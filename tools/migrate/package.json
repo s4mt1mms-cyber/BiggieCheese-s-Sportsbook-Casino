@@ -1,0 +1,17 @@
+{
+  "name": "biggiebucks-migrate",
+  "private": true,
+  "type": "module",
+  "description": "One-time tools to move the league's data from the Claude artifact export into Firestore.",
+  "scripts": {
+    "list-users": "node import.js --list-users",
+    "import": "node import.js",
+    "make-invites": "node make-invites.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.7.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
