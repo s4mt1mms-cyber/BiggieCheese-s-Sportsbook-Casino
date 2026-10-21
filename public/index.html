@@ -24,6 +24,7 @@ window.SB_BACKEND=new Promise(function(r){window.__sbResolve=r});</script>
 .bjacts .btn,.btn.deal{min-height:48px}
 .divbig{font-size:40px;font-weight:900;text-align:center;margin:6px 0}.divrows{display:grid;gap:6px;margin:12px 0}.divrow{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.05)}
 .fpboost{text-align:center;font-weight:800;padding:10px;border-radius:12px;margin:8px 0}.fpboost.on{background:linear-gradient(90deg,#7a5cff,#ffb020);color:#fff}.fpboost.cd{background:rgba(255,255,255,.06);color:#aaa}.fpboostbtn{width:100%;margin:8px 0;background:linear-gradient(90deg,#7a5cff,#ffb020);color:#fff;border:0}.fpboostbtn.armed{box-shadow:0 0 0 3px #ffd23f;animation:dglow 3s linear infinite}
+.onl:not(.dglow){outline:2.5px solid #3ecf6e;outline-offset:1.5px}.onltxt{color:#3ecf6e;font-size:12px;font-weight:700}
 </style>
 <style>
 /* Layout: neon arena. Gold marquee masthead, tab rail, then each matchup as a black scoreboard screen with an orange glow. Single dark look by design. */
@@ -1520,7 +1521,11 @@ const nm=id=>id?(teamOf(id)||S.names[id]||"Member"):"Anyone";
 const role=id=>id&&id===S.meta.commissioner?"Commissioner":"Player";
 const logoOf=id=>{const ph=id&&(S.photos||{})[id];if(ph&&typeof ph==="string"&&ph.startsWith("data:image/"))return ph;const p=id&&S.prefs[id];if(!p)return null;if(typeof p.photo==="string"&&p.photo.startsWith("data:image/"))return p.photo;return null};
 const hasDragon=id=>{const c=((S.prefs||{})[id]||{}).cards||{};return Object.entries(c).some(([k,v])=>Number(v)>0&&(cardById(k)||{}).r===6)};
-const av=(id,cls="av")=>{if(hasDragon(id))cls+=" dglow";const u=logoOf(id);if(u)return `<img class="${cls}" src="${esc(u)}" alt="">`;const t=teamOf(id);return t?badge(t).replace('class="badge"',`class="badge ${cls}"`):""};
+/* online = seen in the last ~6.5 min (mining saves while the app is open on screen, plus live-table and chat stamps) */
+const seenAt=id=>{if(id===S.me)return Date.now();const p=(S.prefs||{})[id]||{};return Math.max(Number(p.mineAt)||0,Number(p.lv)||0,Number(p.chatSeen)||0,Number(p.liveT)||0,Number(p.bjSeq)||0)};
+const isOnline=id=>Date.now()-seenAt(id)<390000;
+const seenTxt=id=>{if(isOnline(id))return `<span class="onltxt">● Online</span>`;const t=seenAt(id);if(!t)return "";const m=Math.round((Date.now()-t)/60000);return `<span class="small muted">Last seen ${m<60?m+"m":m<1440?Math.round(m/60)+"h":Math.round(m/1440)+"d"} ago</span>`};
+const av=(id,cls="av")=>{if(hasDragon(id))cls+=" dglow";if(isOnline(id))cls+=" onl";const u=logoOf(id);if(u)return `<img class="${cls}" src="${esc(u)}" alt="">`;const t=teamOf(id);return t?badge(t).replace('class="badge"',`class="badge ${cls}"`):""};
 function setMe(){
   const n=$("#meName"),sub=$("#meSub");if(!n||!S.me)return;
   n.textContent=teamOf(S.me)||S.names[S.me]||"Your profile";
@@ -1964,12 +1969,12 @@ function picCore(id,big){const u=logoOf(id),t=teamOf(id),c=big?"pic big":"pic",d
 function memberStats(id){const L=ledger();return{inPlay:L.inPlay(id),r:L.rec[id]||{w:0,l:0,p:0},net:L.net[id]||0,wag:L.wagered[id]||0,bal:L.balOf(id),ref:L.refills[id]||0}}
 function bigAv(id){const u=logoOf(id),t=teamOf(id);return u?`<img class="mav" src="${esc(u)}" alt="">`:(t?badge(t).replace('class="badge"','class="badge big"'):`<span class="badge big" style="--bc:#ab9fc2">?</span>`)}
 function viewMembers(){
-  const ids=members().sort((a,b)=>String(nm(a)).localeCompare(nm(b)));
+  const ids=members().sort((a,b)=>(isOnline(b)-isOnline(a))||String(nm(a)).localeCompare(nm(b)));
   if(!ids.length)return `<h2>League members</h2><div class="empty">Nobody has joined yet.</div>`;
   const open=TEAMS.filter(t=>!claimedBy(t));
   return `<h2>League members <span class="num muted small">${ids.length}/${TEAMS.length}</span></h2><p class="small muted">Tap anyone to see their betting history.</p>
   <div class="mgrid">${ids.map(id=>{const st=memberStats(id);return `<button type="button" class="mcard" data-member="${esc(id)}">${bigAv(id)}
-    <span class="mtxt"><span class="mteam">${esc(teamOf(id)||"No team yet")}</span><span class="small muted">${esc(S.names[id]||"Member")}</span>
+    <span class="mtxt"><span class="mteam">${esc(teamOf(id)||"No team yet")}</span><span class="small muted">${esc(S.names[id]||"Member")}</span>${seenTxt(id)}
     <span class="role${role(id)==="Commissioner"?" comm":""}" style="margin:2px 0 0;align-self:flex-start">${role(id)}</span></span>
     <span class="mnum"><span class="num">${st.r.w}–${st.r.l}–${st.r.p}</span><span class="num ${st.net>0?"pos":st.net<0?"neg":"muted"}">${st.net?esc(signed(st.net)):"0 BB"}</span></span></button>`}).join("")}</div>
   ${open.length?`<p class="small muted">Not joined yet: ${open.map(esc).join(", ")}</p>`:""}`;
@@ -1979,7 +1984,7 @@ function memberOverlay(){
   const st=memberStats(id);
   const bets=S.bets.filter(b=>(b.posterId===id||b.takerId===id)&&b.status!=="cancelled"&&gameById(b.gameId)).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
   return `<div class="pickbox" role="dialog" aria-modal="true" aria-labelledby="mvTitle">
-    <div class="mvhead">${logoOf(id)?`<button type="button" class="zoombtn" data-zoom="${esc(id)}" aria-label="View photo larger">${pic(id,true)}</button>`:pic(id,true)}<div style="min-width:0"><h2 id="mvTitle">${esc(nm(id))}</h2>
+    <div class="mvhead">${logoOf(id)?`<button type="button" class="zoombtn" data-zoom="${esc(id)}" aria-label="View photo larger">${pic(id,true)}</button>`:pic(id,true)}<div style="min-width:0"><h2 id="mvTitle">${esc(nm(id))}</h2>${seenTxt(id)}
       <div class="small muted">${esc(S.names[id]||"")}${S.names[id]?" · ":""}${role(id)}</div>
       <div class="stline"><span><span class="stlbl">W-L</span> <span class="num">${st.r.w}-${st.r.l}</span></span><span><span class="stlbl">Profit</span> <span class="num ${st.net>0?"pos":st.net<0?"neg":""}">${st.net?esc(signed(st.net)):"0"}</span></span><span><span class="stlbl">Wagered</span> <span class="num">${Math.round(st.wag).toLocaleString()}</span></span><span><span class="stlbl">Balance</span> <span class="num">${Math.round(st.bal).toLocaleString()}</span></span>${st.inPlay?`<span><span class="stlbl">In play</span> <span class="num">${Math.round(st.inPlay).toLocaleString()}</span></span>`:""}<span class="muted">${bets.length} bet${bets.length===1?"":"s"}</span></div></div></div>
     ${(()=>{const sets=Object.keys(CSETS).filter(setOpen).map(k=>{const cat=cardsCat(k),have=cat.filter(c=>cardCount(c.id,id)>0).length;return `<div class="profset"><span>${CSETS[k].special?"💠 ":""}${esc(CSETS[k].name)}</span><b>${CSETS[k].special?have:`${have}/${cat.length}`}</b></div>`}).join("");
