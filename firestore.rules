@@ -1,0 +1,171 @@
+rules_version = '2';
+
+// BiggieCheese's Sportsbook — Firestore security rules (Phase 1).
+//
+// MEMBERSHIP. You're "in" when links/{your Firebase uid} exists. That doc is
+// created only by redeeming an unused invite code (invites/{code}) in the same
+// batch that marks the invite used by you, or, for the bootstrap admin below,
+// automatically on first sign-in. links/{uid}.oldId is your player id in the
+// app (an old artifact id, or your own uid for a brand-new player).
+//
+// ADMINS: the bootstrap admin email below (keep in sync with
+// public/js/firebase-shim.js), plus any member whose email is listed in
+// config/admins.emails. Admins can write config/*, the commissioner-only
+// collections (meta, adjust, cardimg), invites, links and anyone's prefs.
+//
+// PLAYER-OWNED docs (prefs/{id}, profiles/{id}): only that player or an admin
+// can write. "That player" = links/{uid}.oldId.
+//
+// EVERYTHING ELSE (bets, games, market, chat, bank, loans, plat, rrtable,
+// rrin, rrlook, thtable, thin, thhole, photos, media, ...) is read/write for any
+// member — the same trust model the artifact had. Phase 2 moves money to Cloud
+// Functions; see README "Roadmap".
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function bootstrapEmail() { return 's4mt1mms@gmail.com'; }
+    function bootstrapOldId() { return 'u_IfmXeDmDg1B3W4naCzVbSA'; }
+
+    function docPath(coll, id) {
+      return /databases/$(database)/documents/$(coll)/$(id);
+    }
+
+    function signedIn() {
+      return request.auth != null
+        && request.auth.token.email is string
+        && request.auth.token.email_verified == true;
+    }
+
+    function myEmail() {
+      return request.auth.token.email.lower();
+    }
+
+    function myLinkPath() {
+      return docPath('links', request.auth.uid);
+    }
+
+    function member() {
+      return signedIn() && exists(myLinkPath());
+    }
+
+    function isAdmin() {
+      return signedIn() && (
+        myEmail() == bootstrapEmail()
+        || (exists(myLinkPath())
+            && exists(docPath('config', 'admins'))
+            && myEmail() in get(docPath('config', 'admins')).data.emails)
+      );
+    }
+
+    // The player id this account plays as.
+    function myPlayerId() {
+      return get(myLinkPath()).data.oldId;
+    }
+
+    function isSelf(id) {
+      return member() && myPlayerId() == id;
+    }
+
+    // Collections only admins may change (invites/links have their own rules below).
+    function adminOnly(coll) {
+      return coll in ['config', 'meta', 'adjust', 'cardimg'];
+    }
+
+    // One doc per player; only that player (or an admin) may change it.
+    function playerOwned(coll) {
+      return coll in ['prefs', 'profiles'];
+    }
+
+    // ---------------------------------------------------------------
+    // invites/{code}: made by admins. Anyone signed in may read ONE invite by its
+    // code (not list them), and claim an unused one for themselves.
+    match /invites/{code} {
+      allow get: if signedIn();
+      allow list: if isAdmin();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || claimInvite(code);
+    }
+
+    function claimInvite(code) {
+      return signedIn()
+        && resource.data.used == false
+        && resource.data.get('revoked', false) != true
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['used', 'claimedBy', 'claimedEmail', 'claimedAt'])
+        && request.resource.data.used == true
+        && request.resource.data.claimedBy == request.auth.uid
+        && request.resource.data.claimedEmail == myEmail()
+        && request.resource.data.claimedAt is number
+        // ...and the matching link doc is written in the same batch.
+        && existsAfter(myLinkPath())
+        && getAfter(myLinkPath()).data.code == code;
+    }
+
+    // ---------------------------------------------------------------
+    // links/{uid}: your membership card. You can read your own; admins read all
+    // and can remove access (delete). You can create your own exactly once, by
+    // claiming an invite in the same batch (or as the bootstrap admin).
+    match /links/{uid} {
+      allow get: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow list: if isAdmin();
+      allow create: if signedIn() && request.auth.uid == uid && validNewLink();
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    function validNewLink() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['oldId', 'email', 'code', 'at'])
+        && d.email == myEmail()
+        && d.oldId is string && d.oldId.size() > 0
+        && d.code is string
+        && (
+          // bootstrap owner, straight to their old player
+          (d.code == 'bootstrap' && myEmail() == bootstrapEmail() && d.oldId == bootstrapOldId())
+          // or a real invite that was unused before this batch and is claimed by me after it
+          || (d.code != 'bootstrap' && claimedNow(d.code, d.oldId))
+        );
+    }
+
+    function claimedNow(code, oldId) {
+      let before = get(docPath('invites', code)).data;
+      let after = getAfter(docPath('invites', code)).data;
+      return before.used == false
+        && before.get('revoked', false) != true
+        && after.used == true
+        && after.claimedBy == request.auth.uid
+        && oldId == (before.get('oldId', null) == null ? request.auth.uid : before.oldId);
+    }
+
+    // ---------------------------------------------------------------
+    // config/*: members read (the app reads config/admins), admins write.
+    match /config/{name} {
+      allow read: if member() || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // ---------------------------------------------------------------
+    // Every other top-level document in the app.
+    match /{coll}/{docId} {
+      allow read: if (member() || isAdmin()) && !(coll in ['invites', 'links', 'config']);
+
+      allow create, update: if (member() || isAdmin()) && !(coll in ['invites', 'links', 'config']) && (
+        isAdmin()
+        || (!adminOnly(coll) && !playerOwned(coll))
+        || (playerOwned(coll) && isSelf(docId))
+      );
+
+      // Players never delete their own prefs/profile; admins can.
+      allow delete: if (member() || isAdmin()) && !(coll in ['invites', 'links', 'config']) && (
+        isAdmin()
+        || (!adminOnly(coll) && !playerOwned(coll))
+      );
+    }
+
+    // The app doesn't use subcollections; keep them closed.
+    match /{coll}/{docId}/{rest=**} {
+      allow read, write: if false;
+    }
+  }
+}

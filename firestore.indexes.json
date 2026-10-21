@@ -1,0 +1,8 @@
+{
+  "indexes": [],
+  "fieldOverrides": [
+    { "collectionGroup": "photos", "fieldPath": "d", "indexes": [] },
+    { "collectionGroup": "cardimg", "fieldPath": "d", "indexes": [] },
+    { "collectionGroup": "media", "fieldPath": "d", "indexes": [] }
+  ]
+}
