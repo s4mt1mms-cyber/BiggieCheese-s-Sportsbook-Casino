@@ -4094,11 +4094,11 @@ async function pmBuy(){if(!S.me||!db||S._pmBusy)return;if(S.readOnly)return toas
       won={id,n,cards,cap}}
     if(!won)return toast("Packs are flying off the shelf. Try again in a second.");
     /* pay: fees go to the dev and the card creator as bank transfers; the rest goes to the house as pack spend. Total out is exactly the price */
-    const fees=PM_FEES.filter(f=>f.to!==S.me),house=P-fees.reduce((a,f)=>a+f.amt,0);
+    /* the buyer pays the full price to the house; the house (the app) pays the dev and card-creator fees */const fees=PM_FEES,house=P;
     const q=S.prefs[S.me]=S.prefs[S.me]||{};const cards={...(q.cards||{})},add={};won.cards.forEach(cid=>{cards[cid]=(Number(cards[cid])||0)+1;add[cid]=cards[cid]});
     const patch={packSpent:(Number(q.packSpent)||0)+house,cards:add,packsOpened:(Number(q.packsOpened)||0)+1,pmPacks:(Number(q.pmPacks)||0)+1};
     Object.assign(q,{packSpent:patch.packSpent,cards,packsOpened:patch.packsOpened,pmPacks:patch.pmPacks});await db.doc("prefs/"+S.me).update(patch);
-    for(const f of fees){const ref=db.doc(`bank/platfee_${won.id}_${f.k}`),doc={from:S.me,to:f.to,amt:f.amt,note:f.note,kind:"platfee",slot:won.id,at:Date.now()};try{await ref.set(doc)}catch(_){try{await bkWait(800);await ref.set(doc)}catch(__){}}}
+    for(const f of fees){const ref=db.doc(`bank/platfee_${won.id}_${f.k}`),doc={from:"house",to:f.to,amt:f.amt,note:f.note,kind:"platfee",slot:won.id,at:Date.now()};try{await ref.set(doc)}catch(_){try{await bkWait(800);await ref.set(doc)}catch(__){}}}
     pmShowOpen(won.cards,won.n,won.cap);
     try{db.collection("chat").add({type:"bet",uid:S.me,poster:S.me,at:Date.now(),kind:"plat-open",text:`💠 ${nm(S.me)} opened Platinum Mysterio Pack #${won.n} of ${won.cap}!`})}catch(_){}
     won.cards.filter(c=>(cardById(c)||{}).r===8).forEach((cid,i)=>{const c=cardById(cid);try{db.collection("chat").add({type:"bet",uid:S.me,poster:S.me,at:Date.now()+1+i,kind:"plat-legend",cid,text:`${nm(S.me)} pulled ${c.name} from a Platinum Mysterio Pack!`})}catch(_){}})}
@@ -4643,7 +4643,7 @@ function bkRow(l){const c=bkCalc(l)||{},me=S.me,st=l.status,paid=l.sched?bkPaidK
     <div class="small muted">${esc(bkTermsTxt(l))} · ${c.total?`${c.total.toLocaleString()} BB back`:""}</div>${st==="open"?onlyBadge(l):""}${nxt}${coll}${sz}${btn?`<div class="row">${btn}</div>`:""}</div>`}
 function viewBank(){if(!S.me)return `<div class="empty">Sign in to use the bank.</div>`;const F=bkF(),bal=Math.floor(ledger().balOf(S.me)),me=S.me;
   const ppl=members().filter(id=>id!==me&&teamOf(id)).sort((a,b)=>nm(a).localeCompare(nm(b)));
-  const tx=(S.bank||[]).filter(t=>t.from===me||t.to===me).sort((a,b)=>(b.at||0)-(a.at||0)).slice(0,10);
+  const tx=(S.bank||[]).filter(t=>(t.from===me&&t.kind!=="platfee")||t.to===me).sort((a,b)=>(b.at||0)-(a.at||0)).slice(0,10);
   const L=(S.loans||[]).slice().sort((a,b)=>(b.takenAt||b.at||0)-(a.takenAt||a.at||0));
   const open=L.filter(l=>l.status==="open"),lend=L.filter(l=>l.lender===me&&l.status!=="open"&&l.status!=="cancelled"),borr=L.filter(l=>l.borrower===me&&l.status!=="open"&&l.status!=="cancelled");
   const sec=(t,a,e)=>`<section class="card"><h3>${t}</h3>${a.length?a.map(bkRow).join(""):`<div class="small muted">${e}</div>`}</section>`;
@@ -4652,7 +4652,7 @@ function viewBank(){if(!S.me)return `<div class="empty">Sign in to use the bank.
   <section class="card"><h3>💸 Send BB</h3><div class="row bkform"><label>To<select data-bkf="to"><option value="">Pick someone</option>${ppl.map(id=>`<option value="${esc(id)}" ${F.to===id?"selected":""}>${esc(nm(id))}</option>`).join("")}</select></label>
     <label>Amount<input class="n" data-bkf="amt" inputmode="numeric" type="number" min="1" step="1" max="${bal}" value="${esc(F.amt)}" placeholder="500"></label>
     <label class="grow">Note (optional)<input data-bkf="note" maxlength="120" value="${esc(F.note)}" placeholder="for the pizza"></label><button type="button" class="btn" data-bk="send">Send</button></div>
-    ${tx.length?`<div class="bktx">${tx.map(t=>{const out=t.from===me;return `<div><span class="${out?"neg":"pos"}">${out?"→ "+esc(nm(t.to)):"← "+esc(nm(t.from))}${t.note?` <span class="muted">· ${esc(t.note)}</span>`:""}</span><span class="num ${out?"neg":"pos"}">${out?"−":"+"}${Number(t.amt).toLocaleString()}</span><span class="small muted">${ago(t.at)}</span></div>`}).join("")}</div>`:`<div class="small muted">No transfers yet.</div>`}</section>
+    ${tx.length?`<div class="bktx">${tx.map(t=>{const out=t.from===me;return `<div><span class="${out?"neg":"pos"}">${out?"→ "+esc(nm(t.to)):"← "+(t.kind==="platfee"||t.from==="house"?"The House":esc(nm(t.from)))}${t.note?` <span class="muted">· ${esc(t.note)}</span>`:""}</span><span class="num ${out?"neg":"pos"}">${out?"−":"+"}${Number(t.amt).toLocaleString()}</span><span class="small muted">${ago(t.at)}</span></div>`}).join("")}</div>`:`<div class="small muted">No transfers yet.</div>`}</section>
   <section class="card${S.bkEdit?" bkediting":""}" id="bkOffer"><h3>${S.bkEdit?"✏️ Editing offer":"🤝 Offer a loan"}</h3><div class="row bkform">
     <label>Principal (BB)<input class="n" data-bkf="P" type="number" min="1" step="1" value="${esc(F.P)}"></label>
     <label>Rate %<input class="n" data-bkf="rate" type="number" min="0" max="1000" step="0.1" value="${esc(F.rate)}"></label><label>per${bkUnitSel("rateU",F.rateU)}</label></div>
