@@ -3270,7 +3270,9 @@ function rrMiniChat(){const el=$("#rrChatMini");if(!el)return;const ms=(CHAT.msg
 /* ---------- Russian Roulette LIVE table: up to 4 real players, bots fill the rest ----------
    One shared doc rrtable/live. The host (first person seated) runs the game and writes events;
    every seated player replays the same events in their own 3D bar from their own chair.
-   Players send their moves through rrin/{uid}; head looks go through rrlook/{uid}. */
+   Players send their moves through rrin/{uid}; head looks go through rrlook/{uid}.
+   With the game server on (mpSrv(), see "the game server" below) the server is the host: r.srv is set, RL.host is "@server",
+   so every page takes the non-host paths, and the server (functions/lib/rr.js) emits the same events. */
 const RL_ANIMALS={cat:{n:"Cat",c:0x9a9aa4,g:0},bear:{n:"Bear",c:0x6e4424,g:1},rat:{n:"Rat",c:0x7d7369,g:2},fox:{n:"Fox",c:0xc85a1a,g:3}};const RL_SEATBOT=[{n:"Cleo the Cat",k:"cat",c:0x9a9aa4},{n:"Bruno the Bear",k:"bear",c:0x6e4424},{n:"Whiskers the Rat",k:"rat",c:0x7d7369},{n:"Vixen the Fox",k:"fox",c:0xc85a1a}];const RR_ANG0=RR_ANG.slice();
 const RL_BOTS=[{n:"Bruno the Bear",k:"bear",c:0x6e4424},{n:"Whiskers the Rat",k:"rat",c:0x7d7369},{n:"Vixen the Fox",k:"fox",c:0xc85a1a},{n:"Cleo the Cat",k:"cat",c:0x9a9aa4}];
 const RR_SOLO=RR_SEATS.map(s=>({...s}));
@@ -3284,9 +3286,8 @@ const rlIsHost=()=>rlHost()===S.me;
 /* The live tables are only listened to while you're at one (on its tab in live mode, seated, or mid-game): every
    head turn and move at a table is a read for every page listening. A fresh listen starts like a fresh page load. */
 function rlSub(){if(RL.subs||!db)return;RL.subs=true;RL.seenState=undefined;
-  RL.un=[rlDoc().onSnapshot(s=>{if(!RL.subs)return;RL.room=s.exists?s.data():null;rlOnRoom()},()=>{}),
-    db.collection("rrin").onSnapshot(s=>{if(!RL.subs)return;s.docs.forEach(d=>{RL.ins[d.id]=d.data()});rlPumpIn()},()=>{})];lookSync()}
-function rlUnsub(){if(!RL.subs)return;RL.subs=false;(RL.un||[]).forEach(u=>{try{u()}catch(_){}});RL.un=null;RL.room=null;RL.seenState=undefined}
+  RL.un=[rlDoc().onSnapshot(s=>{if(!RL.subs)return;RL.room=s.exists?s.data():null;rlOnRoom()},()=>{})];mpCfg();lookSync()}
+function rlUnsub(){if(!RL.subs)return;RL.subs=false;(RL.un||[]).forEach(u=>{try{u()}catch(_){}});RL.un=null;if(RL.inUn){try{RL.inUn()}catch(_){}RL.inUn=null}RL.room=null;RL.seenState=undefined}
 const rlWant=()=>!!(RL.on||(S.tab==="rr"&&S.rrMode==="live")||(RL.room&&rlMySeat(RL.room)>=0));
 const thWant=()=>!!(TH.on||S.tab==="th"||(TH.room&&thMySeat(TH.room)>=0)||(S.me&&S.prefs[S.me]&&S.prefs[S.me].thOpen));
 /* head looks (rrlook) are shared by both tables */
@@ -3294,6 +3295,42 @@ function lookSync(){const need=!!db&&(RL.subs&&rlWant()||TH.subs&&thWant());
   if(need&&!RL.lookUn)RL.lookUn=db.collection("rrlook").onSnapshot(s=>{s.docs.forEach(d=>{RL.looks[d.id]=d.data()})},()=>{});
   else if(!need&&RL.lookUn){try{RL.lookUn()}catch(_){}RL.lookUn=null}}
 function tableSync(){if(!db||!S.ready)return;if(RL.subs&&!rlWant())rlUnsub();if(TH.subs&&!thWant())thUnsub();lookSync()}
+/* ---- the game server (Cloud Functions, functions/ in the repo) ----
+   With config/mp.serverHost on and the server's heartbeat (config/mp.beat) fresh, no phone hosts a live table: lobby requests
+   go to mpreq/{me} (answered in the table doc's rsp.{me}), moves to rrin/thin as before, and only the server writes the table
+   docs and deals (the rules enforce it). Any page at the table pokes mptick/{me} once a deadline on the table has passed; the
+   server re-checks it, so a poke can't hurry anything. Flag off, or the server stops answering for 6 minutes: phones host again. */
+const MP={cfg:null,cfgAt:0,pend:null,n:0,recv:{},poke:{}};
+function mpCfg(force){if(!db)return Promise.resolve();if(!force&&MP.cfgP&&Date.now()-MP.cfgAt<120000)return MP.cfgP;MP.cfgAt=Date.now();
+  MP.cfgP=db.doc("config/mp").get().then(s=>{MP.cfg=s.exists?s.data():{}},()=>{MP.cfg=MP.cfg||{}});return MP.cfgP}
+const mpSrv=()=>{const c=MP.cfg;return !!(c&&c.serverHost===true&&Date.now()-(Number(c.beat)||0)<6*60000)};
+function mpReq(tb,a,args){MP.n=Math.max(MP.n+1,Date.now());const n=MP.n;MP.pend={tb,n,at:Date.now(),a};
+  db.doc("mpreq/"+S.me).set({tb,a,n,at:Date.now(),...(args||{})}).catch(()=>{if(MP.pend&&MP.pend.n===n)MP.pend=null;toast("Couldn't reach the table. Check your connection.")});mpConnUI()}
+/* every table snapshot: is my request answered, and when is the table's next deadline (in my clock) */
+function mpAck(tb,r){if(r&&r.srv&&r.sv)MP.recv[tb]={t:Date.now(),rem:Math.max(0,(Number(r.sv.dl)||0)-(Number(r.at)||0)),dl:Number(r.sv.dl)||0};
+  const p=MP.pend;if(!p||p.tb!==tb||!r)return;const x=(r.rsp||{})[S.me];if(x&&x.n>=p.n){MP.pend=null;if(x.msg&&x.n===p.n)toast(x.msg);mpConnUI()}}
+/* who pokes first: seated players in chair order, each a little later than the one before; watchers last */
+function mpRank(tb,r){const ids=tb==="rr"?[0,1,2,3].map(g=>((r.seats||{})["s"+g]||{}).uid):((r.ps&&r.ps.pl)||[]).map((p,g)=>p&&p.uid&&!r.ps.out[g]?p.uid:null);const k=ids.filter(Boolean).indexOf(S.me);return k<0?4:k}
+function mpOverdue(tb,r){const v=MP.recv[tb];if(!v||!r||!r.srv||r.state!=="play"||!r.sv||r.sv.gid!==r.gid)return 0;const now=Date.now();return v.dl>0?now-(v.t+v.rem):0}
+function mpConnUI(){let el=document.getElementById("mpConn");const now=Date.now(),p=MP.pend;
+  if(p&&now-p.at>15000){MP.pend=null;toast("The table server isn't answering. Try again in a minute.")}
+  const tb=S.tab==="rr"?"rr":S.tab==="th"?"th":null,r=tb==="rr"?RL.room:tb==="th"?TH.room:null;
+  const show=!!tb&&(!!(MP.pend&&MP.pend.tb===tb&&now-MP.pend.at>3000)||mpOverdue(tb,r)>6000);
+  if(!el){if(!show)return;el=document.createElement("div");el.id="mpConn";el.setAttribute("role","status");el.style.cssText="position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 64px);transform:translateX(-50%);z-index:9999;background:rgba(10,10,14,.88);color:#f3eedf;padding:7px 16px;border-radius:999px;font-size:13px;pointer-events:none;box-shadow:0 4px 18px rgba(0,0,0,.4)";el.textContent="Connecting to table…";document.body.appendChild(el)}
+  el.hidden=!show}
+setInterval(()=>{if(!db||!S.me)return;const now=Date.now();
+  if((RL.subs||TH.subs)&&now-MP.cfgAt>120000)mpCfg(true);
+  /* a phone host needs everyone's moves; with the server on nobody does */
+  const want=!!MP.cfg&&!mpSrv();
+  if(RL.subs&&want&&!RL.inUn)RL.inUn=db.collection("rrin").onSnapshot(s=>{if(!RL.subs)return;s.docs.forEach(d=>{RL.ins[d.id]=d.data()});rlPumpIn()},()=>{});
+  else if(RL.inUn&&(!RL.subs||!want)){try{RL.inUn()}catch(_){}RL.inUn=null}
+  if(TH.subs&&want&&!TH.inUn)TH.inUn=db.collection("thin").onSnapshot(s=>{if(!TH.subs)return;s.docs.forEach(d=>{TH.ins[d.id]=d.data()});thPumpIn()},()=>{});
+  else if(TH.inUn&&(!TH.subs||!want)){try{TH.inUn()}catch(_){}TH.inUn=null}
+  for(const tb of ["rr","th"]){const r=tb==="rr"?RL.room:TH.room;if(!r||!r.srv||r.state!=="play")continue;
+    const here=tb==="rr"?(RL.on||rlMySeat(r)>=0):TH.on;if(!here)continue;const v=MP.recv[tb];if(!v)continue;
+    const od=mpOverdue(tb,r),wait=700+mpRank(tb,r)*2500;
+    if((od>wait||now-v.t>30000)&&now-(MP.poke[tb]||0)>2500){MP.poke[tb]=now;db.doc("mptick/"+S.me).set({tb,n:now,at:now}).catch(()=>{})}}
+  mpConnUI()},500);
 /* ---- lobby ---- */
 function rlLobbyHtml(){const r=RL.room,ss=rlSeats(r),me=rlMySeat(r),host=rlHost(r),play=r&&r.state==="play",same=!r||r.mode!=="own";
   const bal=Math.floor(ledger().balOf(S.me)),stake=same?Number(r&&r.buyin)||0:(me>=0?Number(ss[me].stake)||0:rrSt().stake);
@@ -3313,6 +3350,7 @@ async function rlWrite(patch){try{await rlDoc().update(patch)}catch(_){try{await
 async function rlAct(a){const r=RL.room||{},ss=rlSeats(r),me=rlMySeat(r);
   if(a.startsWith("m:")){S.rrMode=a.slice(2);return rrHud()}
   if(a.startsWith("pick:")){RL.pick=a.slice(5);return rrHud()}
+  await mpCfg();if(mpSrv())return rlActSrv(a);
   if(a.startsWith("mode:")){if(rlHost()!==S.me)return;await rlWrite({mode:a.slice(5),buyin:rrSt().stake||0});return}
   if(a==="join"){let r=RL.room||{};try{const d=await rlDoc().get();r=d.exists?d.data():{};RL.room=d.exists?r:null}catch(_){}const ss=rlSeats(r);if(rlMySeat(r)>=0)return;if(r.state==="play")return toast("A game is in progress.");const ak=RL.pick&&RL_ANIMALS[RL.pick]?RL.pick:null;if(!ak)return toast("Pick an animal.");const g=RL_ANIMALS[ak].g;if(ss[g])return toast("Someone already took that animal.");const same=r.mode!=="own",need=same?Number(r.buyin)||0:rrSt().stake;
     if(Math.floor(ledger().balOf(S.me))<need)return toast("Not enough BiggieBucks for this table.");
@@ -3323,19 +3361,32 @@ async function rlAct(a){const r=RL.room||{},ss=rlSeats(r),me=rlMySeat(r);
   if(a==="start"){if(rlHost()!==S.me||r.state==="play")return;if(r.nobots&&ss.filter(Boolean).length<2)return toast("No-bots needs at least 2 players.");const now=Date.now(),seats={};
     const L0=ledger(),sm=r.mode!=="own";let cut=[];ss.forEach((x,g)=>{if(!x)return;const need=sm?Number(r.buyin)||0:Number(x.stake)||0;if((x.uid!==S.me&&now-((RL.looks[x.uid]||{}).at||0)>25000)||!(need>0)||Math.floor(L0.balOf(x.uid))<need){seats["s"+g]=null;if(x.uid!==S.me)cut.push(nm(x.uid))}});
     if(seats["s"+rlMySeat(r)]===null)return toast("You don't have enough BiggieBucks for that buy-in.");if(cut.length)toast(`${cut.join(", ")} couldn't cover the buy-in and ${cut.length>1?"were":"was"} removed.`);
-    await rlWrite({state:"play",gid:now,ev:[],at:now,host:S.me,seats});return}}
+    await rlWrite({state:"play",gid:now,ev:[],at:now,host:S.me,seats,srv:false});return}}
+/* the same lobby, run by the game server: the same checks here for quick answers, the server has the final say */
+async function rlActSrv(a){const r=RL.room||{},ss=rlSeats(r),me=rlMySeat(r);
+  if(a.startsWith("mode:")){if(rlHost()!==S.me)return;mpReq("rr","mode",{mode:a.slice(5),buyin:rrSt().stake||0});return}
+  if(a==="join"){if(me>=0)return;if(r.state==="play")return toast("A game is in progress.");const ak=RL.pick&&RL_ANIMALS[RL.pick]?RL.pick:null;if(!ak)return toast("Pick an animal.");if(ss[RL_ANIMALS[ak].g])return toast("Someone already took that animal.");
+    const need=r.mode!=="own"?Number(r.buyin)||0:rrSt().stake;if(Math.floor(ledger().balOf(S.me))<need)return toast("Not enough BiggieBucks for this table.");
+    mpReq("rr","join",{k:ak,stake:rrSt().stake||0,nm:nm(S.me)});rlBeat(true);return}
+  if(a==="leave"){if(me<0)return;mpReq("rr","leave");return}
+  if(a==="nobots"){if(rlHost()!==S.me)return;mpReq("rr","nobots");return}
+  if(a==="start"){if(rlHost()!==S.me||r.state==="play")return;if(r.nobots&&ss.filter(Boolean).length<2)return toast("No-bots needs at least 2 players.");
+    const L0=ledger(),sm=r.mode!=="own",cut=[],names=[];/* the server leaves out anyone whose page has gone quiet; balances only this page can see */
+    ss.forEach((x,g)=>{if(!x)return;const need=sm?Number(r.buyin)||0:Number(x.stake)||0;if(!(need>0)||Math.floor(L0.balOf(x.uid))<need){cut.push(g);if(x.uid!==S.me)names.push(nm(x.uid))}});
+    if(cut.includes(me))return toast("You don't have enough BiggieBucks for that buy-in.");if(names.length)toast(`${names.join(", ")} couldn't cover the buy-in and ${names.length>1?"were":"was"} removed.`);
+    mpReq("rr","start",{cut});return}}
 function rlSyncStake(){if(S.rrMode!=="live"||!RL.room||RL.room.state==="play")return;const me=rlMySeat(),st=rrSt();clearTimeout(rlSyncStake.t);
-  rlSyncStake.t=setTimeout(()=>{if(RL.room.mode!=="own"&&rlHost()===S.me)rlWrite({buyin:st.stake||0});else if(RL.room.mode==="own"&&me>=0)rlWrite({seats:{["s"+me]:{stake:st.stake||0}}})},350)}
+  rlSyncStake.t=setTimeout(()=>{if(mpSrv()){if(RL.room.mode!=="own"&&rlHost()===S.me)mpReq("rr","buyin",{v:st.stake||0});else if(RL.room.mode==="own"&&me>=0)mpReq("rr","stake",{v:st.stake||0});return}if(RL.room.mode!=="own"&&rlHost()===S.me)rlWrite({buyin:st.stake||0});else if(RL.room.mode==="own"&&me>=0)rlWrite({seats:{["s"+me]:{stake:st.stake||0}}})},350)}
 /* heartbeat + head look while on the Russian Roulette tab */
 function rlBeat(force){if(!db||!S.me||(S.tab!=="rr"&&S.tab!=="th"))return;const c=S.rr3,y=c?+c.yaw.toFixed(2):0,p=c?+c.pitch.toFixed(2):0,now=Date.now();
   /* at most 2 a second and only for a visible turn; otherwise a 6s heartbeat (other seats drop a look after 8s) */
   const L=RL.myLook||{},moved=L.y==null||Math.abs(y-L.y)>=.04||Math.abs(p-L.p)>=.04;if(!force&&(now-(L.at||0)<500||!moved&&now-(L.at||0)<6000))return;RL.myLook={y,p,at:now};db.doc("rrlook/"+S.me).update({yaw:y,pitch:p,at:now}).catch(()=>db.doc("rrlook/"+S.me).set({yaw:y,pitch:p,at:now}).catch(()=>{}))}
 setInterval(()=>{if(S.tab==="rr"&&rlMySeat()>=0)rlBeat()},200);
 /* ---- game ---- */
-function rlOnRoom(){const r=RL.room;if(S.tab==="rr")rrHud();if(!r)return;
+function rlOnRoom(){const r=RL.room;mpAck("rr",r);if(S.tab==="rr")rrHud();if(!r)return;
   /* only jump into a game we watched start; a reload mid-game can't rejoin, and a host who reloads calls the game off */
   const first=RL.seenState===undefined;RL.seenState=r.state;
-  if(first&&r.state==="play"){RL.staleGid=r.gid;if(rlHost(r)===S.me)rlWrite({state:"lobby",ev:[],at:Date.now(),off:r.gid});return}
+  if(first&&r.state==="play"){RL.staleGid=r.gid;if(rlHost(r)===S.me&&(!r.srv||(!mpSrv()&&Date.now()-(r.at||0)>120000)))rlWrite({state:"lobby",ev:[],at:Date.now(),off:r.gid});return}
   if(RL.on&&r.state!=="play"&&!RL.ended&&r.ended!==RL.gid){rlAbort("The game was called off. Your buy-in was refunded.",true,true);return}
   if(r.state==="play"&&rlMySeat(r)>=0&&RL.gid!==r.gid&&r.gid!==RL.staleGid&&!RL.on)rlBegin();
   if(RL.on&&RL.gid===r.gid){(r.ev||[]).forEach(e=>{if(e.n>RL.seen){RL.q.push(e);RL.seen=e.n}});rlPump()}
@@ -3347,12 +3398,14 @@ function rlEmit(t,d){if(RL.host!==S.me)return;RL.n=Math.max((RL.n||0)+1,Date.now
 const rlG=l=>(l+RL.my)%4,rlL=g=>(g-RL.my+4)%4;
 function rlSeatHuman(l){const x=RL.seats[rlG(l)];return x&&!RL.away[rlG(l)]?x:null}
 function rlPumpIn(){const h=RL.inWait;if(!h)return;const x=RL.ins[h.uid];if(x&&x.gid===RL.gid&&x.n>(RL.inSeen[h.uid]||0)&&(!h.s||x.s===h.s)){RL.inSeen[h.uid]=x.n;RL.inWait=null;clearTimeout(h.to);h.res(x)}}
-function rlButton(step){const st=rrSt();st.turn=0;st.step=step;st.busy=false;rrHud();return new Promise(r=>{RL.btn=r})}
+function rlButton(step){const st=rrSt();st.turn=0;st.step=step;st.busy=false;rrHud();if(RL.srv)rlReady(step);return new Promise(r=>{RL.btn=r})}
+/* server tables: my replay reached my move, so my clock starts now (the server can only guess how far behind a page is) */
+function rlReady(st){RL.inN=Math.max((RL.inN||0)+1,Date.now());db.doc("rrin/"+S.me).set({gid:RL.gid,n:RL.inN,s:"ready",st,wk:rlWk(),at:Date.now()}).catch(()=>{})}
 /* everyone pauses at the same moments: a real player's move, or a random result from the host */
 async function rlGate(l,step){if(!RL.on)return;const g=rlG(l),x=rlSeatHuman(l);if(!x)return;
   if(RL.host===S.me){let ok=true,t=null;if(l===0){await rlButton(step);t=await rlMyShot(step)}else{const x2=await new Promise(res=>{RL.inWait={uid:x.uid,s:step,res,to:setTimeout(()=>{RL.inWait=null;res(null)},40000)};rlPumpIn()});ok=!!x2;t=x2&&x2.t!=null?x2.t:null}
     let away=false;if(!ok){RL.miss=RL.miss||{};RL.miss[g]=(RL.miss[g]||0)+1;if(RL.miss[g]>=2){away=true;RL.away[g]=true;toast(`${nm(x.uid)} went quiet. A bot takes their seat.`)}}else if(RL.miss)RL.miss[g]=0;rlEmit("step",{g,s:step,away,t});return t}
-  if(l===0){await rlButton(step);const t0=await rlMyShot(step);const st0=rrSt();RL.inN=Math.max((RL.inN||0)+1,Date.now());db.doc("rrin/"+S.me).set({gid:RL.gid,n:RL.inN,s:step,t:t0,at:Date.now()}).catch(()=>{});const st=rrSt();st.busy=true;st.log="…";rrHud()}
+  if(l===0){await rlButton(step);const t0=await rlMyShot(step);const st0=rrSt();RL.inN=Math.max((RL.inN||0)+1,Date.now());db.doc("rrin/"+S.me).set({gid:RL.gid,n:RL.inN,s:step,t:t0,wk:rlWk(),at:Date.now()}).catch(()=>{});const st=rrSt();st.busy=true;st.log="…";rrHud()}
   const e=await rlNeed("step",g);if(e.away)RL.away[g]=true;return e.t==null?null:e.t}
 
 /* my own shot: if I chose "shoot someone", aim with the reticle; the chamber roll is mine too */
@@ -3360,7 +3413,9 @@ async function rlMyShot(step){const st=rrSt();if(step!=="fire"||st.tgt!=="aim"){
   const a=await rrAimUI({label:"Aim at someone, then fire"});return{aim:1,tg:a.hit==null?null:rlG(a.hit),live:rrRandN(5)<rrBullets(st)}}
 /* when a shooter misses, every other living player gets a reticle at the same time */
 async function rlRetAim(st,l){const a=await rrAimUI({ret:true,timeout:6000,label:`Shoot ${l===0?"…":esc(RR_SEATS[l].n.split(" ")[0])}!`});return{fired:a.fired,live:a.fired&&rrRandN(5)<rrRetB(st),hit:a.hit===l}}
-function rlRetMine(st,l){if(l===0||!st.alive[0]||RL.dead)return Promise.resolve();return rlRetAim(st,l).then(r=>{RL.inN=Math.max((RL.inN||0)+1,Date.now());return db.doc("rrin/"+S.me).set({gid:RL.gid,n:RL.inN,s:"ret",r,at:Date.now()}).catch(()=>{})})}
+function rlRetMine(st,l){if(l===0||!st.alive[0]||RL.dead)return Promise.resolve();if(RL.srv)rlReady("ret");return rlRetAim(st,l).then(r=>{RL.inN=Math.max((RL.inN||0)+1,Date.now());return db.doc("rrin/"+S.me).set({gid:RL.gid,n:RL.inN,s:"ret",r,wk:rlWk(),at:Date.now()}).catch(()=>{})})}
+/* the server's current wait; a move must name it, so a late answer can't land on a later question */
+const rlWk=()=>((RL.room||{}).sv||{}).wk||0;
 async function rlCollectRet(st,l){const G=rlG(l),out=[],wait=[];
   for(const k of [0,1,2,3]){if(k===l||!st.alive[k])continue;const g=rlG(k),x=rlSeatHuman(k);
     if(k===0&&!RL.dead)wait.push(rlRetAim(st,l).then(r=>out.push({g,...r,hit:r.hit?G:null})));
@@ -3376,7 +3431,7 @@ async function rlTick(){const st=rrSt();let bo;
     if(l===0){S.rrBOnow=false;RL.dead=true;rlSpecBanner(true)}await rrWait(2400)}
   if(gone&&!RL.dead&&st.alive[0]&&st.alive.reduce((a,b)=>a+b,0)>1)rlDDShow();return gone}
 function rlName(l){return l===0?"You":RR_SEATS[l].n.split(" ")[0]}
-async function rlBegin(){const r=RL.room;RL.on=true;RL.ended=false;RL.gid=r.gid;RL.host=rlHost(r);RL.my=rlMySeat(r);RL.seats=rlSeats(r);RL.away={};RL.q=[];RL.w=[];RL.seen=0;RL.ev=[];RL.inSeen={};RL.dead=false;
+async function rlBegin(){const r=RL.room;RL.on=true;RL.ended=false;RL.gid=r.gid;RL.srv=!!r.srv;RL.host=RL.srv?"@server":rlHost(r);RL.my=rlMySeat(r);RL.seats=rlSeats(r);RL.away={};RL.q=[];RL.w=[];RL.seen=0;RL.ev=[];RL.inSeen={};RL.dead=false;
   (r.ev||[]).forEach(e=>{RL.q.push(e);RL.seen=Math.max(RL.seen,e.n)});
   const same=r.mode!=="own";RL.stake=same?Number(r.buyin)||0:Number(RL.seats[RL.my].stake)||0;
   /* pay in */
@@ -3391,7 +3446,7 @@ async function rlBegin(){const r=RL.room;RL.on=true;RL.ended=false;RL.gid=r.gid;
   rlGame().catch(e=>{console.error(e);rlAbort("The game hit a snag.")})}
 async function rlGame(){const st=rrSt(),c=S.rr3;st.phase="play";st.safe=0;st.paid=RL.stake;st.won=null;st.alive=(RL.alive0||[1,1,1,1]).slice();S.rrBO=0;S.rrBOnow=false;st.busy=true;st.step=null;
   if(c){c.hold=null;c.dark=0;c.focus=null;rrGunRest(c,0,true);c.gunAt=0}
-  const hb=setInterval(()=>{if(!RL.on)return clearInterval(hb);if(RL.host===S.me){if(Date.now()-((RL.room&&RL.room.at)||0)>8000)rlDoc().update({at:Date.now()}).catch(()=>{})}else if(RL.room&&Date.now()-(RL.room.at||0)>30000){clearInterval(hb);rlAbort("The host left, so the game was called off. Your buy-in was refunded.",true)}},4000);
+  const hb=setInterval(()=>{if(!RL.on)return clearInterval(hb);if(RL.srv){if(RL.room&&Date.now()-(RL.room.at||0)>150000){clearInterval(hb);rlAbort("The table server went quiet, so the game was called off. Your buy-in was refunded.",true)}return}if(RL.host===S.me){if(Date.now()-((RL.room&&RL.room.at)||0)>8000)rlDoc().update({at:Date.now()}).catch(()=>{})}else if(RL.room&&Date.now()-(RL.room.at||0)>30000){clearInterval(hb);rlAbort("The host left, so the game was called off. Your buy-in was refunded.",true)}},4000);
   st.log=`Live table: ${RR_SEATS.map((s,l)=>rlName(l)).join(", ")}.`;rrHud();await rrWait(1500);
   while(RL.on&&st.alive.reduce((a,b)=>a+b,0)>1){await rlDraw();if(!RL.on)return;
     for(;;){if(!st.alive[st.turn]){st.turn=(st.turn+1)%4;continue}
@@ -3464,7 +3519,7 @@ async function rlEnd(wl){const st=rrSt(),c=S.rr3,wg=rlG(wl);if(RL.host===S.me)rl
   st.log=wl===0?`<span class="pos"><b>Last one standing.</b></span>`:`<span class="neg"><b>${esc(RR_SEATS[wl].n)}</b> is the last one standing.</span>`;st.phase="idle";st.busy=false;rrHud();
   RL.ended=true;await rrWait(5000);RL.on=false;rlSpecBanner(false);if(RL.host===S.me)rlWrite({state:"lobby",at:Date.now(),ended:RL.gid});rlRestore()}
 function rlAbort(msg,refund,noWrite){if(!RL.on)return;RL.on=false;RL.w=[];if(RL.inWait){clearTimeout(RL.inWait.to);RL.inWait=null}
-  if(refund&&RL.paid===RL.gid){RL.paid=null;const p=S.prefs[S.me]||{};rrSave({rrNet:(Number(p.rrNet)||0)+RL.stake,rrGames:Math.max(0,(Number(p.rrGames)||0)-1)})}if(refund&&!noWrite)rlWrite({state:"lobby",ev:[],at:Date.now()})
+  if(refund&&RL.paid===RL.gid){RL.paid=null;const p=S.prefs[S.me]||{};rrSave({rrNet:(Number(p.rrNet)||0)+RL.stake,rrGames:Math.max(0,(Number(p.rrGames)||0)-1)})}if(refund&&!noWrite&&!RL.srv)rlWrite({state:"lobby",ev:[],at:Date.now()})
   toast(msg);const st=rrSt();st.phase="idle";st.busy=false;st.step=null;rlSpecBanner(false);rlRestore()}
 function rlRestore(){RR_SOLO.forEach((s,i)=>RR_SEATS[i]={...s});RR_ANG0.forEach((a,i)=>RR_ANG[i]=a);window.RR_ENV_ROT=0;rlDDHide();const st=rrSt();st.alive=[1,1,1,1];st.cards=null;if(S.tab==="rr"){rrStop();const v=$("#view");v.innerHTML=viewRR();rrMount()}}
 
@@ -3478,7 +3533,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("#rrDrink");if(!b
   b.classList.remove("sip");void b.offsetWidth;b.classList.add("sip");rrSipPOV();rrDrinkUI();if(lvl>=8)toast("You're seeing double. Maybe slow down.")});
 function rrBOTick(){if(S.tab==="th"||TH.on){if(!(TH.on&&!TH.spec)){S.rrBO=0;if(S.rrBOnow){S.rrBOnow=false}return}const dk=rrDrunk();let b=S.rrBO||0;
     if(S.rrBOnow){b-=1/25;if(b<=.35&&dk<=8){S.rrBOnow=false;if(db&&S.me)db.doc("rrlook/"+S.me).update({bo:0}).catch(()=>{});toast("You come to.")}}else b+=dk>8?(.15+(dk-8)/2*.85)/180:-1/300;
-    b=Math.max(0,Math.min(1,b));S.rrBO=b;if(b>=1&&!S.rrBOnow){S.rrBOnow=true;toast("You're blacking out… 🍺💀");if(db&&S.me)db.doc("rrlook/"+S.me).update({bo:TH.gid}).catch(()=>{})}return}
+    b=Math.max(0,Math.min(1,b));S.rrBO=b;if(b>=1&&!S.rrBOnow){S.rrBOnow=true;toast("You're blacking out… 🍺💀");if(db&&S.me)db.doc("rrlook/"+S.me).update({bo:TH.gid}).catch(()=>{});if(TH.srv&&TH.ps&&TH.ps.toAct===TH.my)thSend({a:"bo",seq:TH.ps.seq})}return}
   const st=rrSt(),dk=rrDrunk();const inG=st.phase==="play"&&(RL.on?!RL.dead&&st.alive[0]:st.alive[0])&&!S.rrSpec;if(!inG){S.rrBO=0;return}
   let b=S.rrBO||0;b+=dk>8?(.15+(dk-8)/2*.85)/180:-1/300;b=Math.max(0,Math.min(1,b));const myTurn=st.turn===0&&!st.drawing&&(st.step||st.busy);if(myTurn&&b>.97)b=.97;S.rrBO=b;
   if(b>=1&&!S.rrBOnow){S.rrBOnow=true;toast("You're blacking out…");if(RL.on&&db&&S.me)db.doc("rrlook/"+S.me).update({bo:RL.gid}).catch(()=>{})}}
@@ -3608,7 +3663,8 @@ async function thPlayHand(H,io){const sit=g=>!!H.pl[g]&&H.st[g]>0&&!H.out[g]&&!(
    thhole/{gid}_{uid} (never into the table doc); moves go through thin/{uid}; head looks reuse rrlook/{uid}.
    Money: you pay the buy-in when the game starts (thNet goes down, thOpen remembers the game); the host writes cash.{uid} when you
    leave, bust or the game ends, and your own page credits that stack back to thNet. If the host vanishes, everyone takes back
-   their stack plus what they had in the unfinished pot, from the last table state. */
+   their stack plus what they had in the unfinished pot, from the last table state.
+   With the game server on (r.srv), functions/lib/th.js is the host and no page deals, runs bots or takes over (TH.amHost stays false). */
 const TH_TURN=30000;
 const TH={room:null,on:false,ins:{},inSeen:{},subs:false,pick:null,ps:null,hole:null,seen:0,recv:{},rz:0,rzOpen:false};
 const thDoc=()=>db.doc("thtable/live");
@@ -3626,9 +3682,8 @@ const thL=g=>(g-TH.my+4)%4,thG=l=>(l+TH.my)%4;
 const thPN=g=>{const p=TH.ps&&TH.ps.pl[g];return !p?"":g===TH.my&&!TH.spec?"You":String(p.n||"").split(" ")[0]};
 async function thSave(patch){Object.assign(S.prefs[S.me]=S.prefs[S.me]||{},patch);try{await db.doc("prefs/"+S.me).update(patch)}catch(_){toast("That game didn't save. Check your connection.")}}
 function thSub(){if(TH.subs||!db)return;TH.subs=true;TH.seenState=undefined;
-  TH.un=[thDoc().onSnapshot(s=>{if(!TH.subs)return;TH.room=s.exists?s.data():null;thOnRoom()},()=>{}),
-    db.collection("thin").onSnapshot(s=>{if(!TH.subs)return;s.docs.forEach(d=>{TH.ins[d.id]=d.data()});thPumpIn()},()=>{})];lookSync()}
-function thUnsub(){if(!TH.subs)return;TH.subs=false;(TH.un||[]).forEach(u=>{try{u()}catch(_){}});TH.un=null;TH.room=null;TH.seenState=undefined}
+  TH.un=[thDoc().onSnapshot(s=>{if(!TH.subs)return;TH.room=s.exists?s.data():null;thOnRoom()},()=>{})];mpCfg();lookSync()}
+function thUnsub(){if(!TH.subs)return;TH.subs=false;(TH.un||[]).forEach(u=>{try{u()}catch(_){}});TH.un=null;if(TH.inUn){try{TH.inUn()}catch(_){}TH.inUn=null}TH.room=null;TH.seenState=undefined}
 async function thWrite(patch){try{await thDoc().update(patch)}catch(_){try{await thDoc().set(patch)}catch(e){toast("Couldn't reach the table. Check your connection.")}}}
 /* ---- money: credit back whatever the host cashed you out with (or your last stack if the game died) ---- */
 function thSettle(force){const p=S.prefs[S.me]||{},o=p.thOpen,r=TH.room;if(!o||!o.gid||!r||TH.settling===(o.id||o.gid))return;
@@ -3655,6 +3710,7 @@ async function thAct(a){const r=TH.room||{},ss=thSeats(r),me=thMySeat(r);
   if(a==="exit"){thExit();return}
   if(a.startsWith("sit:")){TH.sitG=Number(a.slice(4));TH.sitAmt=0;return thHud()}if(a==="sitx"){TH.sitG=null;return thHud()}if(a.startsWith("sa:")){TH.sitAmt=Number(a.slice(3));return thHud()}if(a==="sitgo")return thSitGo();
   if(a==="watch"){if(!thRun(r)||TH.on)return;thBegin(true);return}
+  if(["join","leave","nobots","start"].includes(a)){await mpCfg();if(mpSrv())return thActSrv(a)}
   if(a==="join"){if(RL.on)return toast("Finish your Russian Roulette game first.");let r=TH.room||{};try{const d=await thDoc().get();r=d.exists?d.data():{};TH.room=d.exists?r:null}catch(_){}
     if(thRun(r))return toast("A game is in progress.");const ss=thSeats(r);if(thMySeat(r)>=0)return;const ak=TH.pick&&RL_ANIMALS[TH.pick]?TH.pick:null;if(!ak)return toast("Pick an animal.");const g=RL_ANIMALS[ak].g;if(ss[g])return toast("Someone already took that animal.");
     const need=Number(r.buyin)||0;if(Math.floor(ledger().balOf(S.me))<need)return toast("Not enough BiggieBucks for this table.");
@@ -3669,22 +3725,33 @@ async function thAct(a){const r=TH.room||{},ss=thSeats(r),me=thMySeat(r);
     if(cut.length)toast(`${cut.join(", ")} couldn't cover the buy-in and ${cut.length>1?"were":"was"} removed.`);
     const bl=thBlinds(B),pl=[0,1,2,3].map(g=>{const x=keep[g];return x?{uid:x.uid,k:x.k,n:nm(x.uid),at:now+g}:r.nobots?null:{bot:1,k:RL_SEATBOT[g].k,n:RL_SEATBOT[g].n}});const F=[false,false,false,false];
     const H={gid:now,nobots:!!r.nobots,hand:0,btn:-1,sb:bl.sb,bb:bl.bb,buy:B,pl,st:pl.map(p=>p?B:0),out:F.slice(),lv:F.slice(),np:F.slice(),seq:0,inh:F.slice(),fo:F.slice(),ai:F.slice(),acted:F.slice(),ro:F.slice(),bet:[0,0,0,0],tot:[0,0,0,0],last:["","","",""],board:[],show:[null,null,null,null],hn:[null,null,null,null],win:null,pots:null,street:"wait",toAct:-1,la:-1,dl:0,cur:0,minR:bl.bb,sbs:-1,bbs:-1,log:"Shuffling up…",wnr:-1};
-    await thWrite({state:"play",gid:now,ev:[],at:now,host:S.me,seats,ps:H});return}}
+    await thWrite({state:"play",gid:now,ev:[],at:now,host:S.me,seats,ps:H,srv:false});return}}
+/* the same lobby, run by the game server */
+function thActSrv(a){const r=TH.room||{},ss=thSeats(r),me=thMySeat(r);
+  if(a==="join"){if(RL.on)return toast("Finish your Russian Roulette game first.");if(thRun(r))return toast("A game is in progress.");if(me>=0)return;const ak=TH.pick&&RL_ANIMALS[TH.pick]?TH.pick:null;if(!ak)return toast("Pick an animal.");if(ss[RL_ANIMALS[ak].g])return toast("Someone already took that animal.");
+    if(Math.floor(ledger().balOf(S.me))<(Number(r.buyin)||0))return toast("Not enough BiggieBucks for this table.");mpReq("th","join",{k:ak,nm:nm(S.me)});rlBeat(true);return}
+  if(a==="leave"){if(me<0)return;mpReq("th","leave");return}
+  if(a==="nobots"){if(thHost()!==S.me)return;mpReq("th","nobots");return}
+  if(a==="start"){if(thHost()!==S.me||thRun(r))return;const B=Math.floor(Number(r.buyin)||0);if(!(B>0))return toast("Set a buy-in first.");
+    const L0=ledger(),cut=[],names=[];ss.forEach((x,g)=>{if(!x)return;if(Math.floor(L0.balOf(x.uid))<B){cut.push(g);if(x.uid!==S.me)names.push(nm(x.uid))}});
+    if(cut.includes(me))return toast("You don't have enough BiggieBucks for that buy-in.");
+    if(r.nobots&&ss.filter(Boolean).length-cut.length<2)return toast(names.length?`${names.join(", ")} couldn't cover the buy-in. No-bots needs at least 2 players.`:"No-bots needs at least 2 players.");
+    if(names.length)toast(`${names.join(", ")} couldn't cover the buy-in and ${names.length>1?"were":"was"} removed.`);mpReq("th","start",{cut});return}}
 /* heartbeat + head look while on this tab (shares rrlook with Russian Roulette) */
 setInterval(()=>{if(S.tab==="th"&&((TH.on&&!TH.spec)||thMySeat()>=0))rlBeat()},200);
 /* ---- game: everyone renders the host's latest table state ---- */
-function thOnRoom(){const r=TH.room;thSettle();if(S.tab==="th")thHud();if(!r)return;
+function thOnRoom(){const r=TH.room;mpAck("th",r);thSettle();if(S.tab==="th")thHud();if(!r)return;
   const first=TH.seenState===undefined;TH.seenState=r.state;
   if(TH.on&&r.gid===TH.gid&&r.state!=="play"&&!TH.ended){thAbort("The game was called off. You got back your stack plus your chips in the unfinished pot.");return}
   if(TH.on&&r.gid!==TH.gid){thAbort("The table was reset.");return}
   if(!TH.on&&thRun(r)&&r.ps&&r.gid!==TH.doneGid&&!RL.on){const g=(r.ps.pl||[]).findIndex(p=>p&&p.uid===S.me);const cashed=g>=0&&!!thCashFor(r,{gid:r.gid,id:thOid(r.ps,g)});
     if(g>=0&&!r.ps.out[g]&&!cashed)thBegin(false)}
   /* the host handed the table to you */
-  if(TH.on&&!TH.spec&&!TH.amHost&&r.gid===TH.gid&&r.host===S.me&&thRun(r)&&!TH.ended)thTakeOver(null);
+  if(TH.on&&!TH.spec&&!TH.amHost&&!r.srv&&r.gid===TH.gid&&r.host===S.me&&thRun(r)&&!TH.ended)thTakeOver(null);
   if(TH.on&&r.gid===TH.gid&&!TH.amHost&&r.ps&&!TH.taking){const evs=(r.ev||[]).filter(e=>e.n>TH.seen);if(evs.length)TH.seen=Math.max(...evs.map(e=>e.n));if(evs.length||!TH.ps||r.ps.seq!==TH.ps.seq||r.ps.street!==TH.ps.street)thShow(r.ps,evs)}
   if(TH.on)thCheckOut()}
 async function thBegin(spec,want){const r=TH.room;if(!r||!r.ps||TH.on)return;const ps=r.ps;
-  TH.on=true;TH.spec=!!spec;TH.ended=false;TH.gid=r.gid;TH.amHost=r.host===S.me&&!spec;TH.seen=0;TH.hole=null;TH.ps=null;TH.recv={};TH.sent=-1;TH.rzOpen=false;TH.outShown=false;TH.m=null;
+  TH.on=true;TH.spec=!!spec;TH.ended=false;TH.gid=r.gid;TH.srv=!!r.srv;TH.amHost=!TH.srv&&r.host===S.me&&!spec;TH.seen=0;TH.hole=null;TH.ps=null;TH.recv={};TH.sent=-1;TH.rzOpen=false;TH.outShown=false;TH.m=null;
   TH.taking=false;TH.my=spec&&want!=null?want:spec?[0,1,2,3].find(g=>!ps.pl[g])??[0,1,2,3].find(g=>ps.pl[g]&&ps.pl[g].bot)??-1:ps.pl.findIndex(p=>p&&p.uid===S.me);
   if(TH.my<0||TH.my==null){TH.on=false;return toast("Every chair has a real player. Try again after this game.")}
   if(!spec){TH.myOid=thOid(ps,TH.my);const p=S.prefs[S.me]||{};let o=p.thOpen;
@@ -3699,7 +3766,7 @@ async function thBegin(spec,want){const r=TH.room;if(!r||!r.ps||TH.on)return;con
   if(TH.amHost){TH.amHost=false;thTakeOver(null)}}
 function thHoleSub(){if(TH.unHole){try{TH.unHole()}catch(_){}}TH.unHole=db.doc(`thhole/${TH.gid}_${S.me}`).onSnapshot(s=>{const d=s.exists?s.data():null;if(d&&d.gid===TH.gid){TH.hole=d;thSync3D();thHud()}},()=>{})}
 /* heartbeat; if the host goes quiet, the longest-seated player left takes over the table */
-function thBeat(){if(!TH.on)return clearInterval(TH.hb);const r=TH.room;if(TH.amHost){if(Date.now()-((r&&r.at)||0)>8000)thDoc().update({at:Date.now()}).catch(()=>{});return}if(!r||!r.ps)return;const age=Date.now()-(r.at||0);
+function thBeat(){if(!TH.on)return clearInterval(TH.hb);const r=TH.room;if(TH.srv){if(r&&Date.now()-(r.at||0)>150000)thAbort("The table server went quiet. You got back your stack plus your chips in the unfinished pot.");return}if(TH.amHost){if(Date.now()-((r&&r.at)||0)>8000)thDoc().update({at:Date.now()}).catch(()=>{});return}if(!r||!r.ps)return;const age=Date.now()-(r.at||0);
   if(TH.spec){if(age>150000)thAbort("The table went quiet.");return}if(age<30000||TH.taking)return;
   const ps=r.ps,cand=ps.pl.map((p,g)=>({p,g})).filter(x=>x.p&&x.p.uid&&!ps.out[x.g]&&x.p.uid!==r.host).sort((a,b)=>(a.p.at||0)-(b.p.at||0)||a.g-b.g),k=cand.findIndex(x=>x.p.uid===S.me);
   if(k>=0&&age>30000+k*12000){toast("The dealer went quiet, so you're dealing now.");thTakeOver(r.host)}}
@@ -3711,7 +3778,7 @@ async function thSitGo(){const r=TH.room,ps=r&&r.ps,g=TH.sitG;if(!thRun(r)||!ps|
   if(ps.pl.some((p,k)=>p&&p.uid===S.me&&!ps.out[k]))return toast("You're already at the table.");const p0=ps.pl[g];if(p0&&p0.uid&&!ps.out[g])return toast("Someone's sitting there.");
   const q=S.prefs[S.me]||{},o=q.thOpen;if(o&&o.gid)return toast("Still settling your last seat. Try again in a moment.");
   const id="j"+Date.now().toString(36)+rrRandN(1e6).toString(36);await thSave({thNet:(Number(q.thNet)||0)-amt,thGames:(Number(q.thGames)||0)+1,thOpen:{gid:r.gid,buy:amt,id}});
-  TH.pendSit={g,id};TH.sitG=null;if(!TH.on)await thBegin(true,g);thSend({a:"sit",g,buy:amt,oid:id});toast("You'll be dealt in next hand.");thHud()}
+  TH.pendSit={g,id};TH.sitG=null;if(!TH.on)await thBegin(true,g);thSend({a:"sit",g,buy:amt,oid:id,nm:nm(S.me)});toast("You'll be dealt in next hand.");thHud()}
 function thSitHtml(ps){const open=[0,1,2,3].filter(g=>!ps.pl[g]||ps.pl[g].bot||ps.out[g]);if(TH.pendSit)return `<div class="small muted" style="text-align:center">Taking your seat next hand…</div>`;if(!open.length)return `<div class="small muted" style="text-align:center">Every chair has a player.</div>`;
   if(TH.sitG==null||!open.includes(TH.sitG))return `<div class="thsit">${open.map(g=>`<button type="button" class="chip" data-th="sit:${g}">Sit as the ${RL_ANIMALS[RL_SEATBOT[g].k].n}${ps.pl[g]&&ps.pl[g].bot&&!ps.out[g]?" (bot)":""}</button>`).join("")}</div>`;
   const L=thLimits(ps),bal=Math.floor(ledger().balOf(S.me)),mx=Math.min(L.mx,bal);TH.sitAmt=Math.max(L.mn,Math.min(mx,TH.sitAmt||ps.buy));
@@ -3916,7 +3983,7 @@ function thPlay(a){const ps=TH.ps;if(!TH.on||!ps||ps.toAct!==TH.my||TH.sent===ps
   TH.sent=ps.seq;TH.rzOpen=false;rrTone("click");thSend({a,to,seq:ps.seq});thHud()}
 document.addEventListener("click",e=>{if(S.tab!=="th")return;const b=e.target.closest("[data-th],[data-tha],[data-thrz],[data-thchip]");if(!b)return;
   if(b.dataset.th==="leavetable")return thLeaveTable();if(b.dataset.th==="hideres"){TH.hideRes=TH.gid;const rs=$("#thRes");if(rs)rs.hidden=true;return}if(b.dataset.th)return thAct(b.dataset.th);
-  if(b.dataset.thchip){const r=TH.room||{};if(thHost(r)!==S.me||thRun(r))return;const bal=Math.floor(ledger().balOf(S.me)),k=b.dataset.thchip;const v=k==="clear"?0:(Number(r.buyin)||0)+Number(k);if(v>bal)return toast("You can't cover a buy-in that big.");thWrite({buyin:v});return}
+  if(b.dataset.thchip){const r=TH.room||{};if(thHost(r)!==S.me||thRun(r))return;const bal=Math.floor(ledger().balOf(S.me)),k=b.dataset.thchip;const bl=TH.buyLocal&&Date.now()-TH.buyLocal.at<5000?TH.buyLocal.v:Number(r.buyin)||0;const v=k==="clear"?0:bl+Number(k);if(v>bal)return toast("You can't cover a buy-in that big.");if(mpSrv()){TH.buyLocal={v,at:Date.now()};mpReq("th","buyin",{v})}else thWrite({buyin:v});return}
   if(b.dataset.thrz){TH.rz=Number(b.dataset.thrz);thHud();return}
   const a=b.dataset.tha;if(a==="hold"){thHold(!TH.up);return}if(a==="rz"){TH.rzOpen=true;thHud();return}if(a==="rzx"){TH.rzOpen=false;thHud();return}thPlay(a)});
 document.addEventListener("input",e=>{if(e.target&&e.target.id==="thSitR"){TH.sitAmt=Number(e.target.value);const v=$("#thSitV");if(v)v.textContent=TH.sitAmt.toLocaleString()+" BB";return}if(e.target&&e.target.id==="thRz"){TH.rz=Number(e.target.value);const g=$("#thRzGo"),ps=TH.ps;if(g&&ps){const L=thLegal(ps,TH.my);g.textContent=`${TH.rz>=L.maxTo?"All-in":ps.cur>0?"Raise to":"Bet"} ${TH.rz.toLocaleString()}`}}});

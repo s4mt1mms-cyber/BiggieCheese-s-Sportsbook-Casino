@@ -73,6 +73,22 @@
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "runtime": "nodejs20",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "test",
+        "*.log"
+      ],
+      "predeploy": [
+        "node \"$RESOURCE_DIR/scripts/sync-shared.mjs\" --check"
+      ]
+    }
+  ],
   "emulators": {
     "singleProjectMode": true,
     "auth": {
@@ -89,6 +105,10 @@
     },
     "ui": {
       "enabled": false
+    },
+    "functions": {
+      "host": "127.0.0.1",
+      "port": 5001
     }
   }
 }

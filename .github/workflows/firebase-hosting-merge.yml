@@ -1,11 +1,17 @@
-# Deploys the site (Firebase Hosting) and the Firestore security rules + indexes
-# every time something is pushed to main.
+# Deploys the Firestore security rules + indexes, the game server (Cloud
+# Functions in functions/) and the site (Firebase Hosting) every time something
+# is pushed to main.
 #
 # Needs one repository secret: FIREBASE_SERVICE_ACCOUNT
 #   (created for you by `firebase init hosting:github`, or by hand — see README).
 # The service account needs these roles in Google Cloud IAM:
 #   Firebase Hosting Admin, Firebase Rules Admin, Cloud Datastore Index Admin,
 #   API Keys Viewer, Service Account User.
+# For the game server it also needs (README "Live tables on the server"):
+#   Cloud Functions Admin, Cloud Run Admin, Cloud Build Editor, Artifact
+#   Registry Administrator, Eventarc Admin, Cloud Scheduler Admin.
+# The functions step is allowed to fail: the site still deploys, and the app
+# keeps phones hosting the live tables until config/mp.serverHost is switched on.
 name: Deploy to Firebase on merge
 
 on:
@@ -46,6 +52,36 @@ jobs:
             --project "$FIREBASE_PROJECT_ID" \
             --non-interactive --force
           rm -f "$RUNNER_TEMP/sa.json"
+
+      # The game server. Failing here (missing roles/APIs) must not stop the site
+      # from deploying: phones keep hosting the tables until the server is on.
+      - name: Install and test the game server
+        id: fntest
+        continue-on-error: true
+        working-directory: functions
+        run: |
+          npm ci
+          npm test
+
+      - name: Deploy the game server (Cloud Functions)
+        id: functions
+        if: steps.fntest.outcome == 'success'
+        continue-on-error: true
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          echo "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          trap 'rm -f "$RUNNER_TEMP/sa.json"' EXIT
+          npx --yes firebase-tools@13 deploy \
+            --only functions \
+            --project "$FIREBASE_PROJECT_ID" \
+            --non-interactive --force
+
+      - name: Game server not deployed (the site still deploys)
+        if: steps.fntest.outcome != 'success' || steps.functions.outcome == 'failure'
+        run: |
+          echo "::warning title=Game server (Cloud Functions) not deployed::The live tables keep running on players' phones. Usual cause: the deploy service account is missing roles or Google Cloud APIs. See README > Live tables on the server > Turning it on. Leave config/mp.serverHost off until a functions deploy succeeds."
 
       - name: Deploy Hosting (live channel)
         uses: FirebaseExtended/action-hosting-deploy@v0

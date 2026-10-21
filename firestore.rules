@@ -17,10 +17,17 @@ rules_version = '2';
 // an admin can write. "That player" = links/{uid}.oldId. Every member can read
 // them (live/{id} holds a player's table state so others can watch the game).
 //
-// EVERYTHING ELSE (bets, games, market, chat, bank, loans, plat, rrtable,
-// rrin, rrlook, thtable, thin, thhole, photos, media, ...) is read/write for any
-// member — the same trust model the artifact had. Phase 2 moves money to Cloud
-// Functions; see README "Roadmap".
+// LIVE TABLES. rrin/thin (moves), mpreq (lobby requests), mptick (deadline
+// pokes) and rrlook (head looks) are player-owned like prefs. The table docs
+// rrtable/thtable and the hole cards thhole/{gid}_{playerId}: while the game
+// server is on (config/mp.serverHost == true and its heartbeat config/mp.beat
+// is under 5 minutes old) only the Cloud Functions write them; otherwise a
+// player's phone hosts and members may write them, as before. Either way you can
+// read only your own hole cards. mpsecret (deck, everyone's cards) is server-only.
+//
+// EVERYTHING ELSE (bets, games, market, chat, bank, loans, plat, photos, media,
+// ...) is read/write for any member — the same trust model the artifact had.
+// Phase 2 moves money to Cloud Functions; see README "Roadmap".
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -77,7 +84,20 @@ service cloud.firestore {
     // live/{id}: the player's in-progress casino table (hand, shoe, last spin) plus
     // stats not yet copied into prefs; members read it to spectate.
     function playerOwned(coll) {
-      return coll in ['prefs', 'profiles', 'live'];
+      return coll in ['prefs', 'profiles', 'live', 'rrin', 'thin', 'mpreq', 'mptick', 'rrlook'];
+    }
+
+    // Collections with their own match blocks below.
+    function special(coll) {
+      return coll in ['invites', 'links', 'config', 'rrtable', 'thtable', 'thhole', 'mpsecret'];
+    }
+
+    // True while phones host the live tables (game server off, or not answering).
+    function phoneHosting() {
+      let p = docPath('config', 'mp');
+      return !exists(p)
+        || get(p).data.get('serverHost', false) != true
+        || request.time.toMillis() - get(p).data.get('beat', 0) > 300000;
     }
 
     // ---------------------------------------------------------------
@@ -149,18 +169,34 @@ service cloud.firestore {
     }
 
     // ---------------------------------------------------------------
+    // Live table state: everyone at the league can watch; only the host writes.
+    match /{coll}/{docId} {
+      allow read: if (member() || isAdmin()) && coll in ['rrtable', 'thtable'];
+      allow write: if (member() || isAdmin()) && coll in ['rrtable', 'thtable'] && phoneHosting();
+    }
+    // Hole cards: thhole/{gid}_{playerId}, readable only by that player.
+    match /thhole/{docId} {
+      allow read: if member() && docId == docId.split('_')[0] + '_' + myPlayerId();
+      allow write: if member() && phoneHosting();
+    }
+    // mpsecret/*: the server's deck and everyone's hole cards. Nobody else, ever.
+    match /mpsecret/{docId} {
+      allow read, write: if false;
+    }
+
+    // ---------------------------------------------------------------
     // Every other top-level document in the app.
     match /{coll}/{docId} {
-      allow read: if (member() || isAdmin()) && !(coll in ['invites', 'links', 'config']);
+      allow read: if (member() || isAdmin()) && !special(coll);
 
-      allow create, update: if (member() || isAdmin()) && !(coll in ['invites', 'links', 'config']) && (
+      allow create, update: if (member() || isAdmin()) && !special(coll) && (
         isAdmin()
         || (!adminOnly(coll) && !playerOwned(coll))
         || (playerOwned(coll) && isSelf(docId))
       );
 
       // Players never delete their own prefs/profile; admins can.
-      allow delete: if (member() || isAdmin()) && !(coll in ['invites', 'links', 'config']) && (
+      allow delete: if (member() || isAdmin()) && !special(coll) && (
         isAdmin()
         || (!adminOnly(coll) && !playerOwned(coll))
       );

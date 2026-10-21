@@ -1,0 +1,19 @@
+{
+  "name": "biggiecheese-game-server",
+  "private": true,
+  "type": "module",
+  "description": "Cloud Functions that run the live Russian Roulette and Texas Hold'em tables.",
+  "main": "index.js",
+  "engines": {
+    "node": "20"
+  },
+  "scripts": {
+    "sync": "node scripts/sync-shared.mjs",
+    "check": "node scripts/sync-shared.mjs --check",
+    "test": "node scripts/sync-shared.mjs --check && node test/engine.test.mjs"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.7.0",
+    "firebase-functions": "^6.1.0"
+  }
+}

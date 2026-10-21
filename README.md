@@ -7,8 +7,8 @@ real sign-in and its own database.
 - Live site: https://biggiecheesesportsbook.web.app
 - Firebase project: `biggiecheesesportsbook`
 
-Every push to `main` deploys the site and the database security rules
-automatically (GitHub Actions).
+Every push to `main` deploys the site, the database security rules and the
+game server (Cloud Functions for the live tables) automatically (GitHub Actions).
 
 ---
 
@@ -25,7 +25,9 @@ public/                    the website (Firebase Hosting serves this folder)
   manifest.webmanifest     Add to Home Screen details
   icons/                   app icons
   sw.js                    service worker (installable app, updates show on next open)
-firebase.json              hosting settings + local emulator settings
+functions/                 the game server: Cloud Functions that run the live Russian Roulette
+                           and Texas Hold'em tables (see "Live tables on the server")
+firebase.json              hosting, functions + local emulator settings
 .firebaserc                which Firebase project to deploy to
 firestore.rules            who can read and write what
 firestore.indexes.json     database index settings
@@ -136,6 +138,9 @@ these services:
    - Either way, the account needs **Firebase Rules Admin** and **Cloud
      Datastore Index Admin** to deploy the rules. The `init hosting:github`
      account doesn't have those by default, so add them in IAM.
+   - The game server (Cloud Functions) needs more roles and APIs; see "Live
+     tables on the server → Turning it on". Until then that deploy step fails
+     with a warning and everything else still deploys.
 5. **Deploy.** Push to `main` (or Actions → "Deploy to Firebase on merge" →
    Run workflow). Then open https://biggiecheesesportsbook.web.app.
 6. **Plan / costs.** The free (Spark) plan allows 50k document reads and 20k
@@ -199,6 +204,89 @@ localhost, points the page at the emulators instead of the real project. In
 the browser console, `SB_DEV_SIGNIN("someone@example.com")` signs you in as
 anyone without Google.
 
+## Live tables on the server
+
+The live Russian Roulette and Texas Hold'em tables used to be "hosted" by one
+player's phone: it dealt, ran the bots and the timers, and wrote the table.
+`functions/` moves that job to Cloud Functions, so nobody's phone hosts and
+hole cards are dealt where no player can peek.
+
+**How it works.** The table docs keep the same shape (`rrtable/live`,
+`thtable/live` with the public state and event list, `thhole/{gid}_{player}`
+for your two cards), so the app draws a server-run table with the same code.
+
+- Players send lobby requests (join, leave, start, buy-in, No bots, mode) to
+  `mpreq/{player}` and moves to `thin/{player}` / `rrin/{player}` as before.
+  Each write triggers a function that runs the game in a Firestore transaction
+  on the table doc and answers in the table doc (`rsp.{player}`).
+- The deck and everyone's hole cards live in `mpsecret/{rr|th}`, which no
+  client can read. Shuffles and rolls use Node's crypto RNG. Russian Roulette
+  chamber rolls (including "shoot someone" and return fire) are rolled on the
+  server too; only your aim (did you hit) comes from your page.
+- Timers (the 30s Hold'em clock, Russian Roulette's turn and return-fire
+  windows, bots "thinking", pauses between streets) are deadlines written in
+  the table doc (`sv.dl`). Short ones are slept through by the function; when
+  a long one passes, any page at the table writes `mptick/{player}` and the
+  function re-checks the deadline in the transaction, so a poke can't hurry
+  anything. `mpSweep` runs every minute as a fallback.
+- Money is unchanged: your own page pays your buy-in into `prefs` (`thNet` /
+  `rrNet`) and credits your cash-out from the table doc's records, exactly as
+  with a phone host. The server only records stakes and cash-outs.
+- The rules: while the server is on, only the server writes `rrtable`,
+  `thtable` and `thhole`; you can read only your own hole cards; `rrin`,
+  `thin`, `mpreq`, `mptick` and `rrlook` are writable only by their owner.
+
+**The switch, and the safety net.** The app only uses the server when the doc
+`config/mp` has `serverHost: true` **and** `config/mp.beat` is fresh. `beat` is
+refreshed by the functions themselves (the every-minute `mpSweep` writes
+`mpreq/_probe`, which must come back through the trigger), so it proves the
+whole pipeline works. If the functions aren't deployed, or stop answering for
+about 6 minutes, pages go back to phone hosting by themselves and the rules let
+phones write the tables again (after 5 minutes). With the flag off (or no
+`config/mp`), everything works exactly as before. If a request isn't answered
+within 3 seconds the page shows "Connecting to table…".
+
+### Turning it on
+
+1. Enable these APIs (Google Cloud console → APIs & Services → Enable APIs):
+   **Cloud Functions**, **Cloud Build**, **Artifact Registry**, **Cloud Run
+   Admin**, **Eventarc**, **Cloud Pub/Sub**, **Cloud Scheduler** (and **Cloud
+   Billing** if the deploy asks for it). The project must be on Blaze.
+2. Give the deploy service account (the one in `FIREBASE_SERVICE_ACCOUNT`)
+   these extra roles in IAM: **Cloud Functions Admin**, **Cloud Run Admin**,
+   **Cloud Build Editor**, **Artifact Registry Administrator** (the first
+   deploy sets an image cleanup policy), **Eventarc Admin**, **Cloud Scheduler
+   Admin**, and **Service Account User** (it already has it; it must cover the
+   default compute service account `PROJECT_NUMBER-compute@developer.gserviceaccount.com`,
+   which the functions run as).
+3. The very first functions deploy also grants Eventarc/Pub/Sub roles to
+   Google's service agents, which needs **Project IAM Admin**. Easiest: the
+   owner runs it once from a laptop (`cd functions && npm ci && cd .. &&
+   firebase deploy --only functions`), or grant the service account Project
+   IAM Admin for that first run and remove it after. Later deploys from
+   GitHub Actions don't need it.
+4. Push. The workflow's "Deploy the game server" step must be green (if it
+   fails, the site still deploys and a warning explains why).
+5. Wait a minute, then check Firestore: `config/mp` should have a `beat` (a
+   recent time in ms). Then add the field `serverHost` = `true` (boolean) to
+   `config/mp`. Do it when nobody is mid-game: a phone-hosted game in progress
+   at that moment is called off and refunded.
+6. To go back to phone hosting, set `serverHost` to `false`.
+
+Region: the functions run in `us-central1` (set in `functions/index.js`),
+which suits a `nam5` Firestore. If the database is elsewhere, change it there.
+
+**Code layout.** `functions/lib/th.js` and `functions/lib/rr.js` are the game
+engines (ports of the host code in `index.html`), `functions/index.js` the
+triggers and transactions. `functions/lib/thpure.js` (hand evaluator, pots,
+betting, the bot) and `lib/codec.js` are generated from `public/index.html`
+and `public/js/codec.js` by `node functions/scripts/sync-shared.mjs`; the
+deploy refuses to run if they are out of date. `npm test` in `functions/`
+plays a few hundred simulated hands and games. Locally,
+`firebase emulators:start --only auth,firestore,functions,hosting` runs the
+server too (create `config/mp` with `serverHost: true` and a current `beat`
+in the emulator to use it).
+
 ## Sign-in on iPhone home-screen app
 
 When the site runs as a home-screen app, Google sign-in uses a full-page
@@ -245,10 +333,9 @@ server as the only writer of balances:
 - **Scheduled 1 AM ET function** (Cloud Scheduler, `America/New_York`) for
   the daily jobs: dividends, weekly allowance and refills, loan interest, chat
   pruning, week rollover.
-- **Multiplayer host on the server.** Today one player's browser "hosts" the
-  roulette and hold'em tables (`rrtable`, `thtable`, `thhole`). A function (or
-  a small Cloud Run service) should own table state, deal hole cards privately
-  (only to their owner) and settle pots. Fast-changing look/camera state
-  (`rrlook`) can move to Realtime Database presence to save Firestore writes.
+- **Multiplayer host on the server.** Done for the live tables (see "Live
+  tables on the server"); buy-ins and payouts are still applied by each
+  player's page. Fast-changing look/camera state (`rrlook`) can move to
+  Realtime Database presence to save Firestore writes.
 - Then tighten `firestore.rules` so bets, bank, loans, market, plat and the
   table collections become read-only for clients (writes go through functions).
