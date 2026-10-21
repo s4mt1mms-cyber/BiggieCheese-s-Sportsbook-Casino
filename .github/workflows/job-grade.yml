@@ -1,0 +1,24 @@
+name: Grade finished games (manual)
+
+on:
+  workflow_dispatch: {}
+
+concurrency:
+  group: job-grade
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install --quiet google-cloud-firestore==2.19.0
+      - name: Run grade job
+        working-directory: tools/jobs
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: python grade.py

@@ -1,0 +1,26 @@
+name: Live scores and odds (hourly)
+
+on:
+  schedule:
+    - cron: "46 * * * *"   # every hour at :46 (UTC; same minute as before)
+  workflow_dispatch: {}
+
+concurrency:
+  group: job-scoreboard
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install --quiet google-cloud-firestore==2.19.0
+      - name: Run scoreboard job
+        working-directory: tools/jobs
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: python scoreboard.py
