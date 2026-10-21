@@ -2184,7 +2184,7 @@ async function bjSave(patch){
    /* Win streaks: 5 in a row +2,500 · 6 +5,000 · 7–9 +15,000 each · 10+ +50,000 each. A loss resets it; a push doesn't count either way. */
    if(nh&&nh.done&&nh.at&&Number(cur.bjStreakAt)!==Number(nh.at)){patch.bjStreakAt=nh.at;const d=(nh.results||[]).length?nh.results.reduce((a,z)=>a+(Number(z.delta)||0),0):(Number(nh.delta)||0);let st=Number(cur.bjStreak)||0;
      if(d>0)st++;else if(d<0)st=0;patch.bjStreak=st;
-     const bonus=d>0?(st>=10?50000:st>=7?15000:st===6?5000:st===5?2500:0):0;
+     const tb=(nh.hands||[]).reduce((a,h)=>a+(Number(h.bet)||0),0)||Number(nh.bet)||0;/* streak bonus scales with the bet: full bonus at 1,000+ BB per hand, so min-bet spam pays almost nothing */const bonus=d>0?Math.round((st>=10?50000:st>=7?15000:st===6?5000:st===5?2500:0)*Math.min(1,tb/1000)):0;
      if(bonus){patch.bjBonus=(Number(cur.bjBonus)||0)+bonus;setTimeout(()=>streakPop(st,bonus),1600)}}}if(BJ_REFILL){patch.bjShuffleAt=BJ_REFILL;BJ_REFILL=null}if(patch.bjShoe)patch.bjShoe=Array.from(patch.bjShoe);
   if(patch.bjHand)patch.bjHand=bjCanon(patch.bjHand);
   const mine=S.prefs[S.me];BJ_SEQ=Math.max(BJ_SEQ+1,Date.now(),(Number(mine&&mine.bjSeq)||0)+1);patch.bjSeq=BJ_SEQ;
@@ -4647,7 +4647,7 @@ function viewBank(){if(!S.me)return `<div class="empty">Sign in to use the bank.
   <section class="card"><h3>💸 Send BB</h3><div class="row bkform"><label>To<select data-bkf="to"><option value="">Pick someone</option>${ppl.map(id=>`<option value="${esc(id)}" ${F.to===id?"selected":""}>${esc(nm(id))}</option>`).join("")}</select></label>
     <label>Amount<input class="n" data-bkf="amt" inputmode="numeric" type="number" min="1" step="1" max="${bal}" value="${esc(F.amt)}" placeholder="500"></label>
     <label class="grow">Note (optional)<input data-bkf="note" maxlength="120" value="${esc(F.note)}" placeholder="for the pizza"></label><button type="button" class="btn" data-bk="send">Send</button></div>
-    ${tx.length?`<div class="bktx">${tx.map(t=>{const out=t.from===me;return `<div><span>${out?"→ "+esc(nm(t.to)):"← "+esc(nm(t.from))}${t.note?` <span class="muted">· ${esc(t.note)}</span>`:""}</span><span class="num ${out?"neg":"pos"}">${out?"−":"+"}${Number(t.amt).toLocaleString()}</span><span class="small muted">${ago(t.at)}</span></div>`}).join("")}</div>`:`<div class="small muted">No transfers yet.</div>`}</section>
+    ${tx.length?`<div class="bktx">${tx.map(t=>{const out=t.from===me;return `<div><span class="${out?"neg":"pos"}">${out?"→ "+esc(nm(t.to)):"← "+esc(nm(t.from))}${t.note?` <span class="muted">· ${esc(t.note)}</span>`:""}</span><span class="num ${out?"neg":"pos"}">${out?"−":"+"}${Number(t.amt).toLocaleString()}</span><span class="small muted">${ago(t.at)}</span></div>`}).join("")}</div>`:`<div class="small muted">No transfers yet.</div>`}</section>
   <section class="card${S.bkEdit?" bkediting":""}" id="bkOffer"><h3>${S.bkEdit?"✏️ Editing offer":"🤝 Offer a loan"}</h3><div class="row bkform">
     <label>Principal (BB)<input class="n" data-bkf="P" type="number" min="1" step="1" value="${esc(F.P)}"></label>
     <label>Rate %<input class="n" data-bkf="rate" type="number" min="0" max="1000" step="0.1" value="${esc(F.rate)}"></label><label>per${bkUnitSel("rateU",F.rateU)}</label></div>
@@ -5182,7 +5182,7 @@ document.addEventListener("click",async e=>{
   if("revenge" in t.dataset){revengeStart();return}
   if("bjallin" in t.dataset){const bal=Math.max(0,Math.floor(ledger().balOf(S.me)));S.bjBet=bal;try{localStorage.setItem("sab-bjbet",String(bal))}catch(_){}render();return}
   if("bjclear" in t.dataset){S.bjBet=0;render();return}
-  if(t.dataset.bj){if(t.disabled)return;const tap=Date.now();if(tap-(S._bjTap||0)<150)return;S._bjTap=tap;const before=S._bjSig;return act(()=>bjAction(t.dataset.bj)).then(()=>{if(S._bjSig===before){S._bjSig=null;render()}})}
+  if(t.dataset.bj){if(t.disabled)return;const tap=Date.now();if(tap-(S._bjTap||0)<150)return;/* one new hand per 1.2s: stops spam-dealing without slowing normal play */if((t.dataset.bj==="deal"||t.dataset.bj==="again")&&tap-(S._bjDealAt||0)<1200)return;if(t.dataset.bj==="deal"||t.dataset.bj==="again")S._bjDealAt=tap;S._bjTap=tap;const before=S._bjSig;return act(()=>bjAction(t.dataset.bj)).then(()=>{if(S._bjSig===before){S._bjSig=null;render()}})}
   if(t.dataset.stbj){S.stBJ=t.dataset.stbj==="1";try{localStorage.setItem("sab-stbj",S.stBJ?"1":"0")}catch(_){}render();return}
   const a=t.dataset.act;if(!a)return;
   if(a==="closeFut"){S.futPick=null;render();return}
