@@ -6,8 +6,8 @@
  * up on the next open; the cached copy is only used when the network fails.
  * Firebase / Google / CDN requests are never touched.
  */
-const CACHE = "bb-shell-v1";
-const SHELL = ["/", "/index.html", "/css/gate.css", "/js/firebase-shim.js", "/js/firebase-config.js", "/js/codec.js", "/manifest.webmanifest", "/icons/icon-192.png"];
+const CACHE = "bb-shell-v2";
+const SHELL = ["/", "/index.html", "/css/gate.css", "/js/firebase-shim.js", "/js/firebase-config.js", "/js/codec.js", "/manifest.webmanifest", "/icons/icon-192.png?v=2"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).catch(() => {}).then(() => self.skipWaiting()));
