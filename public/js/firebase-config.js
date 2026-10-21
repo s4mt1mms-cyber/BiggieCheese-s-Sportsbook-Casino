@@ -14,7 +14,8 @@
  */
 export const firebaseConfig = {
   apiKey: "AIzaSyAqH2Ik62QAAUsWVhZJxGYB64Ylu1h_XSg",
-  authDomain: "biggiecheesesportsbook.firebaseapp.com",
+  /* sign in on the site's own domain so it works from the iPhone home-screen app (no third-party storage) */
+  authDomain: /^biggiecheesesportsbook\.(web\.app|firebaseapp\.com)$/.test(location.hostname) ? location.hostname : "biggiecheesesportsbook.firebaseapp.com",
   projectId: "biggiecheesesportsbook",
   storageBucket: "biggiecheesesportsbook.firebasestorage.app",
   messagingSenderId: "302676867929",
