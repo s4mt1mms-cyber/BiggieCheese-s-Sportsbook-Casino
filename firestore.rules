@@ -13,8 +13,9 @@ rules_version = '2';
 // config/admins.emails. Admins can write config/*, the commissioner-only
 // collections (meta, adjust, cardimg), invites, links and anyone's prefs.
 //
-// PLAYER-OWNED docs (prefs/{id}, profiles/{id}): only that player or an admin
-// can write. "That player" = links/{uid}.oldId.
+// PLAYER-OWNED docs (prefs/{id}, profiles/{id}, live/{id}): only that player or
+// an admin can write. "That player" = links/{uid}.oldId. Every member can read
+// them (live/{id} holds a player's table state so others can watch the game).
 //
 // EVERYTHING ELSE (bets, games, market, chat, bank, loans, plat, rrtable,
 // rrin, rrlook, thtable, thin, thhole, photos, media, ...) is read/write for any
@@ -73,8 +74,10 @@ service cloud.firestore {
     }
 
     // One doc per player; only that player (or an admin) may change it.
+    // live/{id}: the player's in-progress casino table (hand, shoe, last spin) plus
+    // stats not yet copied into prefs; members read it to spectate.
     function playerOwned(coll) {
-      return coll in ['prefs', 'profiles'];
+      return coll in ['prefs', 'profiles', 'live'];
     }
 
     // ---------------------------------------------------------------
