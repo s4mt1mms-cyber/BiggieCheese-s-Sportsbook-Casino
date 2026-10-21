@@ -1,3 +1,4 @@
+import { encode } from "./codec.js";
 /*
  * Admin tab: invite codes.
  *
@@ -24,7 +25,7 @@ export function newCode(len = 8) {
 }
 
 export function installInvitesAdmin(F, fs, ctx) {
-  const st = { invites: [], links: [], prefs: {}, nm: (id) => id, err: "", busy: false, flash: "" };
+  const st = { invites: [], links: [], prefs: {}, nm: (id) => id, err: "", busy: false, flash: "", imp: "" };
   const link = (code) => `${ctx.site}/?invite=${encodeURIComponent(code)}`;
   const when = (t) => (t ? new Date(t).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "");
 
@@ -70,6 +71,11 @@ export function installInvitesAdmin(F, fs, ctx) {
 
     const fresh = (byOld[""] || []).filter((i) => !i.revoked || i.used).slice(0, 12);
     return `<div id="sbInvites"><section class="card sbinv">
+      <h3>Import data from the old app</h3>
+      <p class="small muted">Pick the export file (.json) Claude gave you. It overwrites matching records with the old app's data: balances, cards, bets, market, loans, bank, chat, photos and card images. Safe to run again for a final sync.</p>
+      <label class="btn ghost small" style="display:inline-block;cursor:pointer">Choose export file<input type="file" accept=".json,application/json" data-sbimport hidden></label>
+      ${st.imp ? `<p class="note">${esc(st.imp)}</p>` : ""}
+    </section><section class="card sbinv">
       <h3>Invite codes</h3>
       <p class="small muted">Each code works once. Send a player the link for their team; when they sign in and use it, their Google or email account takes over that team's balance, bets and cards. "Remove access" signs that account out of the team for good (make a new code to re-invite).</p>
       ${st.err ? `<p class="note">${esc(st.err)}</p>` : ""}
@@ -116,6 +122,37 @@ export function installInvitesAdmin(F, fs, ctx) {
     catch (_) { window.prompt("Copy this invite link:", url); }
     paint();
   }
+
+  /* one-time import of the old artifact's database: {collection: {docId: data}} */
+  document.addEventListener("change", async (e) => {
+    const inp = e.target.closest && e.target.closest("[data-sbimport]");
+    if (!inp || !inp.files || !inp.files[0]) return;
+    let bundle;
+    try { bundle = JSON.parse(await inp.files[0].text()); } catch (_) { st.imp = "That file isn't valid JSON."; paint(); return; }
+    inp.value = "";
+    const jobs = [];
+    for (const [col, docs] of Object.entries(bundle || {})) {
+      if (!/^[A-Za-z0-9_]+$/.test(col) || !docs || typeof docs !== "object") continue;
+      for (const [id, data] of Object.entries(docs)) if (data && typeof data === "object") jobs.push([col, id, data]);
+    }
+    if (!jobs.length) { st.imp = "Nothing to import in that file."; paint(); return; }
+    if (!confirm(`Import ${jobs.length} records from the old app? Matching records here get overwritten.`)) return;
+    let done = 0, failed = [];
+    st.imp = `Importing… 0 / ${jobs.length}`; paint();
+    let i = 0;
+    const worker = async () => {
+      while (i < jobs.length) {
+        const [col, id, data] = jobs[i++];
+        try { await F.setDoc(F.doc(fs, col, id), encode(data)); }
+        catch (err) { failed.push(`${col}/${id}: ${err && err.code || err}`); }
+        done++;
+        if (done % 10 === 0 || done === jobs.length) { st.imp = `Importing… ${done} / ${jobs.length}`; paint(); }
+      }
+    };
+    await Promise.all([worker(), worker(), worker(), worker()]);
+    st.imp = failed.length ? `Imported ${jobs.length - failed.length} of ${jobs.length}. Failed: ${failed.slice(0, 5).join("; ")}${failed.length > 5 ? "…" : ""}` : `Done — imported all ${jobs.length} records. Reload the page to see everything.`;
+    paint();
+  });
 
   document.addEventListener("click", async (e) => {
     const t = e.target.closest("[data-sbinv-make],[data-sbinv-copy],[data-sbinv-share],[data-sbinv-revoke],[data-sbinv-unlink]");
