@@ -390,6 +390,29 @@ function wrapError(e) {
 }
 const rethrow = (e) => { throw wrapError(e); };
 
+/* ----------------------------------------------------------------------
+ * Usage meter: a client-side estimate of the Firestore reads and writes this
+ * page is billed for (free plan: 50k reads / 20k writes a day). It counts a
+ * read per document a get returns (at least one), per document a listener
+ * receives from the server (the first snapshot included, at least one), and
+ * one per listener of ours that covers a document we write (the server echoes
+ * our own writes back to our listeners). One write per set/update/delete/add.
+ * Look at it in the console: SB_USAGE.r, SB_USAGE.w, SB_USAGE.by.
+ * ---------------------------------------------------------------------- */
+const USAGE = (window.SB_USAGE = window.SB_USAGE || { r: 0, w: 0, by: {} });
+const collOf = (path) => String(path || "").split("/")[0];
+function meter(coll, r, w) {
+  const b = USAGE.by[coll] || (USAGE.by[coll] = { r: 0, w: 0 });
+  b.r += r; b.w += w; USAGE.r += r; USAGE.w += w;
+}
+const LISTENERS = new Set(); // {doc: "coll/id"} or {coll: "coll"}
+function echo(path) {
+  const c = collOf(path);
+  let n = 0;
+  for (const l of LISTENERS) if (l.doc === path || l.coll === c) n++;
+  if (n) meter(c, n, 0);
+}
+
 function makeDb(F, fs) {
   const wrapDocSnap = (s) => {
     let cached;
@@ -441,41 +464,65 @@ function makeDb(F, fs) {
     return {
       id: ref.id,
       path: ref.path,
-      get: () => F.getDoc(ref).then(wrapDocSnap, rethrow),
-      set: (data) => F.setDoc(ref, encode(data || {})).catch(rethrow),
+      get: () => { meter(collOf(ref.path), 1, 0); return F.getDoc(ref).then(wrapDocSnap, rethrow); },
+      set: (data) => { meter(collOf(ref.path), 0, 1); echo(ref.path); return F.setDoc(ref, encode(data || {})).catch(rethrow); },
       update: async (data) => {
         const pairs = updatePairs(data);
         if (!pairs.length) {
           // Nothing to change; still honour "update requires the document to exist".
+          meter(collOf(ref.path), 1, 0);
           const s = await F.getDoc(ref).catch(rethrow);
           if (!s.exists()) throw Object.assign(new Error("No document to update: " + ref.path), { code: "invalid_argument" });
           return;
         }
+        meter(collOf(ref.path), 0, 1); echo(ref.path);
         return F.updateDoc(ref, ...pairs).catch(rethrow);
       },
-      delete: () => F.deleteDoc(ref).catch(rethrow),
-      onSnapshot: (next, error) => F.onSnapshot(ref, (s) => next(wrapDocSnap(s)), (e) => { if (error) error(wrapError(e)); else console.error(e); }),
+      delete: () => { meter(collOf(ref.path), 0, 1); echo(ref.path); return F.deleteDoc(ref).catch(rethrow); },
+      onSnapshot: (next, error) => {
+        const l = { doc: ref.path };
+        LISTENERS.add(l);
+        const un = F.onSnapshot(ref, (s) => { if (!s.metadata.hasPendingWrites && !s.metadata.fromCache) meter(collOf(ref.path), 1, 0); next(wrapDocSnap(s)); },
+          (e) => { LISTENERS.delete(l); if (error) error(wrapError(e)); else console.error(e); });
+        return () => { LISTENERS.delete(l); un(); };
+      },
       collection: (p) => collRef(F.collection(ref, p)),
     };
   }
 
-  function queryRef(q) {
+  function queryRef(q, coll) {
     return {
-      where: (f, op, v) => queryRef(F.query(q, F.where(f, op, encode(v)))),
-      orderBy: (f, dir) => queryRef(F.query(q, F.orderBy(f, dir || "asc"))),
-      limit: (n) => queryRef(F.query(q, F.limit(n))),
-      get: () => F.getDocs(q).then(wrapQuerySnap, rethrow),
-      onSnapshot: (next, error) => F.onSnapshot(q, (s) => next(wrapQuerySnap(s)), (e) => { if (error) error(wrapError(e)); else console.error(e); }),
+      where: (f, op, v) => queryRef(F.query(q, F.where(f, op, encode(v))), coll),
+      orderBy: (f, dir) => queryRef(F.query(q, F.orderBy(f, dir || "asc")), coll),
+      limit: (n) => queryRef(F.query(q, F.limit(n)), coll),
+      get: () => F.getDocs(q).then((s) => { meter(coll, Math.max(1, s.size), 0); return wrapQuerySnap(s); }, rethrow),
+      onSnapshot: (next, error) => {
+        const l = { coll };
+        LISTENERS.add(l);
+        let first = true;
+        const un = F.onSnapshot(q, (s) => {
+          if (!s.metadata.fromCache) {
+            let n = 0;
+            for (const c of s.docChanges()) if (!c.doc.metadata.hasPendingWrites) n++;
+            if (first && !n) n = 1; // an empty result still costs one read
+            if (n) meter(coll, n, 0);
+            first = false;
+          }
+          next(wrapQuerySnap(s));
+        }, (e) => { LISTENERS.delete(l); if (error) error(wrapError(e)); else console.error(e); });
+        return () => { LISTENERS.delete(l); un(); };
+      },
     };
   }
 
   function collRef(c) {
-    return Object.assign(queryRef(c), {
+    return Object.assign(queryRef(c, collOf(c.path)), {
       path: c.path,
       doc: (id) => docRef(id ? F.doc(c, id) : F.doc(c)),
-      add: (data) => F.addDoc(c, encode(data || {})).then(docRef, rethrow),
+      add: (data) => { const r = id0(c); meter(collOf(c.path), 0, 1); echo(r.path); return F.setDoc(r, encode(data || {})).then(() => docRef(r), rethrow); },
     });
   }
+  const id0 = (c) => F.doc(c);
 
   return Object.freeze({
     doc: (path) => docRef(F.doc(fs, path)),
