@@ -1,6 +1,6 @@
 <!doctype html><html lang="en" class="sbgate-open"><head><meta charset="utf-8">
 <title>BiggieCheese's Sportsbook</title>
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover,interactive-widget=resizes-content">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Barlow:wght@400;500;600;700;800&family=Chakra+Petch:wght@600;700&display=swap">
 <meta name="theme-color" content="#130c20">
@@ -161,9 +161,35 @@ p{margin:0}
 .chatform input{flex:1;min-width:0}
 html{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 input,select,textarea{font-size:16px!important}
-.chatpanel{transition:bottom .22s ease,height .22s ease}
-@media (prefers-reduced-motion:reduce){.chatpanel{transition:none}}
-@media (max-width:600px){.chatpanel{left:calc(12px + env(safe-area-inset-left,0px));right:calc(12px + env(safe-area-inset-right,0px));bottom:calc(var(--kb,0px) + 28px + env(safe-area-inset-bottom,0px));width:auto;height:min(91%,calc(100% - var(--kb,0px) - 48px));border-radius:18px;border-width:2px}}
+/* ---- Chat layout, all in one place. Desktop: floating panel bottom-right. Phones: the panel fills the VISIBLE screen.
+   JS keeps --vvt/--vvh = visualViewport offsetTop/height, so with the keyboard up the panel ends right above it and nothing
+   needs the page to scroll. The top always clears the status bar (env(safe-area-inset-top) is 0 in the home-screen app). ---- */
+:root{--vvt:0px;--vvh:100vh}
+.chatlist{overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.chathead,.chatform{flex:none}
+.chatx{width:44px;height:44px}
+.chatform{align-items:stretch}
+.chatform input{min-height:44px;padding-top:8px;padding-bottom:8px}
+.chatform .btn{min-height:44px;flex:none}
+.chatform .gifbtn{min-height:44px;width:46px}
+.cdel{padding:6px 4px;margin:-6px -2px}
+.chatmore{padding:10px 18px}
+.cmsg{min-width:0}.cbody{max-width:100%}.chatlist .cgif{max-width:min(220px,100%)}
+@media (max-width:600px){
+  .chatwrap{inset:auto;left:0;right:0;top:var(--vvt);height:var(--vvh);overscroll-behavior:none}
+  .chatpanel{left:calc(8px + env(safe-area-inset-left,0px));right:calc(8px + env(safe-area-inset-right,0px));top:calc(8px + env(safe-area-inset-top,0px));bottom:calc(8px + env(safe-area-inset-bottom,0px));width:auto;height:auto;max-height:none;border-radius:18px;border-width:2px}
+  html.kb .chatpanel{bottom:6px}
+  .chathead{padding:8px 10px 8px 14px}
+  .chatform{padding:8px}
+}
+html.chatlock,html.chatlock body{overflow:hidden;overscroll-behavior:none}
+html.chatlock body{position:fixed;left:0;right:0;width:100%}
+/* Full-page chat tab: pinned to the visible screen, shrinking above the keyboard instead of letting the page slide */
+html:has(body.chatmode),body.chatmode{overflow:hidden;height:100%;overscroll-behavior:none}
+body.chatmode{position:fixed;left:0;right:0;top:0;width:100%}
+body.chatmode .chatpanel.inpage{position:fixed!important;left:0!important;right:0!important;top:calc(var(--vvt) + env(safe-area-inset-top,0px))!important;bottom:auto!important;height:calc(var(--vvh) - env(safe-area-inset-top,0px))!important;min-height:0!important;width:auto!important;max-width:none;border:0!important;border-radius:0!important;box-shadow:none!important;transition:none;animation:none}
+body.chatmode .chatpanel.inpage .chatform{padding-left:calc(8px + env(safe-area-inset-left,0px));padding-right:calc(8px + env(safe-area-inset-right,0px));padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}
+html.kb body.chatmode .chatpanel.inpage .chatform{padding-bottom:8px}
 main .wrap{padding-bottom:96px}
 .mebalrow{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
 .mebal{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--neon);text-shadow:0 0 8px rgba(92,255,114,.4)}
@@ -398,10 +424,6 @@ body.rlmode main .wrap{padding-top:8px!important}
 .rplus{width:40px;height:40px;font-size:22px!important;color:#f5cf5d;background:#2a2a2a!important;font-weight:800}
 .emgrid{position:fixed;left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom,0px));max-height:46vh;overflow-y:auto;display:grid;grid-template-columns:repeat(8,1fr);gap:2px;background:#1a1a1a;border:1px solid #3a3420;border-radius:18px;padding:10px;transform:translateY(30px);opacity:0;transition:all .22s ease-out}
 .emgrid.show{transform:none;opacity:1}
-/* Full-screen chat page: pinned to the visible screen, shrinking above the keyboard instead of letting the page slide */
-html:has(body.chatmode),body.chatmode{overflow:hidden;height:100%;overscroll-behavior:none}
-body.chatmode .chatpanel.inpage{position:fixed!important;left:0!important;right:0!important;top:env(safe-area-inset-top,0px)!important;bottom:var(--kb,0px)!important;height:auto!important;min-height:0!important;width:auto!important;transition:bottom .28s cubic-bezier(.2,.8,.2,1)}
-body.chatmode .chatpanel.inpage .chatform{padding-bottom:calc(10px + (var(--kb,0px) > 0px ? 0px : env(safe-area-inset-bottom,0px)))}
 .cmsg.pending{opacity:.65}
 .cmsg.pending .ctext{animation:msgIn .2s cubic-bezier(.2,.8,.2,1) both}@keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 .chatlist{scroll-behavior:auto}
@@ -599,8 +621,8 @@ html,body,*{-webkit-tap-highlight-color:transparent}
 .gwbox .pos{color:#5cff72}.gwbox .neg{color:#ff6262}
 .poitems{display:flex;flex-direction:column;border:1px solid #2e2816;border-radius:10px;overflow:hidden}.poitem{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:8px 10px;border-top:1px solid #2e2816}.poitem:first-child{border-top:0}
 .pol{display:flex;flex-direction:column;min-width:0}.pol b{font-size:14px}.pol small{font-size:11px}.por{font-weight:800;white-space:nowrap}.por.pos{color:#5cff72}.por.neg{color:#ff6262}
-.chatbanner{position:fixed;left:50%;top:calc(8px + env(safe-area-inset-top,0px));transform:translate(-50%,-140%);z-index:90;width:min(420px,calc(100% - 24px));display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;border:1px solid var(--magenta,#d33bff);background:#1a0f22f2;color:#fff;font:inherit;text-align:left;box-shadow:0 10px 30px #000a,0 0 18px rgba(211,59,255,.35);transition:transform .35s cubic-bezier(.2,1.2,.4,1);cursor:pointer}
-.chatbanner.on{transform:translate(-50%,0)}.cbic{font-size:22px}.cbt{display:flex;flex-direction:column;min-width:0;flex:1}.cbt b{font-size:13px;color:#f5cf5d}.cbt span{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cbx{opacity:.6;padding:4px 6px;font-size:14px}
+.chatbanner{position:fixed;left:50%;top:calc(var(--vvt) + 8px + env(safe-area-inset-top,0px));transform:translate(-50%,calc(-100% - 30px - env(safe-area-inset-top,0px)));visibility:hidden;pointer-events:none;touch-action:none;-webkit-tap-highlight-color:transparent;z-index:90;width:min(420px,calc(100% - 24px));display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;border:1px solid var(--magenta,#d33bff);background:#1a0f22f2;color:#fff;font:inherit;text-align:left;box-shadow:0 10px 30px #000a,0 0 18px rgba(211,59,255,.35);transition:transform .3s cubic-bezier(.2,.9,.3,1),visibility 0s linear .3s;cursor:pointer}
+.chatbanner.on{transform:translate(-50%,0);visibility:visible;pointer-events:auto;transition:transform .35s cubic-bezier(.2,1.2,.4,1),visibility 0s}.cbic{font-size:22px}.cbt{display:flex;flex-direction:column;min-width:0;flex:1}.cbt b{font-size:13px;color:#f5cf5d}.cbt span{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cbx{opacity:.6;padding:10px 12px;margin:-8px -8px -8px 0;font-size:14px}
 .pkwrap{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:12px}.pkhead{display:flex;justify-content:space-between;align-items:baseline}.pkhead h2{margin:0}
 .pktabs{display:flex;gap:6px}.pktab{flex:1;font:inherit;font-weight:800;padding:10px 6px;border-radius:12px;border:1px solid #3a3115;background:#120d08;color:#f3eedf;cursor:pointer}.pktab.on{background:#f5cf5d;color:#111;border-color:#f5cf5d}
 .pkgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
@@ -1104,11 +1126,9 @@ body.chatmode .mast .brand,body.chatmode .mast::before{display:none!important}
 body.chatmode .mast{border-bottom:0!important}
 body.chatmode header.mast{position:static;height:0;overflow:visible;background:transparent!important;box-shadow:none!important}
 body.chatmode header.mast .wrap{padding:0!important;display:block!important}
-body.chatmode header.mast .hamb{position:fixed!important;top:calc(12px + env(safe-area-inset-top,0px));left:max(12px,env(safe-area-inset-left,0px));z-index:20;background:rgba(0,0,0,.85)}
+body.chatmode header.mast .hamb{position:fixed!important;top:calc(var(--vvt) + 12px + env(safe-area-inset-top,0px));left:max(12px,env(safe-area-inset-left,0px));z-index:20;background:rgba(0,0,0,.85)}
 body.chatmode .chatpanel.inpage .chatlist{padding-top:64px}
 body.chatmode main .wrap{padding:0!important;max-width:none}
-body.chatmode .chatpanel.inpage{border:0!important;border-radius:0!important;box-shadow:none!important;height:calc(100vh - 38px)!important;height:calc(100dvh - 38px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))!important;min-height:0}
-body.chatmode .chatpanel.inpage .chatform{padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
 .lshead{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
 .mywl.big{font-size:22px;border-bottom:0;padding-bottom:0;margin:0;gap:6px 26px}
 /* Header: menu button | league name | commish photo, one row at every width */
@@ -4050,18 +4070,20 @@ function pkOpen(p,set){const cat=cardsCat(set),used={};const left=c=>c.lim-minte
 function pkChance(p,r,set){let miss=1;for(let i=0;i<p.n;i++){const w=pkSlot(p,i,set);miss*=1-w.reduce((a,x,k)=>a+(k>=r?x:0),0)}return 1-miss}
 const fmtPct=x=>x>=.995?"100%":x>=.1?Math.round(x*100)+"%":x>=.01?(x*100).toFixed(1)+"%":(x*100).toFixed(2)+"%";
 /* card images: one doc per card in "cardimg" */
-const CIMG={},CIMG_L={},CIMG_D={},CIMG_P={},CIMG_R={};
+const CIMG={},CIMG_L={},CIMG_D={},CIMG_P={},CIMG_R={},CIMG_T={};
 /* fill every placeholder for this card that is on the page now */
 function cimgApply(cid){const u=CIMG[cid];if(!u)return;document.querySelectorAll(`[data-cimg="${cid}"]`).forEach(el=>{if(!el.classList.contains("has")){el.style.backgroundImage=`url(${u})`;el.classList.add("has")}})}
 /* decode once and keep the decoded Image alive so later reveals paint instantly */
 function cimgDecode(cid){const u=CIMG[cid];if(!u)return Promise.resolve(null);if(CIMG_D[cid])return CIMG_D[cid].p;const ks=Object.keys(CIMG_D);if(ks.length>=24)delete CIMG_D[ks[0]];const im=new Image();im.decoding="async";im.src=u;
-  const p=(im.decode?im.decode():new Promise((r,j)=>{im.onload=r;im.onerror=j})).then(()=>u,()=>u);CIMG_D[cid]={im,p};return p}
+  const p=Promise.race([(im.decode?im.decode():new Promise((r,j)=>{im.onload=r;im.onerror=j})),new Promise(r=>setTimeout(r,2500))]).then(()=>u,()=>u);CIMG_D[cid]={im,p};return p}
 /* fetch (once, with retries on network errors), decode, then swap into any placeholders */
 function cimgLoad(cid,dec){if(CIMG[cid]!==undefined)return dec?cimgDecode(cid):Promise.resolve(CIMG[cid]);if(CIMG_P[cid])return dec?CIMG_P[cid].then(()=>cimgDecode(cid)):CIMG_P[cid];if(!db)return Promise.resolve(null);CIMG_L[cid]=1;
-  return CIMG_P[cid]=db.doc("cardimg/"+cid).get().then(s=>{CIMG[cid]=s.exists?(s.data().d||null):null;delete CIMG_P[cid];if(!dec){cimgApply(cid);return CIMG[cid]}return cimgDecode(cid).then(u=>{cimgApply(cid);return u})},()=>{delete CIMG_P[cid];delete CIMG_L[cid];
+  return CIMG_P[cid]=db.doc("cardimg/"+cid).get().then(s=>{CIMG[cid]=s.exists?(s.data().d||null):null;CIMG_T[cid]=Date.now();delete CIMG_P[cid];cimgApply(cid);if(!dec)return CIMG[cid];return cimgDecode(cid)},()=>{delete CIMG_P[cid];delete CIMG_L[cid];
     const n=CIMG_R[cid]=(CIMG_R[cid]||0)+1;if(n<6)setTimeout(()=>{if(CIMG[cid]===undefined&&document.querySelector(`[data-cimg="${cid}"]:not(.has)`))cimgLoad(cid)},1500*n);return null})}
 function cimgPrefetch(ids,ms){const all=Promise.all([...new Set(ids||[])].map(id=>cimgLoad(id,1).catch(()=>null)));return ms?Promise.race([all,new Promise(r=>setTimeout(r,ms))]):all}
-function cardImg(cid){if(CIMG[cid]!==undefined)return CIMG[cid];if(!CIMG_P[cid])cimgLoad(cid);return null}
+function cardImg(cid){if(CIMG[cid]===null&&Date.now()-(CIMG_T[cid]||0)>60000)delete CIMG[cid];if(CIMG[cid]!==undefined)return CIMG[cid];if(!CIMG_P[cid])cimgLoad(cid);return null}
+/* fill (or request) every card image placeholder still empty under root; used after lists are redrawn */
+function cimgFill(root){(root||document).querySelectorAll("[data-cimg]:not(.has)").forEach(el=>{const id=el.dataset.cimg;if(CIMG[id])cimgApply(id);else cardImg(id)})}
 
 
 
@@ -5455,7 +5477,7 @@ function chatRenderNow(){
   const all=CHAT.msgs.concat(CHAT.pending||[]);
   const more=!CHAT.noMore&&CHAT.msgs.length>=CHAT.subN?`<button type="button" class="chatmore" data-chatmore>Load older messages</button>`:"";
   const html=all.length?more+all.map(chatMsgHtml).join(""):`<p class="small muted" style="text-align:center;margin-top:20px">No messages yet. Start the trash talk.</p>`;
-  if(html===CHAT._html&&list.childElementCount&&!CHAT.justOpened){CHAT.keepScroll=false}else{CHAT._html=html;list.innerHTML=html;fillMedia(list);
+  if(html===CHAT._html&&list.childElementCount&&!CHAT.justOpened){CHAT.keepScroll=false;cimgFill(list)}else{CHAT._html=html;list.innerHTML=html;fillMedia(list);cimgFill(list);
   if((atBottom&&!CHAT.keepScroll)||CHAT.justOpened){list.scrollTop=list.scrollHeight;CHAT.stick=true;CHAT.justOpened=false;requestAnimationFrame(()=>{list.scrollTop=list.scrollHeight})}
   if(CHAT.keepScroll)list.scrollTop=prevTop;
   CHAT.keepScroll=false}
@@ -5463,8 +5485,20 @@ function chatRenderNow(){
     /* Save "read up to" on your profile so the badge survives closing the app */
     if(S.me&&db&&S.prefs[S.me]){S.prefs[S.me].chatSeen=last.at;db.doc("prefs/"+S.me).update({chatSeen:last.at}).catch(()=>{})}}
 }
-/* Keep the chat above the on-screen keyboard instead of letting the phone zoom or scroll */
-if(window.visualViewport){const vv=window.visualViewport;let raf=0;const kb=()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{const k=Math.max(0,Math.round(window.innerHeight-vv.height-vv.offsetTop));document.documentElement.style.setProperty("--kb",(CHAT.open&&k>80?k:0)+"px");if(CHAT.open){window.scrollTo(0,0);const l=$("#chatList");if(l&&CHAT.stick!==false)l.scrollTop=l.scrollHeight}})};vv.addEventListener("resize",kb);vv.addEventListener("scroll",kb)}
+/* Size the chat to the visible screen: --vvt/--vvh follow visualViewport (top offset + height), so with the iPhone keyboard up
+   the panel ends right above it, and html.kb drops the home-indicator padding. The page itself is never scrolled. */
+const chatVV=(()=>{let raf=0;const de=document.documentElement;const run=()=>{raf=0;const vv=window.visualViewport,h=vv?vv.height:window.innerHeight,t=vv?Math.max(0,vv.offsetTop):0;
+    de.style.setProperty("--vvh",Math.round(h)+"px");de.style.setProperty("--vvt",Math.round(t)+"px");
+    de.classList.toggle("kb",Math.max(de.clientHeight,window.innerHeight)-h>120);
+    const l=$("#chatList");if(CHAT.open&&l&&CHAT.stick!==false){CHAT._autoScroll=true;l.scrollTop=l.scrollHeight;requestAnimationFrame(()=>CHAT._autoScroll=false)}};
+  const q=()=>{if(!raf)raf=requestAnimationFrame(run)};
+  if(window.visualViewport){visualViewport.addEventListener("resize",q);visualViewport.addEventListener("scroll",q)}
+  window.addEventListener("resize",q);window.addEventListener("orientationchange",()=>{q();setTimeout(q,300)});run();return q})();
+/* Phones: while the floating chat is open, pin the page behind it so it can't scroll or jump; restore its position on close */
+function chatLock(){const de=document.documentElement,on=CHAT.open&&S.tab!=="chat"&&matchMedia("(max-width:600px)").matches;
+  if(on&&!de.classList.contains("chatlock")){chatLock.y=window.scrollY||0;document.body.style.top=-chatLock.y+"px";de.classList.add("chatlock")}
+  else if(!on&&de.classList.contains("chatlock")){de.classList.remove("chatlock");document.body.style.top="";window.scrollTo(0,chatLock.y||0)}}
+window.addEventListener("resize",()=>{if(CHAT.open)chatLock()});
 /* No pinch or double-tap zoom anywhere in the app */
 ["gesturestart","gesturechange","gestureend"].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));
 document.addEventListener("touchmove",e=>{if(e.touches&&e.touches.length>1)e.preventDefault()},{passive:false});
@@ -5472,8 +5506,8 @@ document.addEventListener("touchmove",e=>{if(e.touches&&e.touches.length>1)e.pre
 let CHAT_PANEL=null;
 function mountChat(inPage){
   CHAT_PANEL=CHAT_PANEL||document.querySelector(".chatpanel");const p=CHAT_PANEL;if(!p)return;
-  if(inPage){const slot=$("#chatPageSlot");if(slot&&p.parentNode!==slot){$("#chatWrap").hidden=true;slot.appendChild(p);p.classList.add("inpage");CHAT.open=true;CHAT.justOpened=true;$("#chatFab").hidden=true;chatRender()}}
-  else if(p.classList.contains("inpage")){p.classList.remove("inpage");$("#chatWrap").appendChild(p);CHAT.open=false;$("#chatFab").hidden=false;chatRender()}
+  if(inPage){const slot=$("#chatPageSlot");if(slot&&p.parentNode!==slot){$("#chatWrap").hidden=true;slot.appendChild(p);p.classList.add("inpage");CHAT.open=true;CHAT.justOpened=true;$("#chatFab").hidden=true;chatBannerHide();chatLock();chatVV();chatRender()}}
+  else if(p.classList.contains("inpage")){p.classList.remove("inpage");$("#chatWrap").appendChild(p);CHAT.open=false;$("#chatFab").hidden=false;chatLock();chatRender()}
 }
 
 /* chat notifications: banner at the top (and a system notification if allowed) for new messages from others */
@@ -5482,13 +5516,27 @@ function chatNotify(){const ms=CHAT.msgs||[];const last=ms.length?ms[ms.length-1
   const chatVisible=S.tab==="chat"||CHAT.open;if(chatVisible&&!document.hidden)return;let off=false;try{off=localStorage.getItem("sab-chatnotif")==="off"}catch(_){}if(off)return;
   const m=fresh[fresh.length-1],who=nm(m.uid),txt=m.gif?"sent a photo":String(m.text||"").slice(0,120),more=fresh.length>1?` (+${fresh.length-1} more)`:"";
   if(document.hidden&&window.Notification&&Notification.permission==="granted"){try{const n=new Notification(`${who}${more}`,{body:txt,tag:"sab-chat",renotify:true});n.onclick=()=>{window.focus();chatOpen(true);n.close()}}catch(_){}}
-  let b=$("#chatBanner");if(!b){b=document.createElement("button");b.type="button";b.id="chatBanner";b.className="chatbanner";document.body.appendChild(b);
-    b.addEventListener("click",e=>{if(e.target.closest("[data-cbx]")){b.classList.remove("on");return}b.classList.remove("on");if(S.tab!=="chat")chatOpen(true)})}
+  const b=chatBannerEl();
   b.innerHTML=`<span class="cbic">💬</span><span class="cbt"><b>${esc(who)}${esc(more)}</b><span>${esc(txt)}</span></span><span class="cbx" data-cbx aria-label="Dismiss">✕</span>`;
-  b.classList.remove("on");void b.offsetWidth;b.classList.add("on");try{haptic&&haptic()}catch(_){}clearTimeout(chatNotify.h);chatNotify.h=setTimeout(()=>b.classList.remove("on"),5000)}
+  const was=b.classList.contains("on");if(!was){b.classList.remove("on");void b.offsetWidth}b.classList.add("on");b.removeAttribute("aria-hidden");b.tabIndex=0;b._at=Date.now();try{haptic&&haptic()}catch(_){}
+  /* auto-dismiss after 5s; if the app is in the background, start counting when it comes back */
+  if(document.hidden){clearTimeout(chatBannerHide.t);chatBannerHide.t=0;b._wait=true}else chatBannerArm(5000)}
+/* One banner element, reused: a newer message replaces the text and restarts the 5s timer */
+function chatBannerEl(){let b=$("#chatBanner");if(b)return b;b=document.createElement("button");b.type="button";b.id="chatBanner";b.className="chatbanner";b.setAttribute("aria-hidden","true");b.tabIndex=-1;b.setAttribute("aria-live","polite");document.body.appendChild(b);
+  let y0=null,swiped=false;
+  b.addEventListener("touchstart",e=>{y0=e.touches[0].clientY;swiped=false;clearTimeout(chatBannerHide.t)},{passive:true});
+  b.addEventListener("touchmove",e=>{if(y0==null)return;const dy=e.touches[0].clientY-y0;if(dy<-10){swiped=true;y0=null;chatBannerHide()}},{passive:true});
+  b.addEventListener("touchend",()=>{y0=null;if(!swiped&&b.classList.contains("on"))chatBannerArm(3000)},{passive:true});
+  b.addEventListener("click",e=>{if(swiped){swiped=false;return}const x=e.target.closest("[data-cbx]");chatBannerHide();if(!x&&S.tab!=="chat")chatOpen(true)});
+  return b}
+function chatBannerHide(){clearTimeout(chatBannerHide.t);chatBannerHide.t=0;const b=$("#chatBanner");if(b){b._wait=false;b.classList.remove("on");b.setAttribute("aria-hidden","true");b.tabIndex=-1}}
+function chatBannerArm(ms){clearTimeout(chatBannerHide.t);chatBannerHide.t=setTimeout(chatBannerHide,ms)}
+/* Coming back to the app: a banner that was waiting gets its 5s now; one that should already be gone goes away */
+const chatBannerWake=()=>{if(document.hidden)return;const b=$("#chatBanner");if(!b||!b.classList.contains("on"))return;if(b._wait){b._wait=false;chatBannerArm(5000)}else if(Date.now()-(b._at||0)>5500)chatBannerHide();else if(!chatBannerHide.t)chatBannerArm(2000)};
+document.addEventListener("visibilitychange",chatBannerWake);window.addEventListener("pageshow",chatBannerWake);window.addEventListener("focus",chatBannerWake);
 function chatNotifPerm(){if(window.Notification&&Notification.permission==="default"){try{Notification.requestPermission()}catch(_){}}}
 document.addEventListener("click",()=>{if(!chatNotifPerm.asked){chatNotifPerm.asked=true;chatNotifPerm()}},{once:true});
-function chatOpen(v){if(S.tab==="chat")return;CHAT.open=v;$("#chatWrap").hidden=!v;$("#chatFab").hidden=v;if(v){CHAT.justOpened=true;chatRender();setTimeout(()=>{try{$("#chatInput").focus()}catch(e){}},50)}else chatRender()}
+function chatOpen(v){if(S.tab==="chat")return;CHAT.open=v;$("#chatWrap").hidden=!v;$("#chatFab").hidden=v;chatLock();chatVV();if(v){chatBannerHide();CHAT.justOpened=true;chatRender();setTimeout(()=>{try{$("#chatInput").focus()}catch(e){}},50)}else chatRender()}
 $("#chatFab").addEventListener("click",()=>{if(!S.me)return toast("Sign in to chat.");chatOpen(true)});
 document.addEventListener("click",e=>{const c=e.target.closest("[data-chat]");if(c){chatOpen(false);return}
   if(e.target.closest("[data-chatmore]")){chatMore();return}
@@ -5549,10 +5597,10 @@ $("#chatForm").addEventListener("submit",e=>{e.preventDefault();e.stopPropagatio
   /* Show it instantly (slightly faded) while it saves */
   const at=Date.now();CHAT.pending=(CHAT.pending||[]).concat({id:"tmp"+at,uid:S.me,text,at,pending:true});i.value="";CHAT.stick=true;chatRender();chatToBottom();
   db.collection("chat").add({uid:S.me,text,at}).catch(()=>{CHAT.pending=CHAT.pending.filter(p=>p.at!==at);chatRender();toast("That message didn't send. Check your connection.")})});
-/* Keep the newest message in view and undo iPhone's page shove whenever the keyboard opens, closes or a message goes out */
-function chatToBottom(){const l=$("#chatList");if(!l)return;CHAT.stick=true;requestAnimationFrame(()=>{l.scrollTop=l.scrollHeight;if(S.tab!=="chat")window.scrollTo(0,window.scrollY);document.documentElement.scrollTop=0;document.body.scrollTop=0;setTimeout(()=>{l.scrollTop=l.scrollHeight},120);setTimeout(()=>{l.scrollTop=l.scrollHeight},350)})}
+/* Keep the newest message in view whenever the keyboard opens, closes or a message goes out */
+function chatToBottom(){const l=$("#chatList");if(!l)return;CHAT.stick=true;const go=()=>{if(CHAT.stick===false)return;CHAT._autoScroll=true;l.scrollTop=l.scrollHeight;requestAnimationFrame(()=>CHAT._autoScroll=false)};requestAnimationFrame(go);setTimeout(go,150);setTimeout(go,400)}
 $("#chatInput").addEventListener("focus",()=>setTimeout(chatToBottom,60));
-$("#chatInput").addEventListener("blur",()=>{requestAnimationFrame(()=>window.scrollTo(0,0))});
+$("#chatInput").addEventListener("blur",()=>{chatVV();setTimeout(chatVV,350);/* iOS can leave the page nudged after the keyboard drops; the page is pinned while chat is open, so put it back */requestAnimationFrame(()=>{if((document.documentElement.classList.contains("chatlock")||S.tab==="chat")&&window.scrollY)window.scrollTo(0,0)})});
 /* Put the keyboard away: tap anywhere in the messages, or drag the messages down */
 (()=>{const l=$("#chatList");let y0=null;
   l.addEventListener("pointerdown",e=>{y0=e.clientY;if(!e.target.closest("button,a,img,[data-hold]")&&document.activeElement===$("#chatInput"))$("#chatInput").blur()});
