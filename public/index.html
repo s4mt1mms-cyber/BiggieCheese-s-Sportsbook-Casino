@@ -17,7 +17,7 @@
 <script>/* The app awaits this; js/firebase-shim.js resolves it with {db,user} once you're signed in and on the invite list. */
 window.SB_BACKEND=new Promise(function(r){window.__sbResolve=r});</script>
 <script type="module" src="/js/firebase-shim.js"></script>
-<style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}.dglow{border-radius:50%;animation:dglow 3s linear infinite;box-shadow:0 0 0 2px #ff6ad5,0 0 10px 3px #8be9ff}
+<style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}/* Home-screen installs from before the status bar went solid draw the page under a see-through one: a black strip there keeps scrolled content and every overlay out from under the clock */html::before{content:"";position:fixed;left:0;right:0;top:0;height:env(safe-area-inset-top,0px);background:#000;z-index:2147483647;pointer-events:none}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}.dglow{border-radius:50%;animation:dglow 3s linear infinite;box-shadow:0 0 0 2px #ff6ad5,0 0 10px 3px #8be9ff}
 @keyframes dglow{0%{box-shadow:0 0 0 2px #ff6ad5,0 0 10px 3px #8be9ff}25%{box-shadow:0 0 0 2px #ffe66a,0 0 10px 3px #ff6ad5}50%{box-shadow:0 0 0 2px #6affb0,0 0 10px 3px #ffe66a}75%{box-shadow:0 0 0 2px #8be9ff,0 0 10px 3px #b06cff}100%{box-shadow:0 0 0 2px #ff6ad5,0 0 10px 3px #8be9ff}}
 @media (prefers-reduced-motion:reduce){.dglow{animation:none}}
 [data-bj],[data-bjchip],[data-bjallin],[data-bjclear]{touch-action:manipulation}
@@ -534,7 +534,7 @@ body.rrmode .chatfab{z-index:40;bottom:calc(120px + env(safe-area-inset-bottom,0
 .rrmenu{z-index:6!important;position:absolute;top:calc(10px + env(safe-area-inset-top,0px));left:10px;z-index:3;width:42px;height:42px;border-radius:12px;border:1px solid #5a4a2a;background:#000b;color:#f5cf5d;display:grid;place-items:center;cursor:pointer}
 .rrstage{position:relative;flex:1;min-height:0;border:0!important;border-radius:0;overflow:hidden;border:2px solid #7a1f1f;background:#140c06;touch-action:none}
 #rrCv{width:100%;height:100%;display:block;touch-action:none}
-.rrhint{position:absolute;top:20px;left:50%;transform:translateX(-50%);font-size:12px;color:#fff;background:#0009;padding:3px 10px;border-radius:99px;pointer-events:none;transition:opacity .6s}
+.rrhint{position:absolute;top:calc(20px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);font-size:12px;color:#fff;background:#0009;padding:3px 10px;border-radius:99px;pointer-events:none;transition:opacity .6s}
 .rrseats{position:absolute;top:58px;left:8px;right:8px;display:flex;gap:4px;flex-wrap:wrap;justify-content:center;pointer-events:none}
 .rrseats span{font-size:11px;font-weight:800;color:#f3eedf;background:#000a;border:1px solid #5a4a2a;border-radius:99px;padding:2px 8px}
 .rrseats span.cur{border-color:#ffd84a;color:#ffd84a;box-shadow:0 0 10px #ffd84a88}.rrseats span.out{opacity:.4;text-decoration:line-through}
