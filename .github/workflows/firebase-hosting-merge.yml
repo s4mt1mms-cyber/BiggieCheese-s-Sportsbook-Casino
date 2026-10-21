@@ -1,0 +1,56 @@
+# Deploys the site (Firebase Hosting) and the Firestore security rules + indexes
+# every time something is pushed to main.
+#
+# Needs one repository secret: FIREBASE_SERVICE_ACCOUNT
+#   (created for you by `firebase init hosting:github`, or by hand — see README).
+# The service account needs these roles in Google Cloud IAM:
+#   Firebase Hosting Admin, Firebase Rules Admin, Cloud Datastore Index Admin,
+#   API Keys Viewer, Service Account User.
+name: Deploy to Firebase on merge
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+env:
+  FIREBASE_PROJECT_ID: biggiecheesesportsbook
+
+concurrency:
+  group: firebase-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Rules first: a site that expects new rules shouldn't go live before them.
+      - name: Deploy Firestore rules and indexes
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          echo "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          npx --yes firebase-tools@13 deploy \
+            --only firestore:rules,firestore:indexes \
+            --project "$FIREBASE_PROJECT_ID" \
+            --non-interactive --force
+          rm -f "$RUNNER_TEMP/sa.json"
+
+      - name: Deploy Hosting (live channel)
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          channelId: live
+          projectId: ${{ env.FIREBASE_PROJECT_ID }}
