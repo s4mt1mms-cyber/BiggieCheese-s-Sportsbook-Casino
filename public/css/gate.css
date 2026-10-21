@@ -1,0 +1,62 @@
+/* Sign-in / invite-only gate. Sits over the whole app until Firebase says you're in. */
+.sbgate{
+  --g-bg:#130c20;--g-paper:#1d1530;--g-ink:#f6f0e4;--g-muted:#ab9fc2;--g-line:#3b2e55;--g-gold:#ffcf2f;--g-orange:#ff8a1f;--g-magenta:#d33bff;--g-loss:#ff6262;
+  position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;
+  padding:max(24px,env(safe-area-inset-top,0px)) 16px max(24px,env(safe-area-inset-bottom,0px));
+  overflow-y:auto;background:var(--g-bg);color:var(--g-ink);
+  font-family:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:15px;line-height:1.5;
+  background-image:radial-gradient(60% 40% at 10% 0%,rgba(211,59,255,.30),transparent 70%),
+    radial-gradient(50% 35% at 95% 10%,rgba(255,138,31,.24),transparent 70%),
+    radial-gradient(70% 40% at 50% 100%,rgba(70,220,255,.10),transparent 70%);
+}
+.sbgate[hidden]{display:none!important}
+html.sbgate-open,html.sbgate-open body{overflow:hidden}
+.sbgate-card{width:100%;max-width:400px;text-align:center;padding:32px 22px 26px;border-radius:20px;
+  background:linear-gradient(180deg,rgba(29,21,48,.94),rgba(13,9,22,.96));border:1px solid var(--g-line);
+  box-shadow:0 0 0 1px rgba(255,207,47,.10) inset,0 20px 60px rgba(0,0,0,.55),0 0 40px rgba(255,138,31,.12)}
+.sbgate-logo{display:block;margin:0 auto 14px;width:96px;height:96px;border-radius:22px;filter:drop-shadow(0 0 16px rgba(255,207,47,.35))}
+.sbgate-eyebrow{font-family:"Chakra Petch",ui-monospace,Menlo,monospace;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--g-gold)}
+.sbgate .sbgate-title{font-family:"Lilita One","Arial Black",Impact,sans-serif;font-weight:400;font-size:clamp(30px,9vw,40px)!important;line-height:1;margin:6px 0 6px;
+  background:linear-gradient(180deg,#fff27a 0%,var(--g-gold) 45%,var(--g-orange) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-wrap:balance}
+.sbgate-sub{margin:0 0 22px;color:var(--g-muted);font-weight:600}
+.sbgate-body{display:grid;gap:12px;justify-items:center}
+.sbgate-body p{margin:0;color:var(--g-muted)}
+.sbgate-body p strong{color:var(--g-ink)}
+.sbgate-h{font-family:"Lilita One","Arial Black",Impact,sans-serif;font-size:22px;letter-spacing:.01em;color:var(--g-ink);margin:0}
+.sbgate-btn{appearance:none;display:inline-flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:50px;padding:12px 18px;border-radius:12px;cursor:pointer;
+  font:700 16px/1.2 "Barlow",system-ui,sans-serif;border:1px solid var(--g-gold);color:#1a1200;background:linear-gradient(180deg,#ffe066,var(--g-gold));
+  box-shadow:0 6px 0 #6b4a00,0 10px 24px rgba(255,207,47,.25);touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.sbgate-btn:active{transform:translateY(3px);box-shadow:0 3px 0 #6b4a00,0 6px 16px rgba(255,207,47,.2)}
+.sbgate-btn:disabled{opacity:.6;cursor:progress}
+.sbgate-btn:focus-visible{outline:3px solid #fff;outline-offset:3px}
+.sbgate-btn .g{flex:none;width:22px;height:22px;border-radius:50%;background:#fff;display:inline-grid;place-items:center}
+.sbgate-btn.ghost{background:transparent;color:var(--g-ink);border-color:var(--g-line);box-shadow:none}
+.sbgate-note{font-size:13px;color:var(--g-muted)}
+.sbgate-err{font-size:13px;color:var(--g-loss);min-height:1em;margin:0}
+.sbgate-who{font-family:"Chakra Petch",ui-monospace,monospace;font-size:13px;color:var(--g-ink);background:rgba(0,0,0,.35);border:1px solid var(--g-line);border-radius:999px;padding:4px 12px;word-break:break-all}
+.sbgate-lock{font-size:40px;line-height:1}
+.sbgate-spin{width:34px;height:34px;border-radius:50%;border:3px solid rgba(255,207,47,.2);border-top-color:var(--g-gold);animation:sbspin .9s linear infinite;margin:6px auto}
+@keyframes sbspin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.sbgate-spin{animation-duration:2.5s}}
+.sbgate code{font-family:"Chakra Petch",ui-monospace,monospace;font-size:12px;color:var(--g-gold)}
+.sbgate-form{display:grid;gap:12px;width:100%}
+.sbgate-input{width:100%;box-sizing:border-box;min-height:54px;padding:10px 14px;border-radius:12px;border:1px solid var(--g-line);background:rgba(0,0,0,.45);color:var(--g-ink);
+  font:700 24px/1 "Chakra Petch",ui-monospace,monospace;letter-spacing:.22em;text-align:center;text-transform:uppercase}
+.sbgate-input::placeholder{color:rgba(171,159,194,.35)}
+.sbgate-input:focus{outline:none;border-color:var(--g-gold);box-shadow:0 0 0 3px rgba(255,207,47,.25)}
+.sbgate-vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.sbgate-input.sbgate-email{font:600 17px/1.2 "Barlow",system-ui,sans-serif;letter-spacing:0;text-transform:none;min-height:50px}
+.sbgate-or{display:flex;align-items:center;gap:10px;width:100%;color:var(--g-muted);font-size:12px;text-transform:uppercase;letter-spacing:.14em}
+.sbgate-or::before,.sbgate-or::after{content:"";flex:1;height:1px;background:var(--g-line)}
+
+/* Admin tab: invite codes (js/invites-admin.js) */
+.sbinv-list{display:grid;gap:10px;margin:10px 0}
+.sbinv-team{border:1px solid var(--line,#3b2e55);border-radius:12px;padding:10px 12px;background:rgba(0,0,0,.18);display:grid;gap:6px}
+.sbinv-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
+.sbinv-head small{font-size:11px;word-break:break-all}
+.sbinv-code{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:13px;padding-top:6px;border-top:1px dashed rgba(171,159,194,.2)}
+.sbinv-code code{font-family:"Chakra Petch",ui-monospace,monospace;font-size:16px;font-weight:700;letter-spacing:.12em;color:var(--gold,#ffcf2f)}
+.sbinv-open{color:var(--neon,#5cff72);font-weight:700}
+.sbinv-acts{display:flex;flex-wrap:wrap;gap:6px;margin-left:auto}
+.sbinv-url{flex-basis:100%;word-break:break-all}
+.sbgate-body .sbgate-h{color:var(--g-ink)}

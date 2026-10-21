@@ -1,0 +1,21 @@
+# Firebase
+.firebase/
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+*.local
+
+# Node
+node_modules/
+
+# Migration data: real exports contain league members' personal info. Never commit.
+tools/migrate/export/
+tools/migrate/*.key.json
+service-account*.json
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+tools/migrate/invites-*.csv
