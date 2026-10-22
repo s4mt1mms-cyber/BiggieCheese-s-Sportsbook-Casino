@@ -4961,7 +4961,7 @@ const PM_PACK={price:55000,n:5,packs:30};
 /* Pack commissions, paid by the house (the buyer pays only the pack price): the dev gets 7.5% of every pack, the Multiverse
    creator (Chancellor Zartog) 5% of every Multiverse pack. Not paid to yourself. One bank doc per buyer, recipient and day
    (amt = that day's running total) so the bank collection stays small. Platinum Mysterio packs keep their own PM_FEES. */
-const PACK_FEES=[{k:"dev",to:"u_IfmXeDmDg1B3W4naCzVbSA",pct:.075,note:"Dev fee · packs"},{k:"mvc",to:"u_jzH6I8emDBcqWaXJhIX_HA",pct:.05,note:"Multiverse creator fee",set:"mv"}];
+const PACK_FEES=[{k:"dev",to:"u_IfmXeDmDg1B3W4naCzVbSA",pct:.075,note:"Dev fee · packs"}];/* Zartog's 5% Multiverse creator fee ended Oct 22 (owner); paid out a one-time 50,000 instead (ZB_ONCE) */
 async function pkFees(p,set){if(!S.me||!db)return;const day=divDay();
   for(const f of PACK_FEES){if((f.set&&f.set!==set)||f.to===S.me)continue;const fee=Math.round(p.price*f.pct);if(!(fee>0))continue;
     const ref=db.doc(`bank/packfee_${S.me}_${f.to}_${day}_${f.k}`);
@@ -5494,7 +5494,14 @@ let _updT=0;document.addEventListener("click",()=>{if(Date.now()-_updT>60000){_u
 /* keep the chat to the newest 200 messages: the owner's page quietly deletes anything older (at most every 6 hours per device: each pass reads up to 400 messages) */
 async function chatPrune(){if(!S.canEdit||!db)return;try{const k="sb-chatprune";if(Date.now()-(Number(localStorage.getItem(k))||0)<6*36e5)return;localStorage.setItem(k,String(Date.now()))}catch(_){}
   try{const r=await db.collection("chat").orderBy("at","desc").limit(400).get();const old=r.docs.slice(200);for(const d of old){await db.doc("chat/"+d.id).delete().catch(()=>{})}}catch(_){}}
-setTimeout(chatPrune,15000);setInterval(chatPrune,30*60000);
+setTimeout(chatPrune,15000);
+/* one-time 50,000 BB dev fee to Chancellor Zartog (owner, Oct 22), paid by the house. Written once by the owner's page; the fixed
+   doc id makes it impossible to pay twice. */
+const ZB_ONCE={id:"devfee_zartog_once",to:"u_jzH6I8emDBcqWaXJhIX_HA",amt:50000};
+async function zbOnce(){if(!db||S.me!=="u_IfmXeDmDg1B3W4naCzVbSA"||!S.ready||!Array.isArray(S.bank))return;if(S.bank.some(t=>t.id===ZB_ONCE.id))return;
+  try{const ref=db.doc("bank/"+ZB_ONCE.id);const ex=await ref.get();if(ex.exists)return;await ref.set({from:"house",to:ZB_ONCE.to,amt:ZB_ONCE.amt,note:"Dev fee · one-time",kind:"shopfee",at:Date.now()});
+    try{db.collection("chat").add({type:"bet",kind:"bank",uid:S.me,poster:S.me,at:Date.now(),text:`🏦 The house paid ${nm(ZB_ONCE.to)} a one-time 50,000 BB dev fee`})}catch(_){}}catch(_){}}
+setTimeout(zbOnce,9000);setInterval(zbOnce,120000);setInterval(chatPrune,30*60000);
 async function quickSell(cid){if(S._qsBusy)return;S._qsBusy=true;try{await quickSell_(cid)}finally{S._qsBusy=false}}
 async function quickSell_(cid){const c=cardById(cid);if(!c||cardCount(cid)<1)return toast("You don't have that card.");const v=qsVal(c);if(!(v>0))return toast("This card can't be quick-sold.");const q=S.prefs[S.me];const left=cardCount(cid)-1,qs=(Number(q.quickSold)||0)+v;
   try{await db.doc("prefs/"+S.me).update({cards:{[cid]:left},quickSold:qs});q.cards={...(q.cards||{}),[cid]:left};q.quickSold=qs;toast(`Sold ${c.name} for ${v.toLocaleString()} BB.`);

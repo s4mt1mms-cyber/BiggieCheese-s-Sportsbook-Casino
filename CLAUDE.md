@@ -142,8 +142,8 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   Supply: `pkLeft(set)` = copies left per rarity (shop shows "Copies left"); `pkBlocked(p,set)` disables a pack once a guaranteed
   slot has nothing left at/above its floor (odds never change: a slot that rolls a sold-out rarity still pulls a card of it, flagged `pulls.over[i]`; it's not added to
   the collection and auto-sells at `qsVal` into `prefs.quickSold` in the same pack write, shown as "MAX SUPPLY · Auto-sold").
-  Pack commissions (`PACK_FEES`/`pkFees`, paid by the house, never to yourself): owner 7.5% of every pack price, Zartog 5% of every
-  Multiverse pack — one `bank/packfee_<buyer>_<to>_<day>_<k>` doc per buyer/recipient/day holding the running total.
+  Pack commissions (`PACK_FEES`/`pkFees`, paid by the house, never to yourself): owner 7.5% of every pack price (Zartog's 5%
+  Multiverse fee ended Oct 22; he got a one-time 50,000 instead, `ZB_ONCE`/`zbOnce`, bank doc `devfee_zartog_once`) — one `bank/packfee_<buyer>_<to>_<day>_<k>` doc per buyer/recipient/day holding the running total.
   `divCalc(id)` = the dividend math (used by `divCheck` and the collection header `colSumHtml`, which also shows total quick-sell value).
 - **Multiverse expansion cards (code-defined)**: the original Multiverse cards live in `meta/cards_mv` (+ images in `cardimg/`,
   made with the Admin card tools). The expansion cards are defined in code in `MV_ADD` (index.html) and merged into the catalog by
