@@ -83,6 +83,12 @@ jobs:
         run: |
           echo "::warning title=Game server (Cloud Functions) not deployed::The live tables keep running on players' phones. Usual cause: the deploy service account is missing roles or Google Cloud APIs. See README > Live tables on the server > Turning it on. Leave config/mp.serverHost off until a functions deploy succeeds."
 
+      # Stamp the build so open apps can tell a new version is out ("Update ready" banner).
+      - name: Stamp build id
+        run: |
+          printf '%s' "$GITHUB_SHA" > public/version.txt
+          sed -i "s/__APP_BUILD__/$GITHUB_SHA/" public/index.html
+
       - name: Deploy Hosting (live channel)
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:

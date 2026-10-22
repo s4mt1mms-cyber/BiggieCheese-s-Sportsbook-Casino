@@ -232,6 +232,8 @@ All use the `FIREBASE_SERVICE_ACCOUNT` repo secret.
 - Things to always re-verify after money-related edits: balance before/after, reload mid-action, two clients.
 
 ## Phone / iOS gotchas
+- New versions: the deploy workflow stamps the commit sha into `APP_BUILD` (index.html) and `/version.txt`; open apps poll it
+  (on focus + every 5 min) and show a "New update ready · tap to refresh" pill (`updCheck`). Don't rename `__APP_BUILD__`.
 - Everything top/bottom-anchored must respect `env(safe-area-inset-top/bottom)`.
 - Chat sizing uses `visualViewport`; don't reintroduce `window.scrollTo(0,0)` hacks.
 - Inputs need font-size ≥16px (iOS zoom). Global key handlers must ignore typing in inputs (`keyInField(e)`).
