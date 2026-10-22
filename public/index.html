@@ -2328,13 +2328,19 @@ function auClick(t){const k=t.dataset.au,id=t.dataset.id;if(!S.me)return toast("
   const A=AURA_BY[id];if(!A)return;
   if(k==="buy"){if(auOwns(S.me,id))return;const bal=Math.floor(ledger().balOf(S.me));if(bal<A.p)return toast(`You need ${A.p.toLocaleString()} BB for ${A.n}. You have ${bal.toLocaleString()} BB.`);S.auAsk={id,t:Date.now()};render();return}
   if(k==="ok"){if(!S.auAsk||S.auAsk.id!==id||Date.now()-S.auAsk.t<450)return;S.auAsk=null;t.disabled=true;auBuy(id)}}
+/* Shop dev fee (owner): 10% of every Aura Shop purchase (auras, and later emotes), paid by the house to the owner; not on the
+   owner's own purchases. One bank doc per purchase, id tied to the item so a retry can't pay twice. */
+const SHOP_DEV="u_IfmXeDmDg1B3W4naCzVbSA",SHOP_FEE=.10;
+async function shopFee(kind,id,price){if(!S.me||S.me===SHOP_DEV)return;const amt=Math.round(price*SHOP_FEE);if(!(amt>0))return;
+  const ref=db.doc(`bank/shopfee_${S.me}_${kind}_${id}`),doc={from:"house",to:SHOP_DEV,amt,note:"Dev fee · Aura Shop",kind:"shopfee",buyer:S.me,item:kind+":"+id,at:Date.now()};
+  for(let t=0;t<3;t++){try{await ref.set(doc);return}catch(_){await new Promise(r=>setTimeout(r,800))}}}
 async function auBuy(id){const A=AURA_BY[id];if(!A||!S.me)return;if(S.readOnly)return toast("View only. Ask the commish for access.");
   if(S._auBusy)return;S._auBusy=true;
   try{const q=S.prefs[S.me]||{};if(auOwns(S.me,id))return;
     if(Math.floor(ledger().balOf(S.me))<A.p)return toast(`You need ${A.p.toLocaleString()} BB for ${A.n}.`);
     const spent=(Number(q.auraSpent)||0)+A.p;
     await db.doc("prefs/"+S.me).update({auras:{[id]:true},aura:id,auraSpent:spent});
-    q.auras={...(q.auras||{}),[id]:true};q.aura=id;q.auraSpent=spent;
+    q.auras={...(q.auras||{}),[id]:true};q.aura=id;q.auraSpent=spent;shopFee("aura",id,A.p);
     toast(`✨ ${A.n} is yours. It's on now.`)}
   catch(e){toast("That didn't save. Check your connection and try again.")}
   finally{S._auBusy=false;render()}}
@@ -5537,7 +5543,7 @@ function bkActivity(me){const out=[],E=(at,v,h,bad)=>{if(at)out.push({at:Number(
       else if(tos.includes(me)&&e>0)E(t.at,e,`⛪ Tithe from ${esc(nm(t.from))}`);continue}
     const a=Math.floor(Number(t.amt))||0;if(!(a>0)||t.from===t.to)continue;const note=t.note&&t.kind!=="debby"?` <span class="bknote">· ${esc(t.note)}</span>`:"";
     if(t.kind==="debby"){if(t.to===me)E(t.at,a,`🦹 Via Debby · stole from ${esc(nm(t.from))}`);else if(t.from===me)E(t.at,-a,`🦹 Via Debby · ${esc(nm(t.to))} stole from you`);continue}
-    if(t.to===me)E(t.at,a,`← ${t.kind==="platfee"||t.kind==="packfee"||t.from==="house"?"The House":esc(nm(t.from))}${note}`);else if(t.from===me&&t.from!=="house")E(t.at,-a,`→ ${esc(nm(t.to))}${note}`)}
+    if(t.to===me)E(t.at,a,`← ${t.kind==="platfee"||t.kind==="packfee"||t.kind==="shopfee"||t.from==="house"?"The House":esc(nm(t.from))}${note}`);else if(t.from===me&&t.from!=="house")E(t.at,-a,`→ ${esc(nm(t.to))}${note}`)}
   for(const l of S.loans||[]){if(!l.borrower||!l.takenAt||!["active","late","repaid","defaulted"].includes(l.status))continue;const L=l.lender===me,B=l.borrower===me;if(!L&&!B)continue;
     const P=Math.floor(Number(l.P))||0,who=esc(nm(L?l.borrower:l.lender));
     E(l.takenAt,L?-P:P,L?`🏦 Loan to ${who}`:`🏦 Loan from ${who}`);
