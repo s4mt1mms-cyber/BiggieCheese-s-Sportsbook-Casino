@@ -390,7 +390,7 @@ body.bjmode .felt{min-height:0;padding-top:16px}
 .felt{position:relative;overflow:hidden}
 .fpwrap{max-width:420px;margin:0 auto;width:100%;display:flex;flex-direction:column;gap:12px}
 .fpstage{border:2px solid #1f5a33;border-radius:18px;overflow:hidden;line-height:0;touch-action:none;-webkit-user-select:none;user-select:none}
-#fpCanvas{width:100%;height:auto;display:block;cursor:pointer}
+#fpCanvas{width:100%;height:auto;aspect-ratio:360/520;display:block;cursor:pointer;touch-action:none}
 .fprule{text-align:center}.fpinfo{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 18px;font-size:14px}.fpinfo .num.pos,.bjlb .num.pos{color:#5cff72}.fpcapnote{text-align:center}
 .c2500{background:#0e7490}.c5000{background:#be185d}.c10000{background:#c2410c}.c25000{background:#4d7c0f}.c50000{background:#1e3a8a;border-color:#f5cf5d!important}.c100000{background:#000;border-color:#5cff72!important;color:#5cff72}.c250000{background:#7f1d1d;border-color:#f5cf5d!important}.c500000{background:#581c87;border-color:#f5cf5d!important}.c1000000{background:#f5cf5d;color:#000;border-color:#000!important}
 .btn.allin{background:#c8102e!important;border-color:#c8102e!important;color:#fff!important}
@@ -5175,6 +5175,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:13,d:"Oct 22",t:[["🧀","Flappy Cheese is sharper and smoother, especially on newer iPhones"]]},
  {v:12,d:"Oct 22",t:[["🎲","Fixed: craps dice now always show the roll that counted"],["🎲","Craps Dean Strow's edge is now 1.95% (wins still round up)"]]},
  {v:11,d:"Oct 22",t:[["🎲","Craps Dean Strow's edge is back to 2.5% (still rounds up)"],["🧀","Flappy Cheese is now a Cheese Farm: start at 1 BB per pipe with a 5,000 BB daily cap, then buy upgrades to earn up to 500 BB a pipe and 500,000 a day"]]},
  {v:10,d:"Oct 22",t:[["🎲","Craps Dean Strow winnings now always round up, so small bets get the full edge"]]},
@@ -5670,7 +5671,7 @@ function fpMount(){const c=$("#fpCanvas");if(!c)return;S._fpStats=null;const ctx
     if(FP.score>0||best!==(Number(q.flapBest)||0)){Object.assign(S.prefs[S.me]=S.prefs[S.me]||{},patch);fpStats();setMe&&setMe();try{await db.doc("prefs/"+S.me).update(patch)}catch(_){toast("That score didn't save. Check your connection.")}}
     if(earn>0)haptic&&haptic()};
   let last=performance.now(),acc=0;
-  const step=()=>{FP.t++;
+  const step=()=>{FP.t++;FP.py=FP.y;FP.pipes.forEach(p=>p.px=p.x);
     if(FP.st==="play"){FP.vy+=G;FP.y+=FP.vy;
       if(FP.t%68===0){const top=60+Math.random()*(H-GAP-140);FP.pipes.push({x:W+10,top,passed:false,rat:FP.score>=1&&Math.random()<.45?{side:Math.random()<.5?"top":"bot",ph:Math.random()*6}:null})}
       FP.pipes.forEach(p=>{p.x-=SPD;if(!p.passed&&p.x+PW<80){p.passed=true;FP.score++}});FP.pipes=FP.pipes.filter(p=>p.x>-PW-10);
@@ -5679,9 +5680,14 @@ function fpMount(){const c=$("#fpCanvas");if(!c)return;S._fpStats=null;const ctx
     else if(FP.st==="ready"){FP.y=H/2+Math.sin(FP.t/12)*8}
     else if(FP.st==="over"&&FP.y<H-34){FP.vy+=G;FP.y=Math.min(H-34,FP.y+FP.vy)}
   };
-  const loop=now=>{if(!document.body.contains(c)){FP.raf=0;return}
+  /* sharp on retina: the backing store follows the on-screen size × pixel ratio; drawing stays in 360×520 game units */
+  const bg=ctx.createLinearGradient(0,0,0,H);bg.addColorStop(0,"#0d2a18");bg.addColorStop(1,"#14532d");
+  const fit=()=>{const cw=c.clientWidth||W,k=Math.min(3,window.devicePixelRatio||1)*cw/W,tw=Math.round(W*k),th=Math.round(H*k);if(c.width!==tw||c.height!==th){c.width=tw;c.height=th}ctx.setTransform(c.width/W,0,0,c.height/H,0,0)};
+  const loop=now=>{if(!document.body.contains(c)){FP.raf=0;return}fit();
     acc+=Math.min(100,(now||performance.now())-last);last=now||performance.now();let n=0;while(acc>=1000/60&&n<6){step();acc-=1000/60;n++}if(n===6)acc=0;
-    const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,"#0d2a18");g.addColorStop(1,"#14532d");ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    /* smooth on 120 Hz screens: draw between the last two physics steps instead of snapping to them */
+    const al=Math.min(1,acc/(1000/60)),ry=FP.y,rx=FP.pipes.map(p=>p.x);if(FP.st==="play"){if(FP.py!=null)FP.y=FP.py+(ry-FP.py)*al;FP.pipes.forEach(p=>{if(p.px!=null)p.x=p.px+(p.x-p.px)*al})}
+    ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
     FP.pipes.forEach(p=>{ctx.fillStyle="#2a2a2a";ctx.fillRect(p.x,0,PW,p.top);ctx.fillRect(p.x,p.top+GAP,PW,H);ctx.fillStyle="#f5cf5d";ctx.fillRect(p.x-4,p.top-16,PW+8,16);ctx.fillRect(p.x-4,p.top+GAP,PW+8,16);if(p.rat)drawRat(p)});
     ctx.fillStyle="#0a2a17";ctx.fillRect(0,H-24,W,24);ctx.fillStyle="#f5cf5d";ctx.fillRect(0,H-24,W,3);
     cheese(80,FP.y,Math.max(-.5,Math.min(1.1,FP.vy/10)));
@@ -5690,6 +5696,7 @@ function fpMount(){const c=$("#fpCanvas");if(!c)return;S._fpStats=null;const ctx
     if(FP.st==="over"){ctx.fillStyle="rgba(0,0,0,.6)";ctx.fillRect(30,H/2-90,W-60,170);ctx.fillStyle="#fff";ctx.font="800 30px Barlow,sans-serif";ctx.fillText("Game over",W/2,H/2-48);
       ctx.font="700 18px Barlow,sans-serif";ctx.fillText(`Score ${FP.score}`,W/2,H/2-16);ctx.fillStyle=FP.earn>0?"#5cff72":"#a89f84";ctx.font="800 24px Barlow,sans-serif";ctx.fillText(FP.earn>0?`+${FP.earn.toLocaleString()} BB`:(fpToday(S.me)>=fpCap()?"Daily cap reached":"+0 BB"),W/2,H/2+20);
       ctx.fillStyle="#cfe8d3";ctx.font="600 14px Barlow,sans-serif";ctx.fillText("Tap to play again",W/2,H/2+56)}
+    FP.y=ry;FP.pipes.forEach((p,i)=>{p.x=rx[i]});
     FP.raf=requestAnimationFrame(loop)};
   last=performance.now();FP.raf=requestAnimationFrame(loop)}
 /* Watching someone else's table: their id, or yours when not watching (or they left the league) */
