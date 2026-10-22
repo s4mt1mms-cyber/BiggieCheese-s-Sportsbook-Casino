@@ -918,6 +918,7 @@ body.pkquake{animation:pkquake .12s linear 34}@keyframes pkquake{25%{transform:t
 .wkrgrid b{font-size:16px;font-weight:800}.wkrnet{font-weight:700}.wkrnet b{font-size:18px}
 .wkrecap .pos,.wkrecap .num.pos{color:#5cff72!important}.wkrecap .neg,.wkrecap .num.neg{color:#ff6262!important}
 .wkrecap.big .wkrgrid b{font-size:18px}.recapbox{gap:12px}
+.autabs{margin:10px 0 14px}
 /* profile popup: compact on phones so it fits */
 #memberView{overflow:hidden!important;touch-action:pan-y;overscroll-behavior:none}
 #memberView .mvbox{padding:14px 14px 16px;box-sizing:border-box;overflow-x:hidden!important;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior:contain;width:min(560px,calc(100vw - 24px));max-width:calc(100vw - 24px)}
@@ -2362,14 +2363,18 @@ function viewAura(){if(!S.me)return `<div class="empty">Sign in to shop.</div>`;
     if(ask===a.id)return `<div class="auask"><button type="button" class="aubtn" data-au="ok" data-id="${a.id}">Buy for ${a.p.toLocaleString()} BB</button><button type="button" class="aubtn ghost" data-au="no">Cancel</button></div>`;
     return `<button type="button" class="aubtn${bal<a.p?" short":""}" data-au="buy" data-id="${a.id}">Buy</button>`};
   const item=a=>{const o=auOwns(me,a.id);return `<div class="auit${cur===a.id?" on":""}${a.t==="Mythic"?" myth":""}" data-auitem="${a.id}">${o?`<span class="auown">Owned</span>`:""}${prev(a.id)}<b>${esc(a.n)}</b>${a.d&&a.t==="Mythic"?`<span class="small muted">${esc(a.d)}</span>`:""}<span class="aupr${o?" own":""}">${a.card?"While you hold the card":o?"Yours to keep":a.p.toLocaleString()+" BB"}</span>${btn(a)}</div>`};
-  return `<div class="aushop"><div class="auhead"><h2>✨ Aura Shop</h2><div class="small">Balance <b class="num" style="color:#5cff72">${bal.toLocaleString()} BB</b></div></div>
+  const tabs=emOn(),tab=tabs&&S.auTab==="emote"?"emote":"aura";
+  const bar=tabs?`<div class="pktabs autabs"><button type="button" class="pktab${tab==="aura"?" on":""}" data-autab="aura">✨ Auras</button><button type="button" class="pktab${tab==="emote"?" on":""}" data-autab="emote">🕺 Emotes</button></div>`:"";
+  const head=`<div class="aushop"><div class="auhead"><h2>✨ Aura Shop</h2><div class="small">Balance <b class="num" style="color:#5cff72">${bal.toLocaleString()} BB</b></div></div>${bar}`;
+  if(tab==="emote")return head+`${emShopHtml()}<p class="aunote">Purchases are permanent, play money only.</p></div>`;
+  return head+`
   <div class="auhero">${prev(cur)}<div class="t"><span>Wearing now</span><b>${A?esc(A.n):"No aura"}</b><i>${A?"Shows around your picture everywhere: chat, profile, lists":"Your normal look: "+esc(auDefName(me))}</i>${A?`<button type="button" class="aubtn ghost" style="width:auto;min-height:34px;padding:0 16px;font-size:13px" data-au="eq" data-id="none">Take it off</button>`:""}</div></div>
   <div class="small muted">You own ${AURAS.filter(a=>!a.card&&auOwns(me,a.id)).length} of ${AURAS.filter(a=>!a.card).length}. Auras are yours forever: switch between them anytime for free.</div>
   ${(()=>{const mine=AURAS.filter(a=>a.card&&auOwns(me,a.id));return `<div class="aush"><span>From your cards</span><span>free</span></div>${mine.length?`<div class="augrid">${mine.map(item).join("")}</div>`:`<p class="small muted">Own a Dragon card or Shrex and its glow shows up here. It stays as long as you hold the card.</p>`}`})()}
   ${AU_TIERS.map(([t,p])=>`<div class="aush"><span>${t}</span><span>${p.toLocaleString()} BB</span></div><div class="augrid">${AURAS.filter(a=>a.t===t).map(item).join("")}</div>`).join("")}
   <div class="aush"><span>No aura</span><span>free</span></div><div class="augrid"><div class="auit${cur?"":" on"}">${prev("")}<b>None</b><span class="aupr own">${esc(auDefName(me))}</span>${cur?`<button type="button" class="aubtn ghost" data-au="eq" data-id="none">Equip</button>`:`<button type="button" class="aubtn eq" aria-disabled="true">✓ Equipped</button>`}</div></div>
-  ${emOn()?emShopHtml():""}
   <p class="aunote">Purchases are permanent, play money only. Everyone sees your aura on your picture.</p></div>`}
+document.addEventListener("click",e=>{const t=e.target.closest("[data-autab]");if(!t)return;S.auTab=t.dataset.autab;render();window.scrollTo(0,0)});
 function auClick(t){const k=t.dataset.au,id=t.dataset.id;if(!S.me)return toast("Sign in first.");
   if(k==="no"){S.auAsk=null;render();return}
   if(k==="eq")return auEquip(id);
