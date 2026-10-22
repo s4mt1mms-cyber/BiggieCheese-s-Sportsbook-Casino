@@ -5214,6 +5214,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:21,d:"Oct 22",t:[["🃏","Blackjack pace tweak: a new hand every 2 seconds"]]},
  {v:20,d:"Oct 22",t:[["🐉","Pull a Dragon and everyone pays you 20,000 BB (one time, shown in chat)"]]},
  {v:19,d:"Oct 22",t:[["🃏","Blackjack has a steadier pace: a new hand at most every 3 seconds"],["🎲","Checked craps payouts: every roll adds up to the BB"]]},
  {v:18,d:"Oct 22",t:[["🐉","Dragon Glow is now a thick, shimmering iridescent ring"]]},
@@ -5886,7 +5887,7 @@ function bjSettle(r,shoe){
 }
 /* Move to the next hand that still needs a decision */
 function bjAdvance(r){while(r.active<r.hands.length){const hd=r.hands[r.active];if(!hd.done&&handVal(hd.cards).t<21&&!hd.aces)return;r.active++}}
-const BJ_DEAL_GAP=3000,BJ_AFTER_GAP=1500,DRAGON_BOUNTY=20000;
+const BJ_DEAL_GAP=2000,BJ_AFTER_GAP=1500,DRAGON_BOUNTY=20000;
 async function bjAction(kind){
   const p=S.prefs[S.me]||{};let netBase=Number(p.bjNet)||0;let r=bjCanon(bjNorm(bjState()));
   const valid=Array.isArray(p.bjShoe)&&p.bjShoe.length<=104,ok=valid&&(kind!=="deal"||p.bjShoe.length>15);
@@ -5897,7 +5898,7 @@ async function bjAction(kind){
     if(r.active>=r.hands.length){S._bjDoneAt=Date.now();const ret=bjSettle(r,shoe);await bjSave({bjHand:r,bjShoe:Array.from(shoe),bjNet:netBase+ret,bjHands:(Number(p.bjHands)||0)+1,...shufPatch});if(r.delta>0)haptic()}
     else await bjSave({bjHand:r,bjShoe:Array.from(shoe),bjNet:netBase,...shufPatch})};
   if(kind==="deal"||kind==="again"){
-    /* pace (owner: no spamming hands): a new hand at most every 3 s, and not until 1.5 s after the last one finished */
+    /* pace (owner: no spamming hands): a new hand at most every 2 s, and not until 1.5 s after the last one finished */
     {const now=Date.now(),ready=Math.max((S._bjLastDeal||0)+BJ_DEAL_GAP,(S._bjDoneAt||0)+BJ_AFTER_GAP);if(now<ready){if(now-(S._bjWaitToast||0)>1200){S._bjWaitToast=now;toast(`Next hand in ${Math.ceil((ready-now)/100)/10}s`)}return}S._bjLastDeal=now}
     const bet=Math.round(S.bjBet||0);
     if(!(bet>=10))return toast("Minimum bet is 10 BB.");if(bet>BJ_MAX)return toast(`Max bet is ${BJ_MAX.toLocaleString()} BB.`);if(bet>bal)return toast("Not enough BiggieBucks for that bet.");

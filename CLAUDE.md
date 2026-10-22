@@ -119,7 +119,7 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   push), so the ledger, My bets, recaps and standings need nothing special. Price is re-checked against `meta/nfl` on submit.
   Rules: NFL bets can only be created before `nfl/{wk}.g[id].kick`, and only admins can change them afterwards.
 - **Casino**: Blackjack (`bj*`; 2-deck shoes, streak bonus = `bjStreakMult(n)` × the hand's bet (3 in a row 1×, 4 2×, then +2× per win: 5 4×, 6 6×, 7 8× …, no cap; Shrex 2×),
-  pace: a new hand at most every 3 s and ≥1.5 s after the last one finished (`BJ_DEAL_GAP`/`BJ_AFTER_GAP`, checked inside `bjAction`)), Roulette (`rl*` — note `rl` prefix is ALSO used for live Russian Roulette lobby code),
+  pace: a new hand at most every 2 s and ≥1.5 s after the last one finished (`BJ_DEAL_GAP`/`BJ_AFTER_GAP`, checked inside `bjAction`)), Roulette (`rl*` — note `rl` prefix is ALSO used for live Russian Roulette lobby code),
   Craps (`cr*`), High-Low (`hl*`), Flappy Cheese = Cheese Farm (`fp*`: Press `FP_PRESS` 1/10/30/100/250/500 BB per pipe, Silo `FP_SILO` 5k…500k daily cap; levels
   `prefs.fpPress/fpSilo`, upgrade spend `prefs.farmSpent` in the ledger; Vector card gives one 10× uncapped run/day),
   Revenge rat hunt (`revengeStart`), mining (25 BB/min while the app is on screen).
