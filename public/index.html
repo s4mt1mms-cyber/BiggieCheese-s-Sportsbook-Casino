@@ -439,6 +439,8 @@ body.rlmode main .wrap{padding-top:8px!important}
 .emgrid{position:fixed;left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom,0px));max-height:46vh;overflow-y:auto;display:grid;grid-template-columns:repeat(8,1fr);gap:2px;background:#1a1a1a;border:1px solid #3a3420;border-radius:18px;padding:10px;transform:translateY(30px);opacity:0;transition:all .22s ease-out}
 .emgrid.show{transform:none;opacity:1}
 .cmsg.pending{opacity:.65}
+/* auras on chat pictures reach past the picture: keep them off the list edge so they are not clipped */
+.cmsg.mine>.aw{margin-right:7px}.cmsg:not(.mine)>.aw,.cmsg:not(.mine)>.zoombtn>.aw{margin-left:7px}
 .cmsg.pending .ctext{animation:msgIn .2s cubic-bezier(.2,.8,.2,1) both}@keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 .chatlist{scroll-behavior:auto}
 /* ---- Fall / Halloween dressing: falling leaves and pumpkins in the header only ---- */
