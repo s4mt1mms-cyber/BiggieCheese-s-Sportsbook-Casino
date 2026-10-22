@@ -912,6 +912,7 @@ body.pkquake{animation:pkquake .12s linear 34}@keyframes pkquake{25%{transform:t
 .wkrgrid b{font-size:16px;font-weight:800}.wkrnet{font-weight:700}.wkrnet b{font-size:18px}
 .wkrecap .pos,.wkrecap .num.pos{color:#5cff72!important}.wkrecap .neg,.wkrecap .num.neg{color:#ff6262!important}
 .wkrecap.big .wkrgrid b{font-size:18px}.recapbox{gap:12px}
+.cbet .small{white-space:pre-line}
 .ffront{position:relative}.pkover{position:absolute;left:6%;right:6%;bottom:12%;z-index:5;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 6px;border-radius:10px;background:rgba(0,0,0,.85);border:1px solid #f5cf5d;text-align:center;line-height:1.2}.pkover b{color:#ff8a8a;font-size:12px;letter-spacing:.12em}.pkover span{color:#5cff72;font-weight:800;font-size:13px}
 .pksupply{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;padding:10px 12px;margin:8px 0 12px;border:1px solid var(--line);border-radius:12px;font-size:13px}.pksupply small{flex-basis:100%;font-size:12px}
 .fpfarm h3{margin-bottom:2px}.fpups{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.fpup{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.03)}.fpuph{display:flex;gap:8px;align-items:center}.fpuph>span:last-child{display:flex;flex-direction:column;line-height:1.15}.fpupic{font-size:24px}.fpupv{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}.fpupv b{font-size:22px;color:#5cff72}.fpupn{font-size:13px;color:var(--gold);font-weight:700}.fppips{display:flex;gap:4px}.fppips i{flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.12)}.fppips i.on{background:var(--gold)}.fpupbtn{min-height:40px;font-size:14px;padding:0 8px}.fpupbtn.ask{background:#5cff72;color:#000}.fpupbtn.short{opacity:.55}.fpmax{text-align:center;font-weight:800;letter-spacing:.12em;color:var(--gold);padding:8px 0}
@@ -5002,7 +5003,7 @@ async function pkBuy(id){const set=pkSt().set;const p=PACKS.find(x=>x.id===id);i
     Object.assign(q,{packSpent:patch.packSpent,cards,packsOpened:patch.packsOpened},autoQS>0?{quickSold:patch.quickSold}:{});
     await db.doc("prefs/"+S.me).update(patch);
     /* Jimmy Scroggins (curse): every copy pulled tithes 10% of the balance right now; the popup shows when its card flips */
-    const nCurse=pulls.filter((x,i)=>!ov[i]&&(cardById(x)||{}).abil==="curse").length;if(nCurse){try{const t=await tiPull(nCurse);if(t.amts.length){S._tiPop=t;try{db.collection("chat").add({type:"bet",kind:"bank",uid:S.me,poster:S.me,at:Date.now(),text:`⛪ ${nm(S.me)} pulled the cursed Jimmy Scroggins Rookie and tithed ${t.amts.reduce((a,b)=>a+b,0).toLocaleString()} BB to the league. THANK YOU FOR TITHING.`})}catch(_){}}}catch(_){}}
+    const nCurse=pulls.filter((x,i)=>!ov[i]&&(cardById(x)||{}).abil==="curse").length;if(nCurse){try{const t=await tiPull(nCurse);if(t.amts.length){S._tiPop=t;try{db.collection("chat").add({type:"bet",kind:"bank",uid:S.me,poster:S.me,at:Date.now(),text:`⛪ ${nm(S.me)} pulled the cursed Jimmy Scroggins Rookie and tithed ${t.amts.reduce((a,b)=>a+b,0).toLocaleString()} BB to the league. THANK YOU FOR TITHING.`,detail:(()=>{const per=t.eachs.reduce((a,b)=>a+b,0);return t.tos.map(id=>`→ ${nm(id)}: +${per.toLocaleString()} BB`).join("\n")})()})}catch(_){}}}catch(_){}}
     pkShowOpen(p,pulls);pkFees(p,cardSet(pulls[0]));
     if(pulls.some((x,i)=>!ov[i]&&(cardById(x)||{}).abil==="social")){try{db.collection("chat").add({type:"bet",uid:S.me,poster:S.me,at:Date.now(),text:`${nm(S.me)} +10 million social credit score!`})}catch(_){}}
     const best=Math.max(...pulls.map(c=>cardById(c).r));if(best>=4){const c=cardById(pulls.find(x=>cardById(x).r===best));try{db.collection("chat").add({type:"bet",uid:S.me,poster:S.me,at:Date.now(),text:`${best===6?"🐉🐉🐉 ":best===5?"🏆 ":"🔥 "}${nm(S.me)} pulled ${best===6?"THE STARLUXE DRAGON SUPREME":CR[best].n}: ${c.name} from a ${p.name}!${best===6?" 🐉🐉🐉":" 🎴"}`})}catch(_){}}}
@@ -5140,10 +5141,10 @@ const TI={conf:null,busy:false,sb:false},TI_EVERY=3*60000,TI_BATCH=2000;
 const tiCursed=id=>hasAb("curse",id);
 function tiAdd(patch,amt){amt=Math.floor(Number(amt)||0);if(amt>0&&S.me&&tiCursed(S.me)){const q=S.prefs[S.me]||{};const v=(Number(q.tiWin)||0)+amt;q.tiWin=v;patch.tiWin=v}return patch}
 function tiRecips(me){let r=members().filter(id=>id!==me&&id!=="house"&&teamOf(id));if(!r.length)r=members().filter(id=>id!==me&&id!=="house");return r.sort()}
-async function tiPull(k){const me=S.me,tos=tiRecips(me);let bal=Math.floor(ledger().balOf(me));const amts=[];let each=0;
+async function tiPull(k){const me=S.me,tos=tiRecips(me);let bal=Math.floor(ledger().balOf(me));const amts=[],eachs=[];let each=0;
   for(let i=0;i<k;i++){const amt=tiPullAmt(bal);if(amt<=0)break;each=tiSplit(amt,tos.length).each;
-    await db.collection("bank").add({from:me,tos,each,amt,kind:"tithe",src:"pull",note:"Tithe",at:Date.now()});bal-=amt;amts.push(amt)}
-  return{amts,each,n:tos.length}}
+    await db.collection("bank").add({from:me,tos,each,amt,kind:"tithe",src:"pull",note:"Tithe",at:Date.now()});bal-=amt;amts.push(amt);eachs.push(each)}
+  return{amts,each,eachs,tos,n:tos.length}}
 function tiPopShow(){const t=S._tiPop;if(!t||$("#tiOv"))return;S._tiPop=null;const tot=t.amts.reduce((a,b)=>a+b,0);
   const o=document.createElement("div");o.id="tiOv";o.className="overlay tiov";o.innerHTML=`<div class="pickbox recapbox tibox"><div class="tihd">THANK YOU FOR TITHING</div><div class="tisub">10% of current balance</div><div class="tiamt num">−${tot.toLocaleString()} BB</div><p class="small muted">Split among the other ${t.n} player${t.n===1?"":"s"}: ${t.each.toLocaleString()} BB each${t.amts.length>1?` (×${t.amts.length} copies)`:""}. While this card is in your collection, 10% of your winnings go to the league too.</p><button class="btn" type="button" id="tiOk">Amen</button></div>`;
   document.body.appendChild(o);const close=()=>{o.remove();render()};o.querySelector("#tiOk").onclick=close;o.addEventListener("click",e=>{if(e.target===o)close()})}
@@ -5188,6 +5189,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:16,d:"Oct 22",t:[["⛪","When someone pulls the cursed Jimmy Scroggins, league chat now shows how much each player got"]]},
  {v:15,d:"Oct 22",t:[["🎴","Pack odds never change with supply: if you pull a card that's already at max supply, it auto-sells for its quick-sell value"]]},
  {v:14,d:"Oct 22",t:[["🎴","The pack shop now shows how many copies of each rarity are left, and packs whose guaranteed cards can't be filled anymore show Sold out"]]},
  {v:13,d:"Oct 22",t:[["🧀","Flappy Cheese is sharper and smoother, especially on newer iPhones"]]},
