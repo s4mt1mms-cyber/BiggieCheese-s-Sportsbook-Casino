@@ -208,10 +208,10 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   Card auras (`card:1` in `AURAS`: `dragon` = hold any Dragon card, `swamp` = hold Shrex): free, listed under "From your cards" only
   while held (`auCardHas`); `auOwns` checks the card, so selling/trading it drops the aura automatically.
   Dev fee: `shopFee(kind,id,price)` pays the owner 10% of every shop purchase from the house (`bank/shopfee_<buyer>_<kind>_<id>`, not on the owner's own buys).
-- **Emotes** (`em*`, Aura Shop → "Emotes" section, played at the live RR + Hold'em tables). **Admin-only for now:**
-  `const EMOTES_PUBLIC=false;` — while false only `S.canEdit` (the admin) sees the shop section and the 🕺 table button
+- **Emotes** (`em*`, Aura Shop → "Emotes" section, played at the live RR + Hold'em tables). **Released (EMOTES_PUBLIC=true, Oct 22).** Gate:
+  `const EMOTES_PUBLIC` — while false only `S.canEdit` (the admin) sees the shop section and the 🕺 table button
   (`#emBtn`, `emUI`) and can play one; every client still RENDERS an emote it receives. Flip it to `true` (and add a NEWS
-  entry) to release. Catalog `EMOTES` (`ldance` L Dance 100,000). Data on the player's prefs: `emotes` {id:true} (owned
+  entry) to release. Catalog `EMOTES` (`ldance` L Dance 500,000). Data on the player's prefs: `emotes` {id:true} (owned
   forever, no equip step), `emoteSpent` (subtracted in `ledger().balOf`); `emBuy` writes both in ONE update (+ `shopFee("emote",…)`).
   Sync: playing writes `rrlook/{me}.emote = {id, at}` (the look doc both tables already listen to, works in server and phone-host
   mode); `emTick` (called every frame in `rrBuild`'s loop) starts it on seat l when it sees a new `at` < 6 s old. 8 s cooldown

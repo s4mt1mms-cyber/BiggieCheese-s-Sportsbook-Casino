@@ -2411,8 +2411,8 @@ async function auEquip(id){if(!S.me)return;if(S.readOnly)return toast("View only
    (emTick) when it sees a new `at` under 6 s old. Blocked during a shoot-someone / return-fire sequence (emFB), on your Russian
    Roulette turn, blacked out or with your chair on the floor; a fire-back or your turn cuts a dance short and sits you back down.
    Add an emote: one EMOTES row + its pose function f(seconds) → pose numbers (all 0 = seated normally; see emLDance). */
-const EMOTES_PUBLIC=false;
-const EMOTES=[{id:"ldance",n:"L Dance",p:100000,d:"Stand up from your chair and hit the L dance",ic:"🕺",len:7,f:k=>emLDance(k)}];
+const EMOTES_PUBLIC=true;
+const EMOTES=[{id:"ldance",n:"L Dance",p:500000,d:"Stand up from your chair and hit the L dance",ic:"🕺",len:7,f:k=>emLDance(k)}];
 const EM_BY=Object.fromEntries(EMOTES.map(e=>[e.id,e]));
 const EM_CD=8000;const EM={seen:{}};
 const emOn=()=>EMOTES_PUBLIC||!!S.canEdit;
@@ -2422,7 +2422,7 @@ function emShopHtml(){const me=S.me,bal=Math.floor(ledger().balOf(me)),ask=S.emA
   const btn=e=>{if(emOwns(me,e.id))return `<button type="button" class="aubtn eq" aria-disabled="true">✓ Owned</button>`;
     if(ask===e.id)return `<div class="auask"><button type="button" class="aubtn" data-em="ok" data-id="${e.id}">Buy for ${e.p.toLocaleString()} BB</button><button type="button" class="aubtn ghost" data-em="no">Cancel</button></div>`;
     return `<button type="button" class="aubtn${bal<e.p?" short":""}" data-em="buy" data-id="${e.id}">Buy</button>`};
-  return `<div class="aush"><span>Emotes</span><span>${EMOTES_PUBLIC?"":"Admin preview · "}100,000 BB each</span></div><div class="small muted" style="margin:-4px 2px 10px">Use them at the live Russian Roulette and Hold'em tables. Everyone at the table sees it.</div>
+  return `<div class="aush"><span>Emotes</span><span>${EMOTES_PUBLIC?"":"Admin preview · "}${(EMOTES[0]||{p:0}).p.toLocaleString()} BB</span></div><div class="small muted" style="margin:-4px 2px 10px">Use them at the live Russian Roulette and Hold'em tables. Everyone at the table sees it.</div>
   <div class="augrid">${EMOTES.map(e=>{const o=emOwns(me,e.id);return `<div class="auit emit" data-emitem="${e.id}">${o?`<span class="auown">Owned</span>`:""}<div class="emprev" data-emprev="${e.id}"></div><b>${esc(e.ic+" "+e.n)}</b><span class="small muted">${esc(e.d)}</span><span class="aupr${o?" own":""}">${o?"Yours to keep · tap 🕺 at a live table":e.p.toLocaleString()+" BB"}</span>${btn(e)}</div>`}).join("")}</div>`}
 function emClick(t){const k=t.dataset.em,id=t.dataset.id;if(!S.me)return toast("Sign in first.");
   if(k==="tap"){const mine=emMine();if(mine.length===1)return emPlay(mine[0].id);const m=$("#emMenu");if(m){if(!m.hidden){m.hidden=true;return}m.innerHTML=mine.map(e=>`<button type="button" data-em="play" data-id="${e.id}">${esc(e.ic+" "+e.n)}</button>`).join("");m.style.bottom=(parseFloat(getComputedStyle(t).bottom)||300)+"px";m.hidden=false}return}
@@ -5435,6 +5435,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:25,d:"Oct 22",t:[["🕺","Emotes are here: buy the L Dance in the Aura Shop (Emotes tab, 500,000 BB), then hit 🕺 at the poker or Russian Roulette table to get up and dance"]]},
  {v:24,d:"Oct 22",t:[["✨","At the poker and Russian Roulette tables, your profile picture and aura now float above your player"]]},
  {v:23,d:"Oct 22",t:[["💬","Tapping someone in chat now closes the chat and takes you straight to their profile or collection"]]},
  {v:22,d:"Oct 22",t:[["🐉","Dragon pulls now show the card in chat with a wild iridescent glow"]]},
