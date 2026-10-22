@@ -83,7 +83,8 @@ Key collections:
 | `offers` | offers on market listings (BB and/or escrowed cards); pages listen to `live==true` only. |
 | `dms/{a__b}`, `dms/{a__b}/msgs` | private 1-to-1 chats (pair id = sorted player ids). Rules: only the two players, not even admins. |
 | `chat`, `media`, `photos` | chat, chat images (chunked), profile photos. |
-| `meta/*` | admin-only: `scoreboard` (hourly odds), `futures`, `league`, `cards_mv` (Multiverse catalog), `plat` (Platinum pack timer). |
+| `meta/*` | admin-only: `scoreboard` (hourly odds), `nfl` (NFL lines), `futures`, `league`, `cards_mv` (Multiverse catalog), `plat` (Platinum pack timer). |
+| `nfl/{season}_{week}` | admin-only (written by the hourly job): real NFL scores/finals/voids for grading NFL bets. |
 | `cardimg/{cardId}` | admin-only card images (`{d: dataURL}`). `adjust/{id}` admin balance adjustments. |
 | `plat/slot_N` | Platinum Mysterio pack purchases (5 cards each). |
 | `rrtable/live`, `thtable/live`, `thhole/*`, `rrin/*`, `thin/*`, `rrlook/*`, `mpreq/*`, `mptick/*`, `mpsecret/*` | live multiplayer tables (see below). |
@@ -106,6 +107,17 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
 ## Features (where to look)
 
 - **Sportsbook**: player-vs-player bets and House lines/parlays/futures from `meta/scoreboard` + `meta/futures`.
+- **NFL bets** (`nfl*`, side menu Sports betting → NFL bets): our own lines on real NFL games vs the House.
+  `tools/jobs/nfl.py` (hourly) takes the home win chance from ESPN's matchup predictor (FPI; fallback: margin ratings from
+  this season), prices each side at decimal 1.01/p rounded to American odds in the player's favor (owner: "house is down 1%"),
+  spread = −13.5·Φ⁻¹(p) to the half point, total = the feed's posted O/U number (or scoring averages); spread/total sides +102.
+  `meta/nfl` = current week's games + lines + `fetchedAt` (page listens only while open; betting pauses if >3 h stale).
+  `nfl/{season}_{week}.g[espnId]` = scores/`final`/`void` (void if not final by end of the Wednesday ET after kickoff;
+  finals/voids frozen once written). Bets are normal House bets with `gameId` `nfl:{season}_{week}:{espnId}:{ml|sp|tot}`
+  (+ `side`, `line`, `odds`, `takerStake`, `nfl{}`); parlays are `type:"parlay", nfl:true` with NFL legs only, one per game.
+  `gameById()` synthesizes a game from the results doc (`nflGame`), `grade()` → `nflGrade` (OT counts; tie/exact line/void =
+  push), so the ledger, My bets, recaps and standings need nothing special. Price is re-checked against `meta/nfl` on submit.
+  Rules: NFL bets can only be created before `nfl/{wk}.g[id].kick`, and only admins can change them afterwards.
 - **Casino**: Blackjack (`bj*`; 2-deck shoes, streak bonuses 5:+2,500 · 6:+5,000 · 7–9:+15,000 · 10+:+50,000 at any bet,
   0.5 s cooldown between deals), Roulette (`rl*` — note `rl` prefix is ALSO used for live Russian Roulette lobby code),
   Craps (`cr*`), High-Low (`hl*`), Flappy Cheese (10 BB/pipe, 5k/day cap; Vector card gives one 10× uncapped run/day),
@@ -153,7 +165,9 @@ Switch on/off: GitHub Actions → "Live tables on the server (switch)". Buy-ins/
 player's own client to prefs (`rrNet`/`thNet`).
 
 ## Scheduled jobs (GitHub Actions, `tools/jobs`)
-- `job-scoreboard.yml` hourly at :46 — Sleeper live scores/projections → fair moneylines → `meta/scoreboard`.
+- `job-scoreboard.yml` hourly at :46 — Sleeper live scores/projections → fair moneylines → `meta/scoreboard`;
+  then (separate step, runs even if the fantasy step exits early) `nfl.py` → `meta/nfl` lines + `nfl/{season}_{week}` results.
+  Tests: `cd tools/jobs && python3 -m unittest test_nfl`.
 - `job-futures.yml` Tuesdays 2:45 AM ET — playoff/title odds simulation → `meta/futures`.
 - `job-grade.yml` manual — grades finished games from Sleeper.
 - `job-mpflag.yml` manual — live-tables server switch.

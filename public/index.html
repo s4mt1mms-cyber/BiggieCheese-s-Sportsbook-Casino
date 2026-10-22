@@ -1125,6 +1125,27 @@ body.pkquake{animation:pkquake .12s linear 34}@keyframes pkquake{25%{transform:t
 .fodd:hover{border-color:#5cff72}
 .fodd.off{border-color:#2e2816;background:transparent;color:#8f8770;cursor:default}
 @media (max-width:420px){.futhead,.futrow{grid-template-columns:minmax(0,1fr) 78px 78px}.fodd{min-width:64px;font-size:13px}}
+.nflday{margin:14px 2px 6px;color:var(--gold)}
+.nflg{padding:10px 12px;gap:8px;margin-bottom:8px}
+.nflg.lk{opacity:.75}
+.nflhd{display:flex;justify-content:space-between;align-items:center;gap:8px;min-width:0}
+.nflgrid{display:grid;grid-template-columns:minmax(0,1fr) 74px 74px 66px;gap:6px;align-items:center}
+.nflh{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:center}
+.nflt{display:flex;align-items:center;gap:8px;min-width:0}
+.nflt img{width:28px;height:28px;flex:none;object-fit:contain}
+.nfltn{display:flex;flex-direction:column;min-width:0;line-height:1.15}
+.nfltn b{font-weight:800}.nfltn small{color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nflsc{margin-left:auto;font-size:18px;font-weight:800;padding-right:2px}
+.nflo{font:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:44px;padding:4px 2px;border-radius:8px;border:1px solid #2f7a3c;background:#0d1a10;color:#5cff72;cursor:pointer;line-height:1.15}
+.nflo small{color:var(--ink);font-size:12px;font-weight:700}
+.nflo b{font-size:13px;font-weight:800}
+.nflo.on{background:#5cff72;color:#04210a;border-color:#5cff72}.nflo.on small{color:#04210a}
+.nflo.off{border-color:#2e2816;background:transparent;color:#8f8770;cursor:default}.nflo.off small{color:#8f8770}
+.nflbar{position:fixed;z-index:14;left:max(16px,env(safe-area-inset-left,0px));right:calc(90px + env(safe-area-inset-right,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px))}
+.nflbar .btn{width:100%;min-height:52px;box-shadow:0 6px 22px rgba(0,0,0,.6)}
+.nflpad{height:84px}
+.nflbet .pbhead{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
+@media (max-width:380px){.nflgrid{grid-template-columns:minmax(0,1fr) 66px 66px 58px;gap:5px}.nfltn small{display:none}}
 .chatpage{display:flex;flex-direction:column;gap:12px}
 .chatpanel.inpage{position:relative!important;inset:auto!important;left:auto!important;right:auto!important;bottom:auto!important;width:100%!important;height:calc(100vh - 210px)!important;height:calc(100dvh - 210px)!important;min-height:380px;animation:none}
 .chatpanel.inpage .chathead{display:none}
@@ -1579,7 +1600,7 @@ button.scslot{background:none;border:0;padding:0;cursor:pointer;color:inherit;fo
 </div>
 <script>/* If the sign-in code never loads (blocked script, bad deploy), don't spin forever. */
 setTimeout(function(){var g=document.getElementById("sbGate");if(g&&!g.hidden&&g.dataset.state==="loading"){document.getElementById("sbGateBody").innerHTML='<p class="sbgate-h">Still loading…</p><p>This is taking longer than it should. Check your connection.</p><button type="button" class="sbgate-btn ghost" onclick="location.reload()">Reload</button>'}},20000);</script>
-<div class="sbar" id="sideNav" hidden><nav class="side" aria-label="Menu"><button type="button" class="who" id="sideWho" data-side="profile"></button><button type="button" class="sitem" data-side="home"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><path d="M12 3 2 11h3v9h5v-6h4v6h5v-9h3z"/></svg><span>Home</span></button><button type="button" class="sitem" data-side="board"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><path d="M4 5h16a1 1 0 0 1 1 1v3a2 2 0 0 0 0 4v3a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-3a2 2 0 0 0 0-4V6a1 1 0 0 1 1-1zm7 2v2h2V7zm0 4v2h2v-2zm0 4v2h2v-2z"/></svg><span>Board</span></button><button type="button" class="sitem" data-side="futures"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><path d="M3 17h3l4-6 4 3 5-8h2v2h-1.2l-5.5 8.8-4-3L7.3 19H3z"/><path d="M3 21h18v-1.6H3z"/></svg><span>Futures</span></button><button type="button" class="sitem" data-side="parlays"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><path d="M4 5h16v3H4zM4 10.5h16v3H4zM4 16h16v3H4z" opacity=".35"/><path d="M6 6.5l1.2 1.2L9.5 5.4M6 12l1.2 1.2 2.3-2.3M6 17.5l1.2 1.2 2.3-2.3" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M12 6h6v1.2h-6zM12 11.4h6v1.2h-6zM12 16.9h6v1.2h-6z"/></svg><span>Parlays</span></button><button type="button" class="sitem" id="casinoTgl" aria-expanded="false"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="12" cy="12" r="3.2"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" stroke="currentColor" stroke-width="2"/></svg><span>Casino</span><svg class="chev" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4"/></svg></button><div class="subnav" id="casinoSub" hidden><button type="button" class="sitem sub" data-side="blackjack"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><path d="M8 2h9a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm4.5 4C11 7.6 9.5 8.8 9.5 10.4c0 1 .8 1.8 1.8 1.8.4 0 .8-.1 1-.4l-.6 2.2h1.6l-.6-2.2c.3.3.6.4 1 .4 1 0 1.8-.8 1.8-1.8C15.5 8.8 14 7.6 12.5 6z"/><path d="M4 6.5v13A2.5 2.5 0 0 0 6.5 22H15v-1.5H6.5a1 1 0 0 1-1-1v-13z"/></svg><span>Blackjack</span></button><button type="button" class="sitem sub" data-side="roulette"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 3a7 7 0 1 1 0 14 7 7 0 0 1 0-14z"/><circle cx="12" cy="12" r="2.4"/><path d="M12 5v4M12 15v4M5 12h4M15 12h4" stroke="currentColor" stroke-width="1.6"/></svg><span>Roulette</span></button><button type="button" class="sitem sub" data-side="craps"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><rect x="2" y="7" width="11" height="11" rx="2.5"/><rect x="11" y="3" width="11" height="11" rx="2.5" opacity=".7"/><circle cx="5.5" cy="10.5" r="1.2" fill="#000"/><circle cx="9.5" cy="14.5" r="1.2" fill="#000"/><circle cx="14.5" cy="6.5" r="1.1" fill="#000"/><circle cx="18.5" cy="10.5" r="1.1" fill="#000"/><circle cx="16.5" cy="8.5" r="1.1" fill="#000"/></svg><span>Craps</span></button><button type="button" class="sitem sub" data-side="hilo"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><rect x="3" y="4" width="11" height="16" rx="2" opacity=".7"/><rect x="9" y="3" width="11" height="16" rx="2"/><path d="M14.5 6l3 4h-6zM14.5 16l3-4h-6z" fill="#000"/></svg><span>High-Low</span></button></div><button type="button" class="sitem" data-side="packs"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><rect x="3" y="5" width="11" height="15" rx="2" opacity=".55" transform="rotate(-10 8 12)"/><rect x="9" y="4" width="11" height="15" rx="2"/><path d="M14.5 8l1.2 2.4 2.6.4-1.9 1.8.5 2.6-2.4-1.3-2.4 1.3.5-2.6-1.9-1.8 2.6-.4z" fill="#000"/></svg><span>Card Collections</span></button><button type="button" class="sitem" data-side="bank"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><path d="M12 2 2 7v2h20V7zM4 10v8h3v-8zm6.5 0v8h3v-8zM17 10v8h3v-8zM2 19h20v3H2z"/></svg><span>Bank</span></button><button type="button" class="sitem" id="mpTgl" aria-expanded="false"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><circle cx="8" cy="8" r="3.2"/><circle cx="16" cy="8" r="3.2"/><path d="M2 19c0-3.3 2.7-6 6-6s6 2.7 6 6zM12.5 13.6A6 6 0 0 1 22 19h-7.5"/></svg><span>Multiplayer games</span><svg class="chev" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4"/></svg></button><div class="subnav" id="mpSub" hidden><button type="button" class="sitem sub rrglow" data-side="rr"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><path d="M2 9h13l1-2h4v3h-2l-1 2H11l-1 2H8l-1 6H3l1-6H2z"/><circle cx="12.5" cy="10.5" r="2.4" fill="none" stroke="currentColor" stroke-width="1.4"/></svg><span>Russian Roulette</span></button><button type="button" class="sitem sub" data-side="th"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><path d="M12 3C9 7 5 9 5 12.5A3.5 3.5 0 0 0 11 15l-1 5h4l-1-5a3.5 3.5 0 0 0 6-2.5C19 9 15 7 12 3z"/></svg><span>Texas Hold'em</span></button></div><button type="button" class="sitem" data-side="flappy"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><path d="M3 15 L21 7 L21 17 Z" opacity=".95"/><circle cx="15" cy="12" r="1.6" fill="#000"/><circle cx="18.5" cy="14.2" r="1.1" fill="#000"/><circle cx="11" cy="14.6" r="1" fill="#000"/></svg><span>Flappy Cheese</span></button><button type="button" class="sitem" data-side="mine"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><path d="M6 2h12a1 1 0 0 1 1 1v19l-3-2-2 2-2-2-2 2-2-2-3 2V3a1 1 0 0 1 1-1zm2 5v2h8V7zm0 4v2h8v-2zm0 4v2h5v-2z"/></svg><span>My bets</span></button><button type="button" class="sitem" data-side="standings"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><path d="M7 3h10v3h4v2a5 5 0 0 1-4.6 5A5 5 0 0 1 13 15.9V18h3v3H8v-3h3v-2.1A5 5 0 0 1 7.6 13 5 5 0 0 1 3 8V6h4zm-2 5a3 3 0 0 0 2 2.8V8zm14 0h-2v2.8A3 3 0 0 0 19 8z"/></svg><span>Standings</span></button><button type="button" class="sitem" data-side="chat"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><path d="M4 4h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-9l-5 4v-4H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg><span>Messages</span></button><button type="button" class="sitem" data-side="setup" id="sideAdmin" hidden><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3h-4l-.4 2.9a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.4 7.4 0 0 0 1.7 1L11 21h4l.4-2.9a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.5zM13 15.5A3.5 3.5 0 1 1 13 8.5a3.5 3.5 0 0 1 0 7z"/></svg><span>Admin</span></button><div class="sfoot">Debbie's Dynasty Dozen · BiggieBucks only</div></nav><div class="shade" data-side="close"></div></div>
+<div class="sbar" id="sideNav" hidden><nav class="side" aria-label="Menu"><button type="button" class="who" id="sideWho" data-side="profile"></button><button type="button" class="sitem" data-side="home"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><path d="M12 3 2 11h3v9h5v-6h4v6h5v-9h3z"/></svg><span>Home</span></button><button type="button" class="sitem" id="sbTgl" aria-expanded="false"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><path d="M4 5h16a1 1 0 0 1 1 1v3a2 2 0 0 0 0 4v3a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-3a2 2 0 0 0 0-4V6a1 1 0 0 1 1-1zm7 2v2h2V7zm0 4v2h2v-2zm0 4v2h2v-2z"/></svg><span>Sports betting</span><svg class="chev" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4"/></svg></button><div class="subnav" id="sbSub" hidden><button type="button" class="sitem sub" data-side="board"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><path d="M4 5h16a1 1 0 0 1 1 1v3a2 2 0 0 0 0 4v3a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-3a2 2 0 0 0 0-4V6a1 1 0 0 1 1-1zm7 2v2h2V7zm0 4v2h2v-2zm0 4v2h2v-2z"/></svg><span>Board</span></button><button type="button" class="sitem sub" data-side="futures"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><path d="M3 17h3l4-6 4 3 5-8h2v2h-1.2l-5.5 8.8-4-3L7.3 19H3z"/><path d="M3 21h18v-1.6H3z"/></svg><span>Futures</span></button><button type="button" class="sitem sub" data-side="parlays"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><path d="M4 5h16v3H4zM4 10.5h16v3H4zM4 16h16v3H4z" opacity=".35"/><path d="M6 6.5l1.2 1.2L9.5 5.4M6 12l1.2 1.2 2.3-2.3M6 17.5l1.2 1.2 2.3-2.3" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M12 6h6v1.2h-6zM12 11.4h6v1.2h-6zM12 16.9h6v1.2h-6z"/></svg><span>Parlays</span></button><button type="button" class="sitem sub" data-side="mine"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><path d="M6 2h12a1 1 0 0 1 1 1v19l-3-2-2 2-2-2-2 2-2-2-3 2V3a1 1 0 0 1 1-1zm2 5v2h8V7zm0 4v2h8v-2zm0 4v2h5v-2z"/></svg><span>My bets</span></button><button type="button" class="sitem sub" data-side="nfl"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><path d="M20.6 3.4c-1.5-.5-6.6-1.2-10.9 3.1S3 15.9 3.4 17.4L6.6 20.6c1.5.4 6.6 1.1 10.9-3.2s3.6-9.4 3.1-10.9zM14 8.6l1.4 1.4-1.1 1.1.9.9-1.4 1.4-.9-.9-1.1 1.1.9.9-1.4 1.4-.9-.9-1.1 1.1L8 14.6l1.1-1.1-.9-.9 1.4-1.4.9.9 1.1-1.1-.9-.9 1.4-1.4.9.9z"/></svg><span>NFL bets</span></button></div><button type="button" class="sitem" id="casinoTgl" aria-expanded="false"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="12" cy="12" r="3.2"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" stroke="currentColor" stroke-width="2"/></svg><span>Casino</span><svg class="chev" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4"/></svg></button><div class="subnav" id="casinoSub" hidden><button type="button" class="sitem sub" data-side="blackjack"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><path d="M8 2h9a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm4.5 4C11 7.6 9.5 8.8 9.5 10.4c0 1 .8 1.8 1.8 1.8.4 0 .8-.1 1-.4l-.6 2.2h1.6l-.6-2.2c.3.3.6.4 1 .4 1 0 1.8-.8 1.8-1.8C15.5 8.8 14 7.6 12.5 6z"/><path d="M4 6.5v13A2.5 2.5 0 0 0 6.5 22H15v-1.5H6.5a1 1 0 0 1-1-1v-13z"/></svg><span>Blackjack</span></button><button type="button" class="sitem sub" data-side="roulette"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 3a7 7 0 1 1 0 14 7 7 0 0 1 0-14z"/><circle cx="12" cy="12" r="2.4"/><path d="M12 5v4M12 15v4M5 12h4M15 12h4" stroke="currentColor" stroke-width="1.6"/></svg><span>Roulette</span></button><button type="button" class="sitem sub" data-side="craps"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><rect x="2" y="7" width="11" height="11" rx="2.5"/><rect x="11" y="3" width="11" height="11" rx="2.5" opacity=".7"/><circle cx="5.5" cy="10.5" r="1.2" fill="#000"/><circle cx="9.5" cy="14.5" r="1.2" fill="#000"/><circle cx="14.5" cy="6.5" r="1.1" fill="#000"/><circle cx="18.5" cy="10.5" r="1.1" fill="#000"/><circle cx="16.5" cy="8.5" r="1.1" fill="#000"/></svg><span>Craps</span></button><button type="button" class="sitem sub" data-side="hilo"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><rect x="3" y="4" width="11" height="16" rx="2" opacity=".7"/><rect x="9" y="3" width="11" height="16" rx="2"/><path d="M14.5 6l3 4h-6zM14.5 16l3-4h-6z" fill="#000"/></svg><span>High-Low</span></button></div><button type="button" class="sitem" data-side="packs"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><rect x="3" y="5" width="11" height="15" rx="2" opacity=".55" transform="rotate(-10 8 12)"/><rect x="9" y="4" width="11" height="15" rx="2"/><path d="M14.5 8l1.2 2.4 2.6.4-1.9 1.8.5 2.6-2.4-1.3-2.4 1.3.5-2.6-1.9-1.8 2.6-.4z" fill="#000"/></svg><span>Card Collections</span></button><button type="button" class="sitem" data-side="bank"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><path d="M12 2 2 7v2h20V7zM4 10v8h3v-8zm6.5 0v8h3v-8zM17 10v8h3v-8zM2 19h20v3H2z"/></svg><span>Bank</span></button><button type="button" class="sitem" id="mpTgl" aria-expanded="false"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><circle cx="8" cy="8" r="3.2"/><circle cx="16" cy="8" r="3.2"/><path d="M2 19c0-3.3 2.7-6 6-6s6 2.7 6 6zM12.5 13.6A6 6 0 0 1 22 19h-7.5"/></svg><span>Multiplayer games</span><svg class="chev" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4"/></svg></button><div class="subnav" id="mpSub" hidden><button type="button" class="sitem sub rrglow" data-side="rr"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><path d="M2 9h13l1-2h4v3h-2l-1 2H11l-1 2H8l-1 6H3l1-6H2z"/><circle cx="12.5" cy="10.5" r="2.4" fill="none" stroke="currentColor" stroke-width="1.4"/></svg><span>Russian Roulette</span></button><button type="button" class="sitem sub" data-side="th"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><path d="M12 3C9 7 5 9 5 12.5A3.5 3.5 0 0 0 11 15l-1 5h4l-1-5a3.5 3.5 0 0 0 6-2.5C19 9 15 7 12 3z"/></svg><span>Texas Hold'em</span></button></div><button type="button" class="sitem" data-side="flappy"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><path d="M3 15 L21 7 L21 17 Z" opacity=".95"/><circle cx="15" cy="12" r="1.6" fill="#000"/><circle cx="18.5" cy="14.2" r="1.1" fill="#000"/><circle cx="11" cy="14.6" r="1" fill="#000"/></svg><span>Flappy Cheese</span></button><button type="button" class="sitem" data-side="standings"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><path d="M7 3h10v3h4v2a5 5 0 0 1-4.6 5A5 5 0 0 1 13 15.9V18h3v3H8v-3h3v-2.1A5 5 0 0 1 7.6 13 5 5 0 0 1 3 8V6h4zm-2 5a3 3 0 0 0 2 2.8V8zm14 0h-2v2.8A3 3 0 0 0 19 8z"/></svg><span>Standings</span></button><button type="button" class="sitem" data-side="chat"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><path d="M4 4h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-9l-5 4v-4H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg><span>Messages</span></button><button type="button" class="sitem" data-side="setup" id="sideAdmin" hidden><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3h-4l-.4 2.9a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.4 7.4 0 0 0 1.7 1L11 21h4l.4-2.9a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.5zM13 15.5A3.5 3.5 0 1 1 13 8.5a3.5 3.5 0 0 1 0 7z"/></svg><span>Admin</span></button><div class="sfoot">Debbie's Dynasty Dozen · BiggieBucks only</div></nav><div class="shade" data-side="close"></div></div>
 <header class="mast"><div class="wrap"><button type="button" class="hamb" id="menuBtn" aria-label="Open menu" aria-expanded="false"><span></span></button>
 
   <div class="brand">
@@ -1625,7 +1646,7 @@ setTimeout(function(){var g=document.getElementById("sbGate");if(g&&!g.hidden&&g
 const PERF_LITE=(()=>{try{return matchMedia("(pointer:coarse)").matches||(navigator.hardwareConcurrency||8)<=4||/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)}catch(_){return false}})();
 const PERF_DPR=Math.min(PERF_LITE?1.5:2,window.devicePixelRatio||1);
 if(PERF_LITE){document.documentElement.classList.add("lite","pmfire-lite");try{const f=document.querySelector("svg #pmFireF");f&&f.ownerSVGElement&&f.ownerSVGElement.pauseAnimations()}catch(_){}}
-const TABS=["bank","home","board","futures","blackjack","roulette","craps","hilo","rr","th","packs","flappy","mine","standings","setup","chat"];
+const TABS=["bank","home","board","futures","nfl","blackjack","roulette","craps","hilo","rr","th","packs","flappy","mine","standings","setup","chat"];
 const S={tab:"home",scoreboard:null,week:null,games:[],bets:[],prefs:{},meta:{},me:null,canEdit:false,names:{},openSlip:null,confirmVoid:null,openBets:new Set(),ready:false,offline:false};
 let db=null,user=null;
 try{const t=localStorage.getItem("sab-tab");if(TABS.includes(t))S.tab=t;}catch(e){}
@@ -1658,7 +1679,7 @@ function setMe(){
   const bl=$("#meBal");if(bl)bl.textContent=Math.round(ledger().balOf(S.me)).toLocaleString()+" BB";
 }
 const who=id=>{if(!id)return"Anyone";const c=role(id)==="Commissioner",a=av(id);return `<button type="button" class="mlink" data-member="${esc(id)}">${a?(c?`<span class="avaura">${a}</span>`:a):""}${esc(nm(id))}${c?"":` <span class="role">Player</span>`}</button>`};
-const gameById=id=>S.games.find(g=>g.id===id);
+const gameById=id=>S.games.find(g=>g.id===id)||(nflIsId(id)?nflGame(id):undefined);
 const teamFor=(g,side)=>side==="home"?g.home:g.away;
 const other=side=>side==="home"?"away":"home";
 
@@ -1682,7 +1703,7 @@ const isML=g=>g&&!g.type&&g.mode==="ml";
 const mlOdds=(g,side)=>side==="home"?Number(g.odds):-Number(g.odds);
 const fmtPts=v=>Number(v).toLocaleString(undefined,{maximumFractionDigits:2});
 const totalWho=g=>g.scope==="combined"?`${g.away} + ${g.home}`:g.team;
-const gTitle=g=>isProp(g)?`${g.team}: ${g.desc}`:isTotal(g)?`${totalWho(g)} ${g.scope==="combined"?"combined ":""}O/U ${fmtPts(g.total)}`:`${g.away} @ ${g.home}`;
+const gTitle=g=>g&&g.nfl?`NFL · ${g.ab} @ ${g.hb}`:isProp(g)?`${g.team}: ${g.desc}`:isTotal(g)?`${totalWho(g)} ${g.scope==="combined"?"combined ":""}O/U ${fmtPts(g.total)}`:`${g.away} @ ${g.home}`;
 const fmtOdds=o=>(o=Number(o))>0?"+"+o:""+o;
 const yesMult=o=>(o=Number(o))>0?o/100:100/Math.abs(o);
 /* What the taker risks when the poster risks `stake` on `side` of a prop priced `odds` for Yes */
@@ -1690,6 +1711,7 @@ const takerRisk=(side,stake,odds)=>Math.round(side==="yes"?stake*yesMult(odds):s
 const sideOdds=(side,odds)=>side==="yes"?Number(odds):-Number(odds);
 function grade(bet,g){
   if(!g||!g.final)return null;
+  if(g.nfl)return nflGrade(bet,g);
   if(isProp(g)){if(g.outcome==="void")return"push";return bet.side===g.outcome?"poster":"taker"}
   if(isTotal(g)){const d=(Number(g.actual)-Number(g.total))*(bet.side==="over"?1:-1);return d>0?"poster":d<0?"taker":"push"}
   if(isML(g)){const d=(g.homeScore-g.awayScore)*(bet.side==="home"?1:-1);return d>0?"poster":d<0?"taker":"push"}
@@ -1770,6 +1792,7 @@ const bettingOff=id=>false;
 /* ---------- Views ---------- */
 function weeksShown(){const set=new Set(S.games.map(g=>Number(g.week)));set.add(curWeek());return[...set].sort((a,b)=>a-b)}
 function betLine(b,g){
+  if(g&&g.nfl)return `<strong>${who(b.posterId)}</strong> ${esc((b.nfl&&b.nfl.label)||"NFL")} <span class="num">${nflOdds(b.odds)}</span> (<span class="num">${esc(pts(b.stake))}</span>) vs <strong>${who(b.takerId)}</strong> · to win <span class="num">${esc(pts(b.takerStake))}</span>`;
   if(isTotal(g)){
     const ps=b.side==="over"?"Over":"Under",ts=b.side==="over"?"Under":"Over",L=fmtPts(g.total),os=b.side==="over"?"under":"over";
     const po=ouEven(g)?"":` <span class="num">${fmtOdds(ouOdds(g,b.side))}</span>`,to=ouEven(g)?"":` <span class="num">${fmtOdds(ouOdds(g,os))}</span>`;
@@ -1797,6 +1820,7 @@ function betLine(b,g){
   return `<strong>${who(b.posterId)}</strong> ${esc(posterTeam)} <span class="num">${fmtLine(b.line)}</span> vs <strong>${who(b.takerId)}</strong> ${esc(takerTeam)} <span class="num">${fmtLine(-b.line)}</span> · ${stake}`;
 }
 function resultPill(b,g){
+  if(g&&g.nfl&&b.status==="live")return nflPill(nflStatus(b));
   const r=grade(b,g);
   if(b.status==="void")return `<span class="pill loss">Voided</span>`;
   if(b.status==="cancelled")return `<span class="pill locked">Cancelled</span>`;
@@ -1819,6 +1843,7 @@ function betActions(b,g){
 }
 const when=t=>t?new Date(t).toLocaleString([], {weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):"";
 function sideText(b,g,poster){
+  if(g&&g.nfl)return `${(b.nfl&&b.nfl.label)||"NFL"} ${nflOdds(b.odds)}, risking ${pts(poster?b.stake:b.takerStake)}`;
   const s=poster?b.side:(isTotal(g)?b.side:isProp(g)?(b.side==="yes"?"no":"yes"):other(b.side));
   if(isTotal(g)){const ts=poster?b.side:(b.side==="over"?"under":"over");return `${ts==="over"?"Over":"Under"} ${fmtPts(g.total)}${ouEven(g)?"":" "+fmtOdds(ouOdds(g,ts))}, putting up ${pts(poster?b.stake:(b.takerStake!=null?b.takerStake:b.stake))}`}
   if(isProp(g))return `${s==="yes"?"Yes":"No"} ${fmtOdds(sideOdds(s,g.odds))}, risking ${pts(poster?b.stake:b.takerStake)}`;
@@ -2283,6 +2308,152 @@ async function placeParlay(){const P=parlayState(),avail=parlayLegsAvail();const
   await db.collection("bets").add({type:"parlay",legs:L.map(({week,...x})=>x),week:Math.max(...L.map(x=>x.week)),stake,unit:"BB",posterId:S.me,takerId:"house",house:true,status:"live",createdAt:now,acceptedAt:now});
   try{const odds=toAmerican(L.reduce((x,l)=>x*decOdds(l.odds),1));await db.collection("chat").add({type:"bet",uid:S.me,poster:S.me,at:Date.now(),text:`${nm(S.me)} placed a ${L.length}-leg parlay (${odds>0?"+":""}${odds})`,detail:`${L.map(l=>l.label).join(" · ")}. ${stake.toLocaleString()} BB to win ${Math.round(stake*(L.reduce((x,l)=>x*decOdds(l.odds),1)-1)).toLocaleString()} BB.`})}catch(_){}
   S.parlay={legs:{},stake:P.stake};render()}
+/* ---------- NFL bets vs the House: our own lines for real NFL games (meta/nfl, written hourly by tools/jobs/nfl.py) ----------
+   Owner's pricing rule: no house edge, the House is down 1% (a side with win chance p pays 1.01/p; spreads and totals pay +102).
+   Results live in nfl/{season}_{week} (scores, final, void). An NFL bet's gameId is "nfl:{season}_{week}:{espnId}:{ml|sp|tot}";
+   gameById() turns it into a game-like object so the ledger, My bets and parlays treat it like any other House bet.
+   Locks at kickoff (also enforced by the Firestore rules). Overtime counts; ties and voids push (refund).
+   meta/nfl is only listened to while the NFL page is open; result docs only for weeks somebody has NFL bets in. */
+const NFL={res:{},subs:{},v:0,cache:new Map(),lines:null,linesLoaded:false,unsub:null,slip:{legs:{},parlay:false,stake:100},open:false};
+const NFL_STALE=3*36e5;
+const nflIsId=id=>typeof id==="string"&&id.startsWith("nfl:");
+/* Void fallback if the hourly job is down: not final by the end of the Wednesday (ET) after the scheduled kickoff, plus 6 h of slack.
+   The job writes void itself at the deadline and never records a final after it, so both agree. */
+function nflVoidAt(k){const d=new Date(Number(k)-5*36e5),dow=d.getUTCDay(),add=((3-dow+7)%7)||7;return Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()+add+1)+5*36e5}
+function nflGame(id){const key=NFL.v+":"+Math.floor(Date.now()/6e4),c=NFL.cache.get(id);if(c&&c.k===key)return c.g;
+  const [,wid,eid,mkt]=id.split(":"),W=NFL.res[wid],r=W&&W.g&&W.g[eid],wk=Number(String(wid).split("_")[1])||0;
+  const isVoid=!!(r&&!r.final&&(r.void||Date.now()>nflVoidAt(r.kick0||r.kick)+6*36e5));
+  const g={id,nfl:true,house:true,mkt,eid,wid,week:wk,ab:r?r.a:"NFL",hb:r?r.h:"",away:r?(r.an||r.a):"NFL game",home:r?(r.hn||r.h):"",
+    awayScore:r?Number(r.as)||0:0,homeScore:r?Number(r.hs)||0:0,final:!!(r&&(r.final||isVoid)),void:isVoid,st:r?r.st:"pre",d:r?r.d:"",kickoff:r&&r.kick?new Date(r.kick).toISOString():null};
+  NFL.cache.set(id,{k:key,g});return g}
+/* bet.side: home/away (ml, sp) or over/under (tot); bet.line: the bettor's own spread, or the total */
+function nflGrade(bet,g){if(g.void)return "push";const a=Number(g.awayScore),h=Number(g.homeScore);let d;
+  if(g.mkt==="ml")d=(h-a)*(bet.side==="home"?1:-1);
+  else if(g.mkt==="sp")d=(bet.side==="home"?h-a:a-h)+Number(bet.line);
+  else if(g.mkt==="tot")d=(a+h-Number(bet.line))*(bet.side==="over"?1:-1);
+  else return null;
+  return d>0?"poster":d<0?"taker":"push"}
+function nflResSync(){const w=new Set();const add=id=>{if(nflIsId(id))w.add(id.split(":")[1])};
+  for(const b of S.bets||[]){add(b.gameId);for(const L of b.legs||[])add(L.gameId)}
+  for(const wid of w)if(!NFL.subs[wid]&&/^\d{4}_\d{1,2}$/.test(wid))NFL.subs[wid]=db.doc("nfl/"+wid).onSnapshot(s=>{NFL.res[wid]=(s.exists&&s.data())||null;NFL.v++;renderSoon()},()=>{})}
+function nflLinesWatch(){const want=S.tab==="nfl"&&typeof db!=="undefined";
+  if(want&&!NFL.unsub)NFL.unsub=db.doc("meta/nfl").onSnapshot(s=>{NFL.lines=(s.exists&&s.data())||null;NFL.linesLoaded=true;renderSoon()},()=>{NFL.linesLoaded=true;renderSoon()});
+  else if(!want&&NFL.unsub){NFL.unsub();NFL.unsub=null;NFL.linesLoaded=false}}
+const nflStale=L=>!L||!L.fetchedAt||Date.now()-Number(L.fetchedAt)>NFL_STALE;
+const nflOpen=(G,L)=>!!G&&!nflStale(L)&&G.status==="pre"&&Date.now()<Number(G.kick);
+const nflLn=v=>{v=Number(v);return v===0?"PK":v>0?"+"+v:"−"+Math.abs(v)};
+const nflOdds=o=>(o=Number(o))>0?"+"+o:"−"+Math.abs(o);
+const nflLogo=ab=>`https://a.espncdn.com/combiner/i?img=/i/teamlogos/nfl/500/${encodeURIComponent(String(ab||"").toLowerCase())}.png&h=56&w=56`;
+const nflTz={timeZone:"America/New_York"};
+const nflKick=k=>new Date(Number(k)).toLocaleTimeString([], {...nflTz,hour:"numeric",minute:"2-digit"})+" ET";
+const nflDay=k=>new Date(Number(k)).toLocaleDateString([], {...nflTz,weekday:"long",month:"short",day:"numeric"});
+/* The current price for one side of one market, or null if that market isn't offered */
+function nflQuote(G,mkt,side){if(!G)return null;
+  if(mkt==="ml"){const o=G.ml&&G.ml[side];return o==null?null:{line:null,odds:Number(o),label:`${side==="home"?G.home:G.away} ML`}}
+  if(mkt==="sp"){if(!G.spread||G.spread.line==null)return null;const l=side==="home"?Number(G.spread.line):-Number(G.spread.line);return {line:l,odds:Number(G.spread.price),label:`${side==="home"?G.home:G.away} ${nflLn(l)}`}}
+  if(mkt==="tot"){if(!G.total||G.total.line==null)return null;return {line:Number(G.total.line),odds:Number(G.total.price),label:`${G.away}@${G.home} ${side==="over"?"Over":"Under"} ${Number(G.total.line)}`}}
+  return null}
+const nflTeamName=(G,side)=>{const n=side==="home"?G.hn:G.an;return n?String(n).split(" ").slice(-1)[0]:""};
+function nflBtn(G,mkt,side,open){const q=nflQuote(G,mkt,side);if(!q||!open)return `<span class="nflo off">${q&&!open?(mkt==="ml"?nflOdds(q.odds):`<small>${mkt==="tot"?(side==="over"?"O ":"U ")+q.line:nflLn(q.line)}</small>`):"—"}</span>`;
+  const key=G.id+":"+mkt+":"+side,on=!!NFL.slip.legs[key];
+  const top=mkt==="sp"?nflLn(q.line):mkt==="tot"?(side==="over"?"O ":"U ")+q.line:"";
+  return `<button type="button" class="nflo${on?" on":""}" data-nflpick="${esc(G.id)}|${mkt}|${side}" aria-pressed="${on}">${top?`<small>${esc(top)}</small>`:""}<b>${nflOdds(q.odds)}</b></button>`}
+function nflGameHtml(G,L){const open=nflOpen(G,L),started=G.status!=="pre";
+  const sc=s=>started?`<b class="nflsc num">${esc(String(s==="home"?G.homeScore:G.awayScore))}</b>`:"";
+  const st=G.status==="post"?`<span class="pill final">${esc(G.detail||"Final")}</span>`:G.status==="in"?`<span class="pill live">${esc(G.detail||"Live")}</span>`:open?`<span class="small muted">${esc(nflKick(G.kick))}</span>`:`<span class="pill locked">Locked</span>`;
+  const row=s=>{const ab=s==="home"?G.home:G.away;return `<span class="nflt"><img src="${nflLogo(ab)}" alt="" loading="lazy" width="28" height="28"><span class="nfltn"><b>${esc(ab)}</b><small>${esc(nflTeamName(G,s))}</small></span>${sc(s)}</span>
+    ${nflBtn(G,"sp",s,open)}${nflBtn(G,"tot",s==="away"?"over":"under",open)}${nflBtn(G,"ml",s,open)}`};
+  return `<div class="card nflg${open?"":" lk"}"><div class="nflhd"><span class="small muted">${esc(G.away)} @ ${esc(G.home)}${G.pHome!=null&&open?` · ${esc(G.home)} ${Math.round(G.pHome*100)}% to win`:""}</span>${st}</div>
+    <div class="nflgrid"><span></span><span class="nflh">Spread</span><span class="nflh">Total</span><span class="nflh">Money</span>${row("away")}${row("home")}</div></div>`}
+function nflLegs(){return Object.values(NFL.slip.legs)}
+function nflPick(spec){const [eid,mkt,side]=spec.split("|"),L=NFL.lines,G=L&&(L.games||[]).find(x=>x.id===eid);
+  if(!nflOpen(G,L))return toast("That game is locked.");const q=nflQuote(G,mkt,side);if(!q)return;
+  const key=eid+":"+mkt+":"+side,legs=NFL.slip.legs;
+  if(legs[key]){delete legs[key];render();return}
+  for(const k in legs){const x=legs[k];if(x.eid===eid&&(x.mkt===mkt||NFL.slip.parlay))delete legs[k]}
+  legs[key]={key,eid,wid:L.wk,mkt,side,line:q.line,odds:q.odds,label:q.label,kick:Number(G.kick),game:`${G.away} @ ${G.home}`};
+  if(nflLegs().length>12){delete legs[key];return toast("12 picks max.")}
+  render()}
+function nflSlipMath(){const legs=nflLegs(),stake=Math.max(0,Math.round(Number(NFL.slip.stake)||0));
+  if(NFL.slip.parlay){const dec=legs.reduce((a,l)=>a*decOdds(l.odds),1);return {stake,total:stake,win:Math.round(stake*(dec-1)),dec}}
+  return {stake,total:stake*legs.length,win:legs.reduce((a,l)=>a+takerRisk("yes",stake,l.odds),0)}}
+function nflSlipHtml(){const legs=nflLegs(),P=NFL.slip.parlay,m=nflSlipMath(),bal=Math.max(0,Math.floor(ledger().balOf(S.me)));
+  const dupe=P&&new Set(legs.map(l=>l.eid)).size<legs.length;
+  return `<div class="overlay" id="nflSlipOv"><div class="pickbox nflslip" role="dialog" aria-modal="true" aria-labelledby="nflSlipT"><div class="eyebrow">NFL bet slip · vs the House</div><h2 id="nflSlipT">${legs.length} pick${legs.length===1?"":"s"}</h2>
+    <div class="seg" role="group" aria-label="Bet type"><button type="button" data-nflmode="straight" aria-pressed="${!P}">Straight</button><button type="button" data-nflmode="parlay" aria-pressed="${P}">Parlay</button></div>
+    <div class="pslip">${legs.length?legs.map(l=>`<div class="pleg"><span>${esc(l.label)}<small class="muted" style="display:block">${esc(l.game)} · ${esc(nflDay(l.kick).split(",")[0])} ${esc(nflKick(l.kick))}</small></span><span class="num">${nflOdds(l.odds)}</span><button type="button" class="px" data-nflx="${esc(l.key)}" aria-label="Remove pick">✕</button></div>`).join(""):`<p class="small muted">Tap any line to add it.</p>`}
+      ${P&&legs.length>=2?`<div class="ptot"><span>${legs.length}-leg parlay</span><b class="num">${nflOdds(toAmerican(m.dec))}</b></div>`:""}</div>
+    ${dupe?`<p class="note">A parlay can only have one pick per game.</p>`:""}${P&&legs.length<2?`<p class="note">A parlay needs at least 2 picks from different games.</p>`:""}
+    <label for="nflStake">${P?"Parlay bet":"Bet on each pick"} (you have ${bal.toLocaleString()} BB)<input class="n" id="nflStake" type="number" inputmode="numeric" min="1" step="1" value="${m.stake}" style="font-size:16px"></label>
+    <div class="betprev" id="nflPrev">${nflPrevTxt()}</div>
+    <div class="row"><button class="btn gold" type="button" data-nflplace ${legs.length&&(!P||(legs.length>=2&&!dupe))?"":"disabled"}>Place ${P?"parlay":legs.length>1?legs.length+" bets":"bet"}</button><button class="btn ghost" type="button" data-nflclear>Clear</button><button class="btn ghost" type="button" data-nflclose>Close</button></div>
+    <p class="small muted">${P?"Every pick has to hit. A pushed or voided pick drops out and the parlay pays on the rest.":"Each pick is its own bet."} Lines are locked in when you place. Overtime counts; a tie or exact line is a push (refund). Paid automatically about an hour after the final.</p></div></div>`}
+function nflPrevTxt(){const m=nflSlipMath();return m.stake>0&&nflLegs().length?`Risk <b class="num" style="color:#ff6262">−${m.total.toLocaleString()} BB</b> · win <b class="num" style="color:#5cff72">+${m.win.toLocaleString()} BB</b>`:""}
+/* My NFL bets: result of a straight bet or parlay */
+function nflStatus(b){if(b.status==="void")return {k:"void",amt:0};
+  if(b.type==="parlay"){const r=gradeParlay(b);return r==null?{k:"pending",amt:parlayWin(b)}:r==="taker"?{k:"lost",amt:-Number(b.stake)}:r==="push"?{k:"push",amt:0}:{k:"won",amt:parlayWin(b)}}
+  const g=gameById(b.gameId),r=g?grade(b,g):null;if(r==null)return {k:"pending",amt:Number(b.takerStake)||0};
+  return r==="push"?{k:g.void?"void":"push",amt:0}:r==="poster"?{k:"won",amt:Number(b.takerStake)||0}:{k:"lost",amt:-Number(b.stake)}}
+function nflPill(s){return s.k==="pending"?`<span class="pill live">Pending</span>`:s.k==="won"?`<span class="pill win">Won +${Math.round(s.amt).toLocaleString()}</span>`:s.k==="lost"?`<span class="pill loss">Lost</span>`:s.k==="void"?`<span class="pill push">Void · refunded</span>`:`<span class="pill push">Push · refunded</span>`}
+const nflIsBet=b=>nflIsId(b.gameId)||(b.type==="parlay"&&(b.nfl===true||(b.legs||[]).some(L=>nflIsId(L.gameId))));
+function nflBetRow(b){const s=nflStatus(b),P=b.type==="parlay";
+  const legs=P?(b.legs||[]).map(L=>{const g=gameById(L.gameId),x=g?grade({side:L.side,line:L.line},g):null;return `<span class="pl ${x==="poster"?"w":x==="taker"?"l":""}">${x==="poster"?"✅":x==="taker"?"❌":x==="push"?"➖":"⏳"} ${esc(L.label)} <span class="num">${nflOdds(L.odds)}</span></span>`}).join(""):"";
+  const g=P?null:gameById(b.gameId);
+  return `<div class="pmine nflbet"><div class="pbhead"><span><b>${P?`${(b.legs||[]).length}-leg NFL parlay`:esc((b.nfl&&b.nfl.label)||"NFL bet")}</b> <span class="num">${nflOdds(P?toAmerican((b.legs||[]).reduce((a,L)=>a*decOdds(L.odds),1)):b.odds)}</span></span>${nflPill(s)}</div>
+    ${P?`<div>${legs}</div>`:`<div class="small muted">${esc(g?`${g.ab} @ ${g.hb}`:"")}${g&&g.final&&!g.void?` · final ${g.awayScore}–${g.homeScore}`:""} · Week ${esc(String(g?g.week:""))}</div>`}
+    <div class="small"><b>${Number(b.stake).toLocaleString()} BB</b> to win <b class="pos">${(P?parlayWin(b):Number(b.takerStake)||0).toLocaleString()} BB</b> · ${esc(when(b.createdAt))}</div></div>`}
+function nflMineHtml(all){const me=S.me;if(!me)return "";const mine=S.bets.filter(b=>b.posterId===me&&nflIsBet(b)&&b.status!=="cancelled").sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  const list=all?mine:mine.filter(b=>nflStatus(b).k==="pending"||Date.now()-(b.createdAt||0)<8*DAY);if(!list.length)return "";
+  return `<h3>Your NFL bets</h3><div class="card parlay">${list.slice(0,40).map(nflBetRow).join("")}</div>`}
+function viewNfl(){const L=NFL.lines;
+  let h=`<div class="weekbar"><div class="wbleft"><div class="eyebrow muted">Real NFL games · our own lines · you get the edge</div><div class="cur">NFL${L&&L.week?` · Week ${esc(String(L.week))}`:""}</div></div></div>`;
+  if(!NFL.linesLoaded)return h+`<div class="empty"><strong>Loading NFL lines…</strong></div>`;
+  const gs=L&&Array.isArray(L.games)?L.games:[];
+  if(!gs.length)return h+`<div class="empty"><strong>No NFL lines right now.</strong><span class="small">Lines for the week's games update every hour.</span></div>`+nflMineHtml(false);
+  if(nflStale(L))h+=`<p class="note">The NFL lines haven't refreshed in over 3 hours, so NFL betting is paused until the next hourly update.</p>`;
+  const days=[];for(const G of gs){const d=nflDay(G.kick);let D=days.find(x=>x.d===d);if(!D)days.push(D={d,g:[]});D.g.push(G)}
+  h+=days.map(D=>`<div class="eyebrow nflday">${esc(D.d)}</div>${D.g.map(G=>nflGameHtml(G,L)).join("")}`).join("");
+  h+=`<p class="small muted">Win chances come from ESPN's matchup predictor (or our own ratings when it's missing), and the House pays you 1% more than fair on every side: no house edge. Spreads and totals pay +102 on both sides. Tap lines to build a slip: straight bets or a parlay (one pick per game). Betting on a game locks at kickoff. Overtime counts; a tie or an exact line is a push. A game that isn't final by the Wednesday after it was scheduled is void and refunded.${L.fetchedAt?` Updated ${esc(when(L.fetchedAt))}.`:""}</p>`;
+  h+=nflMineHtml(false);
+  const n=nflLegs().length;if(n&&S.me)h+=`<div class="nflpad"></div><div class="nflbar"><button type="button" class="btn gold" data-nflslip>Bet slip · ${n} pick${n===1?"":"s"}${NFL.slip.parlay?" · parlay":""}</button></div>`;
+  if(NFL.open&&S.me)h+=nflSlipHtml();
+  return h}
+async function nflPlace(){if(!S.me)throw{code:"msg",message:"Sign in to bet."};const legs=nflLegs(),P=NFL.slip.parlay;
+  if(!legs.length)throw{code:"msg",message:"Pick at least one line."};
+  if(P&&legs.length<2)throw{code:"msg",message:"A parlay needs at least 2 picks."};
+  if(P&&new Set(legs.map(l=>l.eid)).size<legs.length)throw{code:"msg",message:"One pick per game in a parlay."};
+  const stake=Math.round(Number(NFL.slip.stake)||0);if(!(stake>0))throw{code:"msg",message:"Bet at least 1 BB."};
+  const total=P?stake:stake*legs.length,bal=Math.floor(ledger().balOf(S.me));if(total>bal)throw{code:"msg",message:"Not enough BiggieBucks for that."};
+  /* re-read the lines: never place at a price the player didn't see */
+  const s=await db.doc("meta/nfl").get(),F=(s.exists&&s.data())||null;NFL.lines=F||NFL.lines;
+  if(nflStale(F))throw{code:"msg",message:"NFL lines are being refreshed. Try again after the next update."};
+  const moved=[];for(const l of legs){const G=(F.games||[]).find(x=>x.id===l.eid);
+    if(!nflOpen(G,F)){delete NFL.slip.legs[l.key];moved.push(`${l.label} is locked`);continue}
+    const q=nflQuote(G,l.mkt,l.side);if(!q){delete NFL.slip.legs[l.key];moved.push(`${l.label} is off the board`);continue}
+    if(q.odds!==l.odds||q.line!==l.line||F.wk!==l.wid){moved.push(`${l.label} ${nflOdds(l.odds)} → ${q.label} ${nflOdds(q.odds)}`);Object.assign(l,{line:q.line,odds:q.odds,label:q.label,wid:F.wk})}}
+  if(moved.length){render();throw{code:"msg",message:"Lines moved: "+moved.join("; ")+". Check your slip and place again."}}
+  const now=Date.now(),wk=Number(F.week)||curWeek(),base={unit:"BB",posterId:S.me,takerId:"house",house:true,status:"live",createdAt:now,acceptedAt:now};
+  const gid=l=>`nfl:${l.wid}:${l.eid}:${l.mkt}`;
+  const add=d=>db.collection("bets").add(d).catch(e=>{if(e&&(e.code==="not_granted"||/permission/i.test(String(e.code||e.message||""))))throw{code:"msg",message:"That game just kicked off, so its betting is locked."};throw e});
+  if(P){const L=legs.map(l=>{const x={gameId:gid(l),side:l.side,odds:l.odds,label:l.label};if(l.line!=null)x.line=l.line;return x});
+    await add({type:"parlay",nfl:true,legs:L,week:wk,stake,...base});
+    try{const dec=L.reduce((x,l)=>x*decOdds(l.odds),1);await db.collection("chat").add({type:"bet",uid:S.me,poster:S.me,at:Date.now(),text:`${nm(S.me)} placed a ${L.length}-leg NFL parlay (${nflOdds(toAmerican(dec))})`,detail:`${L.map(l=>l.label).join(" · ")}. ${stake.toLocaleString()} BB to win ${Math.round(stake*(dec-1)).toLocaleString()} BB.`})}catch(_){}}
+  else for(const l of legs){const b={gameId:gid(l),side:l.side,odds:l.odds,stake,takerStake:takerRisk("yes",stake,l.odds),nfl:{wid:l.wid,eid:l.eid,mkt:l.mkt,kick:l.kick,label:l.label},...base};if(l.line!=null)b.line=l.line;
+    await add(b);delete NFL.slip.legs[l.key]}
+  NFL.slip.legs={};NFL.open=false;render()}
+nflPlace=oneAtATime(nflPlace);
+document.addEventListener("input",e=>{if(e.target.id==="nflStake"){NFL.slip.stake=e.target.value;const p=$("#nflPrev");if(p)p.innerHTML=nflPrevTxt()}});
+document.addEventListener("click",e=>{const t=e.target.closest("button,#nflSlipOv");if(!t)return;
+  if(t.id==="nflSlipOv"){if(e.target===t){NFL.open=false;render()}return}
+  const d=t.dataset;
+  if(d.nflpick){if(!S.me)return toast("Sign in to bet.");nflPick(d.nflpick);return}
+  if("nflslip" in d){NFL.open=true;render();return}
+  if("nflclose" in d){NFL.open=false;render();return}
+  if("nflclear" in d){NFL.slip.legs={};NFL.open=false;render();return}
+  if(d.nflx){delete NFL.slip.legs[d.nflx];if(!nflLegs().length)NFL.open=false;render();return}
+  if(d.nflmode){NFL.slip.parlay=d.nflmode==="parlay";if(NFL.slip.parlay){const seen=new Set();for(const l of nflLegs()){if(seen.has(l.eid))delete NFL.slip.legs[l.key];else seen.add(l.eid)}}render();return}
+  if("nflplace" in d){act(nflPlace,"Bet placed. It's live.");return}});
+window.__nfl={NFL,nflGame,nflGrade,nflVoidAt};
 /* One bet at a time: a second tap while the first is still saving is ignored, so balances can't be double-spent */
 function oneAtATime(fn){return async(...a)=>{if(S._spending)throw{code:"msg",message:"Still placing your last bet…"};S._spending=true;try{return await fn(...a)}finally{setTimeout(()=>{S._spending=false},1500)}}}
 placeHouseBet=oneAtATime(placeHouseBet);placeParlay=oneAtATime(placeParlay);postWithBet=oneAtATime(postWithBet);
@@ -5228,10 +5399,11 @@ function viewMine(){
   const me=S.me;if(!me)return `<div class="empty">Sign in to see your bets.</div>`;
   const mine=S.bets.filter(b=>(b.posterId===me||b.takerId===me||b.target===me)&&b.status!=="cancelled"&&gameById(b.gameId));
   const recaps=weekRecaps(me),recapHtml=recaps.length?`<section class="card"><h3>Payout summary</h3>${recaps.map(W=>recapCard(W)).join("")}</section>`:"";
-  if(!mine.length)return `<h2>My bets</h2>${liveSummary()}${recapHtml}<div class="empty"><strong>You haven't bet yet.</strong><span class="small">Post an offer on any matchup from the Board, or accept one someone else posted.</span></div>`;
+  const nflPs=S.bets.filter(b=>b.posterId===me&&b.type==="parlay"&&nflIsBet(b)&&b.status!=="cancelled").sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)),nflPH=nflPs.length?`<h3>NFL parlays</h3><div class="card parlay">${nflPs.slice(0,30).map(nflBetRow).join("")}</div>`:"";
+  if(!mine.length)return `<h2>My bets</h2>${liveSummary()}${recapHtml}${nflPH}<div class="empty"><strong>You haven't bet yet.</strong><span class="small">Post an offer on any matchup from the Board, or accept one someone else posted.</span></div>`;
   const byWk={};for(const b of mine){const w=Number(gameById(b.gameId).week);(byWk[w]=byWk[w]||[]).push(b)}
   const L=ledger();
-  return `<h2>My bets</h2>`+liveSummary()+recapHtml+Object.keys(byWk).map(Number).sort((a,b)=>b-a).map(w=>{
+  return `<h2>My bets</h2>`+liveSummary()+recapHtml+nflPH+Object.keys(byWk).map(Number).sort((a,b)=>b-a).map(w=>{
     const net=(L.byWeek[w]&&L.byWeek[w].net[me])||0;
     return `<div class="card"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline"><h3>Week ${w}</h3>${net?`<span class="num ${net>0?"pos":"neg"}">${esc(signed(net))}</span>`:""}</div>
     <div>${byWk[w].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).map(b=>{return betRow(b,gameById(b.gameId),true)}).join("")}</div></div>`;
@@ -5320,7 +5492,7 @@ setInterval(()=>{if(document.visibilityState!=="visible"){MINE_LAST=Date.now();r
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")MINE_LAST=Date.now()});
 /* background updates coalesce into at most one render per frame, and wait while a Flappy run is in progress */
 let _rq=0;window.SB_RENDER=()=>renderSoon();function renderSoon(){if(_rq)return;_rq=requestAnimationFrame(()=>{_rq=0;if((typeof FP!=="undefined"&&FP&&FP.st==="play"&&S.tab==="flappy")||document.getElementById("revOv")){setTimeout(renderSoon,400);return}render()})}
-function render(){lvTick();setTimeout(onlRender,0);setTimeout(autoRefill,0);if(S.gw)setTimeout(gwRender,0);setTimeout(recapPopup,400);
+function render(){nflLinesWatch();lvTick();setTimeout(onlRender,0);setTimeout(autoRefill,0);if(S.gw)setTimeout(gwRender,0);setTimeout(recapPopup,400);
   {const u=logoOf(S.me),m=$("#meAv");if(m){if(u){m.outerHTML=`<img class="dot img" id="meAv" src="${esc(u)}" alt="">`}else if(m.tagName==="IMG"){m.outerHTML=`<span class="dot" id="meAv"></span>`}}}
   setMe();if(CHAT.open)chatRender();if(S.addOpen){refreshGhosts();betPreview()}
   const ts=$("#tabSetup");if(ts)ts.hidden=!S.canEdit;
@@ -5351,7 +5523,7 @@ function render(){lvTick();setTimeout(onlRender,0);setTimeout(autoRefill,0);if(S
   else if((S.housePick&&v.querySelector("#houseModal"))||(S.futPick&&v.querySelector("#futModal"))||(document.activeElement&&v.contains(document.activeElement)&&/^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName))){
     /* Someone is filling in a form: don't redraw the page under them (that reset bet amounts to 100) */
     if(S.housePick)housePrev()}
-  else{mountChat(false);S._bjSig=null;const x=({bank:viewBank,home:viewHome,board:viewBoard,futures:viewFutures,mine:viewMine,standings:viewStandings,setup:viewSetup}[S.tab]||viewBoard)();
+  else{mountChat(false);S._bjSig=null;const x=({bank:viewBank,home:viewHome,board:viewBoard,futures:viewFutures,nfl:viewNfl,mine:viewMine,standings:viewStandings,setup:viewSetup}[S.tab]||viewBoard)();
     /* background snapshots (heartbeats, chat, other players' prefs) re-render often; skip the rebuild when this view's HTML is unchanged and nothing else touched it */
     if(viewDirty(v)||x!==v._gen||v._genTab!==S.tab){v.innerHTML=x;v._gen=x;v._genTab=S.tab}genRan=true}
   const mv=$("#memberView");mv.hidden=!S.viewMember;if(S.viewMember){const x=memberOverlay();if(x!==S._mvHtml){S._mvHtml=x;mv.innerHTML=x}}else S._mvHtml=null;
@@ -5614,7 +5786,7 @@ function sideOpen(v){pageLock("side",!!v);const wrap=$("#sideNav"),pnl=wrap.quer
   requestAnimationFrame(()=>{pnl.style.transform="translateX(-100%)";sh.style.opacity="0"});
   setTimeout(()=>{wrap.hidden=true;pnl.style.transform="";sh.style.opacity="";pnl.style.transition="";sh.style.transition=""},230)}
 function sideRender(){
-  document.querySelectorAll(".sitem[data-side]").forEach(b=>b.classList.toggle("on",b.dataset.side===S.tab));{const s=$("#casinoSub");if(s&&CASINO_TABS.includes(S.tab)&&s.hidden)casinoOpen(true);const b=$("#casinoTgl");if(b)b.classList.toggle("on",CASINO_TABS.includes(S.tab))}{const s=$("#mpSub");if(s&&MP_TABS.includes(S.tab)&&s.hidden)mpOpen(true);const b=$("#mpTgl");if(b)b.classList.toggle("on",MP_TABS.includes(S.tab))}
+  document.querySelectorAll(".sitem[data-side]").forEach(b=>b.classList.toggle("on",b.dataset.side===S.tab));{const s=$("#casinoSub");if(s&&CASINO_TABS.includes(S.tab)&&s.hidden)casinoOpen(true);const b=$("#casinoTgl");if(b)b.classList.toggle("on",CASINO_TABS.includes(S.tab))}{const s=$("#sbSub");if(s&&SB_TABS.includes(S.tab)&&s.hidden)sbOpen(true);const b=$("#sbTgl");if(b)b.classList.toggle("on",SB_TABS.includes(S.tab))}{const s=$("#mpSub");if(s&&MP_TABS.includes(S.tab)&&s.hidden)mpOpen(true);const b=$("#mpTgl");if(b)b.classList.toggle("on",MP_TABS.includes(S.tab))}
   $("#sideAdmin").hidden=!S.canEdit;
   const w=$("#sideWho");if(S.me){w.innerHTML=`${pic(S.me)}<span><b>${esc(nm(S.me))}</b><small>${Math.round(ledger().balOf(S.me)).toLocaleString()} BB</small></span>`}else w.innerHTML=`<span><b>Not signed in</b></span>`;
 }
@@ -5624,6 +5796,9 @@ const CASINO_TABS=["blackjack","roulette","craps","hilo"];
 function casinoOpen(o){const s=$("#casinoSub"),b=$("#casinoTgl");if(!s||!b)return;s.hidden=!o;b.setAttribute("aria-expanded",String(!!o));b.classList.toggle("on",CASINO_TABS.includes(S.tab))}
 document.addEventListener("click",e=>{if(e.target.closest("#casinoTgl")){e.stopPropagation();casinoOpen($("#casinoSub").hidden)}},true);
 const MP_TABS=["rr","th"];
+const SB_TABS=["board","futures","mine","nfl"];
+function sbOpen(o){const s=$("#sbSub"),b=$("#sbTgl");if(!s||!b)return;s.hidden=!o;b.setAttribute("aria-expanded",String(!!o));b.classList.toggle("on",SB_TABS.includes(S.tab))}
+document.addEventListener("click",e=>{if(e.target.closest("#sbTgl")){e.stopPropagation();sbOpen($("#sbSub").hidden)}},true);
 function mpOpen(o){const s=$("#mpSub"),b=$("#mpTgl");if(!s||!b)return;s.hidden=!o;b.setAttribute("aria-expanded",String(!!o));b.classList.toggle("on",MP_TABS.includes(S.tab))}
 document.addEventListener("click",e=>{if(e.target.closest("#mpTgl")){e.stopPropagation();mpOpen($("#mpSub").hidden)}},true);
 $("#sideNav").addEventListener("click",e=>{const t=e.target.closest("[data-side]");if(!t)return;const k=t.dataset.side;
@@ -6288,7 +6463,7 @@ render();
   if(S.me)await lvBoot(P0,()=>{done("live");renderSoon()});
   const sub=(k,apply)=>db.collection(k).onSnapshot(snap=>{apply(snap.docs.map(d=>({id:d.id,...d.data()})));done(k);renderSoon();refreshNames().then(ch=>{if(ch)renderSoon()})},()=>{done(k);renderSoon()});
   sub("games",rows=>S.games=rows);
-  sub("bets",rows=>S.bets=rows);
+  sub("bets",rows=>{S.bets=rows;nflResSync()});
   sub("prefs",rows=>{S.prefs={};LV.rows={};rows.forEach(r=>{LV.rows[r.id]=r;S.prefs[r.id]=lvView(r.id)||r});bjOverlay();chatRender()});
   /* Commissioner balance adjustments (one doc per member: {amount}) */
   db.collection("adjust").onSnapshot(s=>{S.adjust={};s.docs.forEach(d=>S.adjust[d.id]=Number(d.data().amount)||0);renderSoon()},()=>{});

@@ -80,7 +80,7 @@ service cloud.firestore {
 
     // Collections only admins may change (invites/links have their own rules below).
     function adminOnly(coll) {
-      return coll in ['config', 'meta', 'adjust', 'cardimg'];
+      return coll in ['config', 'meta', 'adjust', 'cardimg', 'nfl'];
     }
 
     // One doc per player; only that player (or an admin) may change it.
@@ -228,13 +228,40 @@ service cloud.firestore {
         isAdmin()
         || (!adminOnly(coll) && !playerOwned(coll))
         || (playerOwned(coll) && isSelf(docId))
-      );
+      ) && (coll != 'bets' || isAdmin() || nflBetOk());
 
       // Players never delete their own prefs/profile; admins can.
       allow delete: if (member() || isAdmin()) && !special(coll) && (
         isAdmin()
         || (!adminOnly(coll) && !playerOwned(coll))
       );
+    }
+
+    // NFL bets vs the House (gameId "nfl:{season}_{week}:{espnId}:{ml|sp|tot}", also as parlay legs).
+    // They can only be placed before kickoff, per nfl/{season}_{week}.g[espnId].kick (written by the
+    // hourly job), and once placed only an admin may change them (void/restore).
+    function nflId(id) {
+      return id is string && id.matches('nfl:.*');
+    }
+    function nflKickOk(id) {
+      let p = id.split(':');
+      return p.size() == 4
+        && get(docPath('nfl', p[1])).data.g[p[2]].kick > request.time.toMillis();
+    }
+    function nflLegOk(legs, i) {
+      return legs.size() <= i || !nflId(legs[i].gameId) || nflKickOk(legs[i].gameId);
+    }
+    function nflBetOk() {
+      let d = request.resource.data;
+      let wasNfl = resource != null && (nflId(resource.data.get('gameId', null)) || resource.data.get('nfl', null) == true);
+      let legs = d.get('legs', null);
+      return !wasNfl
+        && (!nflId(d.get('gameId', null)) || nflKickOk(d.gameId))
+        && (!(legs is list) || (
+          (legs.size() <= 12 || d.get('nfl', null) != true)
+          && nflLegOk(legs, 0) && nflLegOk(legs, 1) && nflLegOk(legs, 2) && nflLegOk(legs, 3)
+          && nflLegOk(legs, 4) && nflLegOk(legs, 5) && nflLegOk(legs, 6) && nflLegOk(legs, 7)
+          && nflLegOk(legs, 8) && nflLegOk(legs, 9) && nflLegOk(legs, 10) && nflLegOk(legs, 11)));
     }
 
     // No other subcollections; keep them closed.
