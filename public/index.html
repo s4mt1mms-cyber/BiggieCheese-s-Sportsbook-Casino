@@ -904,6 +904,7 @@ body.pkquake{animation:pkquake .12s linear 34}@keyframes pkquake{25%{transform:t
 .wkrgrid b{font-size:16px;font-weight:800}.wkrnet{font-weight:700}.wkrnet b{font-size:18px}
 .wkrecap .pos,.wkrecap .num.pos{color:#5cff72!important}.wkrecap .neg,.wkrecap .num.neg{color:#ff6262!important}
 .wkrecap.big .wkrgrid b{font-size:18px}.recapbox{gap:12px}
+.colsum{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 4px}.colsum>div{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid var(--line)}.colsum b{font-size:18px}
 .newsbox{max-height:calc(100dvh - 40px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));overflow-y:auto;-webkit-overflow-scrolling:touch}.newsday{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:4px}.newslist{display:grid;gap:8px;text-align:left}.newsitem{display:grid;grid-template-columns:24px 1fr;gap:8px;align-items:start;padding:7px 10px;border-radius:10px;background:rgba(255,255,255,.05);font-size:15px;line-height:1.3}.newslist{gap:6px}.newsbox #newsOk{position:sticky;bottom:0;box-shadow:0 -10px 16px 4px var(--paper)}
 .dragchip{position:fixed!important;z-index:60;pointer-events:none;transform:translate(-50%,-60%) scale(1.15)!important;box-shadow:0 8px 16px rgba(0,0,0,.6)!important;margin:0!important}
 .rlcell i.on,.rlout i.on{pointer-events:auto;touch-action:none;cursor:grab}
@@ -4394,6 +4395,14 @@ function cimgFill(root){(root||document).querySelectorAll("[data-cimg]:not(.has)
    Catalog lives in code (cardsDefault("pm")); images in cardimg/pm-*. Packs are drawn without replacement from the fixed pool:
    pool = every copy minus every card already dealt in a plat/slot_<n> purchase record. Supply never refills (Claire burns for good). */
 const PM_PACK={price:55000,n:5,packs:30};
+/* Pack commissions, paid by the house (the buyer pays only the pack price): the dev gets 7.5% of every pack, the Multiverse
+   creator (Chancellor Zartog) 5% of every Multiverse pack. Not paid to yourself. One bank doc per buyer, recipient and day
+   (amt = that day's running total) so the bank collection stays small. Platinum Mysterio packs keep their own PM_FEES. */
+const PACK_FEES=[{k:"dev",to:"u_IfmXeDmDg1B3W4naCzVbSA",pct:.075,note:"Dev fee · packs"},{k:"mvc",to:"u_jzH6I8emDBcqWaXJhIX_HA",pct:.05,note:"Multiverse creator fee",set:"mv"}];
+async function pkFees(p,set){if(!S.me||!db)return;const day=divDay();
+  for(const f of PACK_FEES){if((f.set&&f.set!==set)||f.to===S.me)continue;const fee=Math.round(p.price*f.pct);if(!(fee>0))continue;
+    const ref=db.doc(`bank/packfee_${S.me}_${f.to}_${day}_${f.k}`);
+    for(let t=0;t<3;t++){try{const ex=await ref.get(),d=ex.exists?ex.data():{};await ref.set({from:"house",to:f.to,amt:(Math.floor(Number(d.amt))||0)+fee,packs:(Number(d.packs)||0)+1,note:f.note,kind:"packfee",buyer:S.me,day,at:Date.now()});break}catch(_){await bkWait(800)}}}}
 const PM_FEES=[{k:"dev",to:"u_IfmXeDmDg1B3W4naCzVbSA",amt:1500,note:"Dev fee"},{k:"creator",to:"u_jzH6I8emDBcqWaXJhIX_HA",amt:1500,note:"Card creator fee"}];
 const PM_PLAT_DESC="Part of the limited time platinum mysterio collection. 💸 Pays 250 BB a day per copy.";
 const PM_CARDS=[
@@ -4647,7 +4656,7 @@ function viewPacks(){if(!S.me)return `<div class="empty">Sign in to collect card
     const got=tiers.map(r=>{const cs=cat.filter(c=>c.r===r&&cardCount(c.id,who)>0);if(!cs.length)return "";return head(r,isPm?`${cs.length} owned`:`${cs.length}/${cat.filter(c=>c.r===r).length}`)+`<div class="cgrid">${cs.map(c=>cardHtml(c,{count:cardCount(c.id,who),click:true,small:true,who:mine?null:who})).join("")}</div>`}).join("");
     const hsh=x=>{let h=7;for(const ch of x)h=(h*31+ch.charCodeAt(0))>>>0;return h};const unseen=isPm?cat.filter(c=>!cardCount(c.id,who)&&!pmSeen(c.id)).sort((a,b)=>hsh(a.id)-hsh(b.id)):[];
     const need=(unseen.length?`<div class="crhead" style="--rc:#f3dfff"><span class="crdot"></span><b>Mystery cards</b><span class="small muted">nobody has pulled these yet</span></div><div class="cgrid">${unseen.map(c=>cardHtml(c,{missing:true,small:true})).join("")}</div>`:"")+tiers.map(r=>{const cs=cat.filter(c=>c.r===r&&!cardCount(c.id,who)&&(!isPm||pmSeen(c.id)));if(!cs.length)return "";return head(r,`${cs.length} still needed`)+`<div class="cgrid">${cs.map(c=>cardHtml(c,{missing:true,small:true})).join("")}</div>`}).join("");
-    body=`<label class="pkwho"><span class="small muted">Viewing</span><select data-pkwho>${members().map(id=>({id,n:Object.values(myCards(id)).filter(x=>Number(x)>0).length})).sort((a,b)=>(b.id===S.me)-(a.id===S.me)||b.n-a.n).map(o=>`<option value="${o.id}" ${o.id===who?"selected":""}>${o.id===S.me?"My collection":esc(nm(o.id))} · ${o.n} card${o.n===1?"":"s"}</option>`).join("")}</select></label>${scHtml(who)}${sets.length>1?`<div class="chips">${sets.filter(k=>!CSETS[k].special).map(k=>`<button type="button" class="chip${k===cs_?" on":""}" data-pkcset="${k}">${esc(CSETS[k].name)}</button>`).join("")}${sets.some(k=>CSETS[k].special)?`<span class="chiplbl">Special</span>${sets.filter(k=>CSETS[k].special).map(k=>`<button type="button" class="chip pmchip${k===cs_?" on":""}" data-pkcset="${k}">💠 ${esc(CSETS[k].name)}</button>`).join("")}`:""}</div>`:`<div class="small muted">${esc(CSETS[cs_].name)}</div>`}${isPm?`<p class="small"><b>${have}</b> collected · <span class="muted">${Object.keys(pmPulled()).length} discovered by the league · limited time, never reprinted</span></p>`:`<div class="pkprog"><b>${have}/${cat.length}</b> collected<div class="pkbar"><i style="width:${Math.round(have/cat.length*100)}%"></i></div></div>`}
+    body=`<label class="pkwho"><span class="small muted">Viewing</span><select data-pkwho>${members().map(id=>({id,n:Object.values(myCards(id)).filter(x=>Number(x)>0).length})).sort((a,b)=>(b.id===S.me)-(a.id===S.me)||b.n-a.n).map(o=>`<option value="${o.id}" ${o.id===who?"selected":""}>${o.id===S.me?"My collection":esc(nm(o.id))} · ${o.n} card${o.n===1?"":"s"}</option>`).join("")}</select></label>${colSumHtml(who)}${scHtml(who)}${sets.length>1?`<div class="chips">${sets.filter(k=>!CSETS[k].special).map(k=>`<button type="button" class="chip${k===cs_?" on":""}" data-pkcset="${k}">${esc(CSETS[k].name)}</button>`).join("")}${sets.some(k=>CSETS[k].special)?`<span class="chiplbl">Special</span>${sets.filter(k=>CSETS[k].special).map(k=>`<button type="button" class="chip pmchip${k===cs_?" on":""}" data-pkcset="${k}">💠 ${esc(CSETS[k].name)}</button>`).join("")}`:""}</div>`:`<div class="small muted">${esc(CSETS[cs_].name)}</div>`}${isPm?`<p class="small"><b>${have}</b> collected · <span class="muted">${Object.keys(pmPulled()).length} discovered by the league · limited time, never reprinted</span></p>`:`<div class="pkprog"><b>${have}/${cat.length}</b> collected<div class="pkbar"><i style="width:${Math.round(have/cat.length*100)}%"></i></div></div>`}
       <h3>${mine?"Your cards":esc(nm(who))+"'s cards"}</h3>${got||`<p class="empty small">${mine?"No cards yet. Open a pack to start your collection.":"No cards in this collection yet."}</p>`}
       ${need?`<h3 class="needh">Still to collect</h3>${need}`:`<p class="pos"><b>${mine?"Full set! You've collected every card.":"Full set! They've collected every card."}</b></p>`}`}
   if(st.tab==="mkt"){const so=st.mksort||"new",rf=st.mkr==null?"any":st.mkr;const SORTS={new:(a,b)=>(b.at||0)-(a.at||0),old:(a,b)=>(a.at||0)-(b.at||0),rhi:(a,b)=>cardById(b.cid).r-cardById(a.cid).r||(b.at||0)-(a.at||0),rlo:(a,b)=>cardById(a.cid).r-cardById(b.cid).r||(b.at||0)-(a.at||0),plo:(a,b)=>(a.price||9e15)-(b.price||9e15),phi:(a,b)=>(b.price||0)-(a.price||0)};
@@ -4665,7 +4674,7 @@ function pkTest(){if(!S.canEdit)return;const cat=cardsCat(pkSt().set);const dr=c
 async function pkBuy(id){const set=pkSt().set;const p=PACKS.find(x=>x.id===id);if(!p||S._pkBusy)return;const bal=Math.floor(ledger().balOf(S.me));if(bal<p.price)return toast("Not enough BiggieBucks for that pack.");
   S._pkBusy=true;try{const pulls=pkOpen(p,set);if(!pulls.length){S._pkBusy=false;return toast("Every card in this collection is sold out.")}cimgPrefetch(pulls);const q=S.prefs[S.me]=S.prefs[S.me]||{};const cards={...(q.cards||{})},add={};pulls.forEach(cid=>{cards[cid]=(Number(cards[cid])||0)+1;add[cid]=cards[cid]});
     const patch={packSpent:(Number(q.packSpent)||0)+p.price,cards:add,packsOpened:(Number(q.packsOpened)||0)+1};Object.assign(q,{packSpent:patch.packSpent,cards,packsOpened:patch.packsOpened});
-    await db.doc("prefs/"+S.me).update(patch);pkShowOpen(p,pulls);
+    await db.doc("prefs/"+S.me).update(patch);pkShowOpen(p,pulls);pkFees(p,cardSet(pulls[0]));
     const best=Math.max(...pulls.map(c=>cardById(c).r));if(best>=4){const c=cardById(pulls.find(x=>cardById(x).r===best));try{db.collection("chat").add({type:"bet",uid:S.me,poster:S.me,at:Date.now(),text:`${best===6?"🐉🐉🐉 ":best===5?"🏆 ":"🔥 "}${nm(S.me)} pulled ${best===6?"THE STARLUXE DRAGON SUPREME":CR[best].n}: ${c.name} from a ${p.name}!${best===6?" 🐉🐉🐉":" 🎴"}`})}catch(_){}}}
   catch(e){toast("Couldn't open that pack. Check your connection.")}finally{S._pkBusy=false;render()}}
 function pkShowOpen(p,pulls){const R=CR[p.r];const imgReady=cimgPrefetch(pulls,8000);const o=document.createElement("div");o.className="pkov";o.innerHTML=`<div class="pkstage"><div class="packbig packart pt${p.r}" style="--rc:${R.c};--rg:${R.g}"><i class="crimp t"></i><i class="crimp b"></i><div class="packfoil"><span class="pklogo">${LOGO[pkSt().set]||""}</span><span class="pkem">${PK_EM[p.r]}</span><span class="pkset">${esc((CSETS[pkSt().set]||CSETS.lm).name)}</span><b>${esc(p.name)}</b><span class="pkn">Tap to open</span></div></div>
@@ -4764,12 +4773,16 @@ document.addEventListener("click",e=>{const v=e.target.closest("[data-profcoll]"
 /* daily card dividend: first visit after 1 AM Eastern pays per copy owned, by rarity */
 const CARD_DIV=[1,5,25,200,1000,5000,50000,250,0];
 function divDay(){const d=new Date(Date.now()-36e5);return d.toLocaleDateString("en-CA",{timeZone:"America/New_York"})}
-async function divCheck(){if(!S.ready||!S.me||!db||S._divBusy)return;const q=S.prefs[S.me];if(!q)return;const day=divDay();if(q.divDay===day)return;
+/* one player's daily card dividend right now (the same math the 1 AM payout uses) */
+function divCalc(id){const q=S.prefs[id]||{},cards=q.cards||{};
   /* own every card of a rarity in a collection: 2x. own every copy in existence of a card: 5x (not the Dragon) */
-  const full=new Set();Object.keys(CSETS).filter(k=>!CSETS[k].special).forEach(set=>{const cat=cardsCat(set);for(let r=0;r<CR.length;r++){const cs=cat.filter(c=>c.r===r);if(cs.length&&cs.every(c=>(Number((q.cards||{})[c.id])||0)>0))full.add(set+":"+r)}});
-  const byR=CR.map(()=>({n:0,amt:0}));let amt=0,n=0,bon=0,mono=0;for(const[cid,v]of Object.entries(q.cards||{})){const c=cardById(cid),k=Number(v)||0;if(!c||k<=0)continue;const solo=c.r>0&&c.r<6&&Object.entries(S.prefs).every(([u,pp])=>u===S.me||!(Number(((pp||{}).cards||{})[cid])>0));const x=c.r<6?(full.has(cardSet(cid)+":"+c.r)?2:1)*(solo?2:1):1;if(solo)mono++;amt+=CARD_DIV[c.r]*k*x;n+=k;byR[c.r].n+=k;byR[c.r].amt+=CARD_DIV[c.r]*k*x;if(x>1)bon++}
+  const full=new Set();Object.keys(CSETS).filter(k=>!CSETS[k].special).forEach(set=>{const cat=cardsCat(set);for(let r=0;r<CR.length;r++){const cs=cat.filter(c=>c.r===r);if(cs.length&&cs.every(c=>(Number(cards[c.id])||0)>0))full.add(set+":"+r)}});
+  const byR=CR.map(()=>({n:0,amt:0}));let amt=0,n=0,bon=0,mono=0;for(const[cid,v]of Object.entries(cards)){const c=cardById(cid),k=Number(v)||0;if(!c||k<=0)continue;const solo=c.r>0&&c.r<6&&Object.entries(S.prefs).every(([u,pp])=>u===id||!(Number(((pp||{}).cards||{})[cid])>0));const x=c.r<6?(full.has(cardSet(cid)+":"+c.r)?2:1)*(solo?2:1):1;if(solo)mono++;amt+=CARD_DIV[c.r]*k*x;n+=k;byR[c.r].n+=k;byR[c.r].amt+=CARD_DIV[c.r]*k*x;if(x>1)bon++}
   /* Peter Griffin: 1.5x on the whole dividend per copy, capped at 3x */
-  const pk=Math.min(3,cardCount("pm-peter")),mult=Math.min(3,Math.pow(1.5,pk)),base=amt;amt=Math.round(amt*mult);
+  const pk=Math.min(3,cardCount("pm-peter",id)),mult=Math.min(3,Math.pow(1.5,pk)),base=amt;amt=Math.round(amt*mult);
+  return {amt,n,byR,full,mono,bon,pk,mult,base}}
+async function divCheck(){if(!S.ready||!S.me||!db||S._divBusy)return;const q=S.prefs[S.me];if(!q)return;const day=divDay();if(q.divDay===day)return;
+  const {amt,n,byR,full,mono,pk,mult,base}=divCalc(S.me);
   /* Evil Witch (Debby): once a day her holder takes 10,000 BB from a random league member who can cover it */
   let deb=null;const hasDeb=cardCount("pm-debby")>0&&q.debbyDay!==day;
   S._divBusy=true;const patch={divDay:day,divEarn:(Number(q.divEarn)||0)+amt};if(hasDeb)patch.debbyDay=day;try{await db.doc("prefs/"+S.me).update(patch);Object.assign(q,patch);
@@ -4784,6 +4797,7 @@ setInterval(divCheck,30000);setTimeout(divCheck,4000);
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:4,d:"Oct 22",t:[["🎴","Your collection now shows your daily dividend and what all your cards would quick-sell for"]]},
  {v:3,d:"Oct 22",t:[["😂","You can now react to messages in DMs: hold or double-tap a message"]]},
  {v:2,d:"Oct 22",t:[["🧀","Flappy Cheese now pays 25 BB per point, up to 10,000 BB a day"]]},
  {v:1,d:"Oct 22",t:[
@@ -5104,7 +5118,7 @@ function bkRow(l){const c=bkCalc(l)||{},me=S.me,st=l.status,N=l.sched?l.sched.am
 function bkActivity(me){const out=[],E=(at,v,h,bad)=>{if(at)out.push({at:Number(at),v,h,bad})};
   for(const t of S.bank||[]){const a=Math.floor(Number(t.amt))||0;if(!(a>0)||t.from===t.to)continue;const note=t.note&&t.kind!=="debby"?` <span class="bknote">· ${esc(t.note)}</span>`:"";
     if(t.kind==="debby"){if(t.to===me)E(t.at,a,`🦹 Via Debby · stole from ${esc(nm(t.from))}`);else if(t.from===me)E(t.at,-a,`🦹 Via Debby · ${esc(nm(t.to))} stole from you`);continue}
-    if(t.to===me)E(t.at,a,`← ${t.kind==="platfee"||t.from==="house"?"The House":esc(nm(t.from))}${note}`);else if(t.from===me&&t.from!=="house")E(t.at,-a,`→ ${esc(nm(t.to))}${note}`)}
+    if(t.to===me)E(t.at,a,`← ${t.kind==="platfee"||t.kind==="packfee"||t.from==="house"?"The House":esc(nm(t.from))}${note}`);else if(t.from===me&&t.from!=="house")E(t.at,-a,`→ ${esc(nm(t.to))}${note}`)}
   for(const l of S.loans||[]){if(!l.borrower||!l.takenAt||!["active","late","repaid","defaulted"].includes(l.status))continue;const L=l.lender===me,B=l.borrower===me;if(!L&&!B)continue;
     const P=Math.floor(Number(l.P))||0,who=esc(nm(L?l.borrower:l.lender));
     E(l.takenAt,L?-P:P,L?`🏦 Loan to ${who}`:`🏦 Loan from ${who}`);
@@ -6311,6 +6325,9 @@ document.addEventListener("click",e=>{const t=e.target.closest("[data-dmgo],[dat
    A card that's no longer owned (sold, traded, burned, in escrow or collateral) just doesn't show. ---------- */
 const scOf=id=>{const a=(S.prefs[id]||{}).showcase;return [0,1,2].map(i=>Array.isArray(a)&&typeof a[i]==="string"&&a[i]?a[i]:null)};
 const scLive=id=>scOf(id).map(cid=>cid&&cardById(cid)&&cardCount(cid,id)>0?cid:null);
+/* collection header: what these cards pay every day and what they would quick-sell for */
+function colSumHtml(who){const d=divCalc(who),cs=myCards(who);let qs=0;for(const[cid,v]of Object.entries(cs)){const k=Number(v)||0;if(k>0)qs+=qsVal(cardById(cid))*k}
+  return `<div class="colsum"><div><span class="stlbl">Daily dividend</span><b class="num pos">+${d.amt.toLocaleString()} BB</b></div><div><span class="stlbl">Quick-sell value</span><b class="num">${qs.toLocaleString()} BB</b></div></div>`}
 function scHtml(who){const mine=who===S.me,sl=scLive(who);if(!mine&&!sl.some(Boolean))return "";
   const slots=mine?sl.map((cid,i)=>cid?`<div class="scslot">${cardHtml(cardById(cid),{click:true,small:true})}</div>`:`<button type="button" class="scslot scadd" data-scedit="${i}" aria-label="Add a card to showcase slot ${i+1}"><span>+</span></button>`):sl.filter(Boolean).map(cid=>`<div class="scslot">${cardHtml(cardById(cid),{click:true,small:true,who})}</div>`);
   return `<div class="scwrap"><div class="schd"><span class="stlbl">⭐ ${mine?"Your showcase":"Showcase"}</span>${mine?`<button type="button" class="btn ghost scedit" data-scedit>Edit showcase</button>`:""}</div><div class="scgrid">${slots.join("")}</div></div>`}

@@ -135,6 +135,9 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   Legendary abilities: Evil Witch "Debby" steals 10k/day from a random player (bank "Via Debby"), Peter Griffin
   multiplies your whole dividend 1.5× per copy (cap 3×), Claire can be burned for 500k (gone forever).
   Dragon owners get an iridescent profile glow. Platinum pack fees (1.5k dev → owner, 1.5k creator → Zartog) are paid by "the house".
+  Pack commissions (`PACK_FEES`/`pkFees`, paid by the house, never to yourself): owner 7.5% of every pack price, Zartog 5% of every
+  Multiverse pack — one `bank/packfee_<buyer>_<to>_<day>_<k>` doc per buyer/recipient/day holding the running total.
+  `divCalc(id)` = the dividend math (used by `divCheck` and the collection header `colSumHtml`, which also shows total quick-sell value).
 - **Market**: list for price and/or trade wants (specific card or "rarity or better"), private listings (`only`).
 - **Offers** (`of*`): BB and/or cards on any open listing. Offered cards leave the offerer's prefs while pending
   (`esc`) and come back on decline/cancel/expiry (48 h)/failure (`returned`, offerer's page). Accept = status race on the
