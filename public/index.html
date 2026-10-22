@@ -3078,7 +3078,7 @@ function crPlace(k){const st=crState();if(st.rolling)return;const sub=S.bjMode==
 /* Resolve one roll: returns new bets, cash back to the player, new point and a message */
 function crResolve(bets,point,a,b,dean){const s=a+b,B={...bets};let cash=0;const wins=[],losses=[];
   if(!point)["odds","come","dcome"].forEach(k=>{if(B[k]){cash+=B[k];delete B[k]}});
-  const win=(k,mult,keep)=>{const v=B[k];if(!v)return;const w=Math.floor(v*mult*(dean?crDeanF(k,s):1));cash+=w+(keep?0:v);wins.push(`${CR_SPOTS[k]} +${w.toLocaleString()}`);if(!keep)delete B[k]};
+  const win=(k,mult,keep)=>{const v=B[k];if(!v)return;/* Dean Strow wins round UP (owner), so even small bets keep the edge */const w=dean?Math.ceil(v*mult*crDeanF(k,s)-1e-9):Math.floor(v*mult);cash+=w+(keep?0:v);wins.push(`${CR_SPOTS[k]} +${w.toLocaleString()}`);if(!keep)delete B[k]};
   const lose=k=>{if(B[k]){losses.push(CR_SPOTS[k]);delete B[k]}};
   /* one-roll bets */
   if(B.field){if([3,4,9,10,11].includes(s))win("field",1);else if(s===2)win("field",2);else if(s===12)win("field",3);else lose("field")}
@@ -5173,6 +5173,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:10,d:"Oct 22",t:[["🎲","Craps Dean Strow winnings now always round up, so small bets get the full edge"]]},
  {v:9,d:"Oct 22",t:[["🎲","Craps Dean Strow now gives a 3% edge at craps (was 2.5%)"]]},
  {v:8,d:"Oct 22",t:[["🔄","When there's an update, you'll now see a \"New update ready\" button: tap it to get the latest version"]]},
  {v:7,d:"Oct 22",t:[
