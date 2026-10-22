@@ -208,6 +208,23 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   Card auras (`card:1` in `AURAS`: `dragon` = hold any Dragon card, `swamp` = hold Shrex): free, listed under "From your cards" only
   while held (`auCardHas`); `auOwns` checks the card, so selling/trading it drops the aura automatically.
   Dev fee: `shopFee(kind,id,price)` pays the owner 10% of every shop purchase from the house (`bank/shopfee_<buyer>_<kind>_<id>`, not on the owner's own buys).
+- **Emotes** (`em*`, Aura Shop → "Emotes" section, played at the live RR + Hold'em tables). **Admin-only for now:**
+  `const EMOTES_PUBLIC=false;` — while false only `S.canEdit` (the admin) sees the shop section and the 🕺 table button
+  (`#emBtn`, `emUI`) and can play one; every client still RENDERS an emote it receives. Flip it to `true` (and add a NEWS
+  entry) to release. Catalog `EMOTES` (`ldance` L Dance 100,000). Data on the player's prefs: `emotes` {id:true} (owned
+  forever, no equip step), `emoteSpent` (subtracted in `ledger().balOf`); `emBuy` writes both in ONE update (+ `shopFee("emote",…)`).
+  Sync: playing writes `rrlook/{me}.emote = {id, at}` (the look doc both tables already listen to, works in server and phone-host
+  mode); `emTick` (called every frame in `rrBuild`'s loop) starts it on seat l when it sees a new `at` < 6 s old. 8 s cooldown
+  (`EM_CD`). Blocked (`emWhy`) during a shoot-someone/return-fire sequence (`emFB`: `S.emFBt` set in `rrShotA`, cleared when the
+  guns go down; also `c.xg` / `.rraim`), on your RR turn (`emMyTurn`), blacked out or with your Hold'em chair down; those cut a
+  running dance (blend back to seated in 0.6 s). Animation: a pose = flat numbers (all 0 = seated), `emLDance(k)` → `emApply`
+  (body, chair slide, leg joints `u.legs` hip/knee added in `rrAnimal`, arm IK goals `a.em` that win in `rrSolveArm`, the "L"
+  `emLSign` on the head); `emEnd` restores the captured seat/chair exactly. Your own dance swings your camera out (`emCam`).
+  Shop preview (`emPrevSync`/`emPrevBuild`): the bear on its chair (`rrChairParts` + `rrAnimal`), renderer only while the card is
+  on screen (IntersectionObserver), disposed when it scrolls off or you leave. Add an emote: one `EMOTES` row + a pose function.
+- **Table head tags**: over each seated animal at RR / Hold'em, real players show their profile picture in their aura (`hdPic`,
+  `md` level, cached; tap for the name), bots their name. RR: HTML `#rrTags` moved by `rrTagsTick` (replaced the canvas sprites);
+  Hold'em: inside `thTags`.
 - **Presence**: "● N online" pill, green avatar rings — from existing prefs stamps (no extra writes).
 - **Admin tab**: invite codes, data import, card tools (per-card Preview + Add/Change image; a live preview of a card being added), previews.
   Uploading an image for a code-defined card (MV_ADD) writes `cardimg/<id>` and flags `imgOver.<id>` on that collection's meta doc,

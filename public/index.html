@@ -686,6 +686,12 @@ html,body,*{-webkit-tap-highlight-color:transparent}
 #thCv{width:100%;height:100%;display:block;touch-action:none}.thwrap .rrhint{top:auto;bottom:calc(200px + env(safe-area-inset-bottom,0px))}
 
 .thko{position:absolute;inset:0;pointer-events:none;z-index:1;opacity:0;background:radial-gradient(ellipse,#0006,#000 75%);transition:opacity 1.2s}.thko.on{opacity:.85}
+.rremote{position:absolute;right:12px;bottom:345px;z-index:4;width:46px;height:46px;border-radius:50%;border:2px solid #c9a0ff;background:#1c0f2ae6;font-size:22px;display:grid;place-items:center;cursor:pointer;color:#fff;box-shadow:0 0 12px #b07cff55;padding:0;touch-action:manipulation}.rremote[hidden]{display:none}.rremote.off{opacity:.42;box-shadow:none;filter:grayscale(.6)}.rremote small{position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);background:#000c;color:#e8d8ff;border-radius:99px;font:800 10px/14px var(--display,sans-serif);padding:0 5px;white-space:nowrap}.rremote small:empty{display:none}.thwrap .rremote{bottom:calc(380px + env(safe-area-inset-bottom,0px))}.emmenu{position:absolute;right:66px;z-index:6;display:flex;flex-direction:column;gap:6px;background:#140b1ef2;border:1px solid #5a3a8a;border-radius:14px;padding:8px}.emmenu[hidden]{display:none}.emmenu button{min-height:40px;border-radius:999px;border:1px solid #5a3a8a;background:#2a1640;color:#fff;font:700 14px var(--display,sans-serif);padding:0 14px;white-space:nowrap}
+.rrtag{position:absolute;left:0;top:0;will-change:transform}.rrtag b{display:block;background:#0009;color:#fff;border-radius:99px;padding:3px 10px;font:700 12px/1.2 var(--display,sans-serif);white-space:nowrap}
+.hdpic{pointer-events:auto;position:relative;display:flex;flex-direction:column;align-items:center;background:none;border:0;padding:0;margin:0;cursor:pointer;-webkit-tap-highlight-color:transparent}.hdpic .aw{--s:44px;margin:0}.hdpic .pic{width:44px;height:44px}.hdpic .badge.pic{font-size:15px}
+.hdpic i{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:3px;font:700 11px/1.2 var(--display,sans-serif);font-style:normal;color:#fff;background:#000b;border-radius:99px;padding:2px 7px;white-space:nowrap;opacity:0;transition:opacity .2s;pointer-events:none}.hdpic.nm i{opacity:1}
+.thtag.hum{background:none;border:0;padding:0;gap:2px}.thtag.hum>.num,.thtag.hum>em,.thtag.hum>b{background:#000b;border-radius:99px;padding:1px 7px}.thtag.hum.cur .hdpic .pic{box-shadow:0 0 0 3px #ffd84a,0 0 14px #ffd84a}.thtag.hum.cur{box-shadow:none}
+.emit{grid-column:1/-1}.emit .auown{z-index:2}.emprev{width:100%;height:230px;border-radius:12px;overflow:hidden;background:radial-gradient(90% 80% at 50% 35%,#3a2416,#120a06 75%);position:relative}.emprev canvas{display:block;width:100%;height:100%}.emprev::after{content:"Preview";position:absolute;left:8px;top:8px;font:700 10px/1 var(--display,sans-serif);letter-spacing:.12em;text-transform:uppercase;color:#d9c79a;opacity:.7}
 .thdrinks .rrneck{bottom:calc(320px + env(safe-area-inset-bottom,0px))}.thdrinks .rrdrink{bottom:calc(250px + env(safe-area-inset-bottom,0px))}.thdrinks .rrdbar{bottom:calc(236px + env(safe-area-inset-bottom,0px))}.thdrinks .rrbobar{bottom:calc(224px + env(safe-area-inset-bottom,0px))}
 .thcs{cursor:pointer}.thcs.drunk .thc{filter:blur(var(--dk,0px));animation:thsway 2.2s ease-in-out infinite}@keyframes thsway{50%{transform:translateX(3px) rotate(2deg)}}
 .thc.bk{background:repeating-linear-gradient(45deg,#8b1a1a 0 4px,#a02424 4px 8px);border:2px solid #fbf8f0}
@@ -1916,7 +1922,7 @@ function ledger0(){
     const a=Math.floor(Number(t.amt));if(!(a>0)||!t.from||!t.to||t.from===t.to)continue;bkA(t.from,-a);bkA(t.to,a)}
   for(const l of S.loans||[]){if(!l.borrower||!l.takenAt||!["active","late","repaid","defaulted"].includes(l.status))continue;const P=Math.floor(Number(l.P))||0;bkA(l.lender,-P);bkA(l.borrower,P);
     const seen=new Set();for(const p of l.payments||[]){if(seen.has(p.k))continue;seen.add(p.k);const a=Math.floor(Number(p.amt))||0;bkA(l.borrower,-a);bkA(l.lender,a)}}
-  return{rec,net,byWeek,wagered,bal,refills,pending,bkNet,wins,tiPaid,tiLast,balOf:id=>(bkNet[id]||0)+B(id)-(Number(S.prefs[id]&&S.prefs[id].curseFee)||0)-(Number(S.prefs[id]&&S.prefs[id].auraSpent)||0)-(Number(S.prefs[id]&&S.prefs[id].farmSpent)||0)-Math.floor((Number(S.prefs[id]&&S.prefs[id].tiWin)||0)/10)+cardMoney(id)-(pending[id]||0)+(Number(S.prefs[id]&&S.prefs[id].bjNet)||0)+(Number(S.prefs[id]&&S.prefs[id].gift)||0)+(Number(S.prefs[id]&&S.prefs[id].flapEarn)||0)+(Number(S.prefs[id]&&S.prefs[id].mineEarn)||0)+(Number(S.prefs[id]&&S.prefs[id].rlNet)||0)+(Number(S.prefs[id]&&S.prefs[id].revengeEarn)||0)+((S.adjust&&S.adjust[id])||0)+(Number(S.prefs[id]&&S.prefs[id].bjBonus)||0)+(Number(S.prefs[id]&&S.prefs[id].crNet)||0)+(Number(S.prefs[id]&&S.prefs[id].hlNet)||0)+(Number(S.prefs[id]&&S.prefs[id].rrNet)||0)+(Number(S.prefs[id]&&S.prefs[id].thNet)||0)+(Number(S.prefs[id]&&S.prefs[id].divEarn)||0),inPlay:id=>pending[id]||0};
+  return{rec,net,byWeek,wagered,bal,refills,pending,bkNet,wins,tiPaid,tiLast,balOf:id=>(bkNet[id]||0)+B(id)-(Number(S.prefs[id]&&S.prefs[id].curseFee)||0)-(Number(S.prefs[id]&&S.prefs[id].auraSpent)||0)-(Number(S.prefs[id]&&S.prefs[id].emoteSpent)||0)-(Number(S.prefs[id]&&S.prefs[id].farmSpent)||0)-Math.floor((Number(S.prefs[id]&&S.prefs[id].tiWin)||0)/10)+cardMoney(id)-(pending[id]||0)+(Number(S.prefs[id]&&S.prefs[id].bjNet)||0)+(Number(S.prefs[id]&&S.prefs[id].gift)||0)+(Number(S.prefs[id]&&S.prefs[id].flapEarn)||0)+(Number(S.prefs[id]&&S.prefs[id].mineEarn)||0)+(Number(S.prefs[id]&&S.prefs[id].rlNet)||0)+(Number(S.prefs[id]&&S.prefs[id].revengeEarn)||0)+((S.adjust&&S.adjust[id])||0)+(Number(S.prefs[id]&&S.prefs[id].bjBonus)||0)+(Number(S.prefs[id]&&S.prefs[id].crNet)||0)+(Number(S.prefs[id]&&S.prefs[id].hlNet)||0)+(Number(S.prefs[id]&&S.prefs[id].rrNet)||0)+(Number(S.prefs[id]&&S.prefs[id].thNet)||0)+(Number(S.prefs[id]&&S.prefs[id].divEarn)||0),inPlay:id=>pending[id]||0};
 }
 const START_BAL=25000,WEEKLY=2500,REFILL_CAP=10000;
 /* Tuesday 2:30 AM ET after week wk ends (weeks run Tuesday to Monday) */
@@ -2347,6 +2353,7 @@ function viewAura(){if(!S.me)return `<div class="empty">Sign in to shop.</div>`;
   ${(()=>{const mine=AURAS.filter(a=>a.card&&auOwns(me,a.id));return `<div class="aush"><span>From your cards</span><span>free</span></div>${mine.length?`<div class="augrid">${mine.map(item).join("")}</div>`:`<p class="small muted">Own a Dragon card or Shrex and its glow shows up here. It stays as long as you hold the card.</p>`}`})()}
   ${AU_TIERS.map(([t,p])=>`<div class="aush"><span>${t}</span><span>${p.toLocaleString()} BB</span></div><div class="augrid">${AURAS.filter(a=>a.t===t).map(item).join("")}</div>`).join("")}
   <div class="aush"><span>No aura</span><span>free</span></div><div class="augrid"><div class="auit${cur?"":" on"}">${prev("")}<b>None</b><span class="aupr own">${esc(auDefName(me))}</span>${cur?`<button type="button" class="aubtn ghost" data-au="eq" data-id="none">Equip</button>`:`<button type="button" class="aubtn eq" aria-disabled="true">✓ Equipped</button>`}</div></div>
+  ${emOn()?emShopHtml():""}
   <p class="aunote">Purchases are permanent, play money only. Everyone sees your aura on your picture.</p></div>`}
 function auClick(t){const k=t.dataset.au,id=t.dataset.id;if(!S.me)return toast("Sign in first.");
   if(k==="no"){S.auAsk=null;render();return}
@@ -2375,6 +2382,169 @@ async function auEquip(id){if(!S.me)return;if(S.readOnly)return toast("View only
   try{await db.doc("prefs/"+S.me).update({aura:v});const q=S.prefs[S.me];if(q)q.aura=v;toast(v?`✨ ${AURA_BY[v].n} on.`:"Aura off. Back to your normal look.")}
   catch(e){toast("That didn't save. Check your connection and try again.")}
   finally{S._auBusy=false;render()}}
+/* ---------- Emotes (Aura Shop → Emotes; played at the live Russian Roulette and Texas Hold'em tables) ----------
+   EMOTES_PUBLIC=false: only the admin (S.canEdit) sees the shop section and the table button and can play one. Every client still
+   RENDERS an emote it receives, so the admin's dance shows to everyone at the table. Flip it to true to release to all players.
+   prefs.emotes = {emoteId:true} (owned forever, no equip step: owning one = usable at both tables), prefs.emoteSpent = BB spent in
+   total (subtracted in ledger().balOf). Buying writes both in ONE prefs update (emBuy).
+   Playing one writes rrlook/{me}.emote = {id, at} (the look doc both tables already share); every client at the table plays it once
+   (emTick) when it sees a new `at` under 6 s old. Blocked during a shoot-someone / return-fire sequence (emFB), on your Russian
+   Roulette turn, blacked out or with your chair on the floor; a fire-back or your turn cuts a dance short and sits you back down.
+   Add an emote: one EMOTES row + its pose function f(seconds) → pose numbers (all 0 = seated normally; see emLDance). */
+const EMOTES_PUBLIC=false;
+const EMOTES=[{id:"ldance",n:"L Dance",p:100000,d:"Stand up from your chair and hit the L dance",ic:"🕺",len:7,f:k=>emLDance(k)}];
+const EM_BY=Object.fromEntries(EMOTES.map(e=>[e.id,e]));
+const EM_CD=8000;const EM={seen:{}};
+const emOn=()=>EMOTES_PUBLIC||!!S.canEdit;
+const emOwns=(id,e)=>!!((((S.prefs||{})[id]||{}).emotes||{})[e]);
+const emMine=()=>S.me?EMOTES.filter(e=>emOwns(S.me,e.id)):[];
+function emShopHtml(){const me=S.me,bal=Math.floor(ledger().balOf(me)),ask=S.emAsk&&S.emAsk.id;
+  const btn=e=>{if(emOwns(me,e.id))return `<button type="button" class="aubtn eq" aria-disabled="true">✓ Owned</button>`;
+    if(ask===e.id)return `<div class="auask"><button type="button" class="aubtn" data-em="ok" data-id="${e.id}">Buy for ${e.p.toLocaleString()} BB</button><button type="button" class="aubtn ghost" data-em="no">Cancel</button></div>`;
+    return `<button type="button" class="aubtn${bal<e.p?" short":""}" data-em="buy" data-id="${e.id}">Buy</button>`};
+  return `<div class="aush"><span>Emotes</span><span>${EMOTES_PUBLIC?"":"Admin preview · "}100,000 BB each</span></div><div class="small muted" style="margin:-4px 2px 10px">Use them at the live Russian Roulette and Hold'em tables. Everyone at the table sees it.</div>
+  <div class="augrid">${EMOTES.map(e=>{const o=emOwns(me,e.id);return `<div class="auit emit" data-emitem="${e.id}">${o?`<span class="auown">Owned</span>`:""}<div class="emprev" data-emprev="${e.id}"></div><b>${esc(e.ic+" "+e.n)}</b><span class="small muted">${esc(e.d)}</span><span class="aupr${o?" own":""}">${o?"Yours to keep · tap 🕺 at a live table":e.p.toLocaleString()+" BB"}</span>${btn(e)}</div>`}).join("")}</div>`}
+function emClick(t){const k=t.dataset.em,id=t.dataset.id;if(!S.me)return toast("Sign in first.");
+  if(k==="tap"){const mine=emMine();if(mine.length===1)return emPlay(mine[0].id);const m=$("#emMenu");if(m){if(!m.hidden){m.hidden=true;return}m.innerHTML=mine.map(e=>`<button type="button" data-em="play" data-id="${e.id}">${esc(e.ic+" "+e.n)}</button>`).join("");m.style.bottom=(parseFloat(getComputedStyle(t).bottom)||300)+"px";m.hidden=false}return}
+  if(k==="play"){const m=$("#emMenu");if(m)m.hidden=true;return emPlay(id)}
+  if(!emOn())return;
+  if(k==="no"){S.emAsk=null;render();return}
+  const E=EM_BY[id];if(!E)return;
+  if(k==="buy"){if(emOwns(S.me,id))return;const bal=Math.floor(ledger().balOf(S.me));if(bal<E.p)return toast(`You need ${E.p.toLocaleString()} BB for ${E.n}. You have ${bal.toLocaleString()} BB.`);S.emAsk={id,t:Date.now()};render();return}
+  if(k==="ok"){if(!S.emAsk||S.emAsk.id!==id||Date.now()-S.emAsk.t<450)return;S.emAsk=null;t.disabled=true;emBuy(id)}}
+async function emBuy(id){const E=EM_BY[id];if(!E||!S.me||!emOn())return;if(S.readOnly)return toast("View only. Ask the commish for access.");
+  if(S._emBusy)return;S._emBusy=true;
+  try{const q=S.prefs[S.me]||{};if(emOwns(S.me,id))return;
+    if(Math.floor(ledger().balOf(S.me))<E.p)return toast(`You need ${E.p.toLocaleString()} BB for ${E.n}.`);
+    const spent=(Number(q.emoteSpent)||0)+E.p;
+    await db.doc("prefs/"+S.me).update({emotes:{[id]:true},emoteSpent:spent});
+    q.emotes={...(q.emotes||{}),[id]:true};q.emoteSpent=spent;shopFee("emote",id,E.p);
+    toast(`🕺 ${E.n} is yours. Tap 🕺 at a live Russian Roulette or Hold'em table.`)}
+  catch(e){toast("That didn't save. Check your connection and try again.")}
+  finally{S._emBusy=false;render()}}
+
+/* ----- when you can emote ----- */
+/* Russian Roulette: it's my move (the button is up), I'm drawing a card or I have the gun */
+function emMyTurn(c){const st=rrSt();return !!(c.act===0||(c.hold&&c.hold.i===0)||c.lFist.visible||(st.phase==="play"&&st.turn===0&&!st.busy&&st.step))}
+/* a shoot-someone / return-fire sequence is on (set by rrShotA, cleared when the guns go down) */
+function emFB(){if(S.tab!=="rr")return false;const c=S.rr3;return !!((S.emFBt&&Date.now()-S.emFBt<60000)||(c&&c.xg&&c.xg.length)||document.querySelector(".rraim"))}
+function emAtTable(){if(S.tab==="rr")return !!(RL.on&&!RL.dead&&S.rr3&&rrSt().alive[0]);if(S.tab==="th")return !!(TH.on&&!TH.spec&&TH.ps&&!(TH.ps.out||[])[TH.my]&&S.rr3);return false}
+function emWhy(){const c=S.rr3;if(!c)return "The table is still loading.";if(emFB())return "Not during a shootout.";
+  if(S.rrBOnow)return "You're blacked out.";
+  if(S.tab==="rr"){if(emMyTurn(c))return "Not while it's your turn.";if(!rrSt().alive[0])return "You're out."}
+  if(S.tab==="th"&&TH.ps&&TH.ps.bof&&TH.ps.bof[TH.my])return "Your chair's on the floor.";return ""}
+function emUI(){if(S.tab!=="rr"&&S.tab!=="th")return;const b=document.getElementById("emBtn");if(!b)return;
+  const show=emOn()&&emMine().length>0&&emAtTable();if(b.hidden===show)b.hidden=!show;if(!show){const m=$("#emMenu");if(m&&!m.hidden)m.hidden=true;return}
+  const why=emWhy(),cd=Math.max(0,(S.emLast||0)+EM_CD-Date.now()),off=!!why||cd>0;if(b.classList.contains("off")!==off)b.classList.toggle("off",off);b.setAttribute("aria-disabled",off?"true":"false");
+  const n=b.firstElementChild,x=cd>0?Math.ceil(cd/1000)+"s":"";if(n&&n.textContent!==x)n.textContent=x;b.title=why||(cd>0?"Cooling down":"Emote")}
+setInterval(emUI,250);
+function emPlay(id){const E=EM_BY[id];if(!E||!emOn()||!emOwns(S.me,id)||!emAtTable())return;const why=emWhy();if(why)return toast(why);
+  const cd=(S.emLast||0)+EM_CD-Date.now();if(cd>0)return toast(`Catch your breath: ${Math.ceil(cd/1000)}s.`);
+  const c=S.rr3;if(S.tab==="th"&&TH.up)thHold(false);if(!emStart(c,0,id))return;S.emLast=Date.now();emUI();
+  const at=Date.now(),em={id,at};db.doc("rrlook/"+S.me).update({emote:em}).catch(()=>db.doc("rrlook/"+S.me).set({emote:em,at}).catch(()=>{}))}
+
+/* ----- the animation (shared by the table scene and the shop preview) -----
+   A pose is a flat object of numbers, all 0 = seated normally, so an emote cut short just blends its last pose back to 0. */
+const EM_RISE=.32*1.12; /* how far the body goes up when the legs straighten (thigh length × the animal's scale) */
+const emSS=x=>x<=0?0:x>=1?1:x*x*(3-2*x);
+/* L Dance: the chair slides back, up on its feet, a side-step out, right paw to the forehead in an "L", then a hop-kick shuffle
+   side to side (left paw pumping) with a twirl in the middle, a little freeze, and back into the chair. ~7 s. */
+function emLDance(k){const seg=(a,b)=>emSS((k-a)/(b-a));
+  const P={cb:.5*(seg(0,.6)-seg(6.25,6.95)),rise:seg(.2,.85)-seg(6.05,6.75),x:0,y:0,z:0,ry:0,rz:0,hx:0,hy:0,hz:0,
+    lh0:0,lh1:0,lk0:0,lk1:0,lz0:0,lz1:0,la:seg(1.3,1.65)-seg(5.3,5.6),ls:seg(1.5,1.7)-seg(5.25,5.4),lal:seg(1.35,1.7)-seg(5.3,5.6),lpx:-.75,lpy:-.55,lpz:-.3};
+  const st=seg(.9,1.4)-seg(5.55,6.05);P.x=.62*st;P.z=.12*st;
+  /* little steps walking out and back */
+  for(const[a,b]of[[.9,1.4],[5.55,6.05]])if(k>a&&k<b){const q=(k-a)/(b-a),w=Math.sin(q*Math.PI*2),amt=Math.abs(w);if(w>0){P.lh1+=.5*amt;P.lk1+=.8*amt}else{P.lh0+=.5*amt;P.lk0+=.8*amt}P.y+=.025*amt}
+  const d0=1.7,BT=.42,N=8,d1=d0+BT*N;
+  if(k>d0&&k<d1){const tb=(k-d0)/BT,bi=Math.floor(tb),f=tb-bi,env=Math.min(1,(k-d0)/.3,(d1-k)/.3),hop=Math.sin(f*Math.PI);
+    if(bi===4||bi===5){/* twirl on the spot (picks up exactly where the last hop landed) */const q=(tb-4)/2;P.ry=-.28+emSS(q)*Math.PI*2;P.rz=.12;P.x+=-.09;P.y+=hop*.05-.025*(1-hop);P.lk0+=.3;P.lk1+=.3;P.lpx=-.85;P.lpy=.4*Math.sin(q*Math.PI)-.5;P.lpz=-.3;P.hz=-.16+.2*Math.sin(q*Math.PI)}
+    else{const v=-Math.cos(Math.PI*tb)*env,dest=bi%2===0?1:-1;P.x+=v*.09;P.y+=hop*.075*env-.025*(1-hop)*env;P.rz=-v*.12;P.ry=v*.28;P.hz=v*.16;P.hx=-.12*hop;
+      /* the trailing leg kicks out sideways and forward on every hop, both knees give a little on the landing */
+      const kick=hop*env;P.lk0+=.3*(1-hop)*env;P.lk1+=.3*(1-hop)*env;if(dest>0){P.lh0+=.75*kick;P.lz0+=.5*kick;P.lk0+=.35*kick}else{P.lh1+=.75*kick;P.lz1+=.5*kick;P.lk1+=.35*kick}
+      /* left paw pumps: down by the hip on the landing, up and out on the hop */
+      P.lpx=-.7;P.lpy=-.6+1.2*hop;P.lpz=-.3-.15*hop}}
+  else if(k>=d1&&k<5.6){/* freeze: lean in with the L */const q=seg(d1,d1+.15);P.rz=.1*q;P.hz=-.18*q;P.hx=-.05*q;P.lpx=-.85;P.lpy=.35;P.lpz=-.3}
+  return P}
+function emLerp(P,f){const o={};for(const k in P)o[k]=(P[k]||0)*f;return o}
+/* the right paw's L: index finger up, thumb across, on the forehead (lives on the head so it reads from every seat) */
+function emLSign(T,u){if(u.lsign)return u.lsign;const g=new T.Group(),m=u.pawMat||new T.MeshStandardMaterial({color:0xc9bfb4});g.position.set(.09,.03,-.25);u.head.add(g);
+  const fin=new T.Mesh(new T.CylinderGeometry(.019,.021,.14,10),m);fin.position.set(0,.09,-.005);g.add(fin);const ft=new T.Mesh(new T.SphereGeometry(.02,10,8),m);ft.position.set(0,.16,-.005);g.add(ft);
+  const th=new T.Mesh(new T.CylinderGeometry(.019,.021,.1,10),m);th.rotation.z=Math.PI/2;th.position.set(-.07,-.005,-.012);g.add(th);const tt=new T.Mesh(new T.SphereGeometry(.02,10,8),m);tt.position.set(-.12,-.005,-.012);g.add(tt);
+  g.traverse(o=>{if(o.isMesh)o.castShadow=true});g.visible=false;u.lsign=g;return g}
+/* put body, legs, arms, head and chair in pose P, relative to how they sat when the emote started (u.em) */
+function emApply(T,sp,P){const b=sp.body,u=b.userData,E=u.em,ch=sp.chair,a=sp.a||0;
+  ch.position.set(E.cp.x+Math.sin(a)*P.cb,E.cp.y,E.cp.z+Math.cos(a)*P.cb);
+  b.position.set(E.bp.x+P.x,E.bp.y+P.rise*EM_RISE+P.y,E.bp.z+P.z-P.cb);b.rotation.set(E.br.x,E.br.y+P.ry,E.br.z+P.rz);
+  (u.legs||[]).forEach((L,j)=>{L.hip.rotation.set(-P.rise*Math.PI/2+(j?P.lh1:P.lh0),0,L.s*(j?P.lz1:P.lz0));L.kn.rotation.set(P.rise*Math.PI/2-(j?P.lk1:P.lk0),0,0)});
+  u.leanT=0;u.up.rotation.x=0;u.head.rotation.set(E.hr.x*(1-P.rise)+P.hx,E.hr.y*(1-P.rise)+P.hy,E.hr.z*(1-P.rise)+P.hz);
+  const mix=(p,q,t)=>p.map((v,i)=>v+(q[i]-v)*t),reach=(A,d)=>{const v=new T.Vector3(...d);if(v.lengthSq()<1e-6)v.set(0,-1,0);return A.sh.position.clone().addScaledVector(v.normalize(),(A.L1+A.L2)*.8)};
+  const pr=reach(u.armR,mix(u.restR,[.3,-.95,-.05],P.rise));if(P.la>0){const fh=new T.Vector3(.09,.03,-.25).applyEuler(u.head.rotation).add(u.head.position);pr.lerp(fh,P.la)}u.armR.em={loc:pr};
+  const pl=reach(u.armL,mix(u.restL,[-.3,-.95,-.05],P.rise));if(P.lal>0)pl.lerp(reach(u.armL,[P.lpx,P.lpy,P.lpz]),P.lal);u.armL.em={loc:pl};
+  const ls=emLSign(T,u);ls.visible=P.ls>.02;if(ls.visible)ls.scale.setScalar(Math.max(.02,P.ls))}
+function emStart(c,l,id){const sp=c&&c.seats&&c.seats[l];if(!sp||!sp.body||!sp.chair||!EM_BY[id])return false;const b=sp.body,u=b.userData;if(u.dead||!b.visible)return false;if(u.em)emEnd(sp);
+  if(u.idle==="drink"&&u.mug){u.mug.position.copy(u.mugHome);u.mug.rotation.set(0,0,0)}u.idle=null;
+  u.em={id,t0:performance.now(),cp:sp.chair.position.clone(),bp0:b.position.clone(),br:b.rotation.clone(),hr:u.head.rotation.clone(),cut:null,P:null};
+  /* your own first-person body sits further back (behind the camera); it dances from the normal seat spot */
+  u.em.bp=u.self?b.position.clone().set(0,.6,-.02):b.position.clone();return true}
+/* back to exactly how they sat */
+function emEnd(sp){const b=sp.body,u=b&&b.userData,E=u&&u.em;if(!E)return;sp.chair.position.copy(E.cp);b.position.copy(E.bp0||E.bp);b.rotation.copy(E.br);
+  (u.legs||[]).forEach(L=>{L.hip.rotation.set(0,0,0);L.kn.rotation.set(0,0,0)});u.head.rotation.copy(E.hr);u.armL.em=null;u.armR.em=null;u.up.rotation.x=0;
+  if(u.lsign)u.lsign.visible=false;if(u.self)u.head.visible=false;u.em=null}
+/* seat l has to stop: it's their Russian Roulette turn / they have the gun / they blacked out (soft: they sit back down) */
+function emStop(c,l){if(S.tab!=="rr")return false;if(c.hold&&c.hold.i===l)return true;
+  if(l===0)return !!(emMyTurn(c)||S.rrBOnow);
+  if(c.act===l)return true;const uid=RR_SEATS[l]&&RR_SEATS[l].uid,L=uid&&RL.looks[uid];return !!(L&&RL.on&&L.bo&&L.bo===RL.gid)}
+/* ... or right now (out of the game, Hold'em chair going over) */
+function emHard(c,l){if(S.tab==="th"&&TH.on&&TH.ps&&TH.ps.bof&&TH.ps.bof[thG(l)])return true;if(l===0&&S.tab==="rr"&&RL.dead)return true;return false}
+function emTick(c,now){if(!c||!c.seats)return;const T=c.T;
+  /* other players' emotes arrive on their look doc */
+  if(RL.on||TH.on)for(let l=1;l<4;l++){const uid=RR_SEATS[l]&&RR_SEATS[l].uid;if(!uid)continue;const L=RL.looks[uid],e=L&&L.emote;if(!e||!e.at||EM.seen[uid]===e.at)continue;EM.seen[uid]=e.at;
+    const age=Date.now()-e.at;if(age<6000&&age>-6000&&EM_BY[e.id]&&emOwns(uid,e.id)&&!emFB()&&!emStop(c,l)&&!emHard(c,l))emStart(c,l,e.id)}
+  let fb=null;
+  c.seats.forEach((sp,l)=>{const b=sp.body,u=b&&b.userData,E=u&&u.em;if(!E)return;
+    if(u.dead||!b.visible||emHard(c,l)){emEnd(sp);return}
+    if(fb==null)fb=emFB();if(!E.cut&&(fb||emStop(c,l)))E.cut={t:now,P:E.P||emLerp(EM_BY[E.id].f(0),1)};
+    let P;if(E.cut){const q=Math.min(1,(now-E.cut.t)/600);if(q>=1){emEnd(sp);return}P=emLerp(E.cut.P,1-emSS(q))}
+    else{const k=(now-E.t0)/1000;if(k>=EM_BY[E.id].len){emEnd(sp);return}P=EM_BY[E.id].f(k)}
+    E.P=P;emApply(T,sp,P)});
+  emCam(c)}
+/* your own dance: the camera swings out over the table so you can watch yourself, then back into your eyes */
+function emCam(c){const sp=c.seats[0],u=sp&&sp.body&&sp.body.userData;if(!u)return;const on=!!(u.em&&!u.em.cut);c.emK=(c.emK||0)+((on?1:0)-(c.emK||0))*(on?.05:.09);
+  if(u.em)u.head.visible=c.emK>.3;
+  if(c.emK<.003){c.emK=0;if(c.emCamOn){c.emCamOn=false;c.yaw=c.yaw}return}c.emCamOn=true;const T=c.T,cam=c.cam,e=emSS(c.emK);
+  const hp=new T.Vector3();u.head.getWorldPosition(hp);hp.y-=.32;cam.position.lerp(new T.Vector3(-.25,1.8,.25),e);
+  const q0=new T.Quaternion().setFromEuler(new T.Euler(c.pitch,c.yaw,0,"YXZ")),q1=new T.Quaternion().setFromRotationMatrix(new T.Matrix4().lookAt(cam.position,hp,new T.Vector3(0,1,0)));cam.quaternion.copy(q0).slerp(q1,e)}
+
+/* ----- shop preview: the bear on its chair doing the emote on a loop (only while the shop is open and the card is on screen) ----- */
+const EMP={};
+function emPrevSync(){const on=S.tab==="aura"&&emOn()&&!!S.me;const els=on?[...document.querySelectorAll("[data-emprev]")]:[];
+  if(!on){for(const id in EMP)emPrevStop(id,true);if(EMP._io){EMP._io.disconnect();delete EMP._io}return}
+  if(!EMP._io&&window.IntersectionObserver)EMP._io=new IntersectionObserver(es=>es.forEach(x=>{const id=x.target.dataset.emprev,p=EMP[id];if(!p)return;p.vis=x.isIntersecting;if(p.vis)emPrevStart(id);else emPrevStop(id)}),{threshold:.05});
+  for(const el of els){const id=el.dataset.emprev;let p=EMP[id];if(!p)p=EMP[id]={id,cv:document.createElement("canvas"),el:null};
+    if(p.el!==el){if(p.el&&EMP._io)EMP._io.unobserve(p.el);p.el=el;if(EMP._io)EMP._io.observe(el);else{p.vis=true;emPrevStart(id)}}if(p.cv.parentNode!==el)el.appendChild(p.cv)}
+  for(const id in EMP)if(id!=="_io"&&!els.includes(EMP[id].el))emPrevStop(id,true)}
+function emPrevStop(id,drop){const p=EMP[id];if(!p||id==="_io")return;const g=p.g;if(g){p.g=null;cancelAnimationFrame(g.raf);try{g.sc.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material)[].concat(o.material).forEach(m=>{if(m.map)m.map.dispose();m.dispose()})})}catch(_){}
+    try{g.R.dispose();g.R.forceContextLoss()}catch(_){}const n=document.createElement("canvas");if(p.cv.parentNode)p.cv.replaceWith(n);p.cv=n}
+  if(drop){if(p.el&&EMP._io)EMP._io.unobserve(p.el);delete EMP[id]}}
+function emPrevStart(id){const p=EMP[id];if(!p||p.g||p.loading)return;p.loading=true;
+  rrLoad().then(()=>{p.loading=false;if(EMP[id]!==p||!p.vis||p.g||S.tab!=="aura"||!p.cv.isConnected)return;p.g=emPrevBuild(p.cv,id)}).catch(()=>{p.loading=false})}
+function emPrevBuild(cv,id){const T=THREE,E=EM_BY[id];const R=new T.WebGLRenderer({canvas:cv,antialias:true,alpha:true});R.setPixelRatio(Math.min(1.5,devicePixelRatio||1));R.outputEncoding=T.sRGBEncoding;R.toneMapping=T.ACESFilmicToneMapping;R.toneMappingExposure=1;
+  const sc=new T.Scene(),cam=new T.PerspectiveCamera(36,1,.05,30);
+  const M=(c,o)=>new T.MeshStandardMaterial(Object.assign({color:c,roughness:.75},o||{}));const add=(geo,mat,x,y,z,par)=>{const m=new T.Mesh(geo,mat);m.position.set(x||0,y||0,z||0);(par||sc).add(m);return m};
+  const fl=add(new T.CircleGeometry(1.9,40),M(0xffffff,{map:rrWood("#4a2b16","rgba(20,10,4,.6)",[3,3]),roughness:.6}),0,0,-.1);fl.rotation.x=-Math.PI/2;
+  const chair=new T.Group();sc.add(chair);rrChairParts(T,add,chair,M(0xffffff,{map:rrWood("#4a2812","rgba(0,0,0,.3)",[1,1]),roughness:.5}),M(0x5a1010,{roughness:.55}));
+  const body=rrAnimal(T,{k:"bear",c:RL_ANIMALS.bear.c},add,M,chair);const u=body.userData,sp={chair,body,a:0};
+  u.em={id,t0:0,cp:chair.position.clone(),bp:body.position.clone(),br:body.rotation.clone(),hr:u.head.rotation.clone()};
+  sc.add(new T.HemisphereLight(0xffe2c4,0x2a1a10,.5));const key=new T.DirectionalLight(0xffd8a8,.85);key.position.set(1.4,3.2,-2.6);sc.add(key);const rim=new T.PointLight(0xff9a60,.7,7);rim.position.set(-1.6,2.2,1.4);sc.add(rim);
+  const tgt=new T.Vector3(.3,1.12,-.12);cam.position.set(1.2,1.7,-3.9);cam.lookAt(tgt);
+  const g={R,sc,cam,raf:0,t0:performance.now(),lt:0};
+  const frame=now=>{if(!cv.isConnected){const p=EMP[id];if(p&&p.g===g)emPrevStop(id);return}g.raf=requestAnimationFrame(frame);if(document.hidden)return;
+    const dt=Math.min(.1,(now-(g.lt||now))/1000);g.lt=now;const sm=r=>1-Math.exp(-dt*r);const w=cv.clientWidth,h=cv.clientHeight;if(!w||!h)return;
+    if(cv.width!==Math.floor(w*R.getPixelRatio())||cv.height!==Math.floor(h*R.getPixelRatio())){R.setSize(w,h,false);cam.aspect=w/h;cam.fov=w/h<1.1?46:36;cam.updateProjectionMatrix()}
+    const k=((now-g.t0)/1000)%(E.len+1.4);emApply(T,sp,k<E.len?E.f(k):emLerp(E.f(0),0));
+    u.torso.scale.y=1+Math.sin(now/450)*.012;if(Math.sin(now/1400)>.995)u.lids.forEach(l=>l.scale.y=1);else u.lids.forEach(l=>l.scale.y=Math.max(.1,l.scale.y*.8));
+    sc.updateMatrixWorld();[u.armL,u.armR].forEach(a=>rrSolveArm(T,body,a,sm));R.render(sc,cam)};
+  g.raf=requestAnimationFrame(frame);return g}
 try{if(matchMedia("(prefers-reduced-motion:reduce)").matches){const f=document.getElementById("auFx");f&&f.pauseAnimations&&f.pauseAnimations()}}catch(_){}
 function memberOverlay(){
   const id=S.viewMember;if(!id)return"";
@@ -3213,7 +3383,7 @@ function rrLoad(){if(window.THREE)return Promise.resolve();if(rrLoad.p)return rr
   rrLoad.p=new Promise((res,rej)=>{const s=document.createElement("script");s.src=window.RR_THREE_SRC||"https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js";s.onload=res;s.onerror=()=>{rrLoad.p=null;rej()};document.head.appendChild(s)});return rrLoad.p}
 function rrSt(){if(S.rrSpec)return S.rrSpec.st;return S.rr||(S.rr={phase:"idle",alive:[1,1,1,1],turn:0,busy:false,stake:0,log:"Pick your buy-in. Everyone matches it. Last one standing takes 4× the buy-in."})}
 function viewRR(spec){if(!S.me)return `<div class="empty">Sign in to play.</div>`;const sw=spec?S.rrSpec.who:null;
-  return `<div class="rrwrap${spec?" spec":""}">${spec?`<div class="rrwatch">${pic(sw)}<span><span class="rrlive">● LIVE</span><b>${esc(nm(sw))}</b></span><button type="button" data-gwwatch="rr:">Leave</button></div><div class="reactbar rrreact"><button type="button" data-react="❤️" aria-label="Send a heart">❤️</button><button type="button" data-react="🔥" aria-label="Send fire">🔥</button><button type="button" data-react="😭" aria-label="Send crying">😭</button></div><button type="button" class="rrchatmini" id="rrChatMini" data-chatopen></button>`:""}<div class="rrstage" id="rrStage"><button type="button" class="rrmenu" aria-label="Open menu" onclick="document.getElementById('menuBtn').click()"><svg viewBox="0 0 24 24" width="24" height="24"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button><canvas id="rrCv"></canvas><div class="rrvig" id="rrVig"></div><div class="rrsplat" id="rrSplat"></div><div class="rrflash" id="rrFlash"></div>${gwBtn("rr")}<div id="gwViewers" class="gwvw rrvw"></div><div class="rrhint">Drag to look around</div>${spec?"":`<button type="button" class="rrneck" id="rrNeck" aria-label="Close up">🔍</button><button type="button" class="rrdrink" id="rrDrink" aria-label="Take a drink">🍺<small id="rrDrinkN"></small></button><div class="rrdbar" id="rrDBar" title="How drunk you are"><i></i></div><div class="rrdbar rrbobar" id="rrBOBar" title="Blackout" hidden><i></i></div>`}
+  return `<div class="rrwrap${spec?" spec":""}">${spec?`<div class="rrwatch">${pic(sw)}<span><span class="rrlive">● LIVE</span><b>${esc(nm(sw))}</b></span><button type="button" data-gwwatch="rr:">Leave</button></div><div class="reactbar rrreact"><button type="button" data-react="❤️" aria-label="Send a heart">❤️</button><button type="button" data-react="🔥" aria-label="Send fire">🔥</button><button type="button" data-react="😭" aria-label="Send crying">😭</button></div><button type="button" class="rrchatmini" id="rrChatMini" data-chatopen></button>`:""}<div class="rrstage" id="rrStage"><button type="button" class="rrmenu" aria-label="Open menu" onclick="document.getElementById('menuBtn').click()"><svg viewBox="0 0 24 24" width="24" height="24"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button><canvas id="rrCv"></canvas><div class="thtags rrtags" id="rrTags"></div><div class="rrvig" id="rrVig"></div><div class="rrsplat" id="rrSplat"></div><div class="rrflash" id="rrFlash"></div>${gwBtn("rr")}<div id="gwViewers" class="gwvw rrvw"></div><div class="rrhint">Drag to look around</div>${spec?"":`<button type="button" class="rrneck" id="rrNeck" aria-label="Close up">🔍</button><button type="button" class="rrdrink" id="rrDrink" aria-label="Take a drink">🍺<small id="rrDrinkN"></small></button><div class="rrdbar" id="rrDBar" title="How drunk you are"><i></i></div><div class="rrdbar rrbobar" id="rrBOBar" title="Blackout" hidden><i></i></div><button type="button" class="rremote" id="emBtn" data-em="tap" aria-label="Emote" hidden>🕺<small></small></button><div class="emmenu" id="emMenu" hidden></div>`}
   <div class="rrseats" id="rrSeats"></div><div class="rrdraw" id="rrDraw" hidden></div><div class="rrmsg" id="rrMsg"></div><div class="rrdd" id="rrDD" hidden><button type="button" class="btn rrfire" id="rrDbl"></button><button type="button" class="btn ghost" id="rrKeep">Keep the bet</button></div><button type="button" class="btn rract" id="rrBtn" hidden></button><div class="rrshoot" id="rrShoot" hidden></div>
   <div class="rrwin" id="rrWinS" hidden><div class="rrwincard"><div class="rrwint">YOU WIN</div><div class="small muted">Last one standing</div><div class="rrwinamt num pos" id="rrWinAmt"></div><div class="small muted" id="rrWinSub"></div><button type="button" class="btn" id="rrAgain">Play again</button></div></div><div class="rrpick" id="rrPick"><div class="rrcard"><div class="eyebrow">Last Call Bar</div><h2>Russian Roulette</h2><p class="small muted">You and 3 animals. Everyone draws a card, lowest goes first. One bullet, five chambers, spun every turn. Everyone matches your buy-in. Last one standing takes 4×.</p>
   ${spec?"":`<div class="chips rlmt" id="rrModeT"></div><div id="rrLive" class="rllive" hidden></div>`}<div class="rrbuy" id="rrBuy"><div class="rrbig"><span class="stlbl">Buy-in</span><b class="num" id="rrStake"></b><span class="stlbl">Win</span><b class="num pos" id="rrWin"></b></div><div class="chips" id="rrChips"></div></div>
@@ -3247,6 +3417,23 @@ function rrSplatTex(){return rrCanvas(256,256,(g,w,h)=>{g.fillStyle="#6e0000";fo
   g.beginPath();g.arc(w/2,h/2,40,0,Math.PI*2);g.fill();for(let i=0;i<14;i++){const a=Math.random()*Math.PI*2;g.lineWidth=3+Math.random()*4;g.strokeStyle="#7a0505";g.beginPath();g.moveTo(w/2,h/2);g.lineTo(w/2+Math.cos(a)*120,h/2+Math.sin(a)*120);g.stroke()}})}
 
 /* --- 3D scene --- */
+/* over-the-head tags: a real player's profile picture in their aura (md level: no SVG filters), a bot's name; HTML moved with transforms,
+   rebuilt only when the picture/aura changes. Tap a picture for the name. */
+const HD={};
+function hdPic(uid,n){const k=auraOf(uid)+"|"+(logoOf(uid)||"")+"|"+role(uid)+"|"+(n||"");const h=HD[uid];if(h&&h.k===k)return h.h;const full=nm(uid)||n||"",f=String(n||full).split(" ")[0].slice(0,14);
+  HD[uid]={k,h:`<button type="button" class="hdpic" title="${esc(full)}" aria-label="${esc(full)}">${pic(uid,false,"md")}<i>${esc(f)}</i></button>`};return HD[uid].h}
+document.addEventListener("click",e=>{const b=e.target.closest(".hdpic");if(!b)return;b.classList.add("nm");clearTimeout(b._t);b._t=setTimeout(()=>b.classList.remove("nm"),2500)});
+function rrTagsTick(c){const box=document.getElementById("rrTags");if(!box||S.tab!=="rr")return;const T=c.T,w=c.cv.clientWidth,h=c.cv.clientHeight,sa=rrSt().alive,hp=c._hv||(c._hv=new T.Vector3());
+  if(box.childElementCount!==3)box.innerHTML="<div></div><div></div><div></div>";
+  for(let i=1;i<4;i++){const el=box.children[i-1],sp=c.seats[i],b=sp&&sp.body,s=RR_SEATS[i]||{};const on=!!(b&&b.visible&&!b.userData.dead&&sa[i]);
+    if(on){b.userData.head.getWorldPosition(hp);hp.y+=.34;hp.project(c.cam)}
+    if(!on||hp.z>1||Math.abs(hp.x)>1.3||Math.abs(hp.y)>1.3){if(!el.hidden)el.hidden=true;continue}if(el.hidden)el.hidden=false;
+    const x=s.uid?hdPic(s.uid,s.n):`<b>${esc(String(s.n||"").split(" ")[0].slice(0,14))}</b>`;if(el._x!==x){el._x=x;el.innerHTML=x;el.className="rrtag"+(s.uid?" hum":"")}
+    el.style.transform=`translate(${((hp.x+1)/2*w).toFixed(1)}px,${((1-hp.y)/2*h).toFixed(1)}px) translate(-50%,-100%)`}}
+/* a bar chair (seat, cushion, back, four legs); also used by the emote preview in the Aura Shop */
+function rrChairParts(T,add,chair,chairW,leather){const B=(w,h,d)=>new T.BoxGeometry(w,h,d),Cy=(a,b,h,s)=>new T.CylinderGeometry(a,b,h,s||16);
+  add(B(.62,.08,.6),chairW,0,.52,0,chair);add(B(.56,.06,.54),leather,0,.58,0,chair);add(B(.62,.85,.07),chairW,0,1,.3,chair);add(B(.5,.55,.03),leather,0,1.05,.26,chair);
+  [[-.27,-.25],[.27,-.25],[-.27,.27],[.27,.27]].forEach(([lx,lz])=>add(Cy(.03,.025,.52,8),chairW,lx,.26,lz,chair))}
 function rrMount(){const cv=$("#rrCv");if(!cv)return;if(!RL.on){RR_SOLO.forEach((s,i)=>RR_SEATS[i]={...s});RR_ANG0.forEach((a,i)=>RR_ANG[i]=a);window.RR_ENV_ROT=0}window.RR_SELFK=null;rrHud();
   rrLoad().then(()=>{if(S.tab!=="rr"||!$("#rrCv"))return;rrBuild($("#rrCv"))}).catch(()=>{const m=$("#rrMsg");if(m)m.textContent="Couldn't load the 3D table. Check your connection and reopen this tab."})}
 const RR_ANG=[0,Math.PI/2,Math.PI,Math.PI*1.5];const RR_SPOT=i=>{const a=RR_ANG[i];return[Math.sin(a)*1.02,Math.cos(a)*1.02,a]};
@@ -3315,8 +3502,7 @@ function rrBuild(cv){const T=THREE;if(S.rr3&&S.rr3.cv===cv)return;rrStop();
   /* seats */
   const seats=[];const RAD=1.78,chairW=M(0xffffff,{map:rrWood("#4a2812","rgba(0,0,0,.3)",[1,1]),roughness:.5}),leather=M(0x5a1010,{roughness:.55});
   for(let i=0;i<4;i++){const a=RR_ANG[i],x=Math.sin(a)*RAD,z=Math.cos(a)*RAD;const chair=new T.Group();chair.position.set(x,0,z);chair.rotation.y=a;chair.visible=true;sc.add(chair);
-    add(B(.62,.08,.6),chairW,0,.52,0,chair);add(B(.56,.06,.54),leather,0,.58,0,chair);add(B(.62,.85,.07),chairW,0,1,.3,chair);add(B(.5,.55,.03),leather,0,1.05,.26,chair);
-    [[-.27,-.25],[.27,-.25],[-.27,.27],[.27,.27]].forEach(([lx,lz])=>add(Cy(.03,.025,.52,8),chairW,lx,.26,lz,chair));
+    rrChairParts(T,add,chair,chairW,leather);
     const myK=i?null:window.RR_SELFK||(RL.on&&RL.seats&&RL.seats[RL.my]?RL.seats[RL.my].k:"cat");const body=i?rrAnimal(T,RR_SEATS[i],add,M,chair):rrAnimal(T,{k:myK,c:(RL_ANIMALS[myK]||RL_ANIMALS.cat).c},add,M,chair);if(!i){body.userData.self=true;body.userData.head.visible=false;body.position.set(0,.55,.26);body.userData.selfPos=body.position.clone()}
     if(body&&i){const mg=new T.Group();const ma=a-.42,mp=new T.Vector3(Math.sin(ma)*1.05,.9,Math.cos(ma)*1.05);mg.position.copy(mp);sc.add(mg);
       add(Cy(.045,.042,.13,18),M(0xe8f4ff,{transparent:true,opacity:.35,roughness:.05}),0,.065,0,mg);add(Cy(.04,.038,.1,18),M(0xd9951a,{transparent:true,opacity:.85,roughness:.2,emissive:0x4a2a00}),0,.055,0,mg);add(Cy(.042,.042,.025,18),M(0xfff8e8,{roughness:.9}),0,.12,0,mg);
@@ -3343,9 +3529,7 @@ function rrBuild(cv){const T=THREE;if(S.rr3&&S.rr3.cv===cv)return;rrStop();
     get yaw(){return yaw},set yaw(v){yaw=v;look()},get pitch(){return pitch},set pitch(v){pitch=v;look()}};S.rr3=ctx;
   rrGunRest(ctx,0,true);
   /* floating name tags over everyone still alive */
-  ctx.tags=seats.map((sp,i)=>{if(!i||!sp.body)return null;const nmTxt=String(RR_SEATS[i].n||"").split(" ")[0].slice(0,14),hum=!!RR_SEATS[i].uid;
-    const tx=rrCanvas(256,64,(g,w,h)=>{g.font="bold 34px Barlow,Arial,sans-serif";const tw=Math.min(w-8,g.measureText(nmTxt).width+28);g.fillStyle=hum?"rgba(245,207,93,.92)":"rgba(0,0,0,.6)";g.beginPath();g.roundRect?g.roundRect((w-tw)/2,8,tw,48,24):g.rect((w-tw)/2,8,tw,48);g.fill();g.fillStyle=hum?"#111":"#fff";g.textAlign="center";g.textBaseline="middle";g.fillText(nmTxt,w/2,33)});
-    const spr=new T.Sprite(new T.SpriteMaterial({map:tx,transparent:true,depthTest:false}));spr.scale.set(.7,.175,1);spr.renderOrder=99;sc.add(spr);return spr});
+  ctx.tags=[];
   const st=S.tab==="th"?{alive:TH.alive||[1,1,1,1]}:rrSt();seats.forEach((s,i)=>{if(i&&!st.alive[i]&&s.body){s.body.visible=false}});
   const size=()=>{const w=cv.clientWidth,h=cv.clientHeight;if(!w||!h)return;cam.fov=w<h?84:62;if(cv.width!==Math.floor(w*R.getPixelRatio())||cv.height!==Math.floor(h*R.getPixelRatio()))R.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix()};
   const loop=now=>{if((S.tab!=="rr"&&S.tab!=="th")||!document.body.contains(cv)){rrStop();return}ctx.raf=requestAnimationFrame(loop);size();const t=(now-ctx.t0)/1000;
@@ -3354,17 +3538,18 @@ function rrBuild(cv){const T=THREE;if(S.rr3&&S.rr3.cv===cv)return;rrStop();
       if(Math.sin(t*.7+i*2.3)>.995)b.userData.lids.forEach(l=>l.scale.y=1);else b.userData.lids.forEach(l=>l.scale.y=Math.max(b.userData.lidBase||.1,l.scale.y*.8))});
     ctx.anim=ctx.anim.filter(f=>f(now)!==false);rrTick(ctx,now);{const wd=Math.min(.1,(now-(ctx.wl||now))/1000);ctx.wl=now;ctx.walkers.forEach(w=>rrWalkerTick(ctx,w,now,wd))}
     {const nk=S.rrNeck?1:0;ctx.nk=(ctx.nk||0)+(nk-(ctx.nk||0))*.12;const f=ctx.nk*.95;cam.position.set(-Math.sin(ctx.yaw)*f,1.65-ctx.nk*.18,1.8-Math.cos(ctx.yaw)*f)}
-    {const sa=S.tab==="th"?[0,0,0,0]:rrSt().alive;ctx.tags.forEach((tg,i)=>{if(!tg)return;const b=seats[i].body;const on=b.visible&&!b.userData.dead&&sa[i];tg.visible=!!on;if(on){b.userData.head.getWorldPosition(tg.position);tg.position.y+=.34}})}
+    rrTagsTick(ctx);
     lamp.intensity=2.6+Math.sin(t*13)*.03;
     {const dk=rrWoozy(),wz=1+Math.max(0,dk-7)*.6;if(dk>0){const w=dk*.015*(1+Math.max(0,dk-7)*.12);cam.rotation.z=Math.sin(t*.7)*w*1.2;cam.rotation.x=ctx.pitch+Math.sin(t*.5)*w*.8;cam.rotation.y=ctx.yaw+Math.sin(t*.33+1)*w*1.1}else cam.rotation.z=0;
      const bo=S.rrBO||0;if(dk>0||bo>0){if(now-(cv._ft||0)>33){cv._ft=now;const sm=rrSmoke(),pulse=.55+.45*Math.sin(t*.8)*Math.sin(t*.37+1);sm.disp.setAttribute("scale",(dk*2.6*wz*(.4+pulse)).toFixed(1));sm.turb.setAttribute("baseFrequency",`${(.006+.002*Math.sin(t*.15)).toFixed(5)} ${(.011+.003*Math.cos(t*.2)).toFixed(5)}`);
        {const sk=dk*.09*wz;cv.style.transform=dk>0?`scale(${(1.03+dk*.006*wz*(.6+pulse)).toFixed(3)}) skew(${(Math.sin(t*.9)*sk).toFixed(2)}deg,${(Math.cos(t*.7)*sk*.7).toFixed(2)}deg) rotate(${(Math.sin(t*.45)*sk*.5).toFixed(2)}deg)`:""}cv.style.filter=(dk>0?`${RR_MOB?"":"url(#rrSmokeF) "}blur(${(dk*.5*wz*(.55+.45*pulse)).toFixed(2)}px) saturate(${(1+dk*.05).toFixed(2)}) `:"")+`brightness(${(1-bo*.6).toFixed(2)})`}}else if(cv.style.filter||cv.style.transform){cv.style.filter="";cv.style.transform=""}}
     if(RL.on&&ctx.hold&&ctx.hold.i>0&&ctx.hold.mode==="hold"&&now-(ctx._aimT||0)>150){ctx._aimT=now;const i=ctx.hold.i,lk=rlLookFor(i);if(lk){const sp=ctx.seats[i],dir=new T.Vector3(-Math.sin(sp.a),0,-Math.cos(sp.a)).applyAxisAngle(new T.Vector3(0,1,0),lk.y);const tg=new T.Vector3(sp.x*.78,1.18-lk.p*.8,sp.z*.78).addScaledVector(dir,.45);rrArmTo(ctx,i,"R",tg)}}
+    emTick(ctx,now);
     R.render(sc,cam)};
   ctx.raf=requestAnimationFrame(loop)}
 
 /* idle life: look around, sip beer, fidget, shift weight */
-function rrIdle(c,i,s,b,now){const T=c.T,u=b.userData,st=rrSt(),hd=u.head;const busy=c.act===i;
+function rrIdle(c,i,s,b,now){const T=c.T,u=b.userData,st=rrSt(),hd=u.head;const busy=c.act===i;if(u.em){u.lt=now;return}
   const dt=Math.min(.1,(now-(u.lt||now))/1000);u.lt=now;const sm=r=>1-Math.exp(-dt*r);
   if(busy&&u.idle){if(u.idle==="drink"){u.mug.position.copy(u.mugHome);u.mug.rotation.set(0,0,0)}u.idle=null;rrArmTo(c,i,"L",u.restL,true)}
   const watching=c.hold&&c.hold.i!==i&&c.hold.i!=null;
@@ -3518,7 +3703,8 @@ function rrAnimal(T,seat,add,M,par){const k=seat.k,g=new T.Group();g.position.se
   const fur=M(seat.c,{roughness:.85}),lt=M(k==="fox"?0xf4ead8:k==="bear"?0xb98a5a:0xc9bfb4,{roughness:.85}),dk=M(0x111111,{roughness:.25}),pink=M(0xe8a0a4,{roughness:.6});
   const S_=(r,a,b)=>new T.SphereGeometry(r,a||24,b||18),C_=(a,b,h,s)=>new T.CylinderGeometry(a,b,h,s||16);
   /* legs, seated (stay on the chair) */
-  [-1,1].forEach(s=>{const th=add(C_(.075,.085,.34),fur,s*.12,.05,-.15,g);th.rotation.x=Math.PI/2;add(S_(.085),fur,s*.12,.05,-.32,g);add(C_(.065,.06,.46),fur,s*.12,-.2,-.33,g);add(S_(.075,16,12),k==="bear"?dk:lt,s*.12,-.46,-.38,g).scale.set(1,.55,1.5)});
+  g.userData.legs=[-1,1].map(s=>{const hip=new T.Group();hip.position.set(s*.12,.05,0);hip.rotation.order="ZXY";g.add(hip);const th=add(C_(.075,.085,.34),fur,0,0,-.15,hip);th.rotation.x=Math.PI/2;
+    const kn=new T.Group();kn.position.set(0,0,-.32);hip.add(kn);add(S_(.085),fur,0,0,0,kn);add(C_(.065,.06,.46),fur,0,-.25,-.01,kn);add(S_(.075,16,12),k==="bear"?dk:lt,0,-.51,-.06,kn).scale.set(1,.55,1.5);return{hip,kn,s}});
   /* upper body pivots at the hips so it can lean to reach */
   const up=new T.Group();up.position.set(0,.06,0);g.add(up);const U=new T.Group();U.position.y=-.06;up.add(U);g.userData.up=up;
   const torso=new T.Group();torso.position.y=.06;U.add(torso);const tb=add(S_(.27),fur,0,.3,0,torso);tb.scale.set(1,1.28,.85);add(S_(.2),lt,0,.27,-.14,torso).scale.set(.85,1.15,.5);
@@ -3540,7 +3726,7 @@ function rrAnimal(T,seat,add,M,par){const k=seat.k,g=new T.Group();g.position.se
     for(let n=0;n<3;n++)add(S_(.025,10,8),pc,(n-1)*.03,-.045,-.04,hand);add(S_(.024,10,8),pc,-s*.055,-.01,-.04,hand);
     if(k==="bear")for(let n=0;n<3;n++)add(new T.ConeGeometry(.007,.025,6),M(0xe8e0d0),(n-1)*.03,-.07,-.055,hand).rotation.x=Math.PI;
     const a={sh,el,hand,s,L1,L2,cur:null,goal:null,bob:0};return a};
-  const L=arm(-1),Rr=arm(1);g.userData.armL=L;g.userData.armR=Rr;g.userData.arm=Rr.sh;g.userData.hand=Rr.hand;
+  const L=arm(-1),Rr=arm(1);g.userData.pawMat=k==="bear"?fur:lt;g.userData.armL=L;g.userData.armR=Rr;g.userData.arm=Rr.sh;g.userData.hand=Rr.hand;
   g.userData.restL=[-.12,-.55,-.83];g.userData.restR=[.12,-.55,-.83];L.goal={dir:g.userData.restL};Rr.goal={dir:g.userData.restR};
   return g}
 /* aim an animal's paw at a world point (or a direction from the shoulder) */
@@ -3548,8 +3734,8 @@ function rrArmTo(c,i,side,target,local){const b=c.seats[i].body,a=side==="L"?b.u
 function rrArmRest(c,i){const b=c.seats[i].body;rrArmTo(c,i,"L",b.userData.restL,true);rrArmTo(c,i,"R",b.userData.restR,true)}
 /* two-bone IK; leans the upper body forward when the paw can't reach */
 function rrSolveArm(T,b,a,sm){const up=b.userData.up,U=up.children[0];let p;
-  if(a.goal.dir){const d=new T.Vector3(...a.goal.dir).normalize();p=a.sh.position.clone().addScaledVector(d,(a.L1+a.L2)*.8)}
-  else{p=U.worldToLocal(a.goal.world.clone())}
+  const G=a.em||a.goal;if(G.loc)p=G.loc.clone();else if(G.dir){const d=new T.Vector3(...G.dir).normalize();p=a.sh.position.clone().addScaledVector(d,(a.L1+a.L2)*.8)}
+  else{p=U.worldToLocal(G.world.clone())}
   if(!a.cur)a.cur=p.clone();if(a.snap){a.cur.copy(p);a.snap=false}else a.cur.lerp(p,sm(10));const tgt=a.cur.clone();tgt.y+=a.bob||0;
   const v=tgt.clone().sub(a.sh.position);const reach=a.L1+a.L2+.02;const dist=v.length();a.excess=Math.max(0,dist-reach*.97);
   const D=Math.min(dist,reach*.985),L1=a.L1,L2=a.L2+.02;const dir=v.normalize();
@@ -3694,7 +3880,7 @@ function rrXGuns(on,at){const c=S.rr3;if(!c)return;const T=c.T,st=rrSt();(c.xg||
     c.anim.push(()=>{if(x.dead)return false;const b=c.seats[k].body;if(b.userData.dead){c.sc.remove(g);return false}const hp=new T.Vector3();b.userData.hand.getWorldPosition(hp);const dir=tp.clone().sub(hp);
       const m=new T.Matrix4().lookAt(new T.Vector3(),dir.normalize().negate(),new T.Vector3(0,1,0));g.quaternion.setFromRotationMatrix(m);const grip=new T.Vector3(0,-.1,-.12).multiplyScalar(g.scale.x).applyQuaternion(g.quaternion);g.position.copy(hp).sub(grip)})}}
 /* the shooter's pull: returns who died (maybe nobody) */
-async function rrShotA(i,shot,say){const st=rrSt(),c=S.rr3,T=c&&c.T;const N=k=>k===0?"you":esc(RR_SEATS[k].n.split(" ")[0]),NC=k=>k===0?"You":esc(RR_SEATS[k].n.split(" ")[0]);
+async function rrShotA(i,shot,say){S.emFBt=Date.now();const st=rrSt(),c=S.rr3,T=c&&c.T;const N=k=>k===0?"you":esc(RR_SEATS[k].n.split(" ")[0]),NC=k=>k===0?"You":esc(RR_SEATS[k].n.split(" ")[0]);
   if(i!==0){say(`<b>${NC(i)} turns the gun on ${shot.aimAt!=null?N(shot.aimAt):"the table"}!</b>`);if(c){c.dark=0;const at=shot.aimAt!=null?shot.aimAt:shot.tg;if(at!=null){const tp=new T.Vector3();if(at===0)c.cam.getWorldPosition(tp);else c.seats[at].body.userData.head.getWorldPosition(tp);if(c.hold)c.hold.mode="hold";c.focus=at;rrArmTo(c,i,"R",tp)}await rrWait(600)}else await rrWait(400)}
   if(c){rrHammer();c.kickT=performance.now();const tr=c.gun.userData.trig;tr.rotation.x=.7;setTimeout(()=>tr.rotation.x=.3,200)}
   if(!shot.live){rrTone("click");say(`<b>*click*</b> Misfire! Empty chamber.`);await rrWait(450);return[]}
@@ -3745,7 +3931,7 @@ async function rrFire(i){const st=rrSt();st.busy=true;const c=S.rr3;const F=RR_S
     st.tgt=null;if(!shot)bang=rrRandN(5)<rrBullets(st)}
   if(shot){dead=await rrShotA(i,shot,say);if(!dead.length){if(!rt)rt=await rrRetaliateSolo(st,i,say);dead=await rrShotB(i,rt,say)}if(!S.rrSpec)rrEmit("fire",{i,shot,rt})}
   else if(!S.rrSpec)rrEmit("fire",{i,bang});
-  if(shot){if(c)c.act=null;
+  if(shot){if(c)c.act=null;S.emFBt=0;
     if(!st.alive[0]){st.busy=false;return rrEnd("lose")}if(c){await rrGunRest(c,i);c.gunAt=i}
     if(!dead.length){st.busy=false;st.turn=(i+1)%4;return rrNext()}
     if(st.alive.reduce((a,b)=>a+b,0)>1){await rrSoloDD(RR_SEATS[dead[0]].n.split(" ")[0]);await rrWait(600);await rrDraw()}st.busy=false;return rrNext()}
@@ -4105,7 +4291,7 @@ async function rlTurn(l){const st=rrSt(),c=S.rr3,T=c&&c.T,F=rlName(l),say=t=>{st
     if(!dead.length){rrXGuns(true,l);say(`<b>Everyone draws on ${l===0?"you":esc(F)}!</b>`);let rtG;
       if(RL.host===S.me){rlEmit("ret",{g:G});rtG=await rlCollectRet(st,l);dead=await rrShotB(l,rtG.map(x=>({i:rlL(x.g),live:!!x.live,hit:x.hit===true||x.hit===G,fired:x.fired})),say)}
       else{await rlNeed("ret",G);dead=await rlRetLive(st,l,say)}}
-    if(c)c.act=null;
+    if(c)c.act=null;S.emFBt=0;
     if(dead.includes(0)){RL.dead=true;const f=$("#rrFlash");if(f)f.className="rrflash";const sp=$("#rrSplat");if(sp)sp.className="rrsplat";rlSpecBanner(true)}
     if(c){await rrGunRest(c,l);c.gunAt=l}if(dead.length&&!RL.dead&&st.alive[0]&&st.alive.reduce((a,b)=>a+b,0)>1)rlDDShow();return dead.length>0}
   if(c){rrHammer();c.kickT=performance.now();const tr=c.gun.userData.trig;tr.rotation.x=.7;setTimeout(()=>tr.rotation.x=.3,200)}
@@ -4130,7 +4316,7 @@ async function rlEnd(wl){const st=rrSt(),c=S.rr3,wg=rlG(wl);if(RL.host===S.me)rl
 function rlAbort(msg,refund,noWrite){if(!RL.on)return;RL.on=false;RL.w=[];if(RL.inWait){clearTimeout(RL.inWait.to);RL.inWait=null}
   if(refund&&RL.paid===RL.gid){RL.paid=null;const p=S.prefs[S.me]||{};rrSave({rrNet:(Number(p.rrNet)||0)+RL.stake,rrGames:Math.max(0,(Number(p.rrGames)||0)-1)})}if(refund&&!noWrite&&!RL.srv)rlWrite({state:"lobby",ev:[],at:Date.now()})
   toast(msg);const st=rrSt();st.phase="idle";st.busy=false;st.step=null;rlSpecBanner(false);rlRestore()}
-function rlRestore(){RR_SOLO.forEach((s,i)=>RR_SEATS[i]={...s});RR_ANG0.forEach((a,i)=>RR_ANG[i]=a);window.RR_ENV_ROT=0;rlDDHide();const st=rrSt();st.alive=[1,1,1,1];st.cards=null;if(S.tab==="rr"){rrStop();const v=$("#view");v.innerHTML=viewRR();rrMount()}}
+function rlRestore(){S.emFBt=0;RR_SOLO.forEach((s,i)=>RR_SEATS[i]={...s});RR_ANG0.forEach((a,i)=>RR_ANG[i]=a);window.RR_ENV_ROT=0;rlDDHide();const st=rrSt();st.alive=[1,1,1,1];st.cards=null;if(S.tab==="rr"){rrStop();const v=$("#view");v.innerHTML=viewRR();rrMount()}}
 
 /* drinking: every beer stacks blur + wobble on your screen; it wears off about one drink a minute */
 function rrSmoke(){if(rrSmoke.o)return rrSmoke.o;const d=document.createElement("div");d.style.cssText="position:absolute;width:0;height:0;overflow:hidden";d.innerHTML=`<svg width="0" height="0"><filter id="rrSmokeF" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.008 0.014" numOctaves="2" seed="1"/><feDisplacementMap in="SourceGraphic" scale="0" xChannelSelector="R" yChannelSelector="G"/></filter></svg>`;document.body.appendChild(d);rrSmoke.o={turb:d.querySelector("feTurbulence"),disp:d.querySelector("feDisplacementMap")};return rrSmoke.o}
@@ -4548,12 +4734,12 @@ function thTags(){const box=$("#thTags"),c=S.rr3,ps=TH.ps;if(!box)return;if(c&&p
     const hp=new T.Vector3();sp.body.userData.head.getWorldPosition(hp);hp.y+=.4;hp.project(c.cam);if(hp.z>1||Math.abs(hp.x)>1.2){el.hidden=true;continue}el.hidden=false;
     el.className="thtag"+(ps.toAct===g?" cur":"")+(ps.fo[g]||ps.out[g]?" dim":"")+(p.uid?" hum":"");el.style.transform=`translate(${(hp.x+1)/2*w}px,${(1-hp.y)/2*h}px) translate(-50%,-100%)`;
     const lab=ps.out[g]?"Out":ps.lv[g]&&!ps.fo[g]?"Leaving":ps.street==="show"&&ps.hn[g]?ps.hn[g]:ps.last[g]||"";
-    const x=`<b>${esc(String(p.n||"").split(" ")[0])}${ps.btn===g?' <span class="thd">D</span>':""}</b><span class="num">${Number(ps.st[g]||0).toLocaleString()}</span>${lab?`<em>${esc(lab)}</em>`:""}${ps.street==="show"&&ps.win&&ps.win[g]?`<em class="pos">+${ps.win[g].toLocaleString()}</em>`:""}${ps.toAct===g&&ps.dl?`<i class="thtm"><i></i></i>`:""}`;
+    const x=`${p.uid?hdPic(p.uid,p.n)+(ps.btn===g?'<b><span class="thd">D</span></b>':""):`<b>${esc(String(p.n||"").split(" ")[0])}${ps.btn===g?' <span class="thd">D</span>':""}</b>`}<span class="num">${Number(ps.st[g]||0).toLocaleString()}</span>${lab?`<em>${esc(lab)}</em>`:""}${ps.street==="show"&&ps.win&&ps.win[g]?`<em class="pos">+${ps.win[g].toLocaleString()}</em>`:""}${ps.toAct===g&&ps.dl?`<i class="thtm"><i></i></i>`:""}`;
     if(el._x!==x){el._x=x;el.innerHTML=x}const tm=el.querySelector(".thtm i");if(tm){const left=Math.max(0,ps.dl-(now-(TH.recv[ps.seq]||now)));tm.style.width=(left/ps.dl*100).toFixed(1)+"%"}}
   const mt=$("#thMyTm i");if(mt&&ps.toAct===TH.my&&ps.dl){const left=Math.max(0,ps.dl-(now-(TH.recv[ps.seq]||now)));mt.style.width=(left/ps.dl*100).toFixed(1)+"%";const s=$("#thMySec");if(s)s.textContent=Math.ceil(left/1000)+"s"}}
 /* ---- view + HUD ---- */
 function viewTH(){if(!S.me)return `<div class="empty">Sign in to play.</div>`;
-  return `<div class="rrwrap thwrap"><div class="rrstage" id="thStage"><button type="button" class="rrmenu" aria-label="Open menu" onclick="document.getElementById('menuBtn').click()"><svg viewBox="0 0 24 24" width="24" height="24"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button><canvas id="thCv"></canvas><div class="rrhint">Drag to look around</div><div class="thko" id="thKO"></div><div class="thtags" id="thTags"></div><div class="thdrinks" id="thDrinks" hidden><button type="button" class="rrneck" id="rrNeck" aria-label="Close up">🔍</button><button type="button" class="rrdrink" id="rrDrink" aria-label="Take a drink">🍺<small id="rrDrinkN"></small></button><div class="rrdbar" id="rrDBar" title="How drunk you are"><i></i></div><div class="rrdbar rrbobar" id="rrBOBar" title="Blackout" hidden><i></i></div></div><div class="thtop" id="thTop"></div><div class="thboard" id="thBoard"></div><div class="thlog" id="thLog"></div><div class="thhud" id="thHud"></div>
+  return `<div class="rrwrap thwrap"><div class="rrstage" id="thStage"><button type="button" class="rrmenu" aria-label="Open menu" onclick="document.getElementById('menuBtn').click()"><svg viewBox="0 0 24 24" width="24" height="24"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button><canvas id="thCv"></canvas><div class="rrhint">Drag to look around</div><div class="thko" id="thKO"></div><div class="thtags" id="thTags"></div><button type="button" class="rremote" id="emBtn" data-em="tap" aria-label="Emote" hidden>🕺<small></small></button><div class="emmenu" id="emMenu" hidden></div><div class="thdrinks" id="thDrinks" hidden><button type="button" class="rrneck" id="rrNeck" aria-label="Close up">🔍</button><button type="button" class="rrdrink" id="rrDrink" aria-label="Take a drink">🍺<small id="rrDrinkN"></small></button><div class="rrdbar" id="rrDBar" title="How drunk you are"><i></i></div><div class="rrdbar rrbobar" id="rrBOBar" title="Blackout" hidden><i></i></div></div><div class="thtop" id="thTop"></div><div class="thboard" id="thBoard"></div><div class="thlog" id="thLog"></div><div class="thhud" id="thHud"></div>
   <div class="rrpick" id="thPick"><div class="rrcard thcard"><div class="eyebrow">Last Call Bar</div><h2>Texas Hold'em</h2><p class="small muted">No-limit hold'em for 2 to 4 players at the bar table. Bots fill the empty chairs unless the host says no bots.</p><div id="thLobby" class="rllive"></div><div class="small muted">Bank <b class="num" id="thBal"></b></div><p class="small muted" id="thFoot"></p></div></div>
   <div class="rrwin" id="thRes" hidden></div></div></div>`}
 function thMount(){const cv=$("#thCv");if(!cv)return;thSub();thApplySeats();thHud();thTagLoop();
@@ -5229,6 +5415,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:24,d:"Oct 22",t:[["✨","At the poker and Russian Roulette tables, your profile picture and aura now float above your player"]]},
  {v:23,d:"Oct 22",t:[["💬","Tapping someone in chat now closes the chat and takes you straight to their profile or collection"]]},
  {v:22,d:"Oct 22",t:[["🐉","Dragon pulls now show the card in chat with a wild iridescent glow"]]},
  {v:21,d:"Oct 22",t:[["🃏","Blackjack pace tweak: a new hand every 2 seconds"]]},
@@ -6031,7 +6218,7 @@ setInterval(()=>{if(document.visibilityState!=="visible"){MINE_LAST=Date.now();r
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")MINE_LAST=Date.now()});
 /* background updates coalesce into at most one render per frame, and wait while a Flappy run is in progress */
 let _rq=0;window.SB_RENDER=()=>renderSoon();function renderSoon(){if(_rq)return;_rq=requestAnimationFrame(()=>{_rq=0;if((typeof FP!=="undefined"&&FP&&FP.st==="play"&&S.tab==="flappy")||document.getElementById("revOv")){setTimeout(renderSoon,400);return}render()})}
-function render(){if(S._rTab!==S.tab){const was=S._rTab;S._rTab=S.tab;try{if(was!==undefined&&CHAT.open&&S.tab!=="chat")chatOpen(false)}catch(_){}}nflLinesWatch();setTimeout(auSpace,0);lvTick();setTimeout(onlRender,0);setTimeout(autoRefill,0);if(S.gw)setTimeout(gwRender,0);setTimeout(recapPopup,400);
+function render(){if(S._rTab!==S.tab){const was=S._rTab;S._rTab=S.tab;try{if(was!==undefined&&CHAT.open&&S.tab!=="chat")chatOpen(false)}catch(_){}}nflLinesWatch();setTimeout(auSpace,0);setTimeout(emPrevSync,0);lvTick();setTimeout(onlRender,0);setTimeout(autoRefill,0);if(S.gw)setTimeout(gwRender,0);setTimeout(recapPopup,400);
   {const u=logoOf(S.me),m=$("#meAv");if(m){if(u){m.outerHTML=`<img class="dot img" id="meAv" src="${esc(u)}" alt="">`}else if(m.tagName==="IMG"){m.outerHTML=`<span class="dot" id="meAv"></span>`}}}
   setMe();if(CHAT.open)chatRender();if(S.addOpen){refreshGhosts();betPreview()}
   const ts=$("#tabSetup");if(ts)ts.hidden=!S.canEdit;
@@ -6088,7 +6275,7 @@ function render(){if(S._rTab!==S.tab){const was=S._rTab;S._rTab=S.tab;try{if(was
 function viewDirty(v){if(!v._mo){v._mo=new MutationObserver(rs=>{if(rs.some(viewRec))v._dirty=true});v._mo.observe(v,{childList:true,subtree:true,attributes:true,characterData:true});v._dirty=true}
   if(v._mo.takeRecords().some(viewRec))v._dirty=true;return v._dirty}
 function viewClean(v){if(v._mo)v._mo.takeRecords();v._dirty=false}
-function viewRec(r){const t=r.target.nodeType===1?r.target:r.target.parentElement;return !(t&&t.closest&&t.closest("[data-bkdue],[data-pmcd]"))}
+function viewRec(r){const t=r.target.nodeType===1?r.target:r.target.parentElement;return !(t&&t.closest&&t.closest("[data-bkdue],[data-pmcd],[data-emprev]"))}
 
 /* ---------- Actions ---------- */
 function updateRisk(form){
@@ -6184,6 +6371,7 @@ document.addEventListener("click",async e=>{
   if(t.dataset.bj){if(t.disabled)return;const tap=Date.now();if(tap-(S._bjTap||0)<150)return;S._bjTap=tap;const before=S._bjSig;return act(()=>bjAction(t.dataset.bj)).then(()=>{if(S._bjSig===before){S._bjSig=null;render()}})}
   if(t.dataset.stbj){S.stBJ=t.dataset.stbj==="1";try{localStorage.setItem("sab-stbj",S.stBJ?"1":"0")}catch(_){}render();return}
   if(t.dataset.au){auClick(t);return}
+  if(t.dataset.em){emClick(t);return}
   const a=t.dataset.act;if(!a)return;
   if(a==="closeFut"){S.futPick=null;render();return}
   if(a==="closeHouse"){S.housePick=null;render();return}
