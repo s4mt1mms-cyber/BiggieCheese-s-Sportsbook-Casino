@@ -904,6 +904,7 @@ body.pkquake{animation:pkquake .12s linear 34}@keyframes pkquake{25%{transform:t
 .wkrgrid b{font-size:16px;font-weight:800}.wkrnet{font-weight:700}.wkrnet b{font-size:18px}
 .wkrecap .pos,.wkrecap .num.pos{color:#5cff72!important}.wkrecap .neg,.wkrecap .num.neg{color:#ff6262!important}
 .wkrecap.big .wkrgrid b{font-size:18px}.recapbox{gap:12px}
+.newsbox{max-height:calc(100dvh - 40px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));overflow-y:auto;-webkit-overflow-scrolling:touch}.newsday{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:4px}.newslist{display:grid;gap:8px;text-align:left}.newsitem{display:grid;grid-template-columns:24px 1fr;gap:8px;align-items:start;padding:7px 10px;border-radius:10px;background:rgba(255,255,255,.05);font-size:15px;line-height:1.3}.newslist{gap:6px}.newsbox #newsOk{position:sticky;bottom:0;box-shadow:0 -10px 16px 4px var(--paper)}
 .dragchip{position:fixed!important;z-index:60;pointer-events:none;transform:translate(-50%,-60%) scale(1.15)!important;box-shadow:0 8px 16px rgba(0,0,0,.6)!important;margin:0!important}
 .rlcell i.on,.rlout i.on{pointer-events:auto;touch-action:none;cursor:grab}
 .dragstack{position:fixed!important;z-index:60;pointer-events:none!important;transform:translate(-50%,-60%) scale(1.25)!important;font-style:normal;font-size:11px;min-width:26px;height:26px;line-height:22px;padding:0 3px;border-radius:13px;background:#f5cf5d;color:#000;border:2px dashed #fff;text-align:center;font-weight:800;box-shadow:0 8px 16px rgba(0,0,0,.6)!important}
@@ -4780,6 +4781,25 @@ function divPopup(amt,n,byR,sets,mono,X){X=X||{};const show=()=>{if($("#recapOv"
   const o=document.createElement("div");o.id="divOv";o.className="overlay";o.innerHTML=`<div class="pickbox recapbox"><h2>🎴 Card dividend</h2><div class="divbig num pos">+${amt.toLocaleString()} BB</div><p class="small muted">Paid for ${n} card${n>1?"s":""} you're holding${sets?` · ${sets} full set${sets>1?"s":""} paying 2×`:""}${mono?` · ${mono} card${mono>1?"s":""} only you own paying 2× more`:""}</p><div class="divrows">${rows}${X.pk?`<div class="divrow"><span style="color:#9fdcff">⚡ Peter Griffin ×${X.pk}</span><span class="muted">${X.mult}× everything</span><b class="num pos">+${(amt-X.base).toLocaleString()}</b></div>`:""}${X.deb?`<div class="divrow"><span style="color:#ffd700">🧙‍♀️ Via Debby</span><span class="muted">from ${esc(nm(X.deb.v))}</span><b class="num pos">+${X.deb.amt.toLocaleString()}</b></div>`:""}</div><button class="btn" type="button" id="divOk">Cha-ching</button></div>`;
   document.body.appendChild(o);const close=()=>o.remove();o.querySelector("#divOk").onclick=close;o.addEventListener("click",e=>{if(e.target===o)close()})};show()}
 setInterval(divCheck,30000);setTimeout(divCheck,4000);
+/* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
+   (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
+const NEWS=[
+ {v:1,d:"Oct 22",t:[
+  ["🏈","NFL bets: bet real NFL games and build NFL parlays (Sports betting in the menu)"],
+  ["💰","Make an offer on any card in someone's collection, even if it's not for sale"],
+  ["💬","Direct messages: private chats with anyone"],
+  ["🤝","Offers and counter-offers on market listings"],
+  ["⭐","Showcase your 3 favorite cards on your profile"],
+  ["🧭","Cleaner menu and chat"],
+  ["🏦","Early loan payoff now costs what's left plus interest so far"]]}];
+function newsPopup(){if(!S.ready||!S.me||!db||S.tab==="chat"||$("#newsOv")||$("#recapOv")||$("#divOv"))return;const q=S.prefs[S.me];if(!q||!NEWS.length)return;
+  let seen=Number(q.newsSeen)||0;try{seen=Math.max(seen,Number(localStorage.getItem("sb-news-seen"))||0)}catch(_){}
+  const top=NEWS[0].v;if(seen>=top)return;const list=NEWS.filter(n=>n.v>seen).slice(0,seen?3:1);
+  const o=document.createElement("div");o.id="newsOv";o.className="overlay";
+  o.innerHTML=`<div class="pickbox recapbox newsbox"><h2>✨ What's new</h2>${list.map(n=>`<div class="newsday">${esc(n.d)}</div><div class="newslist">${n.t.map(([i,x])=>`<div class="newsitem"><span>${i}</span><span>${esc(x)}</span></div>`).join("")}</div>`).join("")}<button class="btn" type="button" id="newsOk">Got it</button></div>`;
+  document.body.appendChild(o);const close=()=>{try{localStorage.setItem("sb-news-seen",String(top))}catch(_){}q.newsSeen=top;db.doc("prefs/"+S.me).update({newsSeen:top}).catch(()=>{});o.remove()};
+  o.querySelector("#newsOk").onclick=close;o.addEventListener("click",e=>{if(e.target===o)close()})}
+setInterval(newsPopup,20000);setTimeout(newsPopup,6000);
 
 /* keep the chat to the newest 200 messages: the owner's page quietly deletes anything older (at most every 6 hours per device: each pass reads up to 400 messages) */
 async function chatPrune(){if(!S.canEdit||!db)return;try{const k="sb-chatprune";if(Date.now()-(Number(localStorage.getItem(k))||0)<6*36e5)return;localStorage.setItem(k,String(Date.now()))}catch(_){}

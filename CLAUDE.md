@@ -191,6 +191,10 @@ All use the `FIREBASE_SERVICE_ACCOUNT` repo secret.
 
 ## Workflow conventions
 - Small focused commits; message explains the user-visible change.
+- **Every user-visible change gets a "What's new" entry**: in index.html search `const NEWS`, add a new entry at the TOP
+  with `v` = previous top v + 1, a short date, and 1–5 plain-language lines (no tech talk, e.g. "Multiverse has been expanded").
+  Players see it once on their next sign-in after the deploy (`newsPopup`, seen state `prefs.newsSeen` + localStorage) and it
+  never shows again after they close it. Never edit an entry that already shipped — add a new one.
 - Before pushing: syntax check + `sync-shared --check`; after pushing, confirm the Actions run is green
   (`gh api repos/s4mt1mms-cyber/BiggieCheese-s-Sportsbook-Casino/actions/runs?per_page=1`).
 - Coordinate with the owner before risky changes; if two people work at once, use branches/PRs to avoid collisions.
