@@ -124,7 +124,7 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
 - **Market**: list for price and/or trade wants (specific card or "rarity or better"), private listings (`only`).
 - **Bank** (`bk*`): transfers; loans with optional collateral (seizure all-at-once or one card per interval),
   auto-collection ONLY on payment dates (takes all you have if short), pay in chunks anytime, early payoff =
-  principal + one payment minus paid (capped at the full schedule).
+  principal + interest accrued so far (loan rate & compounding, payments stop accruing when made), capped at the rest of the schedule, never below what is overdue.
 - **Presence**: "● N online" pill, green avatar rings — from existing prefs stamps (no extra writes).
 - **Admin tab**: invite codes, data import, card tools, previews.
 

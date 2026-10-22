@@ -4639,9 +4639,15 @@ function bkPaidTot(l){const seen=new Set();let t=0;for(const p of l.payments||[]
 const bkAmts=l=>(l.sched&&Array.isArray(l.sched.amts)?l.sched.amts:Array.isArray(l.amts)?l.amts:(bkCalc(l)||{}).amts||[]).map(a=>Number(a)||0);
 const bkTotalOf=l=>bkAmts(l).reduce((a,b)=>a+b,0);
 function bkCumDue(l,now){const a=bkAmts(l);let t=0;for(let k=0;k<a.length;k++)if(now>=bkDue(l,k))t+=a[k];return t}
-/* owner's rule: paying off early costs principal + one installment, never more than the full schedule; payments already made count toward it */
-const bkTarget=l=>{const a=bkAmts(l);return Math.min((Math.floor(Number(l.P))||0)+(a[0]||0),bkTotalOf(l))};
-function bkPayoffNow(l,now){const paid=bkPaidTot(l);return Math.max(0,bkTarget(l)-paid,bkCumDue(l,now)-paid)}
+/* owner's rule: paying off early costs the principal + interest accrued so far (at the loan's rate and compounding),
+   less what's been paid (payments stop accruing from the moment they're made). Never more than the rest of the schedule,
+   never less than what's already overdue. */
+const bkTarget=l=>Math.floor(Number(l.P))||0;
+function bkAccrued(l,now){const c=bkCalc(l)||{},i=Number(c.i)||0,pm=Number((l.sched||{}).payMs)||Number(c.payMs)||1,t0=Number(l.takenAt)||now;
+  const g=dt=>Math.pow(1+i,Math.max(0,dt)/pm);let owed=(Math.floor(Number(l.P))||0)*g(now-t0);
+  const seen=new Set();for(const p of l.payments||[]){if(seen.has(p.k))continue;seen.add(p.k);owed-=(Math.floor(Number(p.amt))||0)*g(now-(Number(p.at)||now))}
+  return Math.max(0,Math.ceil(owed-1e-9))}
+function bkPayoffNow(l,now){const paid=bkPaidTot(l);return Math.max(0,Math.min(bkAccrued(l,now),bkTotalOf(l)-paid),bkCumDue(l,now)-paid)}
 const bkOverAmt=(l,now)=>Math.max(0,bkCumDue(l,now)-bkPaidTot(l));
 const bkLastDue=l=>bkDue(l,bkAmts(l).length-1);
 /* next due time at which money is still owed (Infinity when chunks already cover the whole schedule) */
@@ -4688,7 +4694,7 @@ function bkTake(id){const l=(S.loans||[]).find(x=>x.id===id);if(!l||l.status!=="
   const items=l.coll||[],L={want:{items}};let pick=items.length?mkCover(L):[];if(items.length&&!pick)return toast("You don't have the collateral they ask for.");
   const own=Object.keys(CSETS).flatMap(k=>cardsCat(k)).filter(x=>cardCount(x.id)>0).sort((a,b)=>b.r-a.r);const o=document.createElement("div");o.className="pkov";
   const draw=()=>{o.innerHTML=`<div class="pkview"><h3>Borrow ${c.P.toLocaleString()} BB from ${esc(nm(l.lender))}</h3>
-    <p class="small muted">${c.n} payment${c.n>1?"s":""} of ~${c.amts[0].toLocaleString()} BB every ${esc(bkUT(l.payN,l.payU))}, ${c.total.toLocaleString()} BB total. Payments come out of your balance automatically on each payment date (if you're short, whatever you have is taken and the loan goes late); you can also pay any amount in between. Early payoff: ${bkTarget(c).toLocaleString()} BB (principal + one payment, less what you've paid). ${items.length?`Collateral is locked until the loan ends. ${esc(bkSeizeTxt(l))}, in the order listed.`:(bkGradual(l)?"Unsecured. A missed payment makes you late; catch up within "+esc(bkUT(l.seizeN,l.seizeU))+" of the final payment date or you default.":"Unsecured. A missed payment is a default.")}</p>
+    <p class="small muted">${c.n} payment${c.n>1?"s":""} of ~${c.amts[0].toLocaleString()} BB every ${esc(bkUT(l.payN,l.payU))}, ${c.total.toLocaleString()} BB total. Payments come out of your balance automatically on each payment date (if you're short, whatever you have is taken and the loan goes late); you can also pay any amount in between. Early payoff: principal + interest accrued so far, less what you've paid (never more than the full schedule). ${items.length?`Collateral is locked until the loan ends. ${esc(bkSeizeTxt(l))}, in the order listed.`:(bkGradual(l)?"Unsecured. A missed payment makes you late; catch up within "+esc(bkUT(l.seizeN,l.seizeU))+" of the final payment date or you default.":"Unsecured. A missed payment is a default.")}</p>
     ${items.length?items.map((w,i)=>`<label class="mktrow"><span class="small">${esc(mkItemTxt(w))}</span><select data-ti="${i}">${own.filter(x=>mkFits(w,x)).map(x=>`<option value="${x.id}" ${pick[i]===x.id?"selected":""}>${esc(CR[x.r].n)} · ${esc(x.name)} (×${cardCount(x.id)})</option>`).join("")}</select></label>`).join("")+`<div class="cgrid tradepick">${pick.map(g=>cardHtml(cardById(g),{small:true})).join("")}</div>`:`<p class="small">No collateral needed.</p>`}
     <button type="button" class="btn" data-tgo>Take loan${pick.length?` · put up ${pick.length} card${pick.length>1?"s":""}`:""}</button><button type="button" class="btn ghost" data-pkclose>Cancel</button></div>`};
   draw();document.body.appendChild(o);
@@ -4718,7 +4724,7 @@ async function bkPay(id,arg){if(S._bkBusy)return;const l0=(S.loans||[]).find(x=>
     if(isOff){if(po!==amt)return toast(`The payoff is now ${po.toLocaleString()} BB. Check it and try again.`)}
     else{if(now>=bkLastDue(l)&&amt<po)return toast("The loan term is over. Pay the full amount owed.");if(amt>po)return toast(`You only owe ${po.toLocaleString()} BB. Pay that to settle it.`)}
     const bal=Math.floor(ledger().balOf(S.me));if(bal<amt)return toast(isOff?`You need ${amt.toLocaleString()} BB to pay it off.`:"Not enough BiggieBucks.");
-    const key=bkKey("x"),pays=[...(l.payments||[]),{k:key,amt,at:now,...(isOff?{early:true}:{})}];
+    const key=bkKey("x"),pays=[...(l.payments||[]),{k:key,amt,at:now,...(isOff||amt>=po?{early:true}:{})}];
     const up=bkStep({...l,payments:pays},now,bal-amt)||{};up.payments=up.payments||pays;
     const sig=JSON.stringify(l.payments||[]),s2=await db.doc("loans/"+id).get();
     if(!s2.exists||JSON.stringify(s2.data().payments||[])!==sig||s2.data().status!==l.status||s2.data().tryK!==l.tryK)return toast("A payment just went through. Try again.");
@@ -4751,7 +4757,7 @@ function bkNextTry(l,now){const a=bkAmts(l),paid=bkPaidTot(l),t=bkTryK(l,now);le
 function bkStep(l,now,balOverride){/* pure: returns an update object, or null when nothing to do */
   const bal0=balOverride!=null?balOverride:Math.floor(ledger().balOf(l.borrower));const up={},pays=[...(l.payments||[])];
   const paidOf=()=>bkPaidTot({payments:pays}),cd=bkCumDue(l,now),tgt=bkTarget(l);
-  const fin=()=>{const pd=paidOf();if(pd>=tgt&&pd>=cd){up.status="repaid";up.repaidAt=now;up.seized=[];up.lateSince=null;up.lastSeizeAt=null;return true}return false};
+  const fin=()=>{const pd=paidOf();if((pd>=bkTotalOf(l)||pays.some(p=>p.early))&&pd>=cd){up.status="repaid";up.repaidAt=now;up.seized=[];up.lateSince=null;up.lastSeizeAt=null;return true}return false};
   const cure=()=>{up.status="active";up.seized=[];up.lateSince=null;up.lastSeizeAt=null;up.curedAt=now};
   const j=bkLatestK(l,now),fresh=j>bkTryK(l,now);let od=Math.max(0,cd-paidOf()),late=l.status==="late";
   if(fresh){up.tryK=j;const take=Math.min(od,Math.max(0,Math.floor(bal0)));if(take>0){pays.push({k:bkKey("d"),amt:take,at:now,...(late?{late:true}:{}),...(take<od?{partial:true}:{})});up.payments=pays;od-=take}}
@@ -4795,7 +4801,7 @@ function bkF(){return S.bkF||(S.bkF={to:"",amt:"",note:"",P:"1000",rate:"5",rate
 const bkUnitSel=(k,v)=>`<select data-bkf="${k}">${BK_UL.map(u=>`<option value="${u}" ${u===v?"selected":""}>${u}${k==="rateU"?"":"(s)"}</option>`).join("")}</select>`;
 function bkCardOpts(F){return Object.keys(CSETS).filter(setOpen).flatMap(k=>cardsCat(k)).filter(c=>c.r===Number(F.cr)&&pmSeen(c.id)).map(c=>`<option value="${c.id}" ${F.cc===c.id?"selected":""}>${esc(c.name)}</option>`).join("")}
 function bkPrevHtml(){const F=bkF(),c=bkCalc(bkTerms(F));if(!c||c.err)return `<span class="neg small">${esc(c?c.err:"Check the terms.")}</span>`;
-  const bal=Math.floor(ledger().balOf(S.me));return `<div class="bkstats"><div><span>Per payment</span><b class="num">${c.amts[0].toLocaleString()}${c.amts.some(a=>a!==c.amts[0])?"*":""}</b></div><div><span>Total repaid</span><b class="num">${c.total.toLocaleString()}</b></div><div><span>Interest</span><b class="num pos">+${c.interest.toLocaleString()}</b></div><div><span>Length</span><b class="num">${bkCd(c.payMs*c.n)}</b></div><div><span>Early payoff</span><b class="num">${bkTarget(c).toLocaleString()}</b></div></div>${c.amts.some(a=>a!==c.amts[0])?`<div class="small muted">* whole-BB rounding: payments range ${Math.min(...c.amts)}–${Math.max(...c.amts)} BB.</div>`:""}${c.P>bal?`<div class="small neg">You only have ${bal.toLocaleString()} BB.</div>`:""}`}
+  const bal=Math.floor(ledger().balOf(S.me));return `<div class="bkstats"><div><span>Per payment</span><b class="num">${c.amts[0].toLocaleString()}${c.amts.some(a=>a!==c.amts[0])?"*":""}</b></div><div><span>Total repaid</span><b class="num">${c.total.toLocaleString()}</b></div><div><span>Interest</span><b class="num pos">+${c.interest.toLocaleString()}</b></div><div><span>Length</span><b class="num">${bkCd(c.payMs*c.n)}</b></div><div><span>Early payoff</span><b class="num">${bkTarget(c).toLocaleString()} + interest</b></div></div>${c.amts.some(a=>a!==c.amts[0])?`<div class="small muted">* whole-BB rounding: payments range ${Math.min(...c.amts)}–${Math.max(...c.amts)} BB.</div>`:""}${c.P>bal?`<div class="small neg">You only have ${bal.toLocaleString()} BB.</div>`:""}`}
 function bkTermsTxt(l){return `${Number(l.rate)}%/${l.rateU}, compounded every ${bkUT(l.compN,l.compU)} · ${l.n} payment${Number(l.n)>1?"s":""} every ${bkUT(l.payN,l.payU)}`}
 function bkRow(l){const c=bkCalc(l)||{},me=S.me,st=l.status,N=l.sched?l.sched.amts.length:c.n,now=Date.now(),live=(st==="active"||st==="late")&&l.sched;
   const chip={open:"Open",active:"Active",late:"Late",repaid:"Repaid",defaulted:"Defaulted",cancelled:"Cancelled"}[st]||st;
@@ -4808,7 +4814,7 @@ function bkRow(l){const c=bkCalc(l)||{},me=S.me,st=l.status,N=l.sched?l.sched.am
       const what=col&&sz<col?"next seizure":"default";nxt=stats+`<div class="small bklate">⏰ Late since ${ago(l.lateSince)} · <b class="num">${od.toLocaleString()} BB</b> overdue · ${what} in <b class="num" data-bkdue="${ev}">${bkCd(ev-now)}</b>${nd<Infinity?` · next payment date in <b class="num" data-bkdue="${nd}">${bkCd(nd-now)}</b> (collects ${cdNext.toLocaleString()} BB)`:""}${bor?" · pay the overdue amount to catch up":""}</div>`}
     if(bor){const bal=Math.floor(ledger().balOf(me)),open=now<last,v=(S.bkPart||{})[l.id]||"";
       nxt+=`<div class="row bkpay">${open&&po>1?`<input class="n s" type="number" min="1" step="1" max="${Math.min(bal,po)}" inputmode="numeric" placeholder="BB" data-bkpart="${esc(l.id)}" value="${esc(v)}" aria-label="Amount to pay"><button type="button" class="btn ghost small" data-bk="part" data-id="${esc(l.id)}">Pay part</button>`:""}<button type="button" class="btn small" data-bk="payoff" data-id="${esc(l.id)}" data-amt="${po}" ${bal<po?"disabled":""}>Pay off now · ${po.toLocaleString()} BB</button></div>${bal<po?`<div class="small muted">You have ${bal.toLocaleString()} BB.</div>`:""}`}}
-  else if(st==="open"&&c.amts)nxt=`<div class="small muted">Early payoff: <b class="num">${bkTarget(c).toLocaleString()} BB</b> (principal + one payment)</div>`;
+  else if(st==="open"&&c.amts)nxt=`<div class="small muted">Early payoff: <b class="num">${bkTarget(c).toLocaleString()} BB</b> principal + interest accrued until payoff</div>`;
   else if(l.sched&&(st==="repaid"||st==="defaulted"))nxt=`<div class="small muted">Paid ${bkPaidTot(l).toLocaleString()} BB in total</div>`;
   const short=st==="open"&&c.P&&Math.floor(ledger().balOf(l.lender))<c.P;
   const seized=new Set();(l.seized||[]).forEach((g,i)=>seized.add(i));
