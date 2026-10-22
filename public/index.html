@@ -912,6 +912,11 @@ body.pkquake{animation:pkquake .12s linear 34}@keyframes pkquake{25%{transform:t
 .wkrgrid b{font-size:16px;font-weight:800}.wkrnet{font-weight:700}.wkrnet b{font-size:18px}
 .wkrecap .pos,.wkrecap .num.pos{color:#5cff72!important}.wkrecap .neg,.wkrecap .num.neg{color:#ff6262!important}
 .wkrecap.big .wkrgrid b{font-size:18px}.recapbox{gap:12px}
+#auSpace{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;pointer-events:none;display:block}
+body.auspace{background:transparent!important;background-image:none!important}
+body.auspace>*:not(#auSpace):not(.overlay):not(.pkov){position:relative;z-index:1}
+body.auspace main,body.auspace main .wrap{background:transparent!important}
+body.auspace .auit,body.auspace .auhero{background:rgba(14,12,22,.72)!important;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
 .updbar{position:fixed;left:50%;transform:translateX(-50%);top:calc(10px + env(safe-area-inset-top,0px));z-index:120;border:1px solid #f5cf5d;background:rgba(0,0,0,.92);color:#fff;font:inherit;font-size:15px;padding:10px 16px;border-radius:999px;box-shadow:0 6px 20px rgba(0,0,0,.6);white-space:nowrap;cursor:pointer}.updbar b{color:#f5cf5d}
 .cadraft{width:min(240px,70vw);margin:6px auto 4px}
 .colsum{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 4px}.colsum>div{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid var(--line)}.colsum b{font-size:18px}
@@ -2278,6 +2283,27 @@ function auWrap(a,inner,lvl,o){o=o||{};const A=AURA_BY[a];if(!A)return inner;
 function auDefault(id){const core=picCore(id,true,true);if(role(id)==="Commissioner")return `<span class="picwrap aura big">${core}</span>`;
   if(hasAb("shrex",id))return core.replace('class="pic big','class="pic big swamp');if(hasDragon(id))return core.replace('class="pic big','class="pic big dglow');return core}
 const auDefName=id=>role(id)==="Commissioner"?"Commish ring":hasAb("shrex",id)?"Swamp glow":hasDragon(id)?"Dragon glow":"No glow";
+/* Aura Shop backdrop: an endless starfield drifting toward you (canvas behind the page, only while the shop is open) */
+function auSpace(){const on=S.tab==="aura";let cv=document.getElementById("auSpace");
+  if(!on){if(cv){cancelAnimationFrame(cv._raf);cv.remove();document.body.classList.remove("auspace")}return}if(cv)return;
+  cv=document.createElement("canvas");cv.id="auSpace";cv.setAttribute("aria-hidden","true");document.body.prepend(cv);document.body.classList.add("auspace");
+  const g=cv.getContext("2d"),still=matchMedia("(prefers-reduced-motion: reduce)").matches,N=matchMedia("(max-width:600px)").matches?260:420;let W=0,H=0,dpr=1,last=0;
+  const size=()=>{dpr=Math.min(2,devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;g.setTransform(dpr,0,0,dpr,0,0)};size();addEventListener("resize",size);
+  const tint=()=>{const r=Math.random();return r<.08?"190,210,255":r<.13?"255,225,180":r<.16?"255,190,240":"255,255,255"};
+  const mk=z=>({x:(Math.random()*2-1),y:(Math.random()*2-1),z:z==null?Math.random():z,c:tint(),tw:Math.random()*6.28});
+  const st=Array.from({length:N},()=>mk());
+  /* faint nebula clouds, drawn once per frame under the stars */
+  const neb=[[.2,.25,"120,60,200"],[.85,.7,"30,90,190"],[.6,.15,"200,80,140"]];
+  const frame=t=>{if(!cv.isConnected)return;cv._raf=requestAnimationFrame(frame);if(document.hidden)return;const dt=Math.min(.05,(t-last)/1000||0);last=t;
+    g.fillStyle="#020108";g.fillRect(0,0,W,H);
+    for(const[nx,ny,c]of neb){const x=nx*W+Math.sin(t/9000+nx*9)*30,y=ny*H+Math.cos(t/11000+ny*7)*30,r=Math.max(W,H)*.55;const gr=g.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,`rgba(${c},.10)`);gr.addColorStop(1,"rgba(0,0,0,0)");g.fillStyle=gr;g.fillRect(0,0,W,H)}
+    const cx=W/2,cy=H*.42,f=Math.max(W,H)*.6,v=still?0:.045;
+    for(const p of st){p.z-=v*dt;if(p.z<=.02){Object.assign(p,mk(1))}
+      const k=1/p.z,x=cx+p.x*f*k*.35,y=cy+p.y*f*k*.35;if(x<-20||x>W+20||y<-20||y>H+20){Object.assign(p,mk(1));continue}
+      const a=Math.min(1,(1-p.z)*1.4)*(.75+.25*Math.sin(t/600+p.tw)),r=Math.max(.35,(1-p.z)*2.1);
+      if(r>1.6&&!still){const k2=1/(p.z+v*.2),px=cx+p.x*f*k2*.35,py=cy+p.y*f*k2*.35;g.strokeStyle=`rgba(${p.c},${a*.5})`;g.lineWidth=r;g.beginPath();g.moveTo(px,py);g.lineTo(x,y);g.stroke()}
+      g.fillStyle=`rgba(${p.c},${a})`;g.beginPath();g.arc(x,y,r,0,6.283);g.fill()}};
+  cv._raf=requestAnimationFrame(frame)}
 function viewAura(){if(!S.me)return `<div class="empty">Sign in to shop.</div>`;
   const me=S.me,bal=Math.floor(ledger().balOf(me)),cur=auraOf(me),A=AURA_BY[cur],ask=S.auAsk&&S.auAsk.id,own=AURAS.filter(a=>auOwns(me,a.id)).length;
   const prev=a=>a?auWrap(a,picCore(me,true,true),"fx",{big:true}):`<span class="aunone">${auDefault(me)}</span>`;
@@ -5901,7 +5927,7 @@ setInterval(()=>{if(document.visibilityState!=="visible"){MINE_LAST=Date.now();r
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")MINE_LAST=Date.now()});
 /* background updates coalesce into at most one render per frame, and wait while a Flappy run is in progress */
 let _rq=0;window.SB_RENDER=()=>renderSoon();function renderSoon(){if(_rq)return;_rq=requestAnimationFrame(()=>{_rq=0;if((typeof FP!=="undefined"&&FP&&FP.st==="play"&&S.tab==="flappy")||document.getElementById("revOv")){setTimeout(renderSoon,400);return}render()})}
-function render(){nflLinesWatch();lvTick();setTimeout(onlRender,0);setTimeout(autoRefill,0);if(S.gw)setTimeout(gwRender,0);setTimeout(recapPopup,400);
+function render(){nflLinesWatch();setTimeout(auSpace,0);lvTick();setTimeout(onlRender,0);setTimeout(autoRefill,0);if(S.gw)setTimeout(gwRender,0);setTimeout(recapPopup,400);
   {const u=logoOf(S.me),m=$("#meAv");if(m){if(u){m.outerHTML=`<img class="dot img" id="meAv" src="${esc(u)}" alt="">`}else if(m.tagName==="IMG"){m.outerHTML=`<span class="dot" id="meAv"></span>`}}}
   setMe();if(CHAT.open)chatRender();if(S.addOpen){refreshGhosts();betPreview()}
   const ts=$("#tabSetup");if(ts)ts.hidden=!S.canEdit;
