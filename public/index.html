@@ -912,6 +912,18 @@ body.pkquake{animation:pkquake .12s linear 34}@keyframes pkquake{25%{transform:t
 .wkrgrid b{font-size:16px;font-weight:800}.wkrnet{font-weight:700}.wkrnet b{font-size:18px}
 .wkrecap .pos,.wkrecap .num.pos{color:#5cff72!important}.wkrecap .neg,.wkrecap .num.neg{color:#ff6262!important}
 .wkrecap.big .wkrgrid b{font-size:18px}.recapbox{gap:12px}
+.cdrg{border-color:transparent!important;background:linear-gradient(#120d18,#0b0910) padding-box,conic-gradient(from var(--dga,0deg),#ff6ad5,#ffe66a,#6affb0,#7fe8ff,#b06cff,#ff6ad5) border-box!important;border:2px solid transparent!important;animation:drgBorder 3s linear infinite;box-shadow:0 0 24px rgba(255,120,230,.35),0 0 40px rgba(120,230,255,.25)}
+.cdrg .eyebrow{background:linear-gradient(90deg,#ff9ee5,#ffe66a,#86ffd2,#7fe8ff,#c79bff);-webkit-background-clip:text;background-clip:text;color:transparent!important;font-weight:800}
+@property --dga{syntax:"<angle>";inherits:false;initial-value:0deg}@keyframes drgBorder{to{--dga:360deg}}
+.drgfx{isolation:isolate;margin:12px 10px}.drgfx .tcard{position:relative;z-index:2}
+.drgfx .drgring,.drgfx .drghalo{position:absolute;inset:-7px;border-radius:16px;pointer-events:none;background:conic-gradient(from var(--dga,0deg),#ff6ad5,#ffb36a,#ffe66a,#6affb0,#7fe8ff,#8b7bff,#ff6ad5)}
+.drgfx .drgring{z-index:1;animation:drgBorder 1.6s linear infinite,drgHue 1.6s ease-in-out infinite;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;padding:5px}
+.drgfx .drghalo{z-index:0;inset:-10px;filter:blur(12px);opacity:.9}
+.drgfx::after{content:"";position:absolute;inset:0;z-index:3;border-radius:12px;pointer-events:none;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.55) 45%,rgba(255,180,240,.35) 50%,transparent 62%);background-size:250% 100%;mix-blend-mode:screen;animation:drgShine 2.4s ease-in-out infinite}
+@keyframes drgSpin{to{transform:rotate(1turn)}}@keyframes drgHue{0%,100%{filter:hue-rotate(0) saturate(1.4) brightness(1.1)}50%{filter:hue-rotate(90deg) saturate(2) brightness(1.4)}}
+.drgfx .drghalo{animation:drgBorder 2.4s linear infinite reverse,drgHueB 2s ease-in-out infinite}@keyframes drgHueB{0%,100%{filter:blur(12px) hue-rotate(0) brightness(1.1)}50%{filter:blur(16px) hue-rotate(90deg) brightness(1.5)}}
+@keyframes drgShine{0%{background-position:150% 0}100%{background-position:-50% 0}}
+@media (prefers-reduced-motion:reduce){.drgfx .drgring,.drgfx .drghalo,.drgfx::after,.cdrg{animation:none}}
 .aw.au-swamp::after{inset:0;z-index:3;animation:swamp 3.4s ease-in-out infinite}
 /* Dragon Glow: thick iridescent (holographic) ring that turns and shimmers, with a soft colored halo behind it */
 .au-dragon::before,.au-dragon::after{background:conic-gradient(from 0deg,#ff9ee5,#c79bff,#8fb8ff,#7fe8ff,#86ffd2,#e9ff9a,#ffd59a,#ff9ec4,#ff9ee5);animation:auSpin 4s linear infinite,auIri 3s ease-in-out infinite}
@@ -4851,6 +4863,9 @@ async function pmBuy(){if(!S.me||!db||S._pmBusy)return;if(S.readOnly)return toas
 function pmTest(legId){if(!S.canEdit)return;const ids=[];cardsCat("pm").filter(c=>c.r===7).forEach(c=>{for(let i=0;i<c.lim;i++)ids.push(c.id)});const pick=pmShuffle(ids).slice(0,PM_PACK.n-1);
   const leg=cardsCat("pm").filter(c=>c.r===8);pick.push(legId&&cardById(legId)?legId:leg[Math.floor(pkRand()*leg.length)].id);pmShowOpen(pick,0,0,true)}
 /* chat bubble for a legendary pull: the card in full glory */
+/* Dragon pull in chat: the card itself inside a wild iridescent aura, plus who paid what */
+function dragonChatHtml(m,when,del){const c=cardById(m.cid);
+  return `<div class="cbet cdrg" data-hold="${esc(m.id)}"><div class="eyebrow">🐉 Dragon pull · ${when}${del}</div><div class="cpmrow"><div class="cpmcard drgfx"><i class="drgring"></i><i class="drghalo"></i>${cardHtml(c,{click:true})}</div><div style="min-width:0"><div class="cbtitle">${esc(m.text)}</div><div class="small">${esc(m.detail||"")}</div></div></div>${reactHtml(m)}</div>`}
 function pmChatHtml(m,when,del){const c=cardById(m.cid);const ab=m.cid==="pm-claire"?"🔥 Scorched Earth: burn her for 500,000 BB":m.cid==="pm-debby"?"🧙‍♀️ Hex Tax: steals 10,000 BB a day from someone":"⚡ Freakin' Sweet: 1.5× on every card dividend";
   return `<div class="cbet cpm" data-hold="${esc(m.id)}"><div class="eyebrow">💠 Platinum Mysterio · Legendary pull · ${when}${del}</div><div class="cpmrow"><div class="cpmcard">${cardHtml(c,{click:true})}<span class="pmbadge">${pmBadge(c)}${c.lim===1?" · only one exists":""}</span></div><div style="min-width:0"><div class="cbtitle">${esc(m.text)}</div><div class="small" style="color:${pmTheme(c).hc}">${esc(ab)}</div></div></div>${reactHtml(m)}</div>`}
 
@@ -5027,11 +5042,11 @@ async function pkBuy(id){const set=pkSt().set;const p=PACKS.find(x=>x.id===id);i
     /* Dragon bounty (owner): every Dragon you pull (and keep), everyone else pays you 20,000 BB once (capped at what they have) */
     {const nDr=pulls.filter((x,i)=>!ov[i]&&(cardById(x)||{}).r===6).length;for(let k=0;k<nDr;k++){try{const L0=ledger(),pay={};let tot=0;
       for(const id of tiRecips(S.me)){const a=Math.min(DRAGON_BOUNTY,Math.max(0,Math.floor(L0.balOf(id))));if(a>0){pay[id]=a;tot+=a}}
-      if(tot>0){const at=Date.now();await db.doc(`bank/bounty_${S.me}_${at}_${k}`).set({kind:"bounty",to:S.me,pay,amt:tot,note:"Dragon bounty",at});
-        try{db.collection("chat").add({type:"bet",kind:"bank",uid:S.me,poster:S.me,at:Date.now(),text:`🐉 ${nm(S.me)} PULLED THE DRAGON! Everyone pays them ${DRAGON_BOUNTY.toLocaleString()} BB · ${tot.toLocaleString()} BB total`,detail:Object.entries(pay).map(([id,a])=>`← ${nm(id)}: −${a.toLocaleString()} BB`).join("\n")})}catch(_){}}}catch(_){}}}
+      S._drgPosted=false;if(tot>0){S._drgPosted=true;const at=Date.now();await db.doc(`bank/bounty_${S.me}_${at}_${k}`).set({kind:"bounty",to:S.me,pay,amt:tot,note:"Dragon bounty",at});
+        try{db.collection("chat").add({type:"bet",kind:"bank",uid:S.me,poster:S.me,at:Date.now(),kind:"dragon",cid:pulls.filter((x,i)=>!ov[i]&&(cardById(x)||{}).r===6)[k],text:`🐉 ${nm(S.me)} PULLED THE DRAGON! Everyone pays them ${DRAGON_BOUNTY.toLocaleString()} BB · ${tot.toLocaleString()} BB total`,detail:Object.entries(pay).map(([id,a])=>`← ${nm(id)}: −${a.toLocaleString()} BB`).join("\n")})}catch(_){}}}catch(_){}}}
     pkShowOpen(p,pulls);pkFees(p,cardSet(pulls[0]));
     if(pulls.some((x,i)=>!ov[i]&&(cardById(x)||{}).abil==="social")){try{db.collection("chat").add({type:"bet",uid:S.me,poster:S.me,at:Date.now(),text:`${nm(S.me)} +10 million social credit score!`})}catch(_){}}
-    const best=Math.max(...pulls.map(c=>cardById(c).r));if(best>=4){const c=cardById(pulls.find(x=>cardById(x).r===best));try{db.collection("chat").add({type:"bet",uid:S.me,poster:S.me,at:Date.now(),text:`${best===6?"🐉🐉🐉 ":best===5?"🏆 ":"🔥 "}${nm(S.me)} pulled ${best===6?"THE STARLUXE DRAGON SUPREME":CR[best].n}: ${c.name} from a ${p.name}!${best===6?" 🐉🐉🐉":" 🎴"}`})}catch(_){}}}
+    const best=Math.max(...pulls.map(c=>cardById(c).r));if(best>=4&&!(best===6&&S._drgPosted)){const c=cardById(pulls.find(x=>cardById(x).r===best));try{db.collection("chat").add({type:"bet",uid:S.me,poster:S.me,at:Date.now(),text:`${best===6?"🐉🐉🐉 ":best===5?"🏆 ":"🔥 "}${nm(S.me)} pulled ${best===6?"THE STARLUXE DRAGON SUPREME":CR[best].n}: ${c.name} from a ${p.name}!${best===6?" 🐉🐉🐉":" 🎴"}`})}catch(_){}}}
   catch(e){toast("Couldn't open that pack. Check your connection.")}finally{S._pkBusy=false;render()}}
 function pkShowOpen(p,pulls){const R=CR[p.r];const imgReady=cimgPrefetch(pulls,8000);const o=document.createElement("div");o.className="pkov";o.innerHTML=`<div class="pkstage"><div class="packbig packart pt${p.r}" style="--rc:${R.c};--rg:${R.g}"><i class="crimp t"></i><i class="crimp b"></i><div class="packfoil"><span class="pklogo">${LOGO[pkSt().set]||""}</span><span class="pkem">${PK_EM[p.r]}</span><span class="pkset">${esc((CSETS[pkSt().set]||CSETS.lm).name)}</span><b>${esc(p.name)}</b><span class="pkn">Tap to open</span></div></div>
   <div class="pkrow" hidden>${pulls.map((cid,i)=>{const c=cardById(cid);return `<div class="flip" data-flip="${i}" style="--rc:${CR[c.r].c};--rg:${CR[c.r].g}"><div class="fback"><div class="fbin"><span class="fbc tl">✦</span><span class="fbc tr">✦</span><span class="fbc bl">✦</span><span class="fbc br">✦</span><span class="fblogo">${LOGO.brand}</span><b class="fbword">BIGGIECHEESE</b><small class="fbset">${esc((CSETS[pkSt().set]||CSETS.lm).name)}</small></div></div><div class="ffront">${cardHtml(c,{count:(pulls.over||[])[i]?0:cardCount(cid)})}${(pulls.over||[])[i]?`<div class="pkover"><b>MAX SUPPLY</b><span>Auto-sold +${qsVal(c).toLocaleString()} BB</span></div>`:""}</div></div>`}).join("")}</div>
@@ -5214,6 +5229,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:22,d:"Oct 22",t:[["🐉","Dragon pulls now show the card in chat with a wild iridescent glow"]]},
  {v:21,d:"Oct 22",t:[["🃏","Blackjack pace tweak: a new hand every 2 seconds"]]},
  {v:20,d:"Oct 22",t:[["🐉","Pull a Dragon and everyone pays you 20,000 BB (one time, shown in chat)"]]},
  {v:19,d:"Oct 22",t:[["🃏","Blackjack has a steadier pace: a new hand at most every 3 seconds"],["🎲","Checked craps payouts: every roll adds up to the BB"]]},
@@ -6376,6 +6392,7 @@ function chatMsgHtml(m){
   const when=esc(new Date(m.at).toLocaleString([], {weekday:"short",hour:"numeric",minute:"2-digit"}));
   const del=S.canEdit||m.uid===S.me&&m.type!=="bet"?` <button type="button" class="cdel" data-chatdel="${esc(m.id)}" aria-label="Delete message">delete</button>`:"";
   if(m.type==="bet"&&m.kind==="plat-legend"&&m.cid&&cardById(m.cid))return pmChatHtml(m,when,del);
+  if(m.type==="bet"&&m.kind==="dragon"&&m.cid&&cardById(m.cid))return dragonChatHtml(m,when,del);
   if(m.type==="bet"){const bk=m.kind==="bank",tr=m.kind==="cardtrade"||/ traded .+ for .+ 🔁$/.test(String(m.text||"")),buy=bk||tr||m.kind==="cardbuy"||/ bought .+ for [\d,]+ BB.* 💸$/.test(String(m.text||""));return `<div class="cbet${buy?" cbuy":""}" data-hold="${esc(m.id)}"><div class="eyebrow">${bk?"🏦 Bank":tr?"Traded":buy?"Card sold":"Bet accepted"} · ${when}${del}</div><div class="cbtitle">${esc(m.text)}</div><div class="small">${esc(m.detail||"")}</div>${reactHtml(m)}</div>`;}
   const mine=m.uid===S.me;
   return `<div class="cmsg${mine?" mine":""}${m.pending?" pending":""}">${mine?pic(m.uid):(logoOf(m.uid)?`<button type="button" class="zoombtn" data-zoom="${esc(m.uid)}" aria-label="View photo">${pic(m.uid)}</button>`:pic(m.uid))}<div class="cbody"><div class="cmeta">${mine?"You":`<button type="button" class="mlink" data-member="${esc(m.uid)}">${esc(nm(m.uid))}</button>`} · ${when}${del}</div><div class="ctext${m.gif?" hasgif":""}" data-hold="${esc(m.id)}">${m.gif||m.media?`<img class="cgif" data-mkey="${esc(m.id)}" alt="GIF">`:""}${m.text?esc(m.text):""}</div>${reactHtml(m)}</div></div>`;
