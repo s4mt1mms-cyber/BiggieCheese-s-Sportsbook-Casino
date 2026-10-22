@@ -912,6 +912,7 @@ body.pkquake{animation:pkquake .12s linear 34}@keyframes pkquake{25%{transform:t
 .wkrgrid b{font-size:16px;font-weight:800}.wkrnet{font-weight:700}.wkrnet b{font-size:18px}
 .wkrecap .pos,.wkrecap .num.pos{color:#5cff72!important}.wkrecap .neg,.wkrecap .num.neg{color:#ff6262!important}
 .wkrecap.big .wkrgrid b{font-size:18px}.recapbox{gap:12px}
+.pksupply{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;padding:10px 12px;margin:8px 0 12px;border:1px solid var(--line);border-radius:12px;font-size:13px}.pksupply small{flex-basis:100%;font-size:12px}
 .fpfarm h3{margin-bottom:2px}.fpups{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.fpup{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.03)}.fpuph{display:flex;gap:8px;align-items:center}.fpuph>span:last-child{display:flex;flex-direction:column;line-height:1.15}.fpupic{font-size:24px}.fpupv{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}.fpupv b{font-size:22px;color:#5cff72}.fpupn{font-size:13px;color:var(--gold);font-weight:700}.fppips{display:flex;gap:4px}.fppips i{flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.12)}.fppips i.on{background:var(--gold)}.fpupbtn{min-height:40px;font-size:14px;padding:0 8px}.fpupbtn.ask{background:#5cff72;color:#000}.fpupbtn.short{opacity:.55}.fpmax{text-align:center;font-weight:800;letter-spacing:.12em;color:var(--gold);padding:8px 0}
 #auSpace{position:fixed;inset:0;width:100vw;height:100vh;z-index:-1;pointer-events:none;display:block}
 html:has(body.auspace){background:#000!important}
@@ -4680,6 +4681,10 @@ function pkOpen(p,set){const cat=cardsCat(set),used={};const left=c=>c.lim-minte
     /* a sold-out rarity falls back to the next lower rarity with copies left (then higher, if nothing is left below) */
     let k=r;while(!pool.length&&k>0){k--;pool=cat.filter(c=>c.r===k&&left(c)>0)}if(!pool.length){k=r;while(!pool.length&&k<(p.cap==null?6:p.cap)){k++;pool=cat.filter(c=>c.r===k&&left(c)>0)}}
     if(!pool.length)return null;const c=pool[Math.floor(pkRand()*pool.length)];used[c.id]=(used[c.id]||0)+1;return c.id}).filter(Boolean).sort((a,b)=>cardById(a).r-cardById(b).r)}
+/* copies left to mint per rarity in a collection (Infinity = unlimited) */
+function pkLeft(set){const out=[0,0,0,0,0,0,0];for(const c of cardsCat(set)){if(c.r>6)continue;out[c.r]+=isFinite(c.lim)?Math.max(0,c.lim-minted(c.id)):Infinity}return out}
+/* a pack can't be sold once one of its guaranteed slots has nothing left at (or above) its floor */
+function pkBlocked(p,set){const L=pkLeft(set),above=f=>L.slice(f).reduce((a,b)=>a+b,0);for(let i=0;i<p.n;i++){if(p.fixed&&i<p.fixed.length){if(!(L[p.fixed[i]]>0))return true;continue}if(p.custom&&p.custom[i])continue;const f=p.floors[i]||0;if(f>0&&!(above(f)>0))return true}return false}
 /* exact per-pack chance of at least one card of rarity >= r (shown in the shop) */
 function pkChance(p,r,set){let miss=1;for(let i=0;i<p.n;i++){const w=pkSlot(p,i,set);miss*=1-w.reduce((a,x,k)=>a+(k>=r?x:0),0)}return 1-miss}
 const fmtPct=x=>x>=.995?"100%":x>=.1?Math.round(x*100)+"%":x>=.01?(x*100).toFixed(1)+"%":(x*100).toFixed(2)+"%";
@@ -4957,12 +4962,12 @@ function viewPacks(){if(!S.me)return `<div class="empty">Sign in to collect card
         <span class="setprog"><span>${have}/${cat.length} collected</span><i><b style="width:${Math.round(have/cat.length*100)}%"></b></i></span><span class="setgo">${real?"Open ›":"🔒 Soon"}</span></button>`}).join("")}</div>${pmPackHtml(bal)}`)}
   const SET=CSETS[st.set]||CSETS.lm;
   let body="";
-  if(st.tab==="shop"){body=`<p class="small muted">Every pack can pull any card. Better packs raise the floor and the odds of the rare ones.</p><div class="pkgrid">${PACKS.map(p=>{const R=CR[p.r];const fl={},fx={};for(let i=0;i<p.n;i++){if(p.fixed&&i<p.fixed.length)fx[p.fixed[i]]=(fx[p.fixed[i]]||0)+1;else if(p.custom&&p.custom[i]){fl[4]=(fl[4]||0)+1}else{const f=p.floors[i]||0;if(f>0)fl[f]=(fl[f]||0)+1}}
+  if(st.tab==="shop"){body=`<p class="small muted">Every pack can pull any card. Better packs raise the floor and the odds of the rare ones.</p>${(()=>{const L=pkLeft(pkSt().set);return `<div class="pksupply"><span class="stlbl">Copies left</span>${[2,3,4,5,6].map(r=>`<span style="color:${CR[r].c}">${CR[r].n.split(" ")[0]} <b class="num${L[r]>0?"":" neg"}">${L[r]>0?(isFinite(L[r])?L[r].toLocaleString():"∞"):"Sold out"}</b></span>`).join("")}<small class="muted">A sold-out rarity drops to the next one down.</small></div>`})()}<div class="pkgrid">${PACKS.map(p=>{const R=CR[p.r];const blk=pkBlocked(p,pkSt().set);const fl={},fx={};for(let i=0;i<p.n;i++){if(p.fixed&&i<p.fixed.length)fx[p.fixed[i]]=(fx[p.fixed[i]]||0)+1;else if(p.custom&&p.custom[i]){fl[4]=(fl[4]||0)+1}else{const f=p.floors[i]||0;if(f>0)fl[f]=(fl[f]||0)+1}}
       const g=[...Object.keys(fx).map(Number).sort((a,b)=>b-a).map(f=>`<span style="color:${CR[f].c}">${fx[f]}× ${CR[f].n}</span>`),...Object.keys(fl).map(Number).sort((a,b)=>b-a).map(f=>`<span style="color:${CR[f].c}">${fl[f]}× ${CR[f].n}+</span>`)].join(" · ")||`<span class="muted">No guarantees, pure luck</span>`;
       return `<div class="pack" style="--rc:${R.c};--rg:${R.g}"><div class="packart pt${p.r}"><i class="crimp t"></i><i class="crimp b"></i><div class="packfoil"><span class="pklogo">${LOGO[pkSt().set]||""}</span><span class="pkem">${PK_EM[p.r]}</span><span class="pkset">${esc(SET.name)}</span><b>${esc(p.name)}</b><span class="pkn">${p.n} card${p.n>1?"s":""}</span></div></div>
         <div class="pkinfo"><div class="pkg"><span class="stlbl">Guaranteed</span> ${g}</div>
         <div class="pkodds">${[3,4,5,6].map(r=>`<span style="color:${CR[r].c}">${CR[r].n.split(" ")[0]} ${pkChance(p,r)>0?fmtPct(pkChance(p,r)):"✕"}</span>`).join("")}</div>
-        <button type="button" class="btn" data-pkbuy="${p.id}" ${bal<p.price?"disabled":""}>Open · ${p.price.toLocaleString()} BB</button></div></div>`}).join("")}</div>
+        <button type="button" class="btn" data-pkbuy="${p.id}" ${bal<p.price||blk?"disabled":""}>${blk?"Sold out":`Open · ${p.price.toLocaleString()} BB`}</button></div></div>`}).join("")}</div>
       <p class="small muted">Odds shown are the chance of at least one card of that rarity or better in the pack.</p>${pmPackHtml(bal)}`}
   if(st.tab==="coll"){const sets=Object.keys(CSETS).filter(setOpen);const cs_=st.cset&&sets.includes(st.cset)?st.cset:sets[0];const who=st.who&&S.prefs[st.who]?st.who:S.me,mine=who===S.me;const cat=cardsCat(cs_);const have=cat.filter(c=>cardCount(c.id,who)>0).length;const isPm=cs_==="pm";const tiers=isPm?[8,7]:[6,5,4,3,2,1,0];
     const head=(r,txt)=>`<div class="crhead" style="--rc:${CR[r].c}"><span class="crdot"></span><b>${esc(CR[r].n)}</b><span class="small muted">${txt}</span></div>`;
@@ -4984,7 +4989,7 @@ function viewPacks(){if(!S.me)return `<div class="empty">Sign in to collect card
   return shell(st.tab==="shop"?esc(SET.name):st.tab==="coll"?(st.who&&st.who!==S.me&&S.prefs[st.who]?esc(nm(st.who))+"'s Collection":"My Collection"):"Marketplace",body,st.tab==="shop")}
 function pkTest(){if(!S.canEdit)return;const cat=cardsCat(pkSt().set);const dr=cat.find(c=>c.r===6);if(!dr)return toast("No Dragon card in this set.");const pick=r=>{const l=cat.filter(c=>c.r===r);return l[Math.floor(Math.random()*l.length)].id};
   pkShowOpen(PACKS.find(x=>x.id==="plat"),[pick(1),pick(2),pick(3),pick(4),dr.id])}
-async function pkBuy(id){const set=pkSt().set;const p=PACKS.find(x=>x.id===id);if(!p||S._pkBusy)return;const bal=Math.floor(ledger().balOf(S.me));if(bal<p.price)return toast("Not enough BiggieBucks for that pack.");
+async function pkBuy(id){const set=pkSt().set;const p=PACKS.find(x=>x.id===id);if(!p||S._pkBusy)return;if(pkBlocked(p,set))return toast("This pack is sold out: its guaranteed cards can't be filled anymore.");const bal=Math.floor(ledger().balOf(S.me));if(bal<p.price)return toast("Not enough BiggieBucks for that pack.");
   S._pkBusy=true;try{const pulls=pkOpen(p,set);if(!pulls.length){S._pkBusy=false;return toast("Every card in this collection is sold out.")}cimgPrefetch(pulls);const q=S.prefs[S.me]=S.prefs[S.me]||{};const cards={...(q.cards||{})},add={};pulls.forEach(cid=>{cards[cid]=(Number(cards[cid])||0)+1;add[cid]=cards[cid]});
     const patch={packSpent:(Number(q.packSpent)||0)+p.price,cards:add,packsOpened:(Number(q.packsOpened)||0)+1};Object.assign(q,{packSpent:patch.packSpent,cards,packsOpened:patch.packsOpened});
     await db.doc("prefs/"+S.me).update(patch);
@@ -5175,6 +5180,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:14,d:"Oct 22",t:[["🎴","The pack shop now shows how many copies of each rarity are left, and packs whose guaranteed cards can't be filled anymore show Sold out"]]},
  {v:13,d:"Oct 22",t:[["🧀","Flappy Cheese is sharper and smoother, especially on newer iPhones"]]},
  {v:12,d:"Oct 22",t:[["🎲","Fixed: craps dice now always show the roll that counted"],["🎲","Craps Dean Strow's edge is now 1.95% (wins still round up)"]]},
  {v:11,d:"Oct 22",t:[["🎲","Craps Dean Strow's edge is back to 2.5% (still rounds up)"],["🧀","Flappy Cheese is now a Cheese Farm: start at 1 BB per pipe with a 5,000 BB daily cap, then buy upgrades to earn up to 500 BB a pipe and 500,000 a day"]]},
