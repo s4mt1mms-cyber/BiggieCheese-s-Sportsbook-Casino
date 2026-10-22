@@ -120,7 +120,7 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   Rules: NFL bets can only be created before `nfl/{wk}.g[id].kick`, and only admins can change them afterwards.
 - **Casino**: Blackjack (`bj*`; 2-deck shoes, streak bonuses 5:+2,500 · 6:+5,000 · 7–9:+15,000 · 10+:+50,000 at any bet,
   0.5 s cooldown between deals), Roulette (`rl*` — note `rl` prefix is ALSO used for live Russian Roulette lobby code),
-  Craps (`cr*`), High-Low (`hl*`), Flappy Cheese (10 BB/pipe, 5k/day cap; Vector card gives one 10× uncapped run/day),
+  Craps (`cr*`), High-Low (`hl*`), Flappy Cheese (25 BB/pipe, 10k/day cap; Vector card gives one 10× uncapped run/day),
   Revenge rat hunt (`revengeStart`), mining (25 BB/min while the app is on screen).
 - **Russian Roulette**: solo vs bots and live 4-seat animal bar (three.js scene, `rr*`/`rl*`), drinking/blackout,
   shoot-someone + return fire, winner gets 4× final bet.

@@ -4784,6 +4784,7 @@ setInterval(divCheck,30000);setTimeout(divCheck,4000);
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:2,d:"Oct 22",t:[["🧀","Flappy Cheese now pays 25 BB per point, up to 10,000 BB a day"]]},
  {v:1,d:"Oct 22",t:[
   ["🏈","NFL bets: bet real NFL games and build NFL parlays (Sports betting in the menu)"],
   ["💰","Make an offer on any card in someone's collection, even if it's not for sale"],
@@ -5183,7 +5184,7 @@ document.addEventListener("click",async e=>{const as=e.target.closest("[data-car
 document.addEventListener("change",async e=>{const inp=e.target.closest("[data-cardimgup]");if(!inp||!inp.files||!inp.files[0])return;const cid=inp.dataset.cardimgup;
   try{const d=await toJpeg(inp.files[0],560);await db.doc("cardimg/"+cid).set({d,at:Date.now()});CIMG[cid]=d;toast("Image saved.");render()}catch(_){toast("Couldn't save that image.")}});
 /* ---------- Flappy Cheese: earn BB, 10 per point, capped per day (ET) ---------- */
-const FP_PER=10,FP_CAP=5000;
+const FP_PER=25,FP_CAP=10000;
 const fpDay=()=>new Date().toLocaleDateString("en-CA",{timeZone:"America/New_York"});
 function fpToday(id){const q=S.prefs[id]||{};return q.flapDay===fpDay()?Number(q.flapToday)||0:0}
 function fpStatsHtml(){const q=S.prefs[S.me]||{},today=fpToday(S.me),left=Math.max(0,FP_CAP-today);
