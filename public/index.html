@@ -1551,6 +1551,20 @@ body.chatmode .chatpanel.inpage .dmlist{padding-top:12px}
 body.chatmode .chatpanel.inpage #dmForm{padding-left:calc(8px + env(safe-area-inset-left,0px));padding-right:calc(8px + env(safe-area-inset-right,0px));padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}
 html.kb body.chatmode .chatpanel.inpage #dmForm{padding-bottom:8px}
 .chatform[hidden]{display:none!important}
+
+/* ---- Showcase ---- */
+.scwrap{display:flex;flex-direction:column;gap:8px;margin:10px 0 6px;padding:10px;border:1px solid var(--gold);border-radius:14px;background:linear-gradient(180deg,rgba(245,207,93,.08),transparent)}
+.schd{display:flex;justify-content:space-between;align-items:center;gap:8px}.scedit{min-height:40px;padding:6px 12px;font-size:13px}
+.scgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;width:100%}
+.scslot{min-width:0;display:block;position:relative}.scslot .tcard{width:100%!important;flex:none!important;height:auto!important}
+button.scslot{background:none;border:0;padding:0;cursor:pointer;color:inherit;font:inherit}
+.scadd{aspect-ratio:5/7;border:2px dashed var(--line)!important;border-radius:12px;display:grid!important;place-items:center;color:var(--muted)!important;font-size:34px!important}
+.scslot.on{outline:3px solid var(--gold);outline-offset:3px;border-radius:12px}
+.scedslot{display:flex;flex-direction:column;gap:6px;min-width:0}
+.scctl{display:flex;justify-content:center;gap:4px}.scctl button{flex:1;min-height:36px;min-width:0;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:13px;cursor:pointer;padding:0}.scctl button[disabled]{opacity:.3}
+.sced>select{width:100%;min-height:44px}
+.tpk.scin{outline:2px solid var(--gold);outline-offset:2px;border-radius:12px}
+.mvcards .scgrid{margin:6px 0 10px}
 </style>
 </head>
 <body><svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="pmFireF" x="-30%" y="-40%" width="160%" height="170%"><feTurbulence type="fractalNoise" baseFrequency="0.018 0.06" numOctaves="3" seed="3" result="n"><animate attributeName="baseFrequency" dur="2.4s" values="0.018 0.06;0.022 0.075;0.018 0.06" repeatCount="indefinite"/><animate attributeName="seed" dur="0.9s" values="3;4;5;6;7;3" calcMode="discrete" repeatCount="indefinite"/></feTurbulence><feDisplacementMap in="SourceGraphic" in2="n" scale="46" xChannelSelector="R" yChannelSelector="G"/></filter><filter id="pmFireF2" x="-30%" y="-40%" width="160%" height="170%"><feTurbulence type="turbulence" baseFrequency="0.012 0.045" numOctaves="2" seed="9" result="n"><animate attributeName="baseFrequency" dur="3.1s" values="0.012 0.045;0.016 0.06;0.012 0.045" repeatCount="indefinite"/></feTurbulence><feDisplacementMap in="SourceGraphic" in2="n" scale="60" xChannelSelector="R" yChannelSelector="G"/></filter></svg>
@@ -2100,7 +2114,7 @@ function memberOverlay(){
       <div class="stline"><span><span class="stlbl">W-L</span> <span class="num">${st.r.w}-${st.r.l}</span></span><span><span class="stlbl">Profit</span> <span class="num ${st.net>0?"pos":st.net<0?"neg":""}">${st.net?esc(signed(st.net)):"0"}</span></span><span><span class="stlbl">Wagered</span> <span class="num">${Math.round(st.wag).toLocaleString()}</span></span><span><span class="stlbl">Balance</span> <span class="num">${Math.round(st.bal).toLocaleString()}</span></span>${st.inPlay?`<span><span class="stlbl">In play</span> <span class="num">${Math.round(st.inPlay).toLocaleString()}</span></span>`:""}<span class="muted">${bets.length} bet${bets.length===1?"":"s"}</span></div>${S.me&&id!==S.me?`<button type="button" class="btn mvdm" data-dmgo="${esc(id)}">💬 Message</button>`:""}</div></div>
     ${(()=>{const sets=Object.keys(CSETS).filter(setOpen).map(k=>{const cat=cardsCat(k),have=cat.filter(c=>cardCount(c.id,id)>0).length;return `<div class="profset"><span>${CSETS[k].special?"💠 ":""}${esc(CSETS[k].name)}</span><b>${CSETS[k].special?have:`${have}/${cat.length}`}</b></div>`}).join("");
       const top=Object.entries(myCards(id)).filter(([k,v])=>Number(v)>0&&cardById(k)).map(([k])=>cardById(k)).sort((a,b)=>b.r-a.r).slice(0,3);
-      return `<div class="mvcards"><h3>Card collection</h3><div class="profsets">${sets}</div>${top.length?`<div class="cgrid profbest">${top.map(c=>cardHtml(c,{small:true,click:true})).join("")}</div>`:""}<button type="button" class="btn" data-profcoll="${esc(id)}">🎴 View ${id===S.me?"my":"their"} card collection</button></div>`})()}
+      const scs=scLive(id).filter(Boolean);return `<div class="mvcards"><h3>Card collection</h3><div class="profsets">${sets}</div>${scs.length?`<div class="stlbl">⭐ Showcase</div><div class="scgrid">${scs.map(cid=>`<div class="scslot">${cardHtml(cardById(cid),{small:true,click:true})}</div>`).join("")}</div>`:top.length?`<div class="cgrid profbest">${top.map(c=>cardHtml(c,{small:true,click:true})).join("")}</div>`:""}<button type="button" class="btn" data-profcoll="${esc(id)}">🎴 View ${id===S.me?"my":"their"} card collection</button></div>`})()}
     ${bets.length?`<div>${bets.map(b=>{const g=gameById(b.gameId);return `<div class="bet"><div class="what"><div class="small muted">Week ${esc(g.week)} · ${esc(gTitle(g))}</div>${betLine(b,g)}</div><div class="acts">${resultPill(b,g)}</div></div>`}).join("")}</div>`:`<p class="small muted">No bets yet.</p>`}
     <div><button class="btn ghost" data-act="closeMember">Close</button></div></div>`;
 }
@@ -4461,7 +4475,7 @@ function viewPacks(){if(!S.me)return `<div class="empty">Sign in to collect card
     const got=tiers.map(r=>{const cs=cat.filter(c=>c.r===r&&cardCount(c.id,who)>0);if(!cs.length)return "";return head(r,isPm?`${cs.length} owned`:`${cs.length}/${cat.filter(c=>c.r===r).length}`)+`<div class="cgrid">${cs.map(c=>cardHtml(c,{count:cardCount(c.id,who),click:true,small:true})).join("")}</div>`}).join("");
     const hsh=x=>{let h=7;for(const ch of x)h=(h*31+ch.charCodeAt(0))>>>0;return h};const unseen=isPm?cat.filter(c=>!cardCount(c.id,who)&&!pmSeen(c.id)).sort((a,b)=>hsh(a.id)-hsh(b.id)):[];
     const need=(unseen.length?`<div class="crhead" style="--rc:#f3dfff"><span class="crdot"></span><b>Mystery cards</b><span class="small muted">nobody has pulled these yet</span></div><div class="cgrid">${unseen.map(c=>cardHtml(c,{missing:true,small:true})).join("")}</div>`:"")+tiers.map(r=>{const cs=cat.filter(c=>c.r===r&&!cardCount(c.id,who)&&(!isPm||pmSeen(c.id)));if(!cs.length)return "";return head(r,`${cs.length} still needed`)+`<div class="cgrid">${cs.map(c=>cardHtml(c,{missing:true,small:true})).join("")}</div>`}).join("");
-    body=`<label class="pkwho"><span class="small muted">Viewing</span><select data-pkwho>${members().map(id=>({id,n:Object.values(myCards(id)).filter(x=>Number(x)>0).length})).sort((a,b)=>(b.id===S.me)-(a.id===S.me)||b.n-a.n).map(o=>`<option value="${o.id}" ${o.id===who?"selected":""}>${o.id===S.me?"My collection":esc(nm(o.id))} · ${o.n} card${o.n===1?"":"s"}</option>`).join("")}</select></label>${sets.length>1?`<div class="chips">${sets.filter(k=>!CSETS[k].special).map(k=>`<button type="button" class="chip${k===cs_?" on":""}" data-pkcset="${k}">${esc(CSETS[k].name)}</button>`).join("")}${sets.some(k=>CSETS[k].special)?`<span class="chiplbl">Special</span>${sets.filter(k=>CSETS[k].special).map(k=>`<button type="button" class="chip pmchip${k===cs_?" on":""}" data-pkcset="${k}">💠 ${esc(CSETS[k].name)}</button>`).join("")}`:""}</div>`:`<div class="small muted">${esc(CSETS[cs_].name)}</div>`}${isPm?`<p class="small"><b>${have}</b> collected · <span class="muted">${Object.keys(pmPulled()).length} discovered by the league · limited time, never reprinted</span></p>`:`<div class="pkprog"><b>${have}/${cat.length}</b> collected<div class="pkbar"><i style="width:${Math.round(have/cat.length*100)}%"></i></div></div>`}
+    body=`<label class="pkwho"><span class="small muted">Viewing</span><select data-pkwho>${members().map(id=>({id,n:Object.values(myCards(id)).filter(x=>Number(x)>0).length})).sort((a,b)=>(b.id===S.me)-(a.id===S.me)||b.n-a.n).map(o=>`<option value="${o.id}" ${o.id===who?"selected":""}>${o.id===S.me?"My collection":esc(nm(o.id))} · ${o.n} card${o.n===1?"":"s"}</option>`).join("")}</select></label>${scHtml(who)}${sets.length>1?`<div class="chips">${sets.filter(k=>!CSETS[k].special).map(k=>`<button type="button" class="chip${k===cs_?" on":""}" data-pkcset="${k}">${esc(CSETS[k].name)}</button>`).join("")}${sets.some(k=>CSETS[k].special)?`<span class="chiplbl">Special</span>${sets.filter(k=>CSETS[k].special).map(k=>`<button type="button" class="chip pmchip${k===cs_?" on":""}" data-pkcset="${k}">💠 ${esc(CSETS[k].name)}</button>`).join("")}`:""}</div>`:`<div class="small muted">${esc(CSETS[cs_].name)}</div>`}${isPm?`<p class="small"><b>${have}</b> collected · <span class="muted">${Object.keys(pmPulled()).length} discovered by the league · limited time, never reprinted</span></p>`:`<div class="pkprog"><b>${have}/${cat.length}</b> collected<div class="pkbar"><i style="width:${Math.round(have/cat.length*100)}%"></i></div></div>`}
       <h3>${mine?"Your cards":esc(nm(who))+"'s cards"}</h3>${got||`<p class="empty small">${mine?"No cards yet. Open a pack to start your collection.":"No cards in this collection yet."}</p>`}
       ${need?`<h3 class="needh">Still to collect</h3>${need}`:`<p class="pos"><b>${mine?"Full set! You've collected every card.":"Full set! They've collected every card."}</b></p>`}`}
   if(st.tab==="mkt"){const so=st.mksort||"new",rf=st.mkr==null?"any":st.mkr;const SORTS={new:(a,b)=>(b.at||0)-(a.at||0),old:(a,b)=>(a.at||0)-(b.at||0),rhi:(a,b)=>cardById(b.cid).r-cardById(a.cid).r||(b.at||0)-(a.at||0),rlo:(a,b)=>cardById(a.cid).r-cardById(b.cid).r||(b.at||0)-(a.at||0),plo:(a,b)=>(a.price||9e15)-(b.price||9e15),phi:(a,b)=>(b.price||0)-(a.price||0)};
@@ -6064,6 +6078,38 @@ document.addEventListener("click",e=>{const t=e.target.closest("[data-dmgo],[dat
   if(d.mkoffer){e.preventDefault();return ofCompose(d.mkoffer)}if(d.ofacc){t.disabled=true;return ofAccept(d.ofacc)}if(d.ofdec){t.disabled=true;return ofDecline(d.ofdec)}if(d.ofcan){t.disabled=true;return ofDecline(d.ofcan,true)}
   if(d.ofctr){const x=ofById(d.ofctr);if(x)ofCompose(x.listingId,x.id)}});
 
+
+/* ---------- Showcase: up to 3 favorite cards (from any collection) on top of a player's collection and profile. prefs.showcase = [cid|null x3].
+   A card that's no longer owned (sold, traded, burned, in escrow or collateral) just doesn't show. ---------- */
+const scOf=id=>{const a=(S.prefs[id]||{}).showcase;return [0,1,2].map(i=>Array.isArray(a)&&typeof a[i]==="string"&&a[i]?a[i]:null)};
+const scLive=id=>scOf(id).map(cid=>cid&&cardById(cid)&&cardCount(cid,id)>0?cid:null);
+function scHtml(who){const mine=who===S.me,sl=scLive(who);if(!mine&&!sl.some(Boolean))return "";
+  const slots=mine?sl.map((cid,i)=>cid?`<div class="scslot">${cardHtml(cardById(cid),{click:true,small:true})}</div>`:`<button type="button" class="scslot scadd" data-scedit="${i}" aria-label="Add a card to showcase slot ${i+1}"><span>+</span></button>`):sl.filter(Boolean).map(cid=>`<div class="scslot">${cardHtml(cardById(cid),{click:true,small:true})}</div>`);
+  return `<div class="scwrap"><div class="schd"><span class="stlbl">⭐ ${mine?"Your showcase":"Showcase"}</span>${mine?`<button type="button" class="btn ghost scedit" data-scedit>Edit showcase</button>`:""}</div><div class="scgrid">${slots.join("")}</div></div>`}
+function scEdit(slot){if(!S.me||!S.prefs[S.me])return;const st={sl:scLive(S.me),q:"",set:"any",r:"any"};st.cur=slot!=null&&slot!==""?Number(slot):Math.max(0,st.sl.indexOf(null));if(!(st.cur>=0&&st.cur<3))st.cur=0;
+  const sets=Object.keys(CSETS).filter(setOpen);const o=document.createElement("div");o.className="pkov scov";
+  o.innerHTML=`<div class="pkview ofcomp sced"><h3>Edit showcase</h3><p class="small muted">Pick a slot, then tap one of your cards to put it there. Everyone sees these on top of your collection and profile.</p>
+    <div class="scgrid" data-scslots></div>
+    <div class="offil"><input data-scq placeholder="Search your cards" aria-label="Search your cards"><select data-scset aria-label="Collection"><option value="any">All sets</option>${sets.map(k=>`<option value="${k}">${esc(CSETS[k].name)}</option>`).join("")}</select></div>
+    <select data-scr aria-label="Rarity"><option value="any">All rarities</option>${CR.map((R,i)=>`<option value="${i}">${esc(R.n)}</option>`).join("")}</select>
+    <div class="cgrid tradepick ofgrid" data-scpool></div>
+    <button type="button" class="btn" data-scsave>Save showcase</button><button type="button" class="btn ghost" data-pkclose>Cancel</button></div>`;
+  document.body.appendChild(o);
+  const draw=()=>{o.querySelector("[data-scslots]").innerHTML=st.sl.map((cid,i)=>`<div class="scedslot"><button type="button" class="scslot${cid?"":" scadd"}${st.cur===i?" on":""}" data-scs="${i}" aria-label="Slot ${i+1}">${cid?cardHtml(cardById(cid),{small:true}):"<span>+</span>"}</button>
+      <div class="scctl"><button type="button" data-scmv="${i}" data-d="-1" ${i===0||!cid?"disabled":""} aria-label="Move left">◀</button><button type="button" data-scx="${i}" ${cid?"":"disabled"} aria-label="Remove">✕</button><button type="button" data-scmv="${i}" data-d="1" ${i===2||!cid?"disabled":""} aria-label="Move right">▶</button></div></div>`).join("");
+    const q=st.q.trim().toLowerCase();const pool=(st.set==="any"?sets:[st.set]).flatMap(k=>cardsCat(k)).filter(c=>cardCount(c.id)>0&&(st.r==="any"||c.r===Number(st.r))&&(!q||c.name.toLowerCase().includes(q))).sort((a,b)=>b.r-a.r||a.name.localeCompare(b.name));
+    o.querySelector("[data-scpool]").innerHTML=pool.length?pool.map(c=>`<button type="button" class="tpk${st.sl.includes(c.id)?" scin":""}" data-scpick="${c.id}">${cardHtml(c,{small:true,count:cardCount(c.id)})}</button>`).join(""):`<p class="small muted">No cards match.</p>`;cimgFill(o)};
+  draw();
+  o.addEventListener("input",e=>{if(e.target.matches("[data-scq]")){st.q=e.target.value;draw()}});
+  o.addEventListener("change",e=>{if(e.target.matches("[data-scset]")){st.set=e.target.value;draw()}if(e.target.matches("[data-scr]")){st.r=e.target.value;draw()}});
+  o.addEventListener("click",async e=>{if(e.target===o||e.target.closest("[data-pkclose]"))return o.remove();
+    const sl=e.target.closest("[data-scs]");if(sl){st.cur=Number(sl.dataset.scs);draw();return}
+    const x=e.target.closest("[data-scx]");if(x){st.sl[Number(x.dataset.scx)]=null;st.cur=Number(x.dataset.scx);draw();return}
+    const mv=e.target.closest("[data-scmv]");if(mv){const i=Number(mv.dataset.scmv),j=i+Number(mv.dataset.d);if(j<0||j>2)return;[st.sl[i],st.sl[j]]=[st.sl[j],st.sl[i]];st.cur=j;draw();return}
+    const p=e.target.closest("[data-scpick]");if(p){const cid=p.dataset.scpick,was=st.sl.indexOf(cid);if(was>=0&&was!==st.cur){st.sl[was]=st.sl[st.cur]}st.sl[st.cur]=cid;const nx=st.sl.indexOf(null);if(nx>=0)st.cur=nx;draw();return}
+    const sv=e.target.closest("[data-scsave]");if(!sv)return;sv.disabled=true;const val=st.sl.map(c=>c||null);
+    try{await db.doc("prefs/"+S.me).update({showcase:val});S.prefs[S.me].showcase=val;toast("Showcase saved.");o.remove();render()}catch(_){sv.disabled=false;toast("Couldn't save. Check your connection.")}})}
+document.addEventListener("click",e=>{const t=e.target.closest("[data-scedit]");if(!t)return;e.preventDefault();scEdit(t.dataset.scedit)});
 /* Tap a profile photo to see it large; tap anywhere or press Esc to close */
 document.addEventListener("click",e=>{
   const z=e.target.closest("[data-zoom]");
