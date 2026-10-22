@@ -1898,7 +1898,8 @@ function ledger0(){
   /* Tithe (Jimmy Scroggins curse): one doc pays `each` to every id in `tos`. "pull" docs take `amt` from the payer here
      (the remainder of amt/each just vanishes); "win" docs don't, because the payer's balance already has floor(tiWin/10) taken off */
   const tiPaid={},tiLast={};
-  for(const t of S.bank||[]){if(t.kind==="tithe"){if(!t.from)continue;const e=Math.floor(Number(t.each))||0,a=Math.floor(Number(t.amt))||0;if(t.src==="win"){tiPaid[t.from]=(tiPaid[t.from]||0)+a;tiLast[t.from]=Math.max(tiLast[t.from]||0,Number(t.at)||0)}else bkA(t.from,-a);
+  for(const t of S.bank||[]){if(t.kind==="bounty"){if(!t.to)continue;let tot=0;for(const[id,v]of Object.entries(t.pay||{})){const a=Math.floor(Number(v))||0;if(a>0&&id!==t.to){bkA(id,-a);tot+=a}}bkA(t.to,tot);continue}
+    if(t.kind==="tithe"){if(!t.from)continue;const e=Math.floor(Number(t.each))||0,a=Math.floor(Number(t.amt))||0;if(t.src==="win"){tiPaid[t.from]=(tiPaid[t.from]||0)+a;tiLast[t.from]=Math.max(tiLast[t.from]||0,Number(t.at)||0)}else bkA(t.from,-a);
       if(e>0)for(const r of new Set(Array.isArray(t.tos)?t.tos:[]))if(r!==t.from)bkA(r,e);continue}
     const a=Math.floor(Number(t.amt));if(!(a>0)||!t.from||!t.to||t.from===t.to)continue;bkA(t.from,-a);bkA(t.to,a)}
   for(const l of S.loans||[]){if(!l.borrower||!l.takenAt||!["active","late","repaid","defaulted"].includes(l.status))continue;const P=Math.floor(Number(l.P))||0;bkA(l.lender,-P);bkA(l.borrower,P);
@@ -5023,6 +5024,11 @@ async function pkBuy(id){const set=pkSt().set;const p=PACKS.find(x=>x.id===id);i
     await db.doc("prefs/"+S.me).update(patch);
     /* Jimmy Scroggins (curse): every copy pulled tithes 10% of the balance right now; the popup shows when its card flips */
     const nCurse=pulls.filter((x,i)=>!ov[i]&&(cardById(x)||{}).abil==="curse").length;if(nCurse){try{const t=await tiPull(nCurse);if(t.amts.length){S._tiPop=t;try{db.collection("chat").add({type:"bet",kind:"bank",uid:S.me,poster:S.me,at:Date.now(),text:`⛪ ${nm(S.me)} pulled the cursed Jimmy Scroggins Rookie and tithed ${t.amts.reduce((a,b)=>a+b,0).toLocaleString()} BB to the league. THANK YOU FOR TITHING.`,detail:(()=>{const per=t.eachs.reduce((a,b)=>a+b,0);return t.tos.map(id=>`→ ${nm(id)}: +${per.toLocaleString()} BB`).join("\n")})()})}catch(_){}}}catch(_){}}
+    /* Dragon bounty (owner): every Dragon you pull (and keep), everyone else pays you 20,000 BB once (capped at what they have) */
+    {const nDr=pulls.filter((x,i)=>!ov[i]&&(cardById(x)||{}).r===6).length;for(let k=0;k<nDr;k++){try{const L0=ledger(),pay={};let tot=0;
+      for(const id of tiRecips(S.me)){const a=Math.min(DRAGON_BOUNTY,Math.max(0,Math.floor(L0.balOf(id))));if(a>0){pay[id]=a;tot+=a}}
+      if(tot>0){const at=Date.now();await db.doc(`bank/bounty_${S.me}_${at}_${k}`).set({kind:"bounty",to:S.me,pay,amt:tot,note:"Dragon bounty",at});
+        try{db.collection("chat").add({type:"bet",kind:"bank",uid:S.me,poster:S.me,at:Date.now(),text:`🐉 ${nm(S.me)} PULLED THE DRAGON! Everyone pays them ${DRAGON_BOUNTY.toLocaleString()} BB · ${tot.toLocaleString()} BB total`,detail:Object.entries(pay).map(([id,a])=>`← ${nm(id)}: −${a.toLocaleString()} BB`).join("\n")})}catch(_){}}}catch(_){}}}
     pkShowOpen(p,pulls);pkFees(p,cardSet(pulls[0]));
     if(pulls.some((x,i)=>!ov[i]&&(cardById(x)||{}).abil==="social")){try{db.collection("chat").add({type:"bet",uid:S.me,poster:S.me,at:Date.now(),text:`${nm(S.me)} +10 million social credit score!`})}catch(_){}}
     const best=Math.max(...pulls.map(c=>cardById(c).r));if(best>=4){const c=cardById(pulls.find(x=>cardById(x).r===best));try{db.collection("chat").add({type:"bet",uid:S.me,poster:S.me,at:Date.now(),text:`${best===6?"🐉🐉🐉 ":best===5?"🏆 ":"🔥 "}${nm(S.me)} pulled ${best===6?"THE STARLUXE DRAGON SUPREME":CR[best].n}: ${c.name} from a ${p.name}!${best===6?" 🐉🐉🐉":" 🎴"}`})}catch(_){}}}
@@ -5208,6 +5214,8 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:20,d:"Oct 22",t:[["🐉","Pull a Dragon and everyone pays you 20,000 BB (one time, shown in chat)"]]},
+ {v:19,d:"Oct 22",t:[["🃏","Blackjack has a steadier pace: a new hand at most every 3 seconds"],["🎲","Checked craps payouts: every roll adds up to the BB"]]},
  {v:18,d:"Oct 22",t:[["🐉","Dragon Glow is now a thick, shimmering iridescent ring"]]},
  {v:17,d:"Oct 22",t:[["🐉","Own a Dragon card or Shrex? Its glow now shows up in the Aura Shop under \"From your cards\" so you can equip it. It leaves if you sell or trade the card"]]},
  {v:16,d:"Oct 22",t:[["⛪","When someone pulls the cursed Jimmy Scroggins, league chat now shows how much each player got"]]},
@@ -5553,7 +5561,9 @@ function bkRow(l){const c=bkCalc(l)||{},me=S.me,st=l.status,N=l.sched?l.sched.am
     <div class="small muted">${esc(bkTermsTxt(l))} · ${c.total?`${c.total.toLocaleString()} BB back`:""}</div>${st==="open"?onlyBadge(l):""}${nxt}${coll}${sz}${btn?`<div class="row">${btn}</div>`:""}</div>`}
 /* combined bank log for the viewer: + = money in (green), − = money out (red) */
 function bkActivity(me){const out=[],E=(at,v,h,bad)=>{if(at)out.push({at:Number(at),v,h,bad})};
-  for(const t of S.bank||[]){if(t.kind==="tithe"){const e=Math.floor(Number(t.each))||0,a=Math.floor(Number(t.amt))||0,tos=Array.isArray(t.tos)?t.tos:[];
+  for(const t of S.bank||[]){if(t.kind==="bounty"){const pay=t.pay||{},tot=Object.entries(pay).reduce((x,[id,v])=>x+(id!==t.to?Math.floor(Number(v))||0:0),0);
+      if(t.to===me)E(t.at,tot,`🐉 Dragon bounty · everyone paid you`);else if(Math.floor(Number(pay[me]))>0)E(t.at,-Math.floor(Number(pay[me])),`🐉 Dragon bounty to ${esc(nm(t.to))}`);continue}
+    if(t.kind==="tithe"){const e=Math.floor(Number(t.each))||0,a=Math.floor(Number(t.amt))||0,tos=Array.isArray(t.tos)?t.tos:[];
       if(t.from===me)E(t.at,t.src==="win"?0:-a,t.src==="win"?`⛪ Tithe · ${a.toLocaleString()} BB of your winnings paid out to ${tos.length} players`:`⛪ Tithe · 10% of your balance to the league`);
       else if(tos.includes(me)&&e>0)E(t.at,e,`⛪ Tithe from ${esc(nm(t.from))}`);continue}
     const a=Math.floor(Number(t.amt))||0;if(!(a>0)||t.from===t.to)continue;const note=t.note&&t.kind!=="debby"?` <span class="bknote">· ${esc(t.note)}</span>`:"";
@@ -5876,6 +5886,7 @@ function bjSettle(r,shoe){
 }
 /* Move to the next hand that still needs a decision */
 function bjAdvance(r){while(r.active<r.hands.length){const hd=r.hands[r.active];if(!hd.done&&handVal(hd.cards).t<21&&!hd.aces)return;r.active++}}
+const BJ_DEAL_GAP=3000,BJ_AFTER_GAP=1500,DRAGON_BOUNTY=20000;
 async function bjAction(kind){
   const p=S.prefs[S.me]||{};let netBase=Number(p.bjNet)||0;let r=bjCanon(bjNorm(bjState()));
   const valid=Array.isArray(p.bjShoe)&&p.bjShoe.length<=104,ok=valid&&(kind!=="deal"||p.bjShoe.length>15);
@@ -5883,15 +5894,17 @@ async function bjAction(kind){
   if(kind==="newshoe"){if(r&&!r.done)return toast("Finish this hand first.");return bjSave({bjShoe:newShoe(),bjShuffleAt:Date.now()})}
   const bal=Math.round(ledger().balOf(S.me));
   const finishOrSave=async(extraNet)=>{netBase-=extraNet||0;bjAdvance(r);
-    if(r.active>=r.hands.length){const ret=bjSettle(r,shoe);await bjSave({bjHand:r,bjShoe:Array.from(shoe),bjNet:netBase+ret,bjHands:(Number(p.bjHands)||0)+1,...shufPatch});if(r.delta>0)haptic()}
+    if(r.active>=r.hands.length){S._bjDoneAt=Date.now();const ret=bjSettle(r,shoe);await bjSave({bjHand:r,bjShoe:Array.from(shoe),bjNet:netBase+ret,bjHands:(Number(p.bjHands)||0)+1,...shufPatch});if(r.delta>0)haptic()}
     else await bjSave({bjHand:r,bjShoe:Array.from(shoe),bjNet:netBase,...shufPatch})};
   if(kind==="deal"||kind==="again"){
+    /* pace (owner: no spamming hands): a new hand at most every 3 s, and not until 1.5 s after the last one finished */
+    {const now=Date.now(),ready=Math.max((S._bjLastDeal||0)+BJ_DEAL_GAP,(S._bjDoneAt||0)+BJ_AFTER_GAP);if(now<ready){if(now-(S._bjWaitToast||0)>1200){S._bjWaitToast=now;toast(`Next hand in ${Math.ceil((ready-now)/100)/10}s`)}return}S._bjLastDeal=now}
     const bet=Math.round(S.bjBet||0);
     if(!(bet>=10))return toast("Minimum bet is 10 BB.");if(bet>BJ_MAX)return toast(`Max bet is ${BJ_MAX.toLocaleString()} BB.`);if(bet>bal)return toast("Not enough BiggieBucks for that bet.");
     const pc=[draw(shoe)],dc=[draw(shoe)];pc.push(draw(shoe));dc.push(draw(shoe));
     r={at:Date.now(),bet,hid:1,hands:[{id:1,cards:pc,bet}],active:0,dealer:dc,done:false};
     netBase-=bet;
-    if(isBJ(pc)||isBJ(dc)){const ret=bjSettle(r,shoe);await bjSave({bjHand:r,bjShoe:Array.from(shoe),bjNet:netBase+ret,bjHands:(Number(p.bjHands)||0)+1,...shufPatch});if(r.delta>0)haptic();return}
+    if(isBJ(pc)||isBJ(dc)){S._bjDoneAt=Date.now();const ret=bjSettle(r,shoe);await bjSave({bjHand:r,bjShoe:Array.from(shoe),bjNet:netBase+ret,bjHands:(Number(p.bjHands)||0)+1,...shufPatch});if(r.delta>0)haptic();return}
     return bjSave({bjHand:r,bjShoe:Array.from(shoe),bjNet:netBase,...shufPatch})}
   if(!r||r.done)return;
   const hd=r.hands[r.active];
@@ -6150,7 +6163,7 @@ document.addEventListener("click",async e=>{
   if("revenge" in t.dataset){revengeStart();return}
   if("bjallin" in t.dataset){const bal=Math.max(0,Math.floor(ledger().balOf(S.me)));S.bjBet=bal;try{localStorage.setItem("sab-bjbet",String(bal))}catch(_){}render();return}
   if("bjclear" in t.dataset){S.bjBet=0;render();return}
-  if(t.dataset.bj){if(t.disabled)return;const tap=Date.now();if(tap-(S._bjTap||0)<150)return;/* one new hand per 1.2s: stops spam-dealing without slowing normal play */if((t.dataset.bj==="deal"||t.dataset.bj==="again")&&tap-(S._bjDealAt||0)<500)return;if(t.dataset.bj==="deal"||t.dataset.bj==="again")S._bjDealAt=tap;S._bjTap=tap;const before=S._bjSig;return act(()=>bjAction(t.dataset.bj)).then(()=>{if(S._bjSig===before){S._bjSig=null;render()}})}
+  if(t.dataset.bj){if(t.disabled)return;const tap=Date.now();if(tap-(S._bjTap||0)<150)return;S._bjTap=tap;const before=S._bjSig;return act(()=>bjAction(t.dataset.bj)).then(()=>{if(S._bjSig===before){S._bjSig=null;render()}})}
   if(t.dataset.stbj){S.stBJ=t.dataset.stbj==="1";try{localStorage.setItem("sab-stbj",S.stBJ?"1":"0")}catch(_){}render();return}
   if(t.dataset.au){auClick(t);return}
   const a=t.dataset.act;if(!a)return;
