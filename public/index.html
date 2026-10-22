@@ -5138,7 +5138,7 @@ document.addEventListener("change",e=>{const a=e.target.closest("[data-mksort]")
 
 /* tap anyone's picture to open their profile; profiles link to their card collection */
 document.addEventListener("click",e=>{if(e.target&&e.target.id==="memberView"){S.viewMember=null;render()}});
-document.addEventListener("click",e=>{const v=e.target.closest("[data-profcoll]");if(v){e.preventDefault();const st=pkSt();st.tab="coll";st.who=v.dataset.profcoll;S.viewMember=null;S.tab="packs";render();window.scrollTo(0,0);return}
+document.addEventListener("click",e=>{const v=e.target.closest("[data-profcoll]");if(v){e.preventDefault();if(CHAT.open)chatOpen(false);const st=pkSt();st.tab="coll";st.who=v.dataset.profcoll;S.viewMember=null;S.tab="packs";render();window.scrollTo(0,0);return}
   const p=e.target.closest("[data-uid]");if(!p||!S.prefs[p.dataset.uid])return;const act=e.target.closest("button,a,[data-cardview],canvas,.rrwrap");if(act&&act.contains(p))return;e.preventDefault();e.stopPropagation();S.viewMember=p.dataset.uid;render()},true);
 
 /* daily card dividend: first visit after 1 AM Eastern pays per copy owned, by rarity */
@@ -5229,6 +5229,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:23,d:"Oct 22",t:[["💬","Tapping someone in chat now closes the chat and takes you straight to their profile or collection"]]},
  {v:22,d:"Oct 22",t:[["🐉","Dragon pulls now show the card in chat with a wild iridescent glow"]]},
  {v:21,d:"Oct 22",t:[["🃏","Blackjack pace tweak: a new hand every 2 seconds"]]},
  {v:20,d:"Oct 22",t:[["🐉","Pull a Dragon and everyone pays you 20,000 BB (one time, shown in chat)"]]},
@@ -6030,7 +6031,7 @@ setInterval(()=>{if(document.visibilityState!=="visible"){MINE_LAST=Date.now();r
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")MINE_LAST=Date.now()});
 /* background updates coalesce into at most one render per frame, and wait while a Flappy run is in progress */
 let _rq=0;window.SB_RENDER=()=>renderSoon();function renderSoon(){if(_rq)return;_rq=requestAnimationFrame(()=>{_rq=0;if((typeof FP!=="undefined"&&FP&&FP.st==="play"&&S.tab==="flappy")||document.getElementById("revOv")){setTimeout(renderSoon,400);return}render()})}
-function render(){nflLinesWatch();setTimeout(auSpace,0);lvTick();setTimeout(onlRender,0);setTimeout(autoRefill,0);if(S.gw)setTimeout(gwRender,0);setTimeout(recapPopup,400);
+function render(){if(S._rTab!==S.tab){const was=S._rTab;S._rTab=S.tab;try{if(was!==undefined&&CHAT.open&&S.tab!=="chat")chatOpen(false)}catch(_){}}nflLinesWatch();setTimeout(auSpace,0);lvTick();setTimeout(onlRender,0);setTimeout(autoRefill,0);if(S.gw)setTimeout(gwRender,0);setTimeout(recapPopup,400);
   {const u=logoOf(S.me),m=$("#meAv");if(m){if(u){m.outerHTML=`<img class="dot img" id="meAv" src="${esc(u)}" alt="">`}else if(m.tagName==="IMG"){m.outerHTML=`<span class="dot" id="meAv"></span>`}}}
   setMe();if(CHAT.open)chatRender();if(S.addOpen){refreshGhosts();betPreview()}
   const ts=$("#tabSetup");if(ts)ts.hidden=!S.canEdit;
@@ -6152,7 +6153,7 @@ document.addEventListener("click",async e=>{
   if(t.dataset.ouscope){S.ouScope=t.dataset.ouscope;render();return}
   if(t.dataset.addtype){S.addType=t.dataset.addtype;render();return}
   if(t.dataset.pref){const k=t.dataset.pref,v=t.dataset.val==="true";await act(()=>db.doc("prefs/"+S.me).update({[k]:v}),"Saved");return}
-  if(t.dataset.member){S.viewMember=t.dataset.member;if(S.viewMember===S.me&&!t.closest("#memberView")){}render();return}
+  if(t.dataset.member){/* a profile opened from the chat panel: close the chat so the profile is in front */if(CHAT.open&&t.closest(".chatpanel"))chatOpen(false);S.viewMember=t.dataset.member;if(S.viewMember===S.me&&!t.closest("#memberView")){}render();return}
   if(t.dataset.adjust){const id=t.dataset.adjust,inp=document.querySelector(`[data-adjfor="${CSS.escape(id)}"]`),amt=Math.round(Number(inp&&inp.value)||0);
     if(!(amt>0))return toast("Enter an amount first.");const delta=amt*Number(t.dataset.sign),next=((S.adjust&&S.adjust[id])||0)+delta;
     return act(async()=>{await db.doc("adjust/"+id).set({amount:next,at:Date.now(),last:delta});S.adjust=S.adjust||{};S.adjust[id]=next;if(inp)inp.value="";inp&&inp.blur();render()},`${delta>0?"Added":"Took"} ${Math.abs(delta).toLocaleString()} BB ${delta>0?"to":"from"} ${nm(id)}`)}
