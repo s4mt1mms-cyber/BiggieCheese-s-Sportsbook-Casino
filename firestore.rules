@@ -25,6 +25,9 @@ rules_version = '2';
 // player's phone hosts and members may write them, as before. Either way you can
 // read only your own hole cards. mpsecret (deck, everyone's cards) is server-only.
 //
+// DIRECT MESSAGES (dms/{a__b} and dms/{a__b}/msgs/*): only the two players in the
+// pair id (sorted player ids joined by "__") can read or write them. Not even admins.
+//
 // EVERYTHING ELSE (bets, games, market, chat, bank, loans, plat, photos, media,
 // ...) is read/write for any member — the same trust model the artifact had.
 // Phase 2 moves money to Cloud Functions; see README "Roadmap".
@@ -89,7 +92,7 @@ service cloud.firestore {
 
     // Collections with their own match blocks below.
     function special(coll) {
-      return coll in ['invites', 'links', 'config', 'rrtable', 'thtable', 'thhole', 'mpsecret'];
+      return coll in ['invites', 'links', 'config', 'rrtable', 'thtable', 'thhole', 'mpsecret', 'dms'];
     }
 
     // True while phones host the live tables (game server off, or not answering).
@@ -185,6 +188,38 @@ service cloud.firestore {
     }
 
     // ---------------------------------------------------------------
+    // Direct messages. dms/{pairId}: pairId = the two player ids, sorted, joined
+    // by "__"; the doc repeats them as a, b and ids [a, b] (for "my threads"
+    // queries). Messages live in dms/{pairId}/msgs and must be from the writer.
+    function dmIn(pairId) {
+      let p = pairId.split('__');
+      return member() && p.size() == 2 && p[0] < p[1]
+        && (p[0] == myPlayerId() || p[1] == myPlayerId());
+    }
+    function validDm(pairId) {
+      let p = pairId.split('__');
+      let d = request.resource.data;
+      return d.a == p[0] && d.b == p[1] && d.ids == [p[0], p[1]];
+    }
+    match /dms/{pairId} {
+      allow get: if dmIn(pairId);
+      allow list: if member() && myPlayerId() in resource.data.ids;
+      allow create, update: if dmIn(pairId) && validDm(pairId);
+      allow delete: if false;
+    }
+    match /dms/{pairId}/msgs/{msgId} {
+      allow read: if dmIn(pairId);
+      allow create: if dmIn(pairId)
+        && request.resource.data.from == myPlayerId()
+        && request.resource.data.at is number
+        && request.resource.data.text is string
+        && request.resource.data.text.size() <= 2000
+        && (!('img' in request.resource.data) || (request.resource.data.img is string && request.resource.data.img.size() <= 400000));
+      allow update: if false;
+      allow delete: if dmIn(pairId) && resource.data.from == myPlayerId();
+    }
+
+    // ---------------------------------------------------------------
     // Every other top-level document in the app.
     match /{coll}/{docId} {
       allow read: if (member() || isAdmin()) && !special(coll);
@@ -202,7 +237,7 @@ service cloud.firestore {
       );
     }
 
-    // The app doesn't use subcollections; keep them closed.
+    // No other subcollections; keep them closed.
     match /{coll}/{docId}/{rest=**} {
       allow read, write: if false;
     }

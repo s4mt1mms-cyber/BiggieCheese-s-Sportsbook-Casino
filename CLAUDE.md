@@ -80,6 +80,8 @@ Key collections:
 | `live/{id}` | high-churn private state (blackjack hand/shoe/streak, roulette/craps/high-low/solo RR state, pending stat deltas). Readable by members (for spectating). |
 | `bets`, `games` | sportsbook bets between players / vs the House; games graded from Sleeper. |
 | `market` | card listings/trades. `bank` | BB transfers + fees. `loans` | player loans. |
+| `offers` | offers on market listings (BB and/or escrowed cards); pages listen to `live==true` only. |
+| `dms/{a__b}`, `dms/{a__b}/msgs` | private 1-to-1 chats (pair id = sorted player ids). Rules: only the two players, not even admins. |
 | `chat`, `media`, `photos` | chat, chat images (chunked), profile photos. |
 | `meta/*` | admin-only: `scoreboard` (hourly odds), `futures`, `league`, `cards_mv` (Multiverse catalog), `plat` (Platinum pack timer). |
 | `cardimg/{cardId}` | admin-only card images (`{d: dataURL}`). `adjust/{id}` admin balance adjustments. |
@@ -122,6 +124,13 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   multiplies your whole dividend 1.5× per copy (cap 3×), Claire can be burned for 500k (gone forever).
   Dragon owners get an iridescent profile glow. Platinum pack fees (1.5k dev → owner, 1.5k creator → Zartog) are paid by "the house".
 - **Market**: list for price and/or trade wants (specific card or "rarity or better"), private listings (`only`).
+- **Offers** (`of*`): BB and/or cards on any open listing. Offered cards leave the offerer's prefs while pending
+  (`esc`) and come back on decline/cancel/expiry (48 h)/failure (`returned`, offerer's page). Accept = status race on the
+  offer, then the listing is claimed like `mkBuy` (`status` sold/traded, `buyer`, `price` = offered BB so `cardMoney` counts it
+  once, `offerId`), then `ofDone`; seller picks up cards via `mkClaim` (gotCids), buyer via `ofClaimBuy` (`bClaimed`).
+  Seller can counter (new offer seller→offerer, `ctr`). Every step is posted in the pair's DM thread.
+- **DMs** (`dm*`): League | Direct switch in the chat panel; inbox, threads, unread (`un`/`read` on the thread doc),
+  DM banner. Listens to my thread list + the open thread's newest 50 only.
 - **Bank** (`bk*`): transfers; loans with optional collateral (seizure all-at-once or one card per interval),
   auto-collection ONLY on payment dates (takes all you have if short), pay in chunks anytime, early payoff =
   principal + interest accrued so far (loan rate & compounding, payments stop accruing when made), capped at the rest of the schedule, never below what is overdue.
