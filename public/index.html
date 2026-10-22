@@ -4784,6 +4784,7 @@ setInterval(divCheck,30000);setTimeout(divCheck,4000);
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:3,d:"Oct 22",t:[["😂","You can now react to messages in DMs: hold or double-tap a message"]]},
  {v:2,d:"Oct 22",t:[["🧀","Flappy Cheese now pays 25 BB per point, up to 10,000 BB a day"]]},
  {v:1,d:"Oct 22",t:[
   ["🏈","NFL bets: bet real NFL games and build NFL parlays (Sports betting in the menu)"],
@@ -5868,8 +5869,8 @@ const REACT_EMOJI=Object.fromEntries(REACTS.map(([k,e])=>[k,e]));
 const toEmoji=v=>REACT_EMOJI[v]||v;
 const EMOJI_ALL="😀 😂 🤣 😭 😅 😊 😍 🥰 😘 😎 🤩 🥳 😏 😒 🙄 😬 🤔 🤨 😐 😴 🤯 😳 🥵 🥶 😱 😤 😡 🤬 🤡 💀 ☠️ 👻 💩 🤮 🤑 🤠 😈 👀 🫡 🫠 🥲 😮‍💨 🙏 👏 🙌 👍 👎 👊 ✊ 🤝 💪 🫵 🖕 ✌️ 🤞 👌 🤌 💯 🔥 ❤️ 💔 💸 💰 🪙 🏆 🥇 🎯 🎲 🃏 🎰 ⚡ 💥 🚀 🐐 🐀 🧀 🍿 🍻 🥂 🍾 🏈 🏟️ 📉 📈 🧢 🗑️ 🚨 ✅ ❌ ⁉️ 😵‍💫 🤷 🤦 🙈".split(" ");
 function reactCounts(m){const c={};for(const k in m)if(k.startsWith("r_")&&m[k]){const e=toEmoji(m[k]);c[e]=(c[e]||0)+1}return{c,mine:m["r_"+S.me]?toEmoji(m["r_"+S.me]):null}}
-function reactHtml(m){const {c,mine}=reactCounts(m);const ks=Object.keys(c).sort((a,b)=>c[b]-c[a]);
-  return ks.length?`<div class="rchips">${ks.map(e=>`<button type="button" class="rchip${mine===e?" on":""}" data-creact="${esc(e)}" data-mid="${esc(m.id)}">${e} ${c[e]}</button>`).join("")}</div>`:""}
+function reactHtml(m,src){const {c,mine}=reactCounts(m);const ks=Object.keys(c).sort((a,b)=>c[b]-c[a]);
+  return ks.length?`<div class="rchips">${ks.map(e=>`<button type="button" class="rchip${mine===e?" on":""}" data-creact="${esc(e)}" data-mid="${esc(m.id)}"${src?` data-src="${src}"`:""}>${e} ${c[e]}</button>`).join("")}</div>`:""}
 function chatMsgHtml(m){
   const when=esc(new Date(m.at).toLocaleString([], {weekday:"short",hour:"numeric",minute:"2-digit"}));
   const del=S.canEdit||m.uid===S.me&&m.type!=="bet"?` <button type="button" class="cdel" data-chatdel="${esc(m.id)}" aria-label="Delete message">delete</button>`:"";
@@ -5957,31 +5958,35 @@ document.addEventListener("click",e=>{const c=e.target.closest("[data-chat]");if
   const d=e.target.closest("[data-chatdel]");if(d){const id=d.dataset.chatdel;act(()=>db.doc("chat/"+id).delete().then(()=>{CHAT.older=CHAT.older.filter(m=>m.id!==id);chatJoin();chatRender()}),"Message deleted")}});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&CHAT.open){if(document.querySelector(".pkov"))return;if(CHAT.reacting){CHAT.reacting=null;chatRender()}else if(DM.mode==="dm"&&DM.cur)dmBack();else chatOpen(false)}});
 /* Hold a message to react: it lifts out over a dimmed screen with quick reactions and a + for any emoji */
-async function setReact(mid,emoji){const m=CHAT.msgs.find(x=>x.id===mid);if(!m||!S.me)return;const cur=m["r_"+S.me]?toEmoji(m["r_"+S.me]):null,next=cur===emoji?null:emoji;
-  m["r_"+S.me]=next;CHAT.keepScroll=true;chatRender();haptic&&haptic();act(()=>db.doc("chat/"+mid).update({["r_"+S.me]:next}))}
+const reactMsg=(mid,src)=>src==="dm"?dmMsgs().find(x=>x.id===mid):CHAT.msgs.find(x=>x.id===mid);
+async function setReact(mid,emoji,src){const m=reactMsg(mid,src);if(!m||!S.me)return;const cur=m["r_"+S.me]?toEmoji(m["r_"+S.me]):null,next=cur===emoji?null:emoji;
+  m["r_"+S.me]=next;haptic&&haptic();
+  if(src==="dm"){const pid=DM.cur;if(!pid)return;DM.keep=true;dmRender();act(()=>db.doc("dms/"+pid+"/msgs/"+mid).update({["r_"+S.me]:next}));return}
+  CHAT.keepScroll=true;chatRender();act(()=>db.doc("chat/"+mid).update({["r_"+S.me]:next}))}
 function closeReact(){const o=$("#reactOv");if(!o)return;o.classList.remove("show");setTimeout(()=>o.remove(),180)}
-function openReact(el){closeReact();const mid=el.dataset.hold,m=CHAT.msgs.find(x=>x.id===mid);if(!m)return;haptic&&haptic();
+function openReact(el,src){closeReact();const mid=el.dataset.hold,m=reactMsg(mid,src);if(!m)return;haptic&&haptic();const mineMsg=src==="dm"?m.from===S.me:m.uid===S.me;
   const r=el.getBoundingClientRect(),mine=m["r_"+S.me]?toEmoji(m["r_"+S.me]):null;const quick=["👍","👎","🔥","😂","😭","❤️"];
   const o=document.createElement("div");o.id="reactOv";o.className="reactov";
   const clone=el.cloneNode(true);clone.classList.add("rclone");clone.removeAttribute("data-hold");
   const above=r.top>140;const top=Math.min(Math.max(12,r.top),window.innerHeight-r.height-80);
-  o.innerHTML=`<div class="rpill" style="top:${above?top-58:top+r.height+10}px;${m.uid===S.me?"right:14px":"left:14px"}">${quick.map(e=>`<button type="button" data-pick="${e}" class="${mine===e?"on":""}">${e}</button>`).join("")}<button type="button" class="rplus" data-more aria-label="More emoji">+</button></div>`;
+  o.innerHTML=`<div class="rpill" style="top:${above?top-58:top+r.height+10}px;${mineMsg?"right:14px":"left:14px"}">${quick.map(e=>`<button type="button" data-pick="${e}" class="${mine===e?"on":""}">${e}</button>`).join("")}<button type="button" class="rplus" data-more aria-label="More emoji">+</button></div>`;
   clone.style.cssText=`position:fixed;top:${top}px;left:${r.left}px;width:${r.width}px;margin:0`;o.appendChild(clone);
   document.body.appendChild(o);requestAnimationFrame(()=>o.classList.add("show"));
-  o.addEventListener("click",e=>{const p=e.target.closest("[data-pick]");if(p){setReact(mid,p.dataset.pick);closeReact();return}
+  o.addEventListener("click",e=>{const p=e.target.closest("[data-pick]");if(p){setReact(mid,p.dataset.pick,src);closeReact();return}
     if(e.target.closest("[data-more]")){const g=document.createElement("div");g.className="emgrid";g.innerHTML=EMOJI_ALL.map(x=>`<button type="button" data-pick="${x}" class="${mine===x?"on":""}">${x}</button>`).join("");o.querySelector(".rpill").replaceWith(g);requestAnimationFrame(()=>g.classList.add("show"));return}
     if(!e.target.closest(".emgrid"))closeReact()})}
-(()=>{let timer=0,sx=0,sy=0,el=null;const list=$("#chatList");
+function holdReact(list,src){if(!list)return;let timer=0,sx=0,sy=0,el=null;
   const cancel=()=>{clearTimeout(timer);if(el)el.classList.remove("pressing");el=null};
   list.addEventListener("pointerdown",e=>{const t=e.target.closest("[data-hold]");if(!t)return;sx=e.clientX;sy=e.clientY;cancel();el=t;t.classList.add("pressing");
-    timer=setTimeout(()=>{const x=el;cancel();if(x)openReact(x)},380)});
+    timer=setTimeout(()=>{const x=el;cancel();if(x)openReact(x,src)},380)});
   list.addEventListener("pointerup",cancel);list.addEventListener("pointercancel",cancel);
   list.addEventListener("pointermove",e=>{if(el&&(Math.abs(e.clientX-sx)>8||Math.abs(e.clientY-sy)>8))cancel()});
   list.addEventListener("scroll",cancel,{passive:true});
   list.addEventListener("contextmenu",e=>{if(e.target.closest("[data-hold]"))e.preventDefault()});
-  list.addEventListener("dblclick",e=>{const t=e.target.closest("[data-hold]");if(t){e.preventDefault();openReact(t)}});
-  list.addEventListener("click",e=>{const r=e.target.closest("[data-creact]");if(r){setReact(r.dataset.mid,r.dataset.creact)}});
-})();
+  list.addEventListener("dblclick",e=>{const t=e.target.closest("[data-hold]");if(t){e.preventDefault();openReact(t,src)}});
+  list.addEventListener("click",e=>{const r=e.target.closest("[data-creact]");if(r){setReact(r.dataset.mid,r.dataset.creact,r.dataset.src||src)}});
+}
+holdReact($("#chatList"));holdReact($("#dmList"),"dm");
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeReact()});
 /* GIFs and photos: pick one (or paste one from the keyboard's GIF search) and it uploads and posts */
 /* Images ride inside the database: small ones in the message, big ones split into ~600 KB pieces in "media" docs and stitched back together */
@@ -6077,7 +6082,7 @@ function dmMsgHtml(m){const when=esc(new Date(m.at).toLocaleString([],{weekday:"
   if(m.kind==="offer")return ofBubble(m,when);
   if(m.kind==="sys")return `<div class="dmsys"><span>${esc(m.text||"")}</span><small>${when}</small></div>`;
   const mine=m.from===S.me;
-  return `<div class="cmsg${mine?" mine":""}${m.pending?" pending":""}">${mine?"":pic(m.from)}<div class="cbody"><div class="cmeta">${mine?"You":esc(nm(m.from))} · ${when}</div><div class="ctext${m.img?" hasgif":""}">${m.img?`<img class="cgif" data-dmimg="${esc(m.id)}" alt="Photo">`:""}${m.text?esc(m.text):""}</div></div></div>`}
+  return `<div class="cmsg${mine?" mine":""}${m.pending?" pending":""}">${mine?"":pic(m.from)}<div class="cbody"><div class="cmeta">${mine?"You":esc(nm(m.from))} · ${when}</div><div class="ctext${m.img?" hasgif":""}"${m.pending?"":` data-hold="${esc(m.id)}"`}>${m.img?`<img class="cgif" data-dmimg="${esc(m.id)}" alt="Photo">`:""}${m.text?esc(m.text):""}</div>${reactHtml(m,"dm")}</div></div>`}
 function dmRender(){dmBadge();if(!(CHAT.open&&DM.mode==="dm"))return;const head=$("#dmHead"),list=$("#dmList"),form=$("#dmForm");if(!list)return;
   let hh="",html="";
   if(!DM.cur){form.hidden=true;

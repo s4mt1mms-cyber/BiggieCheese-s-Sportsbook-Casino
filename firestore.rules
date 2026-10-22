@@ -215,7 +215,11 @@ service cloud.firestore {
         && request.resource.data.text is string
         && request.resource.data.text.size() <= 2000
         && (!('img' in request.resource.data) || (request.resource.data.img is string && request.resource.data.img.size() <= 400000));
-      allow update: if false;
+      // Either player may set/clear only their own reaction field r_<their id> (an emoji string or null).
+      allow update: if dmIn(pairId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['r_' + myPlayerId()])
+        && (request.resource.data['r_' + myPlayerId()] == null
+            || (request.resource.data['r_' + myPlayerId()] is string && request.resource.data['r_' + myPlayerId()].size() <= 16));
       allow delete: if dmIn(pairId) && resource.data.from == myPlayerId();
     }
 
