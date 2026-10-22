@@ -4653,7 +4653,7 @@ function pkOpen(p,set){const cat=cardsCat(set),used={};const left=c=>c.lim-minte
 function pkChance(p,r,set){let miss=1;for(let i=0;i<p.n;i++){const w=pkSlot(p,i,set);miss*=1-w.reduce((a,x,k)=>a+(k>=r?x:0),0)}return 1-miss}
 const fmtPct=x=>x>=.995?"100%":x>=.1?Math.round(x*100)+"%":x>=.01?(x*100).toFixed(1)+"%":(x*100).toFixed(2)+"%";
 /* card images: one doc per card in "cardimg" */
-const CIMG={},CIMG_L={},CIMG_D={},CIMG_P={},CIMG_R={},CIMG_T={};
+const CIMG={},CIMG_L={},CIMG_D={},CIMG_P={},CIMG_R={},CIMG_T={},CIMG_PH={};
 /* fill every placeholder for this card that is on the page now */
 function cimgApply(cid){const u=CIMG[cid];if(!u)return;document.querySelectorAll(`[data-cimg="${cid}"]`).forEach(el=>{if(!el.classList.contains("has")){el.style.backgroundImage=`url(${u})`;el.classList.add("has")}})}
 /* decode once and keep the decoded Image alive so later reveals paint instantly */
@@ -4663,10 +4663,10 @@ function cimgDecode(cid){const u=CIMG[cid];if(!u)return Promise.resolve(null);if
 function cimgLoad(cid,dec){if(CIMG[cid]!==undefined)return dec?cimgDecode(cid):Promise.resolve(CIMG[cid]);
   /* code-defined cards (Multiverse expansion): static file, no Firestore read */
   const cc=cardById(cid);if(cc&&cc.code&&cc.img&&!((((S.cardMeta||{})[cardSet(cid)]||{}).imgOver)||{})[cid]){CIMG[cid]=cc.img;CIMG_T[cid]=Date.now();setTimeout(()=>cimgApply(cid),0);return dec?cimgDecode(cid):Promise.resolve(cc.img)}if(CIMG_P[cid])return dec?CIMG_P[cid].then(()=>cimgDecode(cid)):CIMG_P[cid];if(!db)return Promise.resolve(null);CIMG_L[cid]=1;
-  return CIMG_P[cid]=db.doc("cardimg/"+cid).get().then(s=>{CIMG[cid]=s.exists?(s.data().d||null):null;if(!CIMG[cid]&&cc&&cc.code)CIMG[cid]=cardPh(cc);CIMG_T[cid]=Date.now();delete CIMG_P[cid];cimgApply(cid);if(!dec)return CIMG[cid];return cimgDecode(cid)},()=>{delete CIMG_P[cid];delete CIMG_L[cid];
+  return CIMG_P[cid]=db.doc("cardimg/"+cid).get().then(s=>{CIMG[cid]=s.exists?(s.data().d||null):null;if(!CIMG[cid]&&cc&&cc.code){CIMG[cid]=cardPh(cc);CIMG_PH[cid]=1}else delete CIMG_PH[cid];CIMG_T[cid]=Date.now();delete CIMG_P[cid];cimgApply(cid);if(!dec)return CIMG[cid];return cimgDecode(cid)},()=>{delete CIMG_P[cid];delete CIMG_L[cid];
     const n=CIMG_R[cid]=(CIMG_R[cid]||0)+1;if(n<6)setTimeout(()=>{if(CIMG[cid]===undefined&&document.querySelector(`[data-cimg="${cid}"]:not(.has)`))cimgLoad(cid)},1500*n);return null})}
 function cimgPrefetch(ids,ms){const all=Promise.all([...new Set(ids||[])].map(id=>cimgLoad(id,1).catch(()=>null)));return ms?Promise.race([all,new Promise(r=>setTimeout(r,ms))]):all}
-function cardImg(cid){if(CIMG[cid]===null&&Date.now()-(CIMG_T[cid]||0)>60000)delete CIMG[cid];if(CIMG[cid]!==undefined)return CIMG[cid];if(!CIMG_P[cid])cimgLoad(cid);return CIMG[cid]||null}
+function cardImg(cid){if((CIMG[cid]===null||CIMG_PH[cid])&&Date.now()-(CIMG_T[cid]||0)>60000&&!CIMG_P[cid]){if(CIMG_PH[cid]){const ph=CIMG[cid];delete CIMG[cid];cimgLoad(cid);return CIMG[cid]||ph}delete CIMG[cid]}if(CIMG[cid]!==undefined)return CIMG[cid];if(!CIMG_P[cid])cimgLoad(cid);return CIMG[cid]||null}
 /* fill (or request) every card image placeholder still empty under root; used after lists are redrawn */
 function cimgFill(root){(root||document).querySelectorAll("[data-cimg]:not(.has)").forEach(el=>{const id=el.dataset.cimg;if(CIMG[id])cimgApply(id);else cardImg(id)})}
 
@@ -5554,9 +5554,12 @@ function parseCardLines(txt,set){const map={common:0,grey:0,gray:0,uncommon:1,gr
 document.addEventListener("click",async e=>{const as=e.target.closest("[data-cardaset]");if(as){S.cardAdminSet=as.dataset.cardaset;return render()}if(!e.target.closest("[data-cardbulk]"))return;const aset=S.cardAdminSet||"lm";const cards=parseCardLines(($("#cardBulk")||{}).value||"",aset);if(!cards.length)return toast("No valid lines. Use: rarity | name | subtitle | description");
   try{const old=(S.cardMeta||{})[aset]||{};const keep=(old.cards||[]).filter(c=>c.full);await db.doc("meta/"+CSETS[aset].doc).set({...old,cards:[...keep,...cards],at:Date.now()});toast(`Saved ${cards.length} cards.`)}catch(_){toast("Couldn't save. Only the page owner can edit cards.")}});
 document.addEventListener("change",async e=>{const inp=e.target.closest("[data-cardimgup]");if(!inp||!inp.files||!inp.files[0])return;const cid=inp.dataset.cardimgup;
-  try{const d=await toJpeg(inp.files[0],560);await db.doc("cardimg/"+cid).set({d,at:Date.now()});const cc=cardById(cid);
-    if(cc&&cc.code){const set=cardSet(cid),doc=(CSETS[set]||{}).doc;if(doc)await db.doc("meta/"+doc).update({imgOver:{[cid]:Date.now()}});const m=(S.cardMeta||(S.cardMeta={}))[set]=(S.cardMeta[set]||{});m.imgOver={...(m.imgOver||{}),[cid]:Date.now()}}
-    CIMG[cid]=d;delete CIMG_D[cid];document.querySelectorAll(`[data-cimg="${cid}"]`).forEach(el=>el.classList.remove("has"));cimgApply(cid);toast("Image saved.");render()}catch(err){console.error(err);toast("Couldn't save that image"+(err&&err.message?": "+String(err.message).slice(0,80):"."))}finally{inp.value=""}});
+  let d;try{d=await toJpeg(inp.files[0],900)}catch(err){console.error(err);inp.value="";return toast("Couldn't read that picture. Try a screenshot of it or a JPG/PNG.")}
+  try{if(d.length>900000)d=await toJpeg(inp.files[0],640);await db.doc("cardimg/"+cid).set({d,at:Date.now()})}catch(err){console.error(err);inp.value="";return toast("Couldn't save that image"+(err&&err.message?": "+String(err.message).slice(0,80):"."))}
+  CIMG[cid]=d;delete CIMG_PH[cid];delete CIMG_D[cid];CIMG_T[cid]=Date.now();document.querySelectorAll(`[data-cimg="${cid}"]`).forEach(el=>el.classList.remove("has"));cimgApply(cid);toast("Image saved.");render();inp.value="";
+  /* a code-defined card (MV_ADD) with its own art file: flag the upload so it wins over the file for everyone */
+  const cc=cardById(cid);if(cc&&cc.code&&cc.img){const set=cardSet(cid),doc=(CSETS[set]||{}).doc,t=Date.now();const m=(S.cardMeta||(S.cardMeta={}))[set]=(S.cardMeta[set]||{});m.imgOver={...(m.imgOver||{}),[cid]:t};
+    if(doc){try{await db.doc("meta/"+doc).update({imgOver:{[cid]:t}})}catch(err){console.error(err);toast("Saved, but other players may still see the old art until the next update.")}}}});
 /* ---------- Flappy Cheese: earn BB, 10 per point, capped per day (ET) ---------- */
 const FP_PER=25,FP_CAP=10000;
 const fpDay=()=>new Date().toLocaleDateString("en-CA",{timeZone:"America/New_York"});
@@ -6366,7 +6369,12 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape")closeReact()});
 /* Images ride inside the database: small ones in the message, big ones split into ~600 KB pieces in "media" docs and stitched back together */
 const MEDIA={},MEDIA_LOADING={};const PIECE=240000;
 const fileToDataURL=f=>new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=no;r.readAsDataURL(f)});
-async function toJpeg(f,max=1000){const url=await fileToDataURL(f);const img=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=url});
+async function toJpeg(f,max=1000){let img=null;
+  /* decode any picture the browser can read (big phone photos, HEIC on iPhone, PNG, WebP, GIF); try three ways */
+  const viaImg=src=>new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=src});
+  try{const u=URL.createObjectURL(f);try{img=await viaImg(u)}finally{setTimeout(()=>URL.revokeObjectURL(u),5000)}}catch(_){}
+  if(!img&&window.createImageBitmap){try{img=await createImageBitmap(f)}catch(_){}}
+  if(!img)img=await viaImg(await fileToDataURL(f));
   const s=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement("canvas");c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);c.getContext("2d").drawImage(img,0,0,c.width,c.height);return c.toDataURL("image/jpeg",0.8)}
 function fillMedia(root){(root||document).querySelectorAll("img[data-mkey]").forEach(img=>{const id=img.dataset.mkey,m=CHAT.msgs.find(x=>x.id===id);if(!m)return;
   if(m.gif){img.src=m.gif;return}const d=MEDIA[m.media];if(d){img.src=d;return}img.classList.add("loading");loadMedia(m.media,Number(m.parts)||1)})}
