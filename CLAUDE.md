@@ -132,7 +132,7 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   Owner's Oct 22 odds change: Elite/Grail weights ≥5 cut (≤10 → 5, >10 → −5; removed weight moved to Common): Grail pack Elite 16.1 / Grail 5,
   Dragon pack Elite 16 / Grail 5 (+ its slot-3 Elite 10 → 5, to Rare). Dragons and anything under 5% unchanged.
   Quick-sell `QS_VAL=[300,900,3000,12000,36000,90000,1000000,5000,0]`.
-  Daily dividend at 1 AM ET (`divCheck`): `CARD_DIV=[1,5,25,200,1000,5000,50000,250,0]` per copy; full rarity set in a
+  Daily dividend at 1 AM ET (`divCheck`): `CARD_DIV=[1,5,25,200,1000,5000,100000,250,0]` (Dragon 100k since Oct 22) per copy; full rarity set in a
   collection 2×; owning every copy of a card another 2× (max 4×; not Dragon, not Commons, not Platinum).
   Legendary abilities: Evil Witch "Debby" steals 10k/day from a random player (bank "Via Debby"), Peter Griffin
   multiplies your whole dividend 1.5× per copy (cap 3×), Claire can be burned for 500k (gone forever).

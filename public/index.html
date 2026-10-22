@@ -4907,7 +4907,7 @@ function activeCards(id){id=id||S.me;const cs=myCards(id),out=[],seen=new Set(),
     if(k==="pm-debby")add(k,"🧙‍♀️","Steals 10,000 BB a day from someone",["div"]);
     if(k==="pm-claire")add(k,"🔥","Can be burned for 500,000 BB",[]);
     if(k===FP_BOOST_CARD)add(k,"⚡",me?(fpBoostLeft()>0?"10× Flappy run recharging":"10× Flappy run ready"):"One 10× Flappy run a day",["fp"]);
-    if(c.r===6)add(k,"🐉","Dragon: 50,000 BB a day + Dragon Glow",["div"])}
+    if(c.r===6)add(k,"🐉",`Dragon: ${CARD_DIV[6].toLocaleString()} BB a day + Dragon Glow`,["div"])}
   return out}
 function actBar(game){if(!S.me)return "";const a=activeCards(S.me).filter(x=>x.g.includes(game)||x.g.includes("all"));if(!a.length)return "";
   return `<div class="actbar">${a.map(x=>`<span class="actchip${x.bad?" bad":""}" title="${esc(x.name)}">${x.ic} <b>${esc(x.name)}</b> · ${esc(x.t)}</span>`).join("")}</div>`}
@@ -5379,7 +5379,7 @@ document.addEventListener("click",e=>{const v=e.target.closest("[data-profcoll]"
   const p=e.target.closest("[data-uid]");if(!p||!S.prefs[p.dataset.uid])return;const act=e.target.closest("button,a,[data-cardview],canvas,.rrwrap");if(act&&act.contains(p))return;e.preventDefault();e.stopPropagation();S.viewMember=p.dataset.uid;render()},true);
 
 /* daily card dividend: first visit after 1 AM Eastern pays per copy owned, by rarity */
-const CARD_DIV=[1,5,25,200,1000,5000,50000,250,0];
+const CARD_DIV=[1,5,25,200,1000,5000,100000,250,0];
 function divDay(){const d=new Date(Date.now()-36e5);return d.toLocaleDateString("en-CA",{timeZone:"America/New_York"})}
 /* one player's daily card dividend right now (the same math the 1 AM payout uses) */
 function divCalc(id){const q=S.prefs[id]||{},cards=q.cards||{};
@@ -5466,6 +5466,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:31,d:"Oct 22",t:[["🐉","Dragon cards now pay 100,000 BB a day in dividends"]]},
  {v:30,d:"Oct 22",t:[["🔥","Daddy Christian has an ability: at High-Low, once you get 4 right in a row, every guess after that pays with a 2% edge for you"]]},
  {v:29,d:"Oct 22",t:[["⚡","See which of your cards are active: your collection lists every card giving you a boost or ability, and each game shows the ones working there"]]},
  {v:28,d:"Oct 22",t:[["🎲","Craps Dean Strow: 1.85% edge"]]},
