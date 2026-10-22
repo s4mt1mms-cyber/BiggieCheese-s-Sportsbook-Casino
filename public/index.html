@@ -2918,12 +2918,12 @@ const bjCanon=r=>r?{at:r.at,bet:r.bet,hid:r.hid||r.hands.length,hands:r.hands.ma
 let BJ_LOCAL=null,BJ_SEQ=0;
 function bjOverlay(){if(!BJ_LOCAL||!S.me)return;const m=S.prefs[S.me];if(m&&(Number(m.bjSeq)||0)<BJ_LOCAL.bjSeq)Object.assign(m,JSON.parse(JSON.stringify(BJ_LOCAL)));else BJ_LOCAL=null}
 /* streak bonus multiplier of the bet for the n-th win in a row */
-const bjStreakMult=n=>n<4?0:n===4?1:2*(n-4);
+const bjStreakMult=n=>n<4?0:n===4?1:2+1.5*(n-5);
 function streakPop(st,bonus){const d=document.createElement("div");d.className="streakpop";d.innerHTML=`<b>🔥 ${st} in a row!</b><span>+${bonus.toLocaleString()} BB bonus</span>`;document.body.appendChild(d);haptic&&haptic();setTimeout(()=>d.classList.add("out"),2600);setTimeout(()=>d.remove(),3200)}
 async function bjSave(patch){
   /* Count hands where the dealer finishes on 21 (blackjack included), once per hand: every 4th unlocks a Revenge shot */
   {const cur=(S.prefs[S.me]||{}),nh=patch.bjHand,old=cur.bjHand;if(nh&&nh.done&&handVal(nh.dealer).t===21&&!(old&&old.at===nh.at&&old.done))patch.bjDealer21=(Number(cur.bjDealer21)||0)+1
-   /* Win streaks pay a bonus in multiples of the hand's bet (bjStreakMult): 4 in a row 1×, 5 2×, then +2× per win (6 4×, 7 6×, 8 8× …), no cap.
+   /* Win streaks pay a bonus in multiples of the hand's bet (bjStreakMult): 4 in a row 1×, 5 2×, then +1.5× per win (6 3.5×, 7 5×, 8 6.5× …), no cap.
       A loss resets it; a push doesn't count either way. */
    if(nh&&nh.done&&nh.at&&Number(cur.bjStreakAt)!==Number(nh.at)){patch.bjStreakAt=nh.at;const d=(nh.results||[]).length?nh.results.reduce((a,z)=>a+(Number(z.delta)||0),0):(Number(nh.delta)||0);let st=Number(cur.bjStreak)||0;
      if(d>0)st++;else if(d<0)st=0;patch.bjStreak=st;
@@ -5466,6 +5466,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:32,d:"Oct 22",t:[["🃏","Blackjack streak bonus: 4 in a row = 1× your bet, 5 = 2×, then +1.5× for every win after that (6 = 3.5×, 7 = 5×, 8 = 6.5×…)"]]},
  {v:31,d:"Oct 22",t:[["🐉","Dragon cards now pay 100,000 BB a day in dividends"]]},
  {v:30,d:"Oct 22",t:[["🔥","Daddy Christian has an ability: at High-Low, once you get 4 right in a row, every guess after that pays with a 2% edge for you"]]},
  {v:29,d:"Oct 22",t:[["⚡","See which of your cards are active: your collection lists every card giving you a boost or ability, and each game shows the ones working there"]]},
