@@ -129,6 +129,12 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   offer, then the listing is claimed like `mkBuy` (`status` sold/traded, `buyer`, `price` = offered BB so `cardMoney` counts it
   once, `offerId`), then `ofDone`; seller picks up cards via `mkClaim` (gotCids), buyer via `ofClaimBuy` (`bClaimed`).
   Seller can counter (new offer seller→offerer, `ctr`). Every step is posted in the pair's DM thread.
+  **Direct offers** (`direct:true`, `listingId:null`): tap a card in someone else's collection/profile (`data-cardwho`) →
+  "Make offer" (`ofDirHtml`, `ofCompose(null,null,{cid,to})`). The card stays with the owner until accept; the owner's accept
+  re-reads their prefs (fails cleanly → escrow returns if the card is gone), takes the card out, and writes `market/of_<offerId>`
+  (same shape as an accepted listing offer: `status` sold/traded, `price`=BB, `ofDone`), then the normal `mkClaim`/`ofClaimBuy`.
+  A direct counter holds the owner's card on the offer (`sEsc`; returned via `ofReturns`, `sReturned`). Owner sees them under
+  "Offers on your cards" on the Marketplace.
 - **DMs** (`dm*`): League | Direct switch in the chat panel; inbox, threads, unread (`un`/`read` on the thread doc),
   DM banner. Listens to my thread list + the open thread's newest 50 only.
 - **Showcase** (`sc*`): `prefs.showcase` = up to 3 card ids, shown on top of the collection and on the profile; unowned cards hide.
