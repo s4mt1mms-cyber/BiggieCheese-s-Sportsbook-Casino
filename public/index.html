@@ -5233,7 +5233,7 @@ setInterval(()=>{if(document.visibilityState!=="visible"){MINE_LAST=Date.now();r
   const n=(Number(q.mineEarn)||0)+MINE_PER,at=Date.now();q.mineEarn=n;q.mineAt=at;db.doc("prefs/"+S.me).update({mineEarn:n,mineAt:at}).catch(()=>{q.mineEarn=n-MINE_PER});render()},5000);
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")MINE_LAST=Date.now()});
 /* background updates coalesce into at most one render per frame, and wait while a Flappy run is in progress */
-let _rq=0;function renderSoon(){if(_rq)return;_rq=requestAnimationFrame(()=>{_rq=0;if((typeof FP!=="undefined"&&FP&&FP.st==="play"&&S.tab==="flappy")||document.getElementById("revOv")){setTimeout(renderSoon,400);return}render()})}
+let _rq=0;window.SB_RENDER=()=>renderSoon();function renderSoon(){if(_rq)return;_rq=requestAnimationFrame(()=>{_rq=0;if((typeof FP!=="undefined"&&FP&&FP.st==="play"&&S.tab==="flappy")||document.getElementById("revOv")){setTimeout(renderSoon,400);return}render()})}
 function render(){lvTick();setTimeout(onlRender,0);setTimeout(autoRefill,0);if(S.gw)setTimeout(gwRender,0);setTimeout(recapPopup,400);
   {const u=logoOf(S.me),m=$("#meAv");if(m){if(u){m.outerHTML=`<img class="dot img" id="meAv" src="${esc(u)}" alt="">`}else if(m.tagName==="IMG"){m.outerHTML=`<span class="dot" id="meAv"></span>`}}}
   setMe();if(CHAT.open)chatRender();if(S.addOpen){refreshGhosts();betPreview()}
@@ -5277,7 +5277,7 @@ function render(){lvTick();setTimeout(onlRender,0);setTimeout(autoRefill,0);if(S
       <div class="small ${S.readOnly?"neg":"pos"}" style="margin-top:4px">${S.readOnly?"View only. Ask the commish for access.":"Connected"}</div></div></div>
       ${pend?`<p class="small" style="color:var(--gold)">Preview. This is how your photo will look. Save it or pick another.</p><div class="row"><button class="btn" data-act="savePhoto">Save photo</button><label class="btn ghost upl2" for="pfFile">Pick another</label><button class="btn ghost" data-act="cancelPhoto">Cancel</button></div>`:S.readOnly?"":`<label class="btn upl" for="pfFile">${u?"Change photo":"Upload photo"}</label>`}
       <p class="small muted">Shows next to your name on bets and on the Home scoreboard. Use your team logo or a photo of yourself, nothing of anyone else.</p>
-      <div class="row">${u&&!pend&&!S.readOnly?`<button class="btn ghost" data-act="rmPhoto">Remove photo</button>`:""}<button class="btn ghost" data-act="signOut">Sign out</button><button class="btn ghost" data-act="closeProfile">Close</button></div></div>`;if(html!==S._pfHtml){S._pfHtml=html;pf.innerHTML=html}}else S._pfHtml=null;
+      ${window.SB_PWROW?window.SB_PWROW():""}<div class="row">${u&&!pend&&!S.readOnly?`<button class="btn ghost" data-act="rmPhoto">Remove photo</button>`:""}<button class="btn ghost" data-act="signOut">Sign out</button><button class="btn ghost" data-act="closeProfile">Close</button></div></div>`;if(html!==S._pfHtml){S._pfHtml=html;pf.innerHTML=html}}else S._pfHtml=null;
   const pick=$("#teamPick");
   const need=S.me&&S.prefs[S.me]&&!teamOf(S.me);
   pick.hidden=!need;
@@ -5400,6 +5400,7 @@ document.addEventListener("click",async e=>{
     return act(()=>db.doc("bets/"+id).update({status:(b&&b.prevStatus)||"live"}),"Bet restored")}
   if(a==="openProfile"){if(!S.me)return toast("Sign in to set up your profile.");S.profileOpen=true;render();return}
   if(a==="signOut"){if(window.SB_SIGNOUT)window.SB_SIGNOUT();return}
+  if(a==="setPassword"){if(window.SB_SETPW)window.SB_SETPW();return}
   if(a==="closeProfile"){S.profileOpen=false;S.pendingPhoto=null;render();return}
   if(a==="cancelPhoto"){S.pendingPhoto=null;render();return}
   if(a==="savePhoto"){const photo=S.pendingPhoto;if(!photo)return;return act(async()=>{await db.doc("photos/"+S.me).set({d:photo,at:Date.now()});S.photos=S.photos||{};S.photos[S.me]=photo;await db.doc("prefs/"+S.me).update({photo:null,logo:null});S.pendingPhoto=null;render()},"Profile photo saved")}

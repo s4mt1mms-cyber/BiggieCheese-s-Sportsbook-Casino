@@ -68,7 +68,8 @@ The app calls `db.doc(path).get/set/update/delete/onSnapshot` and `db.collection
 (the old artifact API). `firebase-shim.js` maps it onto Firestore. `update()` deep-merges nested maps (shim turns
 nested objects into dotted paths). Arrays-in-arrays are encoded as `{__arr:[...]}` (codec.js).
 
-Identity: Google or email-link sign-in → `links/{firebaseUid}.oldId` = the player id (`u_...` ids from the artifact
+Identity: Google, email + password, or email-link sign-in (links open in Safari, not the iOS home-screen app,
+so password is the home-screen path; password accounts must verify their email, rules need `email_verified`) → `links/{firebaseUid}.oldId` = the player id (`u_...` ids from the artifact
 era, or the Firebase uid for new players). New players join with one-time invite codes (`invites/{code}`) made in
 the Admin tab.
 

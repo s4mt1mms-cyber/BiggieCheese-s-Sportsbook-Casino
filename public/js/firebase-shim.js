@@ -8,7 +8,8 @@
  * in the app's game code had to change.
  *
  * It also owns the sign-in gate (#sbGate in index.html):
- *   signed out            -> "Sign in with Google"
+ *   signed out            -> "Sign in with Google", email + password, or an emailed link
+ *   password account, email not verified yet -> "Check your email, then tap I've verified"
  *   signed in, no link yet -> "BiggieCheese's Sportsbook is invite-only: enter your
  *                             invite code" (+ sign out)
  *   signed in and linked   -> gate disappears and the app boots
@@ -32,6 +33,8 @@ const BOOTSTRAP_ADMIN_EMAIL = "s4mt1mms@gmail.com";
 const BOOTSTRAP_ADMIN_OLD_ID = "u_IfmXeDmDg1B3W4naCzVbSA"; // BiggieCheese Oppenheimer
 const SITE = "https://biggiecheesesportsbook.web.app";
 const EMAIL_KEY = "sb-email-for-signin";
+const AUTH_EMU = "http://127.0.0.1:9099";
+const MIN_PW = 8;
 
 const normCode = (c) => String(c || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
 const siteOrigin = () => (location.protocol === "https:" ? location.origin : SITE);
@@ -43,6 +46,18 @@ const siteOrigin = () => (location.protocol === "https:" ? location.origin : SIT
     if (c) {
       sessionStorage.setItem("sb-invite", c);
       u.searchParams.delete("invite");
+      history.replaceState(null, "", u.pathname + (u.search || "") + u.hash);
+    }
+  } catch (_) {}
+})();
+// ?setpw=1: a fresh sign-in link asked for from "Set password" (Firebase wants a recent
+// sign-in before a password can be added); open the password sheet once we're in.
+(function stashSetPw() {
+  try {
+    const u = new URL(location.href);
+    if (u.searchParams.get("setpw")) {
+      sessionStorage.setItem("sb-setpw", "1");
+      u.searchParams.delete("setpw");
       history.replaceState(null, "", u.pathname + (u.search || "") + u.hash);
     }
   } catch (_) {}
@@ -115,7 +130,7 @@ async function boot() {
   let emu = false;
   try { emu = local && (new URLSearchParams(location.search).has("emu") || sessionStorage.getItem("sb-emu") === "1"); if (emu) sessionStorage.setItem("sb-emu", "1"); } catch (_) {}
   if (emu) {
-    authMod.connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
+    authMod.connectAuthEmulator(auth, AUTH_EMU, { disableWarnings: true });
     fsMod.connectFirestoreEmulator(fs, "127.0.0.1", 8080);
     // Sign in as anyone without Google: SB_DEV_SIGNIN("me@example.com", "Me")
     window.SB_DEV_SIGNIN = (email, name) => authMod.signInWithCredential(auth, authMod.GoogleAuthProvider.credential(
@@ -174,6 +189,7 @@ async function boot() {
       return;
     }
     if (!fbUser) return showLogin(redirectError);
+    if (fbUser.email && !fbUser.emailVerified) return showVerify(fbUser);
     showGate("checking", spinner("Checking your invite…"));
     try {
       const ok = await admit(fbUser);
@@ -191,20 +207,104 @@ async function boot() {
     gateBody.querySelectorAll("[data-sbsignout]").forEach((b) => b.addEventListener("click", () => window.SB_SIGNOUT()));
   }
 
-  function showLogin(err) {
+  const PW_EYE = '<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const pwField = (id, ac, ph) => `<div class="sbgate-pw">
+        <label class="sbgate-vh" for="${id}">${esc(ph)}</label>
+        <input id="${id}" class="sbgate-input sbgate-email" type="password" autocomplete="${ac}" placeholder="${esc(ph)}" required autocapitalize="off" autocorrect="off" spellcheck="false">
+        <button type="button" class="sbgate-eye" data-pweye="${id}" aria-label="Show password" aria-pressed="false">${PW_EYE}</button>
+      </div>`;
+  function wireEyes(root) {
+    root.querySelectorAll("[data-pweye]").forEach((b) => b.addEventListener("click", () => {
+      const inp = document.getElementById(b.dataset.pweye); if (!inp) return;
+      const show = inp.type === "password";
+      inp.type = show ? "text" : "password";
+      b.setAttribute("aria-pressed", String(show));
+      b.setAttribute("aria-label", show ? "Hide password" : "Show password");
+    }));
+  }
+
+  // mode: "signin" | "create". Password sign-in works entirely inside the home-screen
+  // app; an emailed link opens in Safari on iPhone (separate storage), so it's a fallback.
+  function showLogin(err, mode, presetEmail) {
+    mode = mode === "create" ? "create" : "signin";
     const invited = !!peekPendingInvite();
+    const home = standalone();
+    const create = mode === "create";
     showGate("login", `
       <button type="button" class="sbgate-btn" id="sbSignIn">${GOOGLE_G}<span>Sign in with Google</span></button>
       <div class="sbgate-or"><span>or</span></div>
-      <form class="sbgate-form" id="sbEmailForm">
-        <label class="sbgate-vh" for="sbEmail">Email address</label>
-        <input id="sbEmail" class="sbgate-input sbgate-email" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" required>
-        <button type="submit" class="sbgate-btn ghost" id="sbEmailBtn">Email me a sign-in link</button>
+      <form class="sbgate-form" id="sbPwForm" data-mode="${mode}">
+        <p class="sbgate-h sbgate-h2">${create ? "Create your account" : "Sign in with email &amp; password"}</p>
+        <label class="sbgate-vh" for="sbPwEmail">Email address</label>
+        <input id="sbPwEmail" class="sbgate-input sbgate-email" type="email" name="username" autocomplete="username" inputmode="email" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="you@example.com" required value="${esc(presetEmail || "")}">
+        ${pwField("sbPw", create ? "new-password" : "current-password", create ? "New password (" + MIN_PW + "+ characters)" : "Password")}
+        <button type="submit" class="sbgate-btn" id="sbPwBtn">${create ? "Create account" : "Sign in"}</button>
+        <div class="sbgate-links">
+          ${create ? `<button type="button" class="sbgate-link" id="sbPwMode">I already have an account</button>`
+            : `<button type="button" class="sbgate-link" id="sbForgot">Forgot password?</button><button type="button" class="sbgate-link" id="sbPwMode">New player? Create account</button>`}
+        </div>
       </form>
       <p class="sbgate-err" id="sbSignErr" role="alert">${err ? esc(friendlyAuthError(err)) : ""}</p>
+      ${create ? `<p class="sbgate-note">You'll need your invite code from the commish next. We'll email you a link to confirm your address first.</p>` : ""}
+      <details class="sbgate-more" id="sbLinkBox">
+        <summary>Email me a sign-in link instead</summary>
+        ${home ? `<p class="sbgate-note sbgate-warn">Heads up: on iPhone the link opens in Safari, so you'd be signed in there, not in this home-screen app. Use email &amp; password above to sign in here. (Never set a password? Tap "Forgot password?" to make one.)</p>` : ""}
+        <form class="sbgate-form" id="sbEmailForm">
+          <label class="sbgate-vh" for="sbEmail">Email address</label>
+          <input id="sbEmail" class="sbgate-input sbgate-email" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" required>
+          <button type="submit" class="sbgate-btn ghost" id="sbEmailBtn">Email me a sign-in link</button>
+        </form>
+      </details>
       <p class="sbgate-note">${invited ? "You've got an invite! Sign in to claim your spot." : "Invite-only. You'll need an invite code from the commish."}</p>`);
+    wireEyes(gateBody);
     const btn = document.getElementById("sbSignIn");
     btn.addEventListener("click", () => signIn(btn));
+    const pwEmail = document.getElementById("sbPwEmail"), pw = document.getElementById("sbPw");
+    document.getElementById("sbPwMode").addEventListener("click", () => showLogin(null, create ? "signin" : "create", pwEmail.value.trim()));
+    const forgot = document.getElementById("sbForgot");
+    if (forgot) forgot.addEventListener("click", async () => {
+      const errEl = document.getElementById("sbSignErr");
+      const addr = pwEmail.value.trim();
+      errEl.textContent = "";
+      if (!addr || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(addr)) { errEl.textContent = "Type your email address above first, then tap Forgot password."; pwEmail.focus(); return; }
+      forgot.disabled = true;
+      try {
+        await authMod.sendPasswordResetEmail(auth, addr);
+        showGate("pw-reset-sent", `<div class="sbgate-lock" aria-hidden="true">🔑</div>
+          <p class="sbgate-h">Check your email</p>
+          <p>If there's an account for</p><span class="sbgate-who">${esc(addr)}</span>
+          <p>a link to set a new password is on its way (check spam too). It opens a Firebase page where you choose the password. Then come back here and sign in with it.</p>
+          <button type="button" class="sbgate-btn" id="sbBack">Back to sign in</button>`);
+        document.getElementById("sbBack").addEventListener("click", () => showLogin(null, "signin", addr));
+      } catch (e) {
+        forgot.disabled = false;
+        errEl.textContent = friendlyAuthError(e, "password");
+      }
+    });
+    document.getElementById("sbPwForm").addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      const errEl = document.getElementById("sbSignErr"), pb = document.getElementById("sbPwBtn");
+      const addr = pwEmail.value.trim(), pass = pw.value;
+      errEl.textContent = "";
+      if (create && pass.length < MIN_PW) { errEl.textContent = `Use at least ${MIN_PW} characters for your password.`; pw.focus(); return; }
+      pb.disabled = true; pb.textContent = create ? "Creating…" : "Signing in…";
+      try {
+        if (create) {
+          const cred = await authMod.createUserWithEmailAndPassword(auth, addr, pass);
+          try { await authMod.sendEmailVerification(cred.user, { url: siteOrigin() + "/" }); }
+          catch (e) { try { await authMod.sendEmailVerification(cred.user); } catch (_) {} }
+          markHasPw(cred.user.uid);
+          showVerify(cred.user);
+        } else {
+          const cred = await authMod.signInWithEmailAndPassword(auth, addr, pass);
+          markHasPw(cred.user.uid);
+        }
+        // onAuthStateChanged takes it from here.
+      } catch (e) {
+        pb.disabled = false; pb.textContent = create ? "Create account" : "Sign in";
+        errEl.textContent = friendlyAuthError(e, create ? "create" : "password");
+      }
+    });
     document.getElementById("sbEmailForm").addEventListener("submit", async (ev) => {
       ev.preventDefault();
       const addr = document.getElementById("sbEmail").value.trim();
@@ -220,15 +320,56 @@ async function boot() {
           <p class="sbgate-h">Check your email</p>
           <p>We sent a sign-in link to</p><span class="sbgate-who">${esc(addr)}</span>
           <p>Open it on this device to sign in. It can take a minute; check spam too.</p>
+          ${home ? `<p class="sbgate-note sbgate-warn">The link opens in Safari, not this home-screen app. Once you're signed in there, tap your name → <strong>Set password</strong>, then come back here and sign in with email &amp; password.</p>` : ""}
           <button type="button" class="sbgate-btn ghost" id="sbBack">Back</button>`);
         document.getElementById("sbBack").addEventListener("click", () => showLogin(null));
       } catch (e) {
         eb.disabled = false; eb.textContent = "Email me a sign-in link";
+        errEl.textContent = friendlyAuthError(e, "link");
+      }
+    });
+    if (err) { try { document.getElementById("sbLinkBox").open = (err.code || "").includes("action-code"); } catch (_) {} }
+  }
+
+  // Password accounts must confirm their email before the rules let them in
+  // (request.auth.token.email_verified). Verification is per account, not per
+  // device: the link can open in Safari, then "I've verified" here picks it up.
+  function showVerify(fbUser, msg) {
+    showGate("verify", `<div class="sbgate-lock" aria-hidden="true">✉️</div>
+      <p class="sbgate-h">Confirm your email</p>
+      <p>We sent a link to</p><span class="sbgate-who">${esc(fbUser.email || "")}</span>
+      <p>Open it (it's fine if it opens in Safari), then come back here and tap <strong>I've verified</strong>. Check spam if it isn't there in a minute.</p>
+      <button type="button" class="sbgate-btn" id="sbVerified">I've verified</button>
+      <p class="sbgate-err" id="sbVerifyErr" role="alert">${esc(msg || "")}</p>
+      <button type="button" class="sbgate-btn ghost" id="sbResend">Send the email again</button>
+      <button type="button" class="sbgate-btn ghost" data-sbsignout>Use a different account</button>`);
+    wireSignOut();
+    const errEl = document.getElementById("sbVerifyErr");
+    const vb = document.getElementById("sbVerified");
+    vb.addEventListener("click", async () => {
+      errEl.textContent = ""; vb.disabled = true; vb.textContent = "Checking…";
+      try {
+        const u = auth.currentUser || fbUser;
+        await u.reload();
+        if (!u.emailVerified) { vb.disabled = false; vb.textContent = "I've verified"; errEl.textContent = "Not verified yet. Open the link in the email first (check spam), then tap again."; return; }
+        await u.getIdToken(true); // new token carries email_verified for the Firestore rules
+        showGate("checking", spinner("Checking your invite…"));
+        if (await admit(u)) booted = u.uid;
+      } catch (e) {
+        console.warn(e);
+        vb.disabled = false; vb.textContent = "I've verified";
         errEl.textContent = friendlyAuthError(e);
       }
     });
+    const rb = document.getElementById("sbResend");
+    rb.addEventListener("click", async () => {
+      errEl.textContent = ""; rb.disabled = true;
+      try {
+        await authMod.sendEmailVerification(auth.currentUser || fbUser, { url: siteOrigin() + "/" }).catch(() => authMod.sendEmailVerification(auth.currentUser || fbUser));
+        rb.textContent = "Sent! Check your email";
+      } catch (e) { rb.disabled = false; errEl.textContent = friendlyAuthError(e); }
+    });
   }
-
 
   const standalone = () => {
     try { return matchMedia("(display-mode: standalone)").matches || navigator.standalone === true; } catch (_) { return false; }
@@ -257,15 +398,158 @@ async function boot() {
     }
   }
 
-  function friendlyAuthError(e) {
+  // kind: "password" (email + password sign-in), "create", "link", "setpw", or none.
+  function friendlyAuthError(e, kind) {
     const code = (e && e.code) || "";
     if (code === "auth/unauthorized-domain") return "This web address isn't on the Firebase authorized domains list yet.";
     if (code === "auth/network-request-failed") return "Network problem. Check your connection and try again.";
     if (code === "auth/invalid-email") return "That email address doesn't look right.";
-    if (code === "auth/operation-not-allowed") return "Email sign-in isn't switched on yet. Use Google, or ask the commish.";
+    if (code === "auth/missing-password") return "Type your password.";
+    if (code === "auth/operation-not-allowed") {
+      if (kind === "password" || kind === "create" || kind === "setpw") return "Email & password sign-in isn't switched on yet. Tell the commish, and use Google or an email link for now.";
+      return "Email sign-in isn't switched on yet. Use Google, or ask the commish.";
+    }
+    if (code === "auth/invalid-credential" || code === "auth/wrong-password" || code === "auth/user-not-found" || code === "auth/invalid-login-credentials")
+      return "Wrong email or password. Never set a password (you used email links before)? Tap \u201cForgot password?\u201d to make one.";
+    if (code === "auth/email-already-in-use") return "There's already an account for that email. Tap \u201cI already have an account\u201d and sign in. Never set a password? Use \u201cForgot password?\u201d to make one.";
+    if (code === "auth/weak-password") return `Pick a stronger password (at least ${MIN_PW} characters).`;
+    if (code === "auth/user-disabled") return "This account has been switched off. Ask the commish.";
+    if (code === "auth/requires-recent-login") return "For security, sign in again first.";
     if (code === "auth/invalid-action-code" || code === "auth/expired-action-code") return "That sign-in link has expired or was already used. Ask for a new one.";
     if (code === "auth/too-many-requests") return "Too many tries. Wait a minute and try again.";
+    if (kind === "setpw") return "Couldn't save the password. Please try again.";
     return "Couldn't sign in. Please try again.";
+  }
+
+  /* ---------- passwords for email-link players ---------- */
+  // On iPhone the home-screen app has its own storage, and emailed links open in
+  // Safari, so link-only players could never sign in inside the app. Letting them
+  // add a password fixes that. "Has a password" isn't on the client User object,
+  // so ask the Auth REST API (accounts:lookup) and remember the answer per device.
+  const pwKey = (uid) => "sb-haspw-" + uid;
+  function markHasPw(uid) { try { localStorage.setItem(pwKey(uid), "1"); } catch (_) {} PW.has = true; }
+  const PW = { has: null, google: false, linkish: false, email: "" };
+  async function lookupHasPw(u) {
+    try { if (localStorage.getItem(pwKey(u.uid)) === "1") return true; } catch (_) {}
+    try {
+      const tok = await u.getIdToken();
+      const base = (emu ? AUTH_EMU + "/" : "https://") + "identitytoolkit.googleapis.com/v1/accounts:lookup?key=" + encodeURIComponent(firebaseConfig.apiKey);
+      const r = await fetch(base, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ idToken: tok }) });
+      if (!r.ok) return null;
+      const j = await r.json();
+      const x = j && j.users && j.users[0];
+      if (!x) return null;
+      const has = !!(x.passwordHash || x.passwordUpdatedAt);
+      if (has) markHasPw(u.uid);
+      return has;
+    } catch (_) { return null; }
+  }
+  const needsPw = () => PW.linkish && PW.has === false;
+  window.SB_PWROW = () => {
+    const u = auth.currentUser;
+    if (!u || !u.email) return "";
+    const set = !PW.has;
+    return `<div class="sbpw-row">${needsPw() ? `<p class="small" style="margin:0;color:var(--gold,#ffcf2f)">Using the home-screen app? Set a password so you can sign in there.</p>` : ""}
+      <button class="btn ghost" data-act="setPassword">${set ? "Set password" : "Change password"}</button></div>`;
+  };
+  window.SB_SETPW = () => openPwSheet();
+
+  function closePwSheet() { const o = document.getElementById("sbPwSheet"); if (o) o.remove(); }
+  function openPwSheet(note) {
+    const u = auth.currentUser;
+    if (!u) return;
+    closePwSheet();
+    const change = !!PW.has;
+    const o = document.createElement("div");
+    o.id = "sbPwSheet";
+    o.className = "sbgate sbpw";
+    o.setAttribute("role", "dialog"); o.setAttribute("aria-modal", "true"); o.setAttribute("aria-labelledby", "sbPwTitle");
+    o.innerHTML = `<div class="sbgate-card"><div class="sbgate-body">
+      <p class="sbgate-h" id="sbPwTitle">${change ? "Change password" : "Set a password"}</p>
+      ${note ? `<p class="sbgate-note" style="color:var(--g-gold)">${esc(note)}</p>` : ""}
+      <p>${change ? "Your sign-in email stays the same." : "Then sign in anywhere, including the home-screen app, with your email and this password."}</p>
+      <form class="sbgate-form" id="sbPwSet">
+        <input type="email" name="username" autocomplete="username" value="${esc(u.email)}" readonly class="sbgate-input sbgate-email sbgate-ro" aria-label="Email">
+        ${change ? pwField("sbPwCur", "current-password", "Current password") : ""}
+        ${pwField("sbPwNew", "new-password", "New password (" + MIN_PW + "+ characters)")}
+        <button type="submit" class="sbgate-btn" id="sbPwSave">Save password</button>
+      </form>
+      <p class="sbgate-err" id="sbPwErr" role="alert"></p>
+      <div id="sbPwRelog"></div>
+      <button type="button" class="sbgate-btn ghost" id="sbPwClose">${change ? "Cancel" : "Not now"}</button>
+    </div></div>`;
+    document.body.appendChild(o);
+    wireEyes(o);
+    o.addEventListener("click", (ev) => { if (ev.target === o) closePwSheet(); });
+    document.getElementById("sbPwClose").addEventListener("click", closePwSheet);
+    setTimeout(() => { try { document.getElementById(change ? "sbPwCur" : "sbPwNew").focus(); } catch (_) {} }, 50);
+    document.getElementById("sbPwSet").addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      const errEl = document.getElementById("sbPwErr"), sb = document.getElementById("sbPwSave");
+      const nw = document.getElementById("sbPwNew").value, cur = change ? document.getElementById("sbPwCur").value : "";
+      errEl.textContent = "";
+      if (nw.length < MIN_PW) { errEl.textContent = `Use at least ${MIN_PW} characters.`; return; }
+      sb.disabled = true; sb.textContent = "Saving…";
+      try {
+        if (change) await authMod.reauthenticateWithCredential(u, authMod.EmailAuthProvider.credential(u.email, cur));
+        await authMod.updatePassword(u, nw);
+        markHasPw(u.uid);
+        try { localStorage.setItem("sb-pwnag-" + u.uid, "1"); } catch (_) {}
+        o.querySelector(".sbgate-body").innerHTML = `<div class="sbgate-lock" aria-hidden="true">✅</div>
+          <p class="sbgate-h">Password saved</p>
+          <p>In the home-screen app, sign in with</p><span class="sbgate-who">${esc(u.email)}</span><p>and your new password.</p>
+          <button type="button" class="sbgate-btn" id="sbPwDone">Done</button>`;
+        document.getElementById("sbPwDone").addEventListener("click", closePwSheet);
+        refreshApp();
+      } catch (e) {
+        sb.disabled = false; sb.textContent = "Save password";
+        if (e && e.code === "auth/requires-recent-login") {
+          errEl.textContent = "For security, Firebase needs a fresh sign-in before adding a password.";
+          const box = document.getElementById("sbPwRelog");
+          box.innerHTML = `<button type="button" class="sbgate-btn" id="sbPwLink">Email me a fresh sign-in link</button>
+            <p class="sbgate-note">Open it, and this password screen comes right back up. Or sign out, sign in again, and set the password straight away.</p>`;
+          const lb = document.getElementById("sbPwLink");
+          lb.addEventListener("click", async () => {
+            lb.disabled = true;
+            try {
+              await authMod.sendSignInLinkToEmail(auth, u.email, { url: location.origin + "/?setpw=1", handleCodeInApp: true });
+              try { localStorage.setItem(EMAIL_KEY, u.email); } catch (_) {}
+              lb.textContent = "Sent! Check your email";
+            } catch (e2) { lb.disabled = false; errEl.textContent = friendlyAuthError(e2, "link"); }
+          });
+        } else if (change && (e && (e.code === "auth/invalid-credential" || e.code === "auth/wrong-password" || e.code === "auth/invalid-login-credentials"))) {
+          errEl.textContent = "Current password is wrong. Forgot it? Sign out and use \u201cForgot password?\u201d.";
+        } else errEl.textContent = friendlyAuthError(e, "setpw");
+      }
+    });
+  }
+  function refreshApp() { try { if (typeof window.SB_RENDER === "function") window.SB_RENDER(); } catch (_) {} }
+
+  // A small one-time nudge after sign-in in a normal browser tab (that's where
+  // link-only players end up): set a password to use the home-screen app.
+  function showPwNag(u) {
+    if (document.getElementById("sbPwNag") || document.getElementById("sbPwSheet")) return;
+    const d = document.createElement("div");
+    d.id = "sbPwNag"; d.className = "sbpw-nag"; d.setAttribute("role", "status");
+    d.innerHTML = `<p><strong>Using the home-screen app?</strong> Set a password so you can sign in there.</p>
+      <div class="sbpw-nag-row"><button type="button" class="sbgate-btn" id="sbPwNagGo">Set password</button><button type="button" class="sbgate-btn ghost" id="sbPwNagNo">Not now</button></div>`;
+    document.body.appendChild(d);
+    try { localStorage.setItem("sb-pwnag-" + u.uid, "1"); } catch (_) {}
+    document.getElementById("sbPwNagGo").addEventListener("click", () => { d.remove(); openPwSheet(); });
+    document.getElementById("sbPwNagNo").addEventListener("click", () => d.remove());
+  }
+  async function afterAdmit(u) {
+    const ids = (u.providerData || []).map((p) => p.providerId);
+    PW.google = ids.includes("google.com");
+    PW.linkish = ids.includes("password"); // email-link and password accounts both show up as "password"
+    PW.has = PW.linkish ? await lookupHasPw(u) : false;
+    refreshApp();
+    let wantSheet = false;
+    try { wantSheet = sessionStorage.getItem("sb-setpw") === "1"; sessionStorage.removeItem("sb-setpw"); } catch (_) {}
+    if (wantSheet) return setTimeout(() => openPwSheet(PW.has ? "" : "You're signed in again. Set your password now."), 1200);
+    let nagged = false;
+    try { nagged = localStorage.getItem("sb-pwnag-" + u.uid) === "1"; } catch (_) {}
+    if (needsPw() && !standalone() && !nagged) setTimeout(() => { if (auth.currentUser && auth.currentUser.uid === u.uid) showPwNag(u); }, 2500);
   }
 
   /* ---------- invite check + identity ---------- */
@@ -316,6 +600,7 @@ async function boot() {
     window.SB_INFO = { me, email, isAdmin, firebaseUid: fbUser.uid };
     hideGate();
     window.__sbResolve({ db, user });
+    afterAdmit(fbUser).catch((e) => console.warn("password check", e));
     return true;
   }
 
@@ -358,7 +643,7 @@ async function boot() {
 
   async function redeem(fbUser, email, code) {
     const fail = (m) => Object.assign(new Error(m), { userMessage: m });
-    if (!email || fbUser.emailVerified === false) throw fail("Your Google account needs a verified email.");
+    if (!email || fbUser.emailVerified === false) throw fail("Your account needs a verified email first.");
     const invRef = fsMod.doc(fs, "invites/" + code);
     let inv;
     try { inv = await fsMod.getDoc(invRef); } catch (e) { throw fail("That code doesn't work. Check it with the commish."); }

@@ -114,9 +114,11 @@ these services:
    this repo replace the default rules on the first deploy.
 2. **Sign-in methods.** Build → Authentication → Get started → Sign-in method:
    - **Google**: Enable, pick your support email, Save.
-   - **Email/Password**: Enable, then also turn on **"Email link
-     (passwordless sign-in)"**, Save. (Without this, the "Email me a sign-in
-     link" button says email sign-in isn't switched on.)
+   - **Email/Password**: turn on the first toggle, **"Email/Password"**
+     (needed for "Sign in with email & password", "Create account" and
+     "Forgot password?"), and also **"Email link (passwordless sign-in)"**,
+     then Save. (If either is off, the matching button says sign-in isn't
+     switched on yet.)
 3. **Authorized domains.** Authentication → Settings → Authorized domains.
    `biggiecheesesportsbook.web.app`, `biggiecheesesportsbook.firebaseapp.com`
    and `localhost` are there by default. If you add a custom domain later,
@@ -182,7 +184,8 @@ git-ignored. Don't commit it.
 4. Sign in yourself first (you're linked automatically). Check that your team,
    balance and the Admin tab look right.
 5. Text each friend their link (`https://biggiecheesesportsbook.web.app/?invite=CODE`).
-   They open it, sign in with Google or an email link, and land on their team.
+   They open it, sign in with Google, email + password ("New player? Create
+   account", then confirm their email) or an email link, and land on their team.
    Lost a code, or someone used the wrong account? In Admin → Invite codes,
    use "Remove access" and/or make a new code for that team.
 
@@ -295,9 +298,23 @@ in the emulator to use it).
 
 ## Sign-in on iPhone home-screen app
 
+On iPhone the home-screen app has its own storage, separate from Safari, and
+emailed links always open in Safari. So an email link signs you in in Safari,
+never in the home-screen app. Use **email & password** there instead:
+
+- Players who used email links: sign in once in Safari (link), then tap your
+  name → **Set password** (a one-time prompt also offers it). Or, on the
+  sign-in screen, type your email and tap **Forgot password?** to make one.
+  Then sign in inside the home-screen app with email + password.
+- New players without Gmail: **New player? Create account** → confirm the
+  email (the link may open in Safari; that's fine) → **I've verified** in the
+  app → invite code.
+- Requires the **Email/Password** toggle in Firebase console → Authentication
+  → Sign-in method → Email/Password (see setup step 2).
+
 When the site runs as a home-screen app, Google sign-in uses a full-page
 redirect instead of a popup. If Google sign-in from the home-screen app ever
-loops or fails, the email link always works. The longer-term fix is to sign
+loops or fails, use email + password. The longer-term fix is to sign
 in on the same domain:
 
 1. In `public/js/firebase-config.js`, set `authDomain` to

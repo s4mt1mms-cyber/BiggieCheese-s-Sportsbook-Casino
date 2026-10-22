@@ -60,3 +60,36 @@ html.sbgate-open,html.sbgate-open body{overflow:hidden}
 .sbinv-acts{display:flex;flex-wrap:wrap;gap:6px;margin-left:auto}
 .sbinv-url{flex-basis:100%;word-break:break-all}
 .sbgate-body .sbgate-h{color:var(--g-ink)}
+
+/* Email + password sign-in (works inside the iPhone home-screen app) */
+.sbgate-h2{font-size:18px}
+.sbgate-pw{position:relative;width:100%}
+.sbgate-pw .sbgate-input{padding-right:52px;text-align:left}
+.sbgate-form .sbgate-email{text-align:left}
+.sbgate-eye{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:44px;height:44px;display:grid;place-items:center;border:0;border-radius:10px;background:transparent;color:var(--g-muted);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.sbgate-eye[aria-pressed="true"]{color:var(--g-gold)}
+.sbgate-eye:focus-visible{outline:2px solid var(--g-gold)}
+.sbgate-links{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 12px}
+.sbgate-link{appearance:none;border:0;background:none;padding:8px 2px;min-height:40px;color:var(--g-gold);font:600 14px/1.2 "Barlow",system-ui,sans-serif;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.sbgate-link:disabled{opacity:.6}
+.sbgate-more{width:100%;text-align:left;border:1px solid var(--g-line);border-radius:12px;padding:0 12px;background:rgba(0,0,0,.18)}
+.sbgate-more summary{cursor:pointer;padding:12px 0;color:var(--g-ink);font-weight:600;font-size:14px;text-align:center}
+.sbgate-more[open]{padding-bottom:12px}
+.sbgate-more[open] summary{margin-bottom:4px}
+.sbgate-more .sbgate-note{margin:0 0 10px}
+.sbgate-warn{color:var(--g-gold)!important;text-align:left}
+.sbgate-ro{opacity:.75}
+.sbgate-btn.ghost:disabled{cursor:default}
+/* "Set password" sheet + one-time nudge (shown over the app) */
+.sbgate.sbpw{background:rgba(8,5,14,.72);background-image:none;-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.sbpw-row{display:grid;gap:6px;justify-items:start}
+.sbpw-nag{--g-gold:#ffcf2f;--g-ink:#f6f0e4;--g-line:#3b2e55;--g-muted:#ab9fc2;position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:2147482000;max-width:420px;margin:0 auto;
+  padding:14px;border-radius:16px;background:#1d1530;border:1px solid #ffcf2f;color:#f6f0e4;box-shadow:0 12px 40px rgba(0,0,0,.6);
+  font:500 15px/1.4 "Barlow",system-ui,sans-serif;display:grid;gap:10px}
+.sbpw-nag p{margin:0}
+.sbpw-nag-row{display:flex;gap:8px}
+.sbpw-nag .sbgate-btn{min-height:44px;font-size:15px;padding:8px 12px;box-shadow:none;color:#1a1200}
+.sbpw-nag .sbgate-btn.ghost{color:#f6f0e4;border-color:#3b2e55}
+#sbPwRelog:empty{display:none}
+/* The sign-in card can be taller than a small phone: margin:auto centers it without clipping the top when it scrolls */
+.sbgate{align-items:flex-start}.sbgate-card{margin:auto}
