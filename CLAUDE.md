@@ -129,6 +129,8 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   Rarities `CR` 0 Common … 6 Dragon, 7 Platinum, 8 Platinum Mysterio Legendary.
   Mint limits `CR_LIM=[∞,1000,100,10,5,3,1,15,1]`. Packs: Common 5k, Uncommon 10k, Rare 25k, Super Rare 50k,
   Elite 100k, Grail 250k, Dragon 765,432 (odds in `pkPullTier/pkSlot/pkChance` — don't change).
+  Owner's Oct 22 odds change: Elite/Grail weights ≥5 cut (≤10 → 5, >10 → −5; removed weight moved to Common): Grail pack Elite 16.1 / Grail 5,
+  Dragon pack Elite 16 / Grail 5 (+ its slot-3 Elite 10 → 5, to Rare). Dragons and anything under 5% unchanged.
   Quick-sell `QS_VAL=[300,900,3000,12000,36000,90000,1000000,5000,0]`.
   Daily dividend at 1 AM ET (`divCheck`): `CARD_DIV=[1,5,25,200,1000,5000,50000,250,0]` per copy; full rarity set in a
   collection 2×; owning every copy of a card another 2× (max 4×; not Dragon, not Commons, not Platinum).

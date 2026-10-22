@@ -4828,8 +4828,8 @@ const PACKS=[
   {id:"blue",r:2,name:"Rare Pack",price:25000,n:5,odds:[54.597,30,12,2.5,.5,.403,0],floors:[2,0,0,0,0]},
   {id:"purple",r:3,name:"Super Rare Pack",price:50000,n:5,odds:[36.627,33,19,8.94,1.6,.813,.02],floors:[2,2,0,0,0]},
   {id:"red",r:4,name:"Elite Pack",price:100000,n:5,odds:[27.979,32,25,10,4,.971,.05],floors:[3,2,0,0,0]},
-  {id:"gold",r:5,name:"Grail Pack",price:250000,n:5,odds:[15,20,22,16,21.1,6,.1],floors:[3,3,3,0,0]},
-  {id:"plat",r:6,name:"Dragon Pack",price:765432,n:5,odds:[15,20,22,16,21,6,.2],fixed:[3,4],custom:{2:[0,0,60,30,10,0,0],3:[0,0,0,0,1,0,0]},floors:[0,0,2,4,4],last:"renorm",lastOdds:[0,0,0,0,50,45,5]}];
+  {id:"gold",r:5,name:"Grail Pack",price:250000,n:5,odds:[21,20,22,16,16.1,5,.1],floors:[3,3,3,0,0]},
+  {id:"plat",r:6,name:"Dragon Pack",price:765432,n:5,odds:[21,20,22,16,16,5,.2],fixed:[3,4],custom:{2:[0,0,65,30,5,0,0],3:[0,0,0,0,1,0,0]},floors:[0,0,2,4,4],last:"renorm",lastOdds:[0,0,0,0,50,45,5]}];
 function pkOdds(p){return p.odds}
 /* chance of each rarity for one slot: fixed slots are exact; floors lift anything below up to the floor (so floors don't inflate the rare odds),
    except a "renorm" slot, which keeps the table's relative odds above the floor (the Dragon pack's last card) */
@@ -4929,7 +4929,7 @@ function pkOpen(p,set){const cat=cardsCat(set),used={};const left=c=>c.lim-minte
 /* copies left to mint per rarity in a collection (Infinity = unlimited) */
 function pkLeft(set){const out=[0,0,0,0,0,0,0];for(const c of cardsCat(set)){if(c.r>6)continue;out[c.r]+=isFinite(c.lim)?Math.max(0,c.lim-minted(c.id)):Infinity}return out}
 /* a pack can't be sold once one of its guaranteed slots has nothing left at (or above) its floor */
-function pkBlocked(p,set){const L=pkLeft(set),above=f=>L.slice(f).reduce((a,b)=>a+b,0);for(let i=0;i<p.n;i++){if(p.fixed&&i<p.fixed.length){if(!(L[p.fixed[i]]>0))return true;continue}if(p.custom&&p.custom[i])continue;const f=p.floors[i]||0;if(f>0&&!(above(f)>0))return true}return false}
+function pkBlocked(p,set){const L=pkLeft(set),above=f=>L.slice(f).reduce((a,b)=>a+b,0);for(let i=0;i<p.n;i++){if(p.fixed&&i<p.fixed.length){if(!(above(p.fixed[i])>0))return true;continue}if(p.custom&&p.custom[i])continue;const f=p.floors[i]||0;if(f>0&&!(above(f)>0))return true}return false}
 /* exact per-pack chance of at least one card of rarity >= r (shown in the shop) */
 function pkChance(p,r,set){let miss=1;for(let i=0;i<p.n;i++){const w=pkSlot(p,i,set);miss*=1-w.reduce((a,x,k)=>a+(k>=r?x:0),0)}return 1-miss}
 const fmtPct=x=>x>=.995?"100%":x>=.1?Math.round(x*100)+"%":x>=.01?(x*100).toFixed(1)+"%":(x*100).toFixed(2)+"%";
@@ -5435,6 +5435,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:27,d:"Oct 22",t:[["🎴","Pack odds tweak: Grail pack Elite 16.1%, Grail 5%; Dragon pack Elite 16%, Grail 5%. Dragon odds unchanged"],["🐉","Fixed: the Dragon pack no longer shows Sold out while better cards are still available"]]},
  {v:26,d:"Oct 22",t:[["🃏","Blackjack: no wait between hands. Win streak bonuses now start at 4 in a row (1× your bet), 5 = 2×, then +2× per win"],["🟢","Shrex: streak bonuses ×1.5"],["🎲","Craps Dean Strow: 1.6% edge"]]},
  {v:25,d:"Oct 22",t:[["🕺","Emotes are here: buy the L Dance in the Aura Shop (Emotes tab, 500,000 BB), then hit 🕺 at the poker or Russian Roulette table to get up and dance"]]},
  {v:24,d:"Oct 22",t:[["✨","At the poker and Russian Roulette tables, your profile picture and aura now float above your player"]]},
