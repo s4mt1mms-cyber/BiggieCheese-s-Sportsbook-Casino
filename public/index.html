@@ -3075,13 +3075,16 @@ function rrBuild(cv){const T=THREE;if(S.rr3&&S.rr3.cv===cv)return;rrStop();
 
 /* idle life: look around, sip beer, fidget, shift weight */
 function rrIdle(c,i,s,b,now){const T=c.T,u=b.userData,st=rrSt(),hd=u.head;const busy=c.act===i;
+  /* a real player's animal only moves when that player does (head look, drinks, drunk sway, their moves from the table events);
+     the ambient "life" below (random looks, sips, taps, chatter, leaning) is for bots only */
+  const real=!!(RR_SEATS[i]&&RR_SEATS[i].uid&&(RL.on||TH.on));
   const dt=Math.min(.1,(now-(u.lt||now))/1000);u.lt=now;const sm=r=>1-Math.exp(-dt*r);
   if(busy&&u.idle){if(u.idle==="drink"){u.mug.position.copy(u.mugHome);u.mug.rotation.set(0,0,0)}u.idle=null;rrArmTo(c,i,"L",u.restL,true)}
   const watching=c.hold&&c.hold.i!==i&&c.hold.i!=null;
-  let wy=u.lookY||0,wp=u.lookP||0;
-  if(watching||(c.focus!=null&&c.focus!==i&&st.drawing)){const tg=c.seats[c.focus!=null?c.focus:c.hold.i];let want=Math.atan2(tg.x-s.x,tg.z-s.z)-(s.a+Math.PI);want=((want+Math.PI*3)%(Math.PI*2))-Math.PI;wy=Math.max(-1,Math.min(1,-want));wp=watching&&c.hold.mode==="aim"?-.08:.05}
+  let wy=real?0:u.lookY||0,wp=real?0:u.lookP||0;
+  if(!real&&watching||!real&&(c.focus!=null&&c.focus!==i&&st.drawing)){const tg=c.seats[c.focus!=null?c.focus:c.hold.i];let want=Math.atan2(tg.x-s.x,tg.z-s.z)-(s.a+Math.PI);want=((want+Math.PI*3)%(Math.PI*2))-Math.PI;wy=Math.max(-1,Math.min(1,-want));wp=watching&&c.hold.mode==="aim"?-.08:.05}
   if(!busy){u.next=u.next||now+1500+i*900;
-    if(!u.idle&&!watching&&now>u.next){const r=Math.random();
+    if(!real&&!u.idle&&!watching&&now>u.next){const r=Math.random();
       if(r<.3&&u.mug){u.idle="drink";u.ph=0;u.t0=now}
       else if(r<.65){u.idle="look";u.t0=now;u.lookY=(Math.random()-.5)*1.6;u.lookP=(Math.random()-.4)*.4}
       else if(r<.75){u.idle="tap";u.t0=now}else if(r<.88){u.idle="talk";u.t0=now}
@@ -3102,9 +3105,14 @@ function rrIdle(c,i,s,b,now){const T=c.T,u=b.userData,st=rrSt(),hd=u.head;const 
       if(u.ph===3){const k=Math.min(1,(el-1450)/1100);pose(1,1.0+k*.3);rrArmTo(c,i,"L",handle());u.armL.snap=true;wp=-.3-.12*k;wy=0;if(el>2550)u.ph=4}
       if(u.ph===4){const e=1-ease(Math.min(1,(el-2550)/800));pose(e,e*1.3);rrArmTo(c,i,"L",handle());u.armL.snap=true;wp=-.42*e;if(el>3350){u.ph=5;mug.position.copy(u.mugHome);mug.quaternion.copy(yawQ);rrArmTo(c,i,"L",u.restL,true)}}
       if(u.ph===5&&el>4200){u.idle=null;u.next=now+2500+Math.random()*3500}}}
-  {const lk=rlLookFor(i);if(lk){wy=lk.y;wp=lk.p}const L=RR_SEATS[i]&&RR_SEATS[i].uid&&RL.looks[RR_SEATS[i].uid];if(L&&L.drink&&L.drink!==u._dk&&!busy&&u.mug&&!u.idle){u._dk=L.drink;u.idle="drink";u.ph=0;u.t0=now}}
+  {const lk=rlLookFor(i);if(lk){wy=lk.y;wp=lk.p}const L=real&&RL.looks[RR_SEATS[i].uid];
+    /* their drink: played once per sip they take (only fresh ones, and not while the gun is in their hand: their own screen skips it then too) */
+    if(L&&L.drink&&L.drink!==u._dk&&u.mug&&!u.idle){if(busy||(c.hold&&c.hold.i===i)||Date.now()-L.drink>6000)u._dk=L.drink;else{u._dk=L.drink;u.idle="drink";u.ph=0;u.t0=now}}
+    /* drunk: their whole body sways and their head lolls about as much as their own screen wobbles */
+    if(L&&L.drunk&&L.drink){const dk=Math.max(0,Math.min(10,L.drunk-(Date.now()-L.drink)/22000));u.dkSway=dk>1.5?(dk-1.5)/8.5:0}else u.dkSway=0;
+    if(u.dkSway){const t=now/1000+i;wy+=Math.sin(t*.7)*.25*u.dkSway;wp+=Math.sin(t*.5+1)*.15*u.dkSway}}
   if(hd){hd.rotation.y+=(wy-hd.rotation.y)*sm(7);hd.rotation.x+=(wp-hd.rotation.x)*sm(7)}rrNeckAnim(i,u,dt);
-  const tz=u.idle==="shift"&&!busy?u.lean:0;b.rotation.z+=(tz-b.rotation.z)*sm(3);
+  const tz=(u.idle==="shift"&&!busy?u.lean:0)+(u.dkSway?Math.sin(now/1000*.9+i)*.09*u.dkSway:0);b.rotation.z+=(tz-b.rotation.z)*sm(3);
   if(u.idle==="talk"&&now-u.t0>2200){u.idle=null;u.next=now+1500+Math.random()*3000}
   /* facial expression */
   const aimMe=c.hold&&c.hold.i===i&&c.hold.mode==="aim",aimOther=c.hold&&c.hold.i!==i&&c.hold.mode==="aim",relief=now<(u.reliefT||0);
@@ -3397,11 +3405,15 @@ function rrBotTgtPeek(st,i){if(st._bt&&st._bt.i===i)return st._bt.t!=null;st._bt
 function rrBotTgt(st,i){if(st._bt&&st._bt.i===i){const t=st._bt.t;st._bt=null;return t}return rrBotTgt0(st,i)}
 function rrBotTgt0(st,i){if(rrRandN(100)>=12)return null;const o=[0,1,2,3].filter(k=>k!==i&&st.alive[k]);return o.length?o[rrRandN(o.length)]:null}
 
-/* return fire: everyone else pulls a gun and points it at the shooter */
+/* where a real player at a live table is looking right now (their camera ray from their head), or null */
+function rlAimPt(c,k,d){const u=RR_SEATS[k]&&RR_SEATS[k].uid,L=u&&(RL.on||TH.on)?RL.looks[u]:null,lk=rlLookFor(k);if(!L||!lk||!c.seats[k]||!c.seats[k].body)return null;const T=c.T,sp=c.seats[k],p=Math.max(-1.1,Math.min(1.1,Number(L.pitch)||0));
+  const dir=new T.Vector3(-Math.sin(sp.a),0,-Math.cos(sp.a)).applyAxisAngle(new T.Vector3(0,1,0),lk.y).multiplyScalar(Math.cos(p));dir.y=Math.sin(p);const hp=new T.Vector3();sp.body.userData.head.getWorldPosition(hp);return hp.addScaledVector(dir,d||2)}
+/* return fire: everyone else pulls a gun and points it at the shooter (a real player's follows their own aim) */
 function rrXGuns(on,at){const c=S.rr3;if(!c)return;const T=c.T,st=rrSt();(c.xg||[]).forEach(x=>{c.sc.remove(x.g);x.dead=true});c.xg=[];if(!on)return;
   for(let k=1;k<4;k++){if(k===at||!st.alive[k]||!c.seats[k].body)continue;const g=c.gun.clone(true);g.traverse(o=>{if(o.isLight)o.visible=false});c.sc.add(g);const x={g,k};c.xg.push(x);
     const tp=new T.Vector3();if(at===0)c.cam.getWorldPosition(tp);else c.seats[at].body.userData.head.getWorldPosition(tp);rrArmTo(c,k,"R",tp.clone().lerp(c.seats[k].body.userData.head.getWorldPosition(new T.Vector3()),.55));
-    c.anim.push(()=>{if(x.dead)return false;const b=c.seats[k].body;if(b.userData.dead){c.sc.remove(g);return false}const hp=new T.Vector3();b.userData.hand.getWorldPosition(hp);const dir=tp.clone().sub(hp);
+    c.anim.push(now=>{if(x.dead)return false;const b=c.seats[k].body;if(b.userData.dead){c.sc.remove(g);return false}
+      if(now-(x.t||0)>150){x.t=now;const ap=rlAimPt(c,k);if(ap){tp.copy(ap);rrArmTo(c,k,"R",tp.clone().lerp(b.userData.head.getWorldPosition(new T.Vector3()),.55))}}const hp=new T.Vector3();b.userData.hand.getWorldPosition(hp);const dir=tp.clone().sub(hp);
       const m=new T.Matrix4().lookAt(new T.Vector3(),dir.normalize().negate(),new T.Vector3(0,1,0));g.quaternion.setFromRotationMatrix(m);const grip=new T.Vector3(0,-.1,-.12).multiplyScalar(g.scale.x).applyQuaternion(g.quaternion);g.position.copy(hp).sub(grip)})}}
 /* the shooter's pull: returns who died (maybe nobody) */
 async function rrShotA(i,shot,say){const st=rrSt(),c=S.rr3,T=c&&c.T;const N=k=>k===0?"you":esc(RR_SEATS[k].n.split(" ")[0]),NC=k=>k===0?"You":esc(RR_SEATS[k].n.split(" ")[0]);
@@ -3412,7 +3424,7 @@ async function rrShotA(i,shot,say){const st=rrSt(),c=S.rr3,T=c&&c.T;const N=k=>k
   rrBang(shot.tg);st.alive[shot.tg]=0;st.safe=0;haptic&&haptic();say(`<span class="neg"><b>BANG.</b> ${NC(i)} shot ${N(shot.tg)}${shot.tg===0?". You're out.":"."}</span>`);await rrWait(2000);return[shot.tg]}
 /* one return-fire shot at seat i by seat r.i (live: the chamber was loaded) */
 function rrShot1(i,r){const c=S.rr3,T=c&&c.T;{if(c){if(r.i===0){const f=$("#rrFlash");if(f&&r.live){f.className="rrflash";void f.offsetWidth;f.className="rrflash on"}}else if(c.seats[r.i].body){const b=c.seats[r.i].body,hp=new T.Vector3();b.userData.head.getWorldPosition(hp);
-      const tp=new T.Vector3();if(i===0)c.cam.getWorldPosition(tp);else c.seats[i].body.userData.head.getWorldPosition(tp);rrArmTo(c,r.i,"R",tp);if(r.live){const fl=new T.PointLight(0xffb040,4,3);fl.position.copy(hp);c.sc.add(fl);setTimeout(()=>c.sc.remove(fl),120)}}}
+      const tp=new T.Vector3();if(i===0)c.cam.getWorldPosition(tp);else c.seats[i].body.userData.head.getWorldPosition(tp);if(!rlAimPt(c,r.i))rrArmTo(c,r.i,"R",tp);if(r.live){const fl=new T.PointLight(0xffb040,4,3);fl.position.copy(hp);c.sc.add(fl);setTimeout(()=>c.sc.remove(fl),120)}}}
     rrTone(r.live?"bang":"click")}}
 /* the guns go down; down = seat i was already dropped by a shot as it happened */
 const rrNC=k=>k===0?"You":esc(RR_SEATS[k].n.split(" ")[0]),rrNm=k=>k===0?"you":esc(RR_SEATS[k].n.split(" ")[0]);
@@ -3595,7 +3607,9 @@ const rlWant=()=>!!(RL.on||(S.tab==="rr"&&S.rrMode==="live")||(RL.room&&rlMySeat
 const thWant=()=>!!(TH.on||S.tab==="th"||(TH.room&&thMySeat(TH.room)>=0)||(S.me&&S.prefs[S.me]&&S.prefs[S.me].thOpen));
 /* head looks (rrlook) are shared by both tables */
 function lookSync(){const need=!!db&&(RL.subs&&rlWant()||TH.subs&&thWant());
-  if(need&&!RL.lookUn)RL.lookUn=db.collection("rrlook").onSnapshot(s=>{s.docs.forEach(d=>{RL.looks[d.id]=d.data()})},()=>{});
+  if(need&&!RL.lookUn)RL.lookUn=db.collection("rrlook").onSnapshot(s=>{s.docs.forEach(d=>{const o=RL.looks[d.id],n=d.data();RL.looks[d.id]=n;
+    /* someone at my Russian Roulette table doubled down */
+    const dd=n&&n.dd;if(o&&dd&&RL.on&&d.id!==S.me&&dd.g===RL.gid&&(!o.dd||o.dd.at!==dd.at)&&(RL.seats||[]).some(x=>x&&x.uid===d.id))toast(`${nm(d.id)} doubled down: ${Number(dd.x||0).toLocaleString()} BB in.`)})},()=>{});
   else if(!need&&RL.lookUn){try{RL.lookUn()}catch(_){}RL.lookUn=null}}
 function tableSync(){if(!db||!S.ready)return;if(RL.subs&&!rlWant())rlUnsub();if(TH.subs&&!thWant())thUnsub();lookSync()}
 /* ---- the game server (Cloud Functions, functions/ in the repo) ----
@@ -3683,7 +3697,7 @@ function rlSyncStake(){if(S.rrMode!=="live"||!RL.room||RL.room.state==="play")re
 /* heartbeat + head look while on the Russian Roulette tab */
 function rlBeat(force){if(!db||!S.me||(S.tab!=="rr"&&S.tab!=="th"))return;const c=S.rr3,y=c?+c.yaw.toFixed(2):0,p=c?+c.pitch.toFixed(2):0,now=Date.now();
   /* at most 2 a second and only for a visible turn; otherwise a 6s heartbeat (other seats drop a look after 8s) */
-  const L=RL.myLook||{},moved=L.y==null||Math.abs(y-L.y)>=.04||Math.abs(p-L.p)>=.04;if(!force&&(now-(L.at||0)<500||!moved&&now-(L.at||0)<6000))return;RL.myLook={y,p,at:now};db.doc("rrlook/"+S.me).update({yaw:y,pitch:p,at:now}).catch(()=>db.doc("rrlook/"+S.me).set({yaw:y,pitch:p,at:now}).catch(()=>{}))}
+  const L=RL.myLook||{},moved=L.y==null||Math.abs(y-L.y)>=.04||Math.abs(p-L.p)>=.04,gap=document.querySelector(".rraim")?250:500;if(!force&&(now-(L.at||0)<gap||!moved&&now-(L.at||0)<6000))return;RL.myLook={y,p,at:now};db.doc("rrlook/"+S.me).update({yaw:y,pitch:p,at:now}).catch(()=>db.doc("rrlook/"+S.me).set({yaw:y,pitch:p,at:now}).catch(()=>{}))}
 setInterval(()=>{if(S.tab==="rr"&&rlMySeat()>=0)rlBeat()},200);
 /* ---- game ---- */
 function rlOnRoom(){const r=RL.room;mpAck("rr",r);if(S.tab==="rr")rrHud();if(!r)return;
@@ -3829,7 +3843,7 @@ function rlDDShow(){const s=$("#rrStage");if(!s)return;let d=$("#rlDD");if(!d){d
   const bal=Math.floor(ledger().balOf(S.me));d.innerHTML=bal>=RL.stake?`<div class="small">Someone's gone. Double your bet?</div><button type="button" class="btn rrfire" data-rldd="1">Double down · +${RL.stake.toLocaleString()} BB</button><button type="button" class="btn ghost" data-rldd="0">Keep ${RL.stake.toLocaleString()} BB</button><div class="small muted">Win pays 4× your bet: <b class="num pos">${(RL.stake*2*RR_MULT).toLocaleString()} BB</b> if you double</div>`:`<div class="small muted">Not enough BB to double down.</div>`;d.hidden=false;clearTimeout(rlDDShow.t);rlDDShow.t=setTimeout(rlDDHide,bal>=RL.stake?12000:2500)}
 function rlDDHide(){const d=$("#rlDD");if(d)d.hidden=true}
 document.addEventListener("click",async e=>{const b=e.target.closest("[data-rldd]");if(!b)return;rlDDHide();if(b.dataset.rldd!=="1"||!RL.on||RL.dead||S._rlDD)return;if(Math.floor(ledger().balOf(S.me))<RL.stake)return toast("Not enough BiggieBucks.");
-  S._rlDD=true;setTimeout(()=>S._rlDD=false,3000);const p=S.prefs[S.me]||{};await rrSave({rrNet:(Number(p.rrNet)||0)-RL.stake});RL.stake*=2;rrTone("win");const st=rrSt();st.paid=RL.stake;st.log=`<b>Doubled.</b> You're in for <b class="num">${RL.stake.toLocaleString()} BB</b>. Win pays <b class="num pos">${(RL.stake*RR_MULT).toLocaleString()} BB</b>.`;rrHud()});
+  S._rlDD=true;setTimeout(()=>S._rlDD=false,3000);const p=S.prefs[S.me]||{};await rrSave({rrNet:(Number(p.rrNet)||0)-RL.stake});RL.stake*=2;if(db&&S.me)db.doc("rrlook/"+S.me).update({dd:{g:RL.gid,x:RL.stake,at:Date.now()}}).catch(()=>{});rrTone("win");const st=rrSt();st.paid=RL.stake;st.log=`<b>Doubled.</b> You're in for <b class="num">${RL.stake.toLocaleString()} BB</b>. Win pays <b class="num pos">${(RL.stake*RR_MULT).toLocaleString()} BB</b>.`;rrHud()});
 function rlSpecBanner(on){let b=$("#rlSpec");if(!b&&on){const s=$("#rrStage");if(!s)return;b=document.createElement("div");b.id="rlSpec";b.className="rlspec";b.innerHTML="👻 You're out · spectating";s.appendChild(b)}if(b)b.hidden=!on}
 async function rlEnd(wl){const st=rrSt(),c=S.rr3,wg=rlG(wl);if(RL.host===S.me)rlEmit("end",{g:wg});
   const pay=Math.floor(RL.stake*RR_MULT);
@@ -4167,7 +4181,7 @@ async function thGame(old){const H=JSON.parse(JSON.stringify(TH.room.ps));if(H.n
   await new Promise(r=>setTimeout(r,4000));thWrite({state:"lobby",at:Date.now(),ended:H.gid})}
 /* ---- client side ---- */
 function thBecome(g){TH.spec=false;TH.my=g;TH.myOid=thOid(TH.ps,g);TH.pendSit=null;TH.outShown=false;TH.hole=null;thHoleSub();thApplySeats();if(S.tab==="th"){rrStop();TH.m=null;const v=$("#view");v.innerHTML=viewTH();thMount()}}
-function thShow(ps,evs){const prev=TH.ps;TH.ps=ps;if(TH.spec&&TH.pendSit&&thCashFor(TH.room,{gid:TH.gid,id:TH.pendSit.id})){TH.pendSit=null;toast("That chair got taken first. Your buy-in was refunded.")}if(TH.spec&&TH.pendSit){const g=ps.pl.findIndex(p=>p&&p.uid===S.me&&p.oid===TH.pendSit.id);if(g>=0&&!ps.out[g]){thBecome(g);return}}if(!TH.recv[ps.seq])TH.recv[ps.seq]=Date.now();if(ps.street==="end")TH.ended=true;
+function thShow(ps,evs){const prev=TH.ps;TH.ps=ps;if(TH.on&&prev&&ps&&ps.pl.map(p=>p&&p.uid||"").join()!==prev.pl.map(p=>p&&p.uid||"").join())thApplySeats();if(TH.spec&&TH.pendSit&&thCashFor(TH.room,{gid:TH.gid,id:TH.pendSit.id})){TH.pendSit=null;toast("That chair got taken first. Your buy-in was refunded.")}if(TH.spec&&TH.pendSit){const g=ps.pl.findIndex(p=>p&&p.uid===S.me&&p.oid===TH.pendSit.id);if(g>=0&&!ps.out[g]){thBecome(g);return}}if(!TH.recv[ps.seq])TH.recv[ps.seq]=Date.now();if(ps.street==="end")TH.ended=true;
   if(prev&&prev.hand!==ps.hand){TH.rzOpen=false;TH.sent=-1;if(TH.up)thHold(false)}if(TH.up&&(ps.fo[TH.my]||!ps.inh[TH.my]))thHold(false);
   (evs||[]).forEach(e=>{if(e.t==="deal"||e.t==="board")rrTone("card");else if(e.t==="win"||e.t==="end")rrTone(e.t==="end"?"win":"click");else if(e.t==="act"&&e.la!==TH.my)rrTone("click");if(e.t==="act")thReach(e.la,ps)});
   if(ps.toAct===TH.my&&!TH.spec&&prev&&prev.toAct!==TH.my&&typeof haptic==="function")haptic();
@@ -4236,7 +4250,7 @@ function thFrame(c,ps){const m=TH.m,T=c.T,now=performance.now();if(!m||m.ctx!==c
         tp=pv.add(off);tp.y=1.16-lu*.08-dk*.012+Math.sin(t*1.9+i)*w*.4;
         const rx=Math.max(-2.05,Math.min(.25,-.35-lu*1.15+Math.max(0,-pt)*.25-dk*.08+Math.sin(t*.5)*.05+Math.sin(t*1.1+i)*w*1.6));
         tq=new T.Quaternion().setFromEuler(new T.Euler(rx,a+ys,(i?-.12:.12)+Math.sin(t*.8)*.05+Math.sin(t*1.7)*w*2,"YXZ"));
-        if(c.seats[l]&&c.seats[l].body)rrArmTo(c,l,i?"R":"L",tp.clone().add(new T.Vector3(Math.cos(a+ys),0,-Math.sin(a+ys)).multiplyScalar(sd*.6)))}
+        if(c.seats[l]&&c.seats[l].body&&(i||c.seats[l].body.userData.idle!=="drink"))rrArmTo(c,l,i?"R":"L",tp.clone().add(new T.Vector3(Math.cos(a+ys),0,-Math.sin(a+ys)).multiplyScalar(sd*.6)))}
       else{tp=cd.userData.home;tq=cd.userData.homeQ}
       cd.position.lerp(tp,.2);cd.quaternion.slerp(tq,.2)});
     if(l>0&&c.seats[l]&&c.seats[l].body&&m.upS[g]!==(up?1:0)){m.upS[g]=up?1:0;const a=RR_ANG[l];if(up){const q=new T.Vector3(Math.sin(a)*1.3,1.12,Math.cos(a)*1.3);rrArmTo(c,l,"R",q.clone().add(new T.Vector3(Math.cos(a)*.07,0,-Math.sin(a)*.07)));rrArmTo(c,l,"L",q.clone().add(new T.Vector3(-Math.cos(a)*.07,0,Math.sin(a)*.07)))}else rrArmRest(c,l)}
@@ -5508,7 +5522,7 @@ function render(){nflLinesWatch();lvTick();setTimeout(onlRender,0);setTimeout(au
   else if(S.tab==="packs"){mountChat(false);S._bjSig=null;const x=viewPacks();if(v._pk!==x||!v.querySelector(".pkwrap")){v._pk=x;v.innerHTML=x}}
   else if(S.tab==="rr"&&gwWho("rr")!==S.me){mountChat(false);S._bjSig=null;bjReactScan();const who=gwWho("rr");if(!S.rrSpec||S.rrSpec.who!==who||!v.querySelector(".rrwrap.spec")){rrSpecStart(who);v.innerHTML=viewRR(true);rrMount()}else{rrSpecFeed();rrHud()}rrMiniChat()}
   else if(S.tab==="th"){mountChat(false);S._bjSig=null;if(S.rrSpec){S.rrSpec=null;rrStop()}if(!v.querySelector(".thwrap")){rrStop();v.innerHTML=viewTH();thMount()}else thHud()}
-  else if(S.tab==="rr"){mountChat(false);S._bjSig=null;if(S.rrSpec){S.rrSpec=null;rrStop();v.innerHTML=""}gwOwn("rr");if(!v.querySelector(".rrwrap")){S._rrLB=null;v.innerHTML=viewRR();rrMount()}else rrHud()}
+  else if(S.tab==="rr"){mountChat(false);S._bjSig=null;if(S.rrSpec){S.rrSpec=null;rrStop();v.innerHTML=""}gwOwn("rr");if(!v.querySelector(".rrwrap:not(.thwrap):not(.spec)")){S._rrLB=null;rrStop();v.innerHTML=viewRR();rrMount()}else rrHud()}
   else if(S.tab==="hilo"&&gwWho("hilo")!==S.me){mountChat(false);S._bjSig=null;gwPaint(v,"hilo")}
   else if(S.tab==="hilo"){mountChat(false);S._bjSig=null;if(!v.querySelector(".hlwrap")){S._hlLB=null;v.innerHTML=viewHilo()}hlRefresh();gwOwn("hilo")}
   else if(S.tab==="craps"&&gwWho("craps")!==S.me){mountChat(false);S._bjSig=null;gwPaint(v,"craps")}
