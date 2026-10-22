@@ -120,7 +120,8 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   Rules: NFL bets can only be created before `nfl/{wk}.g[id].kick`, and only admins can change them afterwards.
 - **Casino**: Blackjack (`bj*`; 2-deck shoes, streak bonus = `bjStreakMult(n)` × the hand's bet (3 in a row 1×, 4 2×, then +2× per win: 5 4×, 6 6×, 7 8× …, no cap; Shrex 2×),
   0.5 s cooldown between deals), Roulette (`rl*` — note `rl` prefix is ALSO used for live Russian Roulette lobby code),
-  Craps (`cr*`), High-Low (`hl*`), Flappy Cheese (25 BB/pipe, 10k/day cap; Vector card gives one 10× uncapped run/day),
+  Craps (`cr*`), High-Low (`hl*`), Flappy Cheese = Cheese Farm (`fp*`: Press `FP_PRESS` 1/10/30/100/250/500 BB per pipe, Silo `FP_SILO` 5k…500k daily cap; levels
+  `prefs.fpPress/fpSilo`, upgrade spend `prefs.farmSpent` in the ledger; Vector card gives one 10× uncapped run/day),
   Revenge rat hunt (`revengeStart`), mining (25 BB/min while the app is on screen).
 - **Russian Roulette**: solo vs bots and live 4-seat animal bar (three.js scene, `rr*`/`rl*`), drinking/blackout,
   shoot-someone + return fire, winner gets 4× final bet.
@@ -159,7 +160,7 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
     Sports bets: `prefs.tiSb` = won bet ids seen since the curse started (`tiSbCheck`, uses `ledger().wins`). Not winnings: transfers,
     loans, market/offer sales, quick-sells. No dividend, no full-set credit, can't be quick-sold (`qsVal` 0); can be sold/traded;
     "Remove curse" (`tiUncurse`) costs 5,000 (`prefs.curseFee`, in the ledger) and burns one copy (back into the packs).
-  - `dean` **Craps Dean Strow** (Elite): craps payouts × `crDeanF(bet, n)` so every bet type's EV is +3% (`CR_EDGE`) (math in the comment
+  - `dean` **Craps Dean Strow** (Elite): craps payouts × `crDeanF(bet, n)` so every bet type's EV is +2.5% (`CR_EDGE`; winnings round up) (math in the comment
     above `crDeanF`; `crResolve(..., dean)`).
   - `hof` **Heart of Finance** (Elite): Bank → "Borrow 10,000 BB" (`hofTake`): a normal `loans` doc with `lender:"house"`, `hof:true`,
     5%/day, 1 payment of 10,500 after 24 h, gradual mode (late, default 7 days after due); auto-collected by the borrower's page like any
