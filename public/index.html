@@ -182,8 +182,8 @@ input,select,textarea{font-size:16px!important}
   .chathead{padding:8px 10px 8px 14px}
   .chatform{padding:8px}
 }
-html.chatlock,html.chatlock body{overflow:hidden;overscroll-behavior:none}
-html.chatlock body{position:fixed;left:0;right:0;width:100%}
+html.pagelock,html.pagelock body{overflow:hidden;overscroll-behavior:none}
+html.pagelock body{position:fixed;left:0;right:0;width:100%}
 /* Full-page chat tab: pinned to the visible screen, shrinking above the keyboard instead of letting the page slide */
 html:has(body.chatmode),body.chatmode{overflow:hidden;height:100%;overscroll-behavior:none}
 body.chatmode{position:fixed;left:0;right:0;top:0;width:100%}
@@ -286,11 +286,13 @@ td.r,th.r{text-align:right}
 .bkwrap{display:flex;flex-direction:column;gap:14px}.bkhead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}.bkhead h2{margin:0}
 .bkform{gap:8px}.bkform label.grow{flex:1 1 160px}.bkform input.n.s{width:64px}.bkpair{display:flex;gap:4px}.bkform select{max-width:100%}
 .bktx{display:flex;flex-direction:column;gap:4px}.bktx>div{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:baseline;font-size:14px;border-top:1px solid var(--line);padding-top:4px}.bktx>div>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bktx>div.pos>span:not(:last-child){color:#5cff72}.bktx>div.neg>span:not(:last-child){color:var(--loss)}.bktx .bknote{opacity:.75}
 .bkstats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.bkstats>div{background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:8px;padding:6px 8px;display:flex;flex-direction:column}.bkstats span{font-size:11px;color:var(--muted)}.bkstats b{font-size:16px}
 @media (max-width:480px){.bkstats{grid-template-columns:repeat(2,1fr)}}
 .bkcoll{display:flex;flex-wrap:wrap;gap:6px}.bkcoll>span{font-size:12px;padding:3px 8px;border-radius:99px;border:1px solid var(--c);color:var(--c);cursor:pointer;display:inline-flex;gap:4px;align-items:center}.bkcoll button{background:none;border:0;color:inherit;cursor:pointer;padding:0 2px}
 .bkrow{border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:6px}.bkrh{display:flex;gap:8px;align-items:center}.bkchip{font-size:11px;font-family:var(--mono);padding:2px 8px;border-radius:99px;border:1px solid var(--muted);color:var(--muted);white-space:nowrap}
-.bkchip.late{border-color:#ff9f1a;color:#ff9f1a}.bklate{color:#ffb347}.bkcoll>span.seized{border-style:dashed;opacity:.75}
+.bkchip.late{border-color:#ff9f1a;color:#ff9f1a}.bklate{color:#ffb347}
+.bkls b{font-size:14px}.bkpay{align-items:center;gap:6px}.bkpay input{width:110px}.bkcoll>span.seized{border-style:dashed;opacity:.75}
 .bkcl{display:flex;flex-direction:column;gap:4px}.bkcl>div{display:flex;align-items:center;gap:6px;border:1px solid var(--c);border-radius:8px;padding:3px 6px;font-size:13px}.bkcl span{flex:1;color:var(--c);min-width:0}.bkcl button{background:none;border:1px solid var(--line);border-radius:5px;color:var(--ink);cursor:pointer;width:28px;height:26px}.bkcl button:disabled{opacity:.3}
 .onlyb{font-size:12px;color:#ffb347;font-weight:700}.whop{display:flex;flex-wrap:wrap;gap:6px}label.whoc{flex-direction:row;align-items:center;gap:5px;border:1px solid var(--line);border-radius:99px;padding:4px 10px;font-size:13px;color:var(--ink);cursor:pointer}label.whoc:has(input:checked){border-color:var(--gold);color:var(--gold)}.bkpriv{opacity:.55}
 .bkchip.edited{border-style:dashed;margin-right:4px}.bkediting{border-color:var(--gold)}
@@ -1150,7 +1152,8 @@ nav:not(.side){display:none!important}
 .sbar{position:fixed;inset:0;z-index:30;display:flex}
 .sbar[hidden]{display:none!important}
 .sbar .shade{flex:1;background:rgba(0,0,0,.6)}
-.side{order:-1;width:min(300px,82vw);background:#0b0b0b;border-right:1px solid #3a3420;padding:calc(22px + env(safe-area-inset-top,0px)) 16px calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:4px;overflow-y:auto;animation:sideIn .2s ease-out}
+.sbar{overscroll-behavior:none;touch-action:pan-y}
+.side{order:-1;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;max-height:100%;width:min(300px,82vw);background:#0b0b0b;border-right:1px solid #3a3420;padding:calc(22px + env(safe-area-inset-top,0px)) 16px calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:4px;overflow-y:auto;animation:sideIn .2s ease-out}
 @keyframes sideIn{from{transform:translateX(-100%)}to{transform:none}}
 @media (prefers-reduced-motion:reduce){.side{animation:none}}
 .side .who{font:inherit;color:var(--ink);background:none;border:0;border-bottom:1px solid #2e2816;display:flex;gap:12px;align-items:center;padding:0 4px 16px;margin-bottom:8px;text-align:left;cursor:pointer}
@@ -1463,6 +1466,26 @@ html.lite :is(.pmo-card.charge,.pmo-card.spinL,.pmo-card.spin,.pmo-pack) :is(.pm
 }
 @keyframes pmoFlipCalm{to{transform:rotateY(180deg)}}
 .pkov{align-items:flex-start;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:max(20px,env(safe-area-inset-top)) 16px max(48px,env(safe-area-inset-bottom))}.pkov>.pkview{margin:auto 0}.pkview .cflip{width:min(70vw,250px,calc(58vh*5/7))}
+/* anything opened from the chat must sit above it (chat panel 25/45, chat banner 90) */
+.overlay{z-index:50}#memberView{z-index:91}.zoomwrap{z-index:93!important}.pkov{z-index:95}
+/* pack-open overlays: stage centered in the visible area between the safe areas; big art shrinks on short screens instead of overflowing */
+.pkov:has(>.pkstage),.pkov.pmo{padding:max(24px,calc(env(safe-area-inset-top,0px) + 16px)) 16px max(32px,calc(env(safe-area-inset-bottom,0px) + 20px))}
+.pkov>.pkstage{margin:auto 0}
+.mast .ebrow{display:flex!important;align-items:center;gap:8px;overflow:visible!important}.mast .ebrow .ebt{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.onlpill{margin-left:auto;flex:none;display:inline-flex;align-items:center;gap:5px;font:700 11px/1 var(--mono,inherit);letter-spacing:.04em;text-transform:none;color:#d8ffe3;background:#0d2416;border:1px solid #2c6b3f;border-radius:999px;padding:3px 8px;cursor:pointer;white-space:nowrap}
+.onlpill i{width:7px;height:7px;border-radius:50%;background:#3ecf6e;box-shadow:0 0 6px #3ecf6e}
+.onlpill[hidden]{display:none}
+@media (max-width:420px){.onlpill .onlw{display:none}}
+.onlpop{position:fixed;z-index:97;top:calc(env(safe-area-inset-top,0px) + 64px);right:max(12px,env(safe-area-inset-right,0px));width:min(300px,calc(100vw - 24px));max-height:min(70vh,calc(100dvh - env(safe-area-inset-top,0px) - 90px));overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;background:#0b0b0b;border:1px solid #3a3420;border-radius:14px;box-shadow:0 12px 40px #000c;padding:10px;display:flex;flex-direction:column;gap:2px}
+.onlhd{display:flex;align-items:center;justify-content:space-between;padding:2px 4px 8px}.onlx{background:none;border:0;color:var(--muted);font-size:16px;cursor:pointer;padding:4px 6px}
+.onlsub{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:10px 4px 4px;border-top:1px solid #2e2816;margin-top:6px}
+.onlrow{display:flex;align-items:center;gap:10px;background:none;border:0;color:var(--ink);font:inherit;text-align:left;padding:6px 4px;border-radius:8px;cursor:pointer}.onlrow:hover{background:#ffffff0d}
+.onlrow>span{display:flex;flex-direction:column;min-width:0}.onlrow b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.onlrow .pic{width:34px;height:34px;flex:none}
+.pkstage .packbig{width:min(58vw,240px,calc((100vh - 140px)*3/4));width:min(58vw,240px,calc((100dvh - 140px)*3/4))}
+.pkstage .flip{width:min(30vw,130px,calc((100vh - 220px)/2*5/7));width:min(30vw,130px,calc((100dvh - 220px)/2*5/7))}
+.pmo .pmo-stage{min-height:0;margin:auto 0}
+.pmo-pack{width:min(56vw,230px,calc((100vh - 280px)*3/4));width:min(56vw,230px,calc((100dvh - 280px)*3/4))}
+.pmo-card{width:min(60vw,250px,calc((100vh - 280px)*5/7));width:min(60vw,250px,calc((100dvh - 280px)*5/7))}
 </style>
 </head>
 <body><svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="pmFireF" x="-30%" y="-40%" width="160%" height="170%"><feTurbulence type="fractalNoise" baseFrequency="0.018 0.06" numOctaves="3" seed="3" result="n"><animate attributeName="baseFrequency" dur="2.4s" values="0.018 0.06;0.022 0.075;0.018 0.06" repeatCount="indefinite"/><animate attributeName="seed" dur="0.9s" values="3;4;5;6;7;3" calcMode="discrete" repeatCount="indefinite"/></feTurbulence><feDisplacementMap in="SourceGraphic" in2="n" scale="46" xChannelSelector="R" yChannelSelector="G"/></filter><filter id="pmFireF2" x="-30%" y="-40%" width="160%" height="170%"><feTurbulence type="turbulence" baseFrequency="0.012 0.045" numOctaves="2" seed="9" result="n"><animate attributeName="baseFrequency" dur="3.1s" values="0.012 0.045;0.016 0.06;0.012 0.045" repeatCount="indefinite"/></feTurbulence><feDisplacementMap in="SourceGraphic" in2="n" scale="60" xChannelSelector="R" yChannelSelector="G"/></filter></svg>
@@ -1482,7 +1505,7 @@ setTimeout(function(){var g=document.getElementById("sbGate");if(g&&!g.hidden&&g
 
   <div class="brand">
     <figure class="commish"><img src="data:image/webp;base64,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" alt="League commissioner"><figcaption>Commish</figcaption></figure>
-    <div style="min-width:0"><div class="eyebrow">BiggieBucks only</div><h1 id="leagueName">BiggieCheese's Sportsbook</h1></div>
+    <div style="min-width:0"><div class="eyebrow ebrow"><span class="ebt">BiggieBucks only</span><button type="button" class="onlpill" id="onlPill" aria-haspopup="dialog" aria-expanded="false" hidden></button></div><h1 id="leagueName">BiggieCheese's Sportsbook</h1></div>
   </div>
   <button type="button" class="me" id="meBtn" data-act="openProfile" aria-label="Your profile"><span class="dot" id="meAv"></span><span class="mewho"><span id="meName">Connecting…</span><span class="mebalrow"><span id="meBal" class="mebal"></span><span id="meSub" class="mesub"></span></span></span><span class="mecaret" aria-hidden="true">▾</span></button>
 </div></header>
@@ -4582,6 +4605,20 @@ function bkCalc(t){if(!t)return null;const P=Number(t.P),rate=Number(t.rate),n=N
 const bkPaidKs=l=>new Set((l.payments||[]).map(p=>p.k));
 function bkNextK(l){const s=bkPaidKs(l);let k=0;while(s.has(k))k++;return k}
 const bkDue=(l,k)=>Number(l.takenAt)+(k+1)*Number(l.sched.payMs);
+/* money model: the schedule (amts[k] due at bkDue(l,k)) sets what must be paid BY each time; payments are tracked by total.
+   Each payment entry has a unique k (numeric = legacy installment, strings for chunks/auto-collections) and counts once. */
+function bkPaidTot(l){const seen=new Set();let t=0;for(const p of l.payments||[]){if(seen.has(p.k))continue;seen.add(p.k);t+=Math.floor(Number(p.amt))||0}return t}
+const bkAmts=l=>(l.sched&&Array.isArray(l.sched.amts)?l.sched.amts:Array.isArray(l.amts)?l.amts:(bkCalc(l)||{}).amts||[]).map(a=>Number(a)||0);
+const bkTotalOf=l=>bkAmts(l).reduce((a,b)=>a+b,0);
+function bkCumDue(l,now){const a=bkAmts(l);let t=0;for(let k=0;k<a.length;k++)if(now>=bkDue(l,k))t+=a[k];return t}
+/* owner's rule: paying off early costs principal + one installment, never more than the full schedule; payments already made count toward it */
+const bkTarget=l=>{const a=bkAmts(l);return Math.min((Math.floor(Number(l.P))||0)+(a[0]||0),bkTotalOf(l))};
+function bkPayoffNow(l,now){const paid=bkPaidTot(l);return Math.max(0,bkTarget(l)-paid,bkCumDue(l,now)-paid)}
+const bkOverAmt=(l,now)=>Math.max(0,bkCumDue(l,now)-bkPaidTot(l));
+const bkLastDue=l=>bkDue(l,bkAmts(l).length-1);
+/* next due time at which money is still owed (Infinity when chunks already cover the whole schedule) */
+function bkNextDue(l){const a=bkAmts(l),paid=bkPaidTot(l);let c=0;for(let k=0;k<a.length;k++){c+=a[k];if(c>paid)return bkDue(l,k)}return Infinity}
+const bkKey=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 const bkCardsTxt=cids=>(cids||[]).map(g=>{const c=cardById(g);return c?c.name:"a card"}).join(", ");
 const bkChat=text=>{try{db.collection("chat").add({type:"bet",kind:"bank",uid:S.me,poster:S.me,at:Date.now(),text})}catch(_){}};
 async function bkGive(cids){if(!cids||!cids.length)return;const q=S.prefs[S.me];const ch={};cids.forEach(g=>ch[g]=(ch[g]!=null?ch[g]:cardCount(g))+1);q.cards={...(q.cards||{}),...ch};await db.doc("prefs/"+S.me).update({cards:ch})}
@@ -4623,7 +4660,7 @@ function bkTake(id){const l=(S.loans||[]).find(x=>x.id===id);if(!l||l.status!=="
   const items=l.coll||[],L={want:{items}};let pick=items.length?mkCover(L):[];if(items.length&&!pick)return toast("You don't have the collateral they ask for.");
   const own=Object.keys(CSETS).flatMap(k=>cardsCat(k)).filter(x=>cardCount(x.id)>0).sort((a,b)=>b.r-a.r);const o=document.createElement("div");o.className="pkov";
   const draw=()=>{o.innerHTML=`<div class="pkview"><h3>Borrow ${c.P.toLocaleString()} BB from ${esc(nm(l.lender))}</h3>
-    <p class="small muted">${c.n} payment${c.n>1?"s":""} of ~${c.amts[0].toLocaleString()} BB every ${esc(bkUT(l.payN,l.payU))}, ${c.total.toLocaleString()} BB total. Payments come out of your balance automatically. ${items.length?`Collateral is locked until the loan ends. ${esc(bkSeizeTxt(l))}, in the order listed.`:(bkGradual(l)?"Unsecured. A missed payment makes you late; catch up within "+esc(bkUT(l.seizeN,l.seizeU))+" of the final due date or you default.":"Unsecured. A missed payment is a default.")}</p>
+    <p class="small muted">${c.n} payment${c.n>1?"s":""} of ~${c.amts[0].toLocaleString()} BB every ${esc(bkUT(l.payN,l.payU))}, ${c.total.toLocaleString()} BB total. Payments come out of your balance automatically on each payment date (if you're short, whatever you have is taken and the loan goes late); you can also pay any amount in between. Early payoff: ${bkTarget(c).toLocaleString()} BB (principal + one payment, less what you've paid). ${items.length?`Collateral is locked until the loan ends. ${esc(bkSeizeTxt(l))}, in the order listed.`:(bkGradual(l)?"Unsecured. A missed payment makes you late; catch up within "+esc(bkUT(l.seizeN,l.seizeU))+" of the final payment date or you default.":"Unsecured. A missed payment is a default.")}</p>
     ${items.length?items.map((w,i)=>`<label class="mktrow"><span class="small">${esc(mkItemTxt(w))}</span><select data-ti="${i}">${own.filter(x=>mkFits(w,x)).map(x=>`<option value="${x.id}" ${pick[i]===x.id?"selected":""}>${esc(CR[x.r].n)} · ${esc(x.name)} (×${cardCount(x.id)})</option>`).join("")}</select></label>`).join("")+`<div class="cgrid tradepick">${pick.map(g=>cardHtml(cardById(g),{small:true})).join("")}</div>`:`<p class="small">No collateral needed.</p>`}
     <button type="button" class="btn" data-tgo>Take loan${pick.length?` · put up ${pick.length} card${pick.length>1?"s":""}`:""}</button><button type="button" class="btn ghost" data-pkclose>Cancel</button></div>`};
   draw();document.body.appendChild(o);
@@ -4643,14 +4680,28 @@ async function bkDoTake(l,gives,ed){if(S._bkBusy)return;gives=[].concat(gives||[
     escrowed=false;toast(`You borrowed ${c.P.toLocaleString()} BB.`);bkChat(`${nm(S.me)} took ${nm(D.lender)}'s ${c.P.toLocaleString()} BB loan 🏦${gives.length?` · collateral: ${bkCardsTxt(gives)}`:""}`)}
   catch(e){if(escrowed)try{await bkGive(gives)}catch(_){}toast("Couldn't take the loan. Try again.")}finally{S._bkBusy=false;render()}}
 
-async function bkPayoff(id){if(S._bkBusy)return;const l0=(S.loans||[]).find(x=>x.id===id);if(!l0||l0.borrower!==S.me||!["active","late"].includes(l0.status))return;S._bkBusy=true;
+/* borrower pays any chunk (or the whole payoff). amt: number, or {payoff:expectedPrice} */
+async function bkPay(id,arg){if(S._bkBusy)return;const l0=(S.loans||[]).find(x=>x.id===id);if(!l0||l0.borrower!==S.me||!["active","late"].includes(l0.status))return;
+  const isOff=typeof arg==="object";let amt=isOff?Number(arg.payoff):Number(arg);
+  if(!Number.isInteger(amt)||amt<1)return toast("Enter a whole number of BB (1 or more).");
+  S._bkBusy=true;
   try{const s=await db.doc("loans/"+id).get();if(!s.exists)return;const l={id,...s.data()};if(!["active","late"].includes(l.status)||l.borrower!==S.me)return toast("That loan isn't active anymore.");
-    const paid=bkPaidKs(l),left=l.sched.amts.map((a,k)=>({k,amt:a})).filter(p=>!paid.has(p.k)),sum=left.reduce((a,p)=>a+p.amt,0);
-    if(Math.floor(ledger().balOf(S.me))<sum)return toast(`You need ${sum.toLocaleString()} BB to pay it off.`);
-    const n0=(l.payments||[]).length,s2=await db.doc("loans/"+id).get();if(!s2.exists||(s2.data().payments||[]).length!==n0||s2.data().status!==l.status)return toast("A payment just went through. Try again.");
-    const at=Date.now();await db.doc("loans/"+id).update({payments:[...(l.payments||[]),...left.map(p=>({...p,at,early:true}))],status:"repaid",repaidAt:at,seized:[]});
-    toast("Loan paid off. Your collateral is coming back.");bkChat(`${nm(S.me)} paid off ${nm(l.lender)}'s loan early ✅`)}
-  catch(e){toast("Couldn't pay it off. Try again.")}finally{S._bkBusy=false;render();setTimeout(bkProcess,300)}}
+    const now=Date.now(),po=bkPayoffNow(l,now);
+    if(isOff){if(po!==amt)return toast(`The payoff is now ${po.toLocaleString()} BB. Check it and try again.`)}
+    else{if(now>=bkLastDue(l)&&amt<po)return toast("The loan term is over. Pay the full amount owed.");if(amt>po)return toast(`You only owe ${po.toLocaleString()} BB. Pay that to settle it.`)}
+    const bal=Math.floor(ledger().balOf(S.me));if(bal<amt)return toast(isOff?`You need ${amt.toLocaleString()} BB to pay it off.`:"Not enough BiggieBucks.");
+    const key=bkKey("x"),pays=[...(l.payments||[]),{k:key,amt,at:now,...(isOff?{early:true}:{})}];
+    const up=bkStep({...l,payments:pays},now,bal-amt)||{};up.payments=up.payments||pays;
+    const sig=JSON.stringify(l.payments||[]),s2=await db.doc("loans/"+id).get();
+    if(!s2.exists||JSON.stringify(s2.data().payments||[])!==sig||s2.data().status!==l.status||s2.data().tryK!==l.tryK)return toast("A payment just went through. Try again.");
+    await db.doc("loans/"+id).update(up);await bkWait(700);
+    const s3=await db.doc("loans/"+id).get();if(!s3.exists||!(s3.data().payments||[]).some(p=>p.k===key))return toast("That payment didn't go through. Try again.");
+    const E=s3.data();
+    if(E.status==="repaid"){toast(`Loan paid off.${(l.collateral||[]).length?" Your collateral is coming back.":""}`);bkChat(`${nm(S.me)} paid off ${nm(l.lender)}'s loan ${now<bkLastDue(l)?"early ":""}✅`)}
+    else if(l.status==="late"&&E.status==="active")toast(`Paid ${amt.toLocaleString()} BB. You're caught up${(l.seized||[]).length?" and your seized cards are back":""}.`);
+    else toast(`Paid ${amt.toLocaleString()} BB toward the loan.`);
+    if(S.bkPart)delete S.bkPart[id]}
+  catch(e){toast("Couldn't make the payment. Try again.")}finally{S._bkBusy=false;render();setTimeout(bkProcess,300)}}
 
 /* automatic installments + collateral seizure.
    The borrower's page acts on time; the lender's page steps in once an event is 20s overdue.
@@ -4660,36 +4711,42 @@ async function bkPayoff(id){if(S._bkBusy)return;const l0=(S.loans||[]).find(x=>x
    Once everything is seized and they're still late at the next seizure tick (or the final due date passed), the loan defaults. */
 const bkSeizeMs=l=>(BK_U[l.seizeU]||0)*(Number(l.seizeN)||0);
 const bkGradual=l=>l.seizeMode==="gradual"&&bkSeizeMs(l)>0;
-function bkOverdue(l,now){const paid=bkPaidKs(l),N=l.sched.amts.length,out=[];for(let k=0;k<N;k++)if(!paid.has(k)&&now>=bkDue(l,k))out.push({k,amt:Number(l.sched.amts[k])||0});return out}
 /* when the next late-state event (seizure / default) happens */
-function bkNextEvent(l){const N=l.sched.amts.length,last=bkDue(l,N-1),col=(l.collateral||[]).length,sz=(l.seized||[]).length,ms=bkSeizeMs(l),base=Number(l.lastSeizeAt||l.lateSince);
+function bkNextEvent(l){const last=bkLastDue(l),col=(l.collateral||[]).length,sz=(l.seized||[]).length,ms=bkSeizeMs(l),base=Number(l.lastSeizeAt||l.lateSince);
   if(!col)return last+ms;if(sz>=col)return Math.min(base+ms,Math.max(last,base));return base+ms}
-function bkStep(l,now){/* pure: returns an update object, or null when nothing to do */
-  const N=l.sched.amts.length,bal0=Math.floor(ledger().balOf(l.borrower));const up={},pays=[...(l.payments||[])];
-  const fin=()=>{if(new Set(pays.map(p=>p.k)).size>=N){up.status="repaid";up.repaidAt=now;up.seized=[]}};
-  if(l.status==="active"){let bal=bal0;const add=[];let miss=false;for(const p of bkOverdue(l,now)){if(bal>=p.amt){bal-=p.amt;add.push({k:p.k,amt:p.amt,at:now})}else{miss=true;break}}
-    if(!add.length&&!miss)return null;pays.push(...add);up.payments=pays;fin();if(up.status)return up;
-    if(miss){if(!bkGradual(l)){up.status="defaulted";up.defaultedAt=now}else{up.status="late";up.lateSince=now;up.lastSeizeAt=now;up.seized=(l.collateral||[]).slice(0,1)}}
+/* auto-collection happens ONLY at scheduled due times, one attempt per due time (tryK = last due index attempted).
+   Between due times nothing is pulled; the borrower can pay chunks / pay off by hand, which can cure lateness. */
+const bkLatestK=(l,now)=>{const N=bkAmts(l).length;let j=-1;for(let k=0;k<N;k++)if(now>=bkDue(l,k))j=k;return j};
+const bkTryK=(l,now)=>l.tryK!=null?Number(l.tryK):(l.status==="late"?bkLatestK(l,now):-1);
+/* next due time that will trigger a collection attempt */
+function bkNextTry(l,now){const a=bkAmts(l),paid=bkPaidTot(l),t=bkTryK(l,now);let c=0;for(let k=0;k<a.length;k++){c+=a[k];if(k>t&&c>paid)return bkDue(l,k)}return Infinity}
+function bkStep(l,now,balOverride){/* pure: returns an update object, or null when nothing to do */
+  const bal0=balOverride!=null?balOverride:Math.floor(ledger().balOf(l.borrower));const up={},pays=[...(l.payments||[])];
+  const paidOf=()=>bkPaidTot({payments:pays}),cd=bkCumDue(l,now),tgt=bkTarget(l);
+  const fin=()=>{const pd=paidOf();if(pd>=tgt&&pd>=cd){up.status="repaid";up.repaidAt=now;up.seized=[];up.lateSince=null;up.lastSeizeAt=null;return true}return false};
+  const cure=()=>{up.status="active";up.seized=[];up.lateSince=null;up.lastSeizeAt=null;up.curedAt=now};
+  const j=bkLatestK(l,now),fresh=j>bkTryK(l,now);let od=Math.max(0,cd-paidOf()),late=l.status==="late";
+  if(fresh){up.tryK=j;const take=Math.min(od,Math.max(0,Math.floor(bal0)));if(take>0){pays.push({k:bkKey("d"),amt:take,at:now,...(late?{late:true}:{}),...(take<od?{partial:true}:{})});up.payments=pays;od-=take}}
+  if(od<=0){if(late)cure();fin();return Object.keys(up).length?up:null}
+  if(!late){if(!fresh)return null;/* missed at this due time */
+    if(!bkGradual(l)){up.status="defaulted";up.defaultedAt=now}else{up.status="late";up.lateSince=now;up.lastSeizeAt=now;up.seized=(l.collateral||[]).slice(0,1)}
     return up}
-  if(l.status==="late"){const od=bkOverdue(l,now),owed=od.reduce((a,p)=>a+p.amt,0);
-    if(bal0>=owed){pays.push(...od.map(p=>({k:p.k,amt:p.amt,at:now,late:true})));up.payments=pays;up.status="active";up.seized=[];up.lateSince=null;up.lastSeizeAt=null;up.curedAt=now;fin();return up}
-    if(now<bkNextEvent(l))return null;
-    const col=l.collateral||[],sz=(l.seized||[]).length;
-    if(col.length&&sz<col.length){up.seized=col.slice(0,sz+1);up.lastSeizeAt=now;return up}
-    up.status="defaulted";up.defaultedAt=now;up.seized=col.slice();return up}
-  return null}
+  if(now<bkNextEvent(l))return fresh?up:null;
+  const col=l.collateral||[],sz=(l.seized||[]).length;
+  if(col.length&&sz<col.length){up.seized=col.slice(0,sz+1);up.lastSeizeAt=now;return up}
+  up.status="defaulted";up.defaultedAt=now;up.seized=col.slice();return up}
 let _bkProc=false;
 async function bkProcess(){if(!S.me||!db||_bkProc||S.readOnly||!S.ready)return;_bkProc=true;
   try{for(const l0 of (S.loans||[]).slice()){try{
     if((l0.status==="active"||l0.status==="late")&&l0.sched&&Array.isArray(l0.sched.amts)&&(l0.borrower===S.me||l0.lender===S.me)){
-      const now=Date.now(),N=l0.sched.amts.length;
-      const evt=l0.status==="active"?(bkNextK(l0)<N?bkDue(l0,bkNextK(l0)):Infinity):bkNextEvent(l0);
-      if(l0.borrower===S.me?(l0.status==="late"||now>=evt):now-evt>20000){
+      const now=Date.now();
+      const evt=l0.status==="active"?(bkPayoffNow(l0,now)<=0?now:bkNextTry(l0,now)):(bkOverAmt(l0,now)<=0?now:Math.min(bkNextEvent(l0),bkNextTry(l0,now)));
+      if(l0.borrower===S.me?now>=evt:now-evt>20000){
         const s=await db.doc("loans/"+l0.id).get();const l=s.exists&&{id:l0.id,...s.data()};
-        if(l&&(l.status==="active"||l.status==="late")){const sig=JSON.stringify([l.status,(l.payments||[]).length,(l.seized||[]).length]);
+        if(l&&(l.status==="active"||l.status==="late")){const sig=JSON.stringify([l.status,l.payments||[],(l.seized||[]).length,l.tryK]);
           const up=bkStep(l,now);
           if(up){const f=await db.doc("loans/"+l.id).get();const F=f.exists&&f.data();
-            if(F&&JSON.stringify([F.status,(F.payments||[]).length,(F.seized||[]).length])===sig){
+            if(F&&JSON.stringify([F.status,F.payments||[],(F.seized||[]).length,F.tryK])===sig){
               await db.doc("loans/"+l.id).update(up);Object.assign(l0,up);
               const sc=(up.seized||[]).length>(l.seized||[]).length&&up.status!=="defaulted"?up.seized[up.seized.length-1]:null;
               if(up.status==="repaid")bkChat(`${nm(l.borrower)} repaid ${nm(l.lender)}'s ${Number(l.P).toLocaleString()} BB loan in full ✅`);
@@ -4704,35 +4761,56 @@ async function bkProcess(){if(!S.me||!db||_bkProc||S.readOnly||!S.ready)return;_
   }catch(_){}}}finally{_bkProc=false}}
 setInterval(bkProcess,5000);
 setInterval(()=>{document.querySelectorAll("[data-bkdue]").forEach(el=>{el.textContent=bkCd(Number(el.dataset.bkdue)-Date.now())})},1000);
-function bkCd(ms){if(ms<=0)return"due now";let s=Math.ceil(ms/1000);const d=Math.floor(s/86400);s%=86400;const h=Math.floor(s/3600);s%=3600;const m=Math.floor(s/60);s%=60;return d?`${d}d ${h}h`:h?`${h}h ${m}m`:m?`${m}m ${s}s`:`${s}s`}
+function bkCd(ms){if(ms<=0)return"now";let s=Math.ceil(ms/1000);const d=Math.floor(s/86400);s%=86400;const h=Math.floor(s/3600);s%=3600;const m=Math.floor(s/60);s%=60;return d?`${d}d ${h}h`:h?`${h}h ${m}m`:m?`${m}m ${s}s`:`${s}s`}
 
 function bkF(){return S.bkF||(S.bkF={to:"",amt:"",note:"",P:"1000",rate:"5",rateU:"week",compN:"1",compU:"day",payN:"1",payU:"week",n:"4",title:"",cm:"r",cr:"2",cc:"",cq:"1",only:[],sm:"all",szN:"1",szU:"day"})}
 const bkUnitSel=(k,v)=>`<select data-bkf="${k}">${BK_UL.map(u=>`<option value="${u}" ${u===v?"selected":""}>${u}${k==="rateU"?"":"(s)"}</option>`).join("")}</select>`;
 function bkCardOpts(F){return Object.keys(CSETS).filter(setOpen).flatMap(k=>cardsCat(k)).filter(c=>c.r===Number(F.cr)&&pmSeen(c.id)).map(c=>`<option value="${c.id}" ${F.cc===c.id?"selected":""}>${esc(c.name)}</option>`).join("")}
 function bkPrevHtml(){const F=bkF(),c=bkCalc(bkTerms(F));if(!c||c.err)return `<span class="neg small">${esc(c?c.err:"Check the terms.")}</span>`;
-  const bal=Math.floor(ledger().balOf(S.me));return `<div class="bkstats"><div><span>Per payment</span><b class="num">${c.amts[0].toLocaleString()}${c.amts.some(a=>a!==c.amts[0])?"*":""}</b></div><div><span>Total repaid</span><b class="num">${c.total.toLocaleString()}</b></div><div><span>Interest</span><b class="num pos">+${c.interest.toLocaleString()}</b></div><div><span>Length</span><b class="num">${bkCd(c.payMs*c.n)}</b></div></div>${c.amts.some(a=>a!==c.amts[0])?`<div class="small muted">* whole-BB rounding: payments range ${Math.min(...c.amts)}–${Math.max(...c.amts)} BB.</div>`:""}${c.P>bal?`<div class="small neg">You only have ${bal.toLocaleString()} BB.</div>`:""}`}
+  const bal=Math.floor(ledger().balOf(S.me));return `<div class="bkstats"><div><span>Per payment</span><b class="num">${c.amts[0].toLocaleString()}${c.amts.some(a=>a!==c.amts[0])?"*":""}</b></div><div><span>Total repaid</span><b class="num">${c.total.toLocaleString()}</b></div><div><span>Interest</span><b class="num pos">+${c.interest.toLocaleString()}</b></div><div><span>Length</span><b class="num">${bkCd(c.payMs*c.n)}</b></div><div><span>Early payoff</span><b class="num">${bkTarget(c).toLocaleString()}</b></div></div>${c.amts.some(a=>a!==c.amts[0])?`<div class="small muted">* whole-BB rounding: payments range ${Math.min(...c.amts)}–${Math.max(...c.amts)} BB.</div>`:""}${c.P>bal?`<div class="small neg">You only have ${bal.toLocaleString()} BB.</div>`:""}`}
 function bkTermsTxt(l){return `${Number(l.rate)}%/${l.rateU}, compounded every ${bkUT(l.compN,l.compU)} · ${l.n} payment${Number(l.n)>1?"s":""} every ${bkUT(l.payN,l.payU)}`}
-function bkRow(l){const c=bkCalc(l)||{},me=S.me,st=l.status,paid=l.sched?bkPaidKs(l).size:0,N=l.sched?l.sched.amts.length:c.n,now=Date.now();
+function bkRow(l){const c=bkCalc(l)||{},me=S.me,st=l.status,N=l.sched?l.sched.amts.length:c.n,now=Date.now(),live=(st==="active"||st==="late")&&l.sched;
   const chip={open:"Open",active:"Active",late:"Late",repaid:"Repaid",defaulted:"Defaulted",cancelled:"Cancelled"}[st]||st;
-  const owed=l.sched?l.sched.amts.reduce((a,x,k)=>a+(bkPaidKs(l).has(k)?0:x),0):0;let nxt="";
-  if(st==="active"&&l.sched){const k=bkNextK(l);if(k<N)nxt=`<div class="small">Next: <b class="num">${l.sched.amts[k].toLocaleString()} BB</b> in <b class="num" data-bkdue="${bkDue(l,k)}">${bkCd(bkDue(l,k)-now)}</b> · ${paid}/${N} paid · ${owed.toLocaleString()} BB left</div>`}
-  if(st==="late"&&l.sched){const od=bkOverdue(l,now).reduce((a,p)=>a+p.amt,0),col=(l.collateral||[]).length,sz=(l.seized||[]).length,ev=bkNextEvent(l);
-    const what=col&&sz<col?"next seizure":"default";nxt=`<div class="small bklate">⏰ Late since ${ago(l.lateSince)} · <b class="num">${od.toLocaleString()} BB</b> overdue · ${what} in <b class="num" data-bkdue="${ev}">${bkCd(ev-now)}</b> · ${paid}/${N} paid</div>`}
+  let nxt="";
+  if(live){const paid=bkPaidTot(l),tot=bkTotalOf(l),od=bkOverAmt(l,now),po=bkPayoffNow(l,now),nd=bkNextTry(l,now),last=bkLastDue(l),bor=l.borrower===me;
+    const cdNext=nd<Infinity?bkCumDue(l,nd)-paid:0;
+    const stats=`<div class="bkstats bkls"><div><span>Paid so far</span><b class="num">${paid.toLocaleString()}</b></div><div><span>Left on schedule</span><b class="num">${Math.max(0,tot-paid).toLocaleString()}</b></div><div><span>Overdue</span><b class="num ${od?"neg":""}">${od.toLocaleString()}</b></div><div><span>Pay off now</span><b class="num">${po.toLocaleString()}</b></div></div>`;
+    if(st==="active")nxt=stats+(nd<Infinity?`<div class="small">Next payment: <b class="num">${cdNext.toLocaleString()} BB</b> on the payment date in <b class="num" data-bkdue="${nd}">${bkCd(nd-now)}</b> · of ${tot.toLocaleString()} BB total</div>`:`<div class="small">Ahead of schedule — nothing more is owed until the next payment date.</div>`);
+    else{const col=(l.collateral||[]).length,sz=(l.seized||[]).length,ev=bkNextEvent(l);
+      const what=col&&sz<col?"next seizure":"default";nxt=stats+`<div class="small bklate">⏰ Late since ${ago(l.lateSince)} · <b class="num">${od.toLocaleString()} BB</b> overdue · ${what} in <b class="num" data-bkdue="${ev}">${bkCd(ev-now)}</b>${nd<Infinity?` · next payment date in <b class="num" data-bkdue="${nd}">${bkCd(nd-now)}</b> (collects ${cdNext.toLocaleString()} BB)`:""}${bor?" · pay the overdue amount to catch up":""}</div>`}
+    if(bor){const bal=Math.floor(ledger().balOf(me)),open=now<last,v=(S.bkPart||{})[l.id]||"";
+      nxt+=`<div class="row bkpay">${open&&po>1?`<input class="n s" type="number" min="1" step="1" max="${Math.min(bal,po)}" inputmode="numeric" placeholder="BB" data-bkpart="${esc(l.id)}" value="${esc(v)}" aria-label="Amount to pay"><button type="button" class="btn ghost small" data-bk="part" data-id="${esc(l.id)}">Pay part</button>`:""}<button type="button" class="btn small" data-bk="payoff" data-id="${esc(l.id)}" data-amt="${po}" ${bal<po?"disabled":""}>Pay off now · ${po.toLocaleString()} BB</button></div>${bal<po?`<div class="small muted">You have ${bal.toLocaleString()} BB.</div>`:""}`}}
+  else if(st==="open"&&c.amts)nxt=`<div class="small muted">Early payoff: <b class="num">${bkTarget(c).toLocaleString()} BB</b> (principal + one payment)</div>`;
+  else if(l.sched&&(st==="repaid"||st==="defaulted"))nxt=`<div class="small muted">Paid ${bkPaidTot(l).toLocaleString()} BB in total</div>`;
   const short=st==="open"&&c.P&&Math.floor(ledger().balOf(l.lender))<c.P;
   const seized=new Set();(l.seized||[]).forEach((g,i)=>seized.add(i));
   const has=(l.collateral&&l.collateral.length),want=l.coll&&l.coll.length;
   const coll=has?`<div class="bkcoll">${l.collateral.map((g,i)=>{const x=cardById(g);return x?`<span class="${seized.has(i)&&st==="late"?"seized":""}" style="--c:${CR[x.r].c}" data-cardview="${g}" title="${seized.has(i)?"Seized (returns if they catch up)":"Priority "+(i+1)}">${i+1}. ${esc(x.name)}${seized.has(i)&&st==="late"?" · seized":""}</span>`:""}).join("")}</div>${st==="late"&&seized.size?`<div class="small muted">Seized cards return if they catch up.</div>`:""}${["active","late"].includes(st)?`<div class="small muted">🔒 Collateral is locked until the loan ends.</div>`:""}`
     :want?`<div class="small muted">Collateral (seizure order): ${l.coll.map((w,i)=>`${i+1}. ${esc(mkItemTxt(w))}`).join(" · ")}</div>`:`<div class="small muted">No collateral — unsecured</div>`;
-  const sz=(has||want)?`<div class="small muted">${esc(bkSeizeTxt(l))}</div>`:bkGradual(l)?`<div class="small muted">Late payments allowed; defaults ${esc(bkUT(l.seizeN,l.seizeU))} after the final due date if still behind</div>`:`<div class="small muted">A missed payment is a default</div>`;
+  const sz=(has||want)?`<div class="small muted">${esc(bkSeizeTxt(l))}</div>`:bkGradual(l)?`<div class="small muted">Late payments allowed; defaults ${esc(bkUT(l.seizeN,l.seizeU))} after the final payment date if still behind</div>`:`<div class="small muted">A missed payment is a default</div>`;
   let btn="";if(st==="open"&&l.lender===me)btn=`<button type="button" class="btn ghost small" data-bk="edit" data-id="${esc(l.id)}" ${S.bkEdit===l.id?"disabled":""}>${S.bkEdit===l.id?"Editing…":"Edit"}</button><button type="button" class="btn ghost small" data-bk="cancel" data-id="${esc(l.id)}">Cancel</button>`;
   else if(st==="open"&&me&&!canTake(l))btn=`<button type="button" class="btn ghost small" disabled>Private offer for ${esc(onlyTxt(l))}</button>`;
   else if(st==="open"&&me)btn=`<button type="button" class="btn small" data-bk="take" data-id="${esc(l.id)}" ${short?"disabled":""}>${short?"Lender short":"Take loan"}</button>`;
-  else if((st==="active"||st==="late")&&l.borrower===me)btn=`<button type="button" class="btn ghost small" data-bk="payoff" data-id="${esc(l.id)}">Pay off ${owed.toLocaleString()} BB</button>`;
   return `<div class="bkrow${st==="open"&&!canTake(l)&&l.lender!==me?" bkpriv":""}"><div class="bkrh">${pic(l.lender)}<div style="min-width:0;flex:1"><b>${(c.P||0).toLocaleString()} BB</b> <span class="small muted">from ${esc(nm(l.lender))}${l.borrower?` → ${esc(nm(l.borrower))}`:""}</span>${l.note?`<div class="small">${esc(l.note)}</div>`:""}</div>${st==="open"&&l.editedAt?`<span class="bkchip edited" title="Edited ${esc(ago(l.editedAt))}">edited</span>`:""}<span class="bkchip ${st}">${chip}</span></div>
     <div class="small muted">${esc(bkTermsTxt(l))} · ${c.total?`${c.total.toLocaleString()} BB back`:""}</div>${st==="open"?onlyBadge(l):""}${nxt}${coll}${sz}${btn?`<div class="row">${btn}</div>`:""}</div>`}
+/* combined bank log for the viewer: + = money in (green), − = money out (red) */
+function bkActivity(me){const out=[],E=(at,v,h,bad)=>{if(at)out.push({at:Number(at),v,h,bad})};
+  for(const t of S.bank||[]){const a=Math.floor(Number(t.amt))||0;if(!(a>0)||t.from===t.to)continue;const note=t.note&&t.kind!=="debby"?` <span class="bknote">· ${esc(t.note)}</span>`:"";
+    if(t.kind==="debby"){if(t.to===me)E(t.at,a,`🦹 Via Debby · stole from ${esc(nm(t.from))}`);else if(t.from===me)E(t.at,-a,`🦹 Via Debby · ${esc(nm(t.to))} stole from you`);continue}
+    if(t.to===me)E(t.at,a,`← ${t.kind==="platfee"||t.from==="house"?"The House":esc(nm(t.from))}${note}`);else if(t.from===me&&t.from!=="house")E(t.at,-a,`→ ${esc(nm(t.to))}${note}`)}
+  for(const l of S.loans||[]){if(!l.borrower||!l.takenAt||!["active","late","repaid","defaulted"].includes(l.status))continue;const L=l.lender===me,B=l.borrower===me;if(!L&&!B)continue;
+    const P=Math.floor(Number(l.P))||0,who=esc(nm(L?l.borrower:l.lender));
+    E(l.takenAt,L?-P:P,L?`🏦 Loan to ${who}`:`🏦 Loan from ${who}`);
+    const seen=new Set();for(const p of l.payments||[]){if(seen.has(p.k))continue;seen.add(p.k);const a=Math.floor(Number(p.amt))||0;if(!a)continue;
+      const kind=p.early?"Payoff":typeof p.k==="string"&&p.k[0]==="x"?"Part payment":p.partial?"Partial payment (short)":p.late?"Late payment":"Loan payment";
+      E(p.at,L?a:-a,L?`💵 ${kind} from ${who}`:`💵 ${kind} to ${who}`)}
+    if(l.status==="defaulted")E(l.defaultedAt,0,L?`💀 ${who} defaulted${(l.collateral||[]).length?` · you get ${esc(bkCardsTxt(l.collateral))}`:" · unsecured"}`:`💀 Defaulted on ${who}'s loan${(l.collateral||[]).length?` · lost ${esc(bkCardsTxt(l.collateral))}`:""}`,B);
+    else if(l.status==="late"&&(l.seized||[]).length)E(l.lastSeizeAt,0,L?`🔒 Holding ${esc(bkCardsTxt(l.seized))} from ${who}`:`🔒 Seized: ${esc(bkCardsTxt(l.seized))} (returns if you catch up)`,B);
+    if(l.status==="repaid")E(l.repaidAt,0,`✅ ${L?`${who} repaid your loan`:`Repaid ${who}'s loan`}`)}
+  return out.sort((a,b)=>b.at-a.at)}
 function viewBank(){if(!S.me)return `<div class="empty">Sign in to use the bank.</div>`;const F=bkF(),bal=Math.floor(ledger().balOf(S.me)),me=S.me;
   const ppl=members().filter(id=>id!==me&&teamOf(id)).sort((a,b)=>nm(a).localeCompare(nm(b)));
-  const tx=(S.bank||[]).filter(t=>(t.from===me&&t.kind!=="platfee")||t.to===me).sort((a,b)=>(b.at||0)-(a.at||0)).slice(0,10);
+  const tx=bkActivity(me).slice(0,20);
   const L=(S.loans||[]).slice().sort((a,b)=>(b.takenAt||b.at||0)-(a.takenAt||a.at||0));
   const open=L.filter(l=>l.status==="open"),lend=L.filter(l=>l.lender===me&&l.status!=="open"&&l.status!=="cancelled"),borr=L.filter(l=>l.borrower===me&&l.status!=="open"&&l.status!=="cancelled");
   const sec=(t,a,e)=>`<section class="card"><h3>${t}</h3>${a.length?a.map(bkRow).join(""):`<div class="small muted">${e}</div>`}</section>`;
@@ -4741,7 +4819,7 @@ function viewBank(){if(!S.me)return `<div class="empty">Sign in to use the bank.
   <section class="card"><h3>💸 Send BB</h3><div class="row bkform"><label>To<select data-bkf="to"><option value="">Pick someone</option>${ppl.map(id=>`<option value="${esc(id)}" ${F.to===id?"selected":""}>${esc(nm(id))}</option>`).join("")}</select></label>
     <label>Amount<input class="n" data-bkf="amt" inputmode="numeric" type="number" min="1" step="1" max="${bal}" value="${esc(F.amt)}" placeholder="500"></label>
     <label class="grow">Note (optional)<input data-bkf="note" maxlength="120" value="${esc(F.note)}" placeholder="for the pizza"></label><button type="button" class="btn" data-bk="send">Send</button></div>
-    ${tx.length?`<div class="bktx">${tx.map(t=>{const out=t.from===me;return `<div><span class="${out?"neg":"pos"}">${out?"→ "+esc(nm(t.to)):"← "+(t.kind==="platfee"||t.from==="house"?"The House":esc(nm(t.from)))}${t.note?` <span class="muted">· ${esc(t.note)}</span>`:""}</span><span class="num ${out?"neg":"pos"}">${out?"−":"+"}${Number(t.amt).toLocaleString()}</span><span class="small muted">${ago(t.at)}</span></div>`}).join("")}</div>`:`<div class="small muted">No transfers yet.</div>`}</section>
+    <div class="stlbl">Recent activity</div>${tx.length?`<div class="bktx">${tx.map(t=>`<div class="${t.v>0?"pos":t.v<0?"neg":t.bad?"neg":"neu"}"><span>${t.h}</span><span class="num">${t.v>0?"+":t.v<0?"−":""}${t.v?Math.abs(t.v).toLocaleString():""}</span><span class="small muted">${ago(t.at)}</span></div>`).join("")}</div>`:`<div class="small muted">No activity yet.</div>`}</section>
   <section class="card${S.bkEdit?" bkediting":""}" id="bkOffer"><h3>${S.bkEdit?"✏️ Editing offer":"🤝 Offer a loan"}</h3><div class="row bkform">
     <label>Principal (BB)<input class="n" data-bkf="P" type="number" min="1" step="1" value="${esc(F.P)}"></label>
     <label>Rate %<input class="n" data-bkf="rate" type="number" min="0" max="1000" step="0.1" value="${esc(F.rate)}"></label><label>per${bkUnitSel("rateU",F.rateU)}</label></div>
@@ -4754,7 +4832,7 @@ function viewBank(){if(!S.me)return `<div class="empty">Sign in to use the bank.
     <label id="bkCCw" ${F.cm==="cid"?"":"hidden"}>Card<select data-bkf="cc" id="bkCC">${bkCardOpts(F)}</select></label>
     <label>Qty<input class="n s" data-bkf="cq" type="number" min="1" max="10" step="1" value="${esc(F.cq)}"></label><button type="button" class="btn ghost" data-bk="addc">+ Add</button></div>
     <div class="row bkform"><label>If they miss a payment<select data-bkf="sm"><option value="all" ${F.sm!=="gradual"?"selected":""}>${coll.length?"Seize all at once":"Default immediately"}</option><option value="gradual" ${F.sm==="gradual"?"selected":""}>${coll.length?"Seize one card at a time":"Allow late payments"}</option></select></label>
-    <label ${F.sm==="gradual"?"":"hidden"} id="bkSzw">${coll.length?"Every":"Grace after final due"}<span class="bkpair"><input class="n s" data-bkf="szN" type="number" min="1" max="100" step="1" value="${esc(F.szN)}">${bkUnitSel("szU",F.szU)}</span></label></div>
+    <label ${F.sm==="gradual"?"":"hidden"} id="bkSzw">${coll.length?"Every":"Grace after final payment date"}<span class="bkpair"><input class="n s" data-bkf="szN" type="number" min="1" max="100" step="1" value="${esc(F.szN)}">${bkUnitSel("szU",F.szU)}</span></label></div>
     <div class="small muted" id="bkSzTxt">${bkSzHelp(F,coll)}</div>
     <label>Title (optional)<input data-bkf="title" maxlength="80" value="${esc(F.title)}" placeholder="Payday loan, no questions asked"></label>
     ${whoPickHtml(F.only,"data-bkonly")}<div id="bkPrev">${bkPrevHtml()}</div><div class="row"><button type="button" class="btn" data-bk="post">${S.bkEdit?"Save changes":"Post offer"}</button>${S.bkEdit?`<button type="button" class="btn ghost" data-bk="editx">Cancel edit</button>`:""}</div></section>
@@ -4764,10 +4842,11 @@ document.addEventListener("input",e=>{const t=e.target.closest("[data-bkf]");if(
   if(t.dataset.bkf==="sm"){const w=$("#bkSzw");if(w)w.hidden=F.sm!=="gradual";const x=$("#bkSzTxt");if(x)x.textContent=bkSzHelp(F,S.bkColl||[])}
   if(t.dataset.bkf==="cr"||t.dataset.bkf==="cm"){const w=$("#bkCCw"),s=$("#bkCC");if(w)w.hidden=F.cm!=="cid";if(s){s.innerHTML=bkCardOpts(F);F.cc=s.value}}
   const p=$("#bkPrev");if(p)p.innerHTML=bkPrevHtml()});
+document.addEventListener("input",e=>{const t=e.target.closest("[data-bkpart]");if(!t)return;(S.bkPart||(S.bkPart={}))[t.dataset.bkpart]=t.value});
 document.addEventListener("change",e=>{if(e.target.closest("[data-bkf]"))e.target.dispatchEvent(new Event("input",{bubbles:true}))});
 document.addEventListener("click",e=>{const t=e.target.closest("[data-bk]");if(!t)return;const k=t.dataset.bk,F=bkF();
   if(S.readOnly&&!["rmc","addc","upc","dnc"].includes(k))return toast("View only. Ask the commish for access.");
-  if(k==="send")return bkSend();if(k==="post")return bkPost();if(k==="take")return bkTake(t.dataset.id);if(k==="cancel"){if(S.bkEdit===t.dataset.id)S.bkEdit=null;return bkCancel(t.dataset.id)}if(k==="edit")return bkEditLoad(t.dataset.id);if(k==="editx"){S.bkEdit=null;S.bkColl=[];F.title="";F.only=[];return render()}if(k==="payoff")return bkPayoff(t.dataset.id);
+  if(k==="send")return bkSend();if(k==="post")return bkPost();if(k==="take")return bkTake(t.dataset.id);if(k==="cancel"){if(S.bkEdit===t.dataset.id)S.bkEdit=null;return bkCancel(t.dataset.id)}if(k==="edit")return bkEditLoad(t.dataset.id);if(k==="editx"){S.bkEdit=null;S.bkColl=[];F.title="";F.only=[];return render()}if(k==="payoff")return bkPay(t.dataset.id,{payoff:Number(t.dataset.amt)});if(k==="part"){const inp=document.querySelector(`[data-bkpart="${CSS.escape(t.dataset.id)}"]`);return bkPay(t.dataset.id,Number(inp?inp.value:(S.bkPart||{})[t.dataset.id]))}
   if(k==="upc"||k==="dnc"){const a=S.bkColl||[],i=Number(t.dataset.i),j=k==="upc"?i-1:i+1;if(a[i]&&a[j]){[a[i],a[j]]=[a[j],a[i]]}return render()}
   if(k==="rmc"){(S.bkColl||[]).splice(Number(t.dataset.i),1);return render()}
   if(k==="addc"){const q=Math.floor(Number(F.cq));if(!(q>=1&&q<=10))return toast("Quantity must be 1–10.");const r=Number(F.cr);if(!CR[r])return;
@@ -4826,7 +4905,7 @@ function fpMount(){const c=$("#fpCanvas");if(!c)return;S._fpStats=null;const ctx
   const reset=()=>{FP.st="ready";FP.y=H/2;FP.vy=0;FP.pipes=[];FP.t=0;FP.score=0};
   const flap=()=>{if(FP.st==="ready"){FP.st="play";FP.vy=FLAP;if(FP.boost&&fpHasBoost()&&fpBoostLeft()<=0){FP.boost=false;FP.boostRun=true;const at=Date.now();S.prefs[S.me].flapBoostAt=at;db.doc("prefs/"+S.me).update({flapBoostAt:at}).catch(()=>{});fpStats()}else FP.boost=false}else if(FP.st==="play")FP.vy=FLAP;else if(FP.st==="over"&&Date.now()-FP.overAt>600)reset()};
   c.onpointerdown=e=>{e.preventDefault();flap()};
-  if(!window._fpKey){window._fpKey=true;document.addEventListener("keydown",e=>{if(S.tab==="flappy"&&(e.code==="Space"||e.code==="ArrowUp")&&$("#fpCanvas")){e.preventDefault();$("#fpCanvas").onpointerdown(e)}})}
+  if(!window._fpKey){window._fpKey=true;document.addEventListener("keydown",e=>{if(S.tab==="flappy"&&(e.code==="Space"||e.code==="ArrowUp")&&$("#fpCanvas")&&!keyInField(e)){e.preventDefault();$("#fpCanvas").onpointerdown(e)}})}
   /* The dealer rat peeks out of a pipe end, bobbing in and out (at most 26px into the gap) */
   const ratPos=p=>{const pop=Math.max(0,Math.sin(FP.t/14+p.rat.ph)*1.15)*38;const x=p.x+PW/2;return{pop,x,y:p.rat.side==="top"?p.top+pop-12:p.top+GAP-pop+12}};
   const drawRat=p=>{const r=ratPos(p);if(r.pop<1)return;ctx.save();ctx.beginPath();if(p.rat.side==="top")ctx.rect(p.x-10,p.top,PW+20,GAP);else ctx.rect(p.x-10,p.top,PW+20,GAP);ctx.clip();
@@ -5127,7 +5206,7 @@ setInterval(()=>{if(document.visibilityState!=="visible"){MINE_LAST=Date.now();r
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")MINE_LAST=Date.now()});
 /* background updates coalesce into at most one render per frame, and wait while a Flappy run is in progress */
 let _rq=0;function renderSoon(){if(_rq)return;_rq=requestAnimationFrame(()=>{_rq=0;if((typeof FP!=="undefined"&&FP&&FP.st==="play"&&S.tab==="flappy")||document.getElementById("revOv")){setTimeout(renderSoon,400);return}render()})}
-function render(){lvTick();setTimeout(autoRefill,0);if(S.gw)setTimeout(gwRender,0);setTimeout(recapPopup,400);
+function render(){lvTick();setTimeout(onlRender,0);setTimeout(autoRefill,0);if(S.gw)setTimeout(gwRender,0);setTimeout(recapPopup,400);
   {const u=logoOf(S.me),m=$("#meAv");if(m){if(u){m.outerHTML=`<img class="dot img" id="meAv" src="${esc(u)}" alt="">`}else if(m.tagName==="IMG"){m.outerHTML=`<span class="dot" id="meAv"></span>`}}}
   setMe();if(CHAT.open)chatRender();if(S.addOpen){refreshGhosts();betPreview()}
   const ts=$("#tabSetup");if(ts)ts.hidden=!S.canEdit;
@@ -5387,8 +5466,32 @@ document.addEventListener("submit",async e=>{
 
 /* Haptic tap: Android uses the vibration API; iPhone (iOS 18+) gets a tick by flipping a hidden switch control */
 function haptic(){try{if(navigator.vibrate&&navigator.vibrate(18))return}catch(e){}try{$("#hapticLbl").click()}catch(e){}}
+/* true when a key event belongs to typing (input/textarea/select/contenteditable, or anything inside the open chat) — game hotkeys must leave these alone */
+function keyInField(e){const t=e&&e.target,a=document.activeElement;const f=x=>x&&x.nodeType===1&&(x.closest("input,textarea,select,[contenteditable]:not([contenteditable=false])")||x.isContentEditable||x.closest("#chatWrap,.chatpanel"));
+  return !!(f(t)||f(a)||e.isComposing)}
+/* ---------- Who's online pill + sheet (presence comes from prefs already loaded; no extra reads) ---------- */
+function onlRender(){const b=$("#onlPill");if(!b)return;if(!S.me||!S.ready){b.hidden=true;return}
+  const on=members().filter(id=>teamOf(id)&&isOnline(id));b.hidden=false;b.innerHTML=`<i></i>${on.length}<span class="onlw"> online</span>`;b.setAttribute("aria-label",`${on.length} online`);
+  const pop=$("#onlPop");if(pop)pop.innerHTML=onlHtml()}
+function onlHtml(){const ids=members().filter(id=>teamOf(id)),on=ids.filter(isOnline).sort((a,b)=>(a===S.me?-1:b===S.me?1:nm(a).localeCompare(nm(b))));
+  const rec=ids.filter(id=>!isOnline(id)&&seenAt(id)).sort((a,b)=>seenAt(b)-seenAt(a)).slice(0,12);
+  const row=id=>`<button type="button" class="onlrow" data-member="${esc(id)}">${pic(id)}<span><b>${esc(nm(id))}${id===S.me?" <small class=\"muted\">(you)</small>":""}</b>${seenTxt(id)}</span></button>`;
+  return `<div class="onlhd"><b>🟢 Online now · ${on.length}</b><button type="button" class="onlx" data-onlx aria-label="Close">✕</button></div>${on.map(row).join("")||`<div class="small muted">Nobody right now.</div>`}${rec.length?`<div class="onlsub">Recently active</div>${rec.map(row).join("")}`:""}`}
+function onlOpen(v){let pop=$("#onlPop");const b=$("#onlPill");if(b)b.setAttribute("aria-expanded",String(!!v));
+  if(!v){if(pop)pop.remove();return}
+  if(!pop){pop=document.createElement("div");pop.id="onlPop";pop.className="onlpop";pop.setAttribute("role","dialog");pop.setAttribute("aria-label","Who's online");document.body.appendChild(pop)}
+  pop.innerHTML=onlHtml()}
+document.addEventListener("click",e=>{if(e.target.closest("#onlPill")){onlOpen(!$("#onlPop"));return}
+  const pop=$("#onlPop");if(!pop)return;if(e.target.closest("[data-onlx]")||e.target.closest("#onlPop [data-member]")||!e.target.closest("#onlPop"))setTimeout(()=>onlOpen(false),0)});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("#onlPop"))onlOpen(false)});
+setInterval(onlRender,30000);
 /* ---------- Sidebar menu ---------- */
-function sideOpen(v){const wrap=$("#sideNav"),pnl=wrap.querySelector(".side"),sh=wrap.querySelector(".shade");
+/* Pin the page behind an open drawer/sheet so touch scrolling can't move it (iOS ignores overflow:hidden on body); shared by chat + side menu */
+const PL={on:new Set(),y:0};
+function pageLock(r,on){const de=document.documentElement,was=PL.on.size>0;if(on)PL.on.add(r);else PL.on.delete(r);const now=PL.on.size>0;
+  if(now&&!was){PL.y=window.scrollY||0;document.body.style.top=-PL.y+"px";de.classList.add("pagelock")}
+  else if(!now&&was){de.classList.remove("pagelock");document.body.style.top="";window.scrollTo(0,PL.y||0)}}
+function sideOpen(v){pageLock("side",!!v);const wrap=$("#sideNav"),pnl=wrap.querySelector(".side"),sh=wrap.querySelector(".shade");
   $("#menuBtn").setAttribute("aria-expanded",String(v));
   if(v){pnl.style.transition="none";pnl.style.transform="";sh.style.transition="none";sh.style.opacity="";wrap.hidden=false;sideRender();return}
   if(wrap.hidden)return;
@@ -5496,9 +5599,7 @@ const chatVV=(()=>{let raf=0;const de=document.documentElement;const run=()=>{ra
   if(window.visualViewport){visualViewport.addEventListener("resize",q);visualViewport.addEventListener("scroll",q)}
   window.addEventListener("resize",q);window.addEventListener("orientationchange",()=>{q();setTimeout(q,300)});run();return q})();
 /* Phones: while the floating chat is open, pin the page behind it so it can't scroll or jump; restore its position on close */
-function chatLock(){const de=document.documentElement,on=CHAT.open&&S.tab!=="chat"&&matchMedia("(max-width:600px)").matches;
-  if(on&&!de.classList.contains("chatlock")){chatLock.y=window.scrollY||0;document.body.style.top=-chatLock.y+"px";de.classList.add("chatlock")}
-  else if(!on&&de.classList.contains("chatlock")){de.classList.remove("chatlock");document.body.style.top="";window.scrollTo(0,chatLock.y||0)}}
+function chatLock(){const on=CHAT.open&&S.tab!=="chat"&&matchMedia("(max-width:600px)").matches;document.documentElement.classList.toggle("chatlock",on);pageLock("chat",on)}
 window.addEventListener("resize",()=>{if(CHAT.open)chatLock()});
 /* No pinch or double-tap zoom anywhere in the app */
 ["gesturestart","gesturechange","gestureend"].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));
