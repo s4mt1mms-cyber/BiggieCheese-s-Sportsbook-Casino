@@ -79,7 +79,7 @@ Key collections:
 | `prefs/{id}` | each player's own doc: team, cards {cardId: count}, all game P/L fields, stats, presence stamps. Written only by that player (and admin). |
 | `live/{id}` | high-churn private state (blackjack hand/shoe/streak, roulette/craps/high-low/solo RR state, pending stat deltas). Readable by members (for spectating). |
 | `bets`, `games` | sportsbook bets between players / vs the House; games graded from Sleeper. |
-| `market` | card listings/trades. `bank` | BB transfers + fees. `loans` | player loans. |
+| `market` | card listings/trades. `bank` | BB transfers + fees + curse tithes (`kind:"tithe"`). `loans` | player loans (+ Heart of Finance House loans, `lender:"house"`). |
 | `offers` | offers on market listings (BB and/or escrowed cards); pages listen to `live==true` only. |
 | `dms/{a__b}`, `dms/{a__b}/msgs` | private 1-to-1 chats (pair id = sorted player ids). Rules: only the two players, not even admins. |
 | `chat`, `media`, `photos` | chat, chat images (chunked), profile photos. |
@@ -138,6 +138,39 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   Pack commissions (`PACK_FEES`/`pkFees`, paid by the house, never to yourself): owner 7.5% of every pack price, Zartog 5% of every
   Multiverse pack — one `bank/packfee_<buyer>_<to>_<day>_<k>` doc per buyer/recipient/day holding the running total.
   `divCalc(id)` = the dividend math (used by `divCheck` and the collection header `colSumHtml`, which also shows total quick-sell value).
+- **Multiverse expansion cards (code-defined)**: the original Multiverse cards live in `meta/cards_mv` (+ images in `cardimg/`,
+  made with the Admin card tools). The expansion cards are defined in code in `MV_ADD` (index.html) and merged into the catalog by
+  `cardsCat("mv")` (`mvMerge`); ids are `mv-<slug>`, art is static WebP at `public/cards/mv/<slug>.webp` (620 px wide, ~50–150 KB;
+  no Firestore read; `/cards/**` is cached a week, so bump `MV_IMGV` when REPLACING a file). Nothing to do in production at launch:
+  deploying makes them part of Multiverse packs. Pack odds are untouched; a new card just joins its rarity's pool, mint limits per `CR_LIM`.
+  **Add a card later:** one row `[slug, rarity, "Title", {opts}]` in `MV_ADD` + the WebP file. `img:false` = no art yet → a placeholder
+  face (`cardPh`: rarity colors, name, "Art coming soon"; an Admin "Add image" upload to `cardimg/<id>` also fills it, no deploy);
+  to add art later drop in the WebP and delete `img:false`. `abil:"<key>"` attaches an ability (`CARD_ABIL`, shown on the card back
+  by `abHtml` as "Ability · name"); `div:N` overrides the daily dividend per copy (`cardDiv`, used inside `divCalc`, so the collection header and the 1 AM payout agree; the curse card is skipped there too). Blur bystanders' faces in new art.
+  Abilities (`hasAb(key,id)`; extra copies never stack):
+  - `curse` **Jimmy Scroggins Rookie** (Super Rare). Pull: 10% of the puller's balance (floor) per copy, split in whole BB among all
+    other players (`tiRecips`: everyone else with a team), remainder vanishes; bank doc `{kind:"tithe",src:"pull",from,tos,each,amt}`;
+    "THANK YOU FOR TITHING" popup when the card flips. While held: 10% of every win (BJ hand net + streak bonus, roulette spin net,
+    craps roll net, High-Low cash-out profit, RR/Hold'em profit, sports-bet wins, dividends, mining, Flappy, rat hunt, Debby) —
+    each win site calls `tiAdd(patch, profit)`, which adds to `prefs.tiWin` in the SAME write as the winnings field (tiWin is in
+    `LV_LAZY`, so it batches with its partner). Ledger: `balOf` − floor(tiWin/10) at once. Settlement (`tiSettle`, every 20 s, at most
+    every 3 min unless ≥2,000 owed, only from the server-confirmed tiWin `TI.conf`): one bank doc `ti_<me>_<paidSoFar>`
+    `{kind:"tithe",src:"win",tos,each,amt=each·n}`; recipients get `each` once; "win" docs are NOT taken from the payer again.
+    Sports bets: `prefs.tiSb` = won bet ids seen since the curse started (`tiSbCheck`, uses `ledger().wins`). Not winnings: transfers,
+    loans, market/offer sales, quick-sells. No dividend, no full-set credit, can't be quick-sold (`qsVal` 0); can be sold/traded;
+    "Remove curse" (`tiUncurse`) costs 5,000 (`prefs.curseFee`, in the ledger) and burns one copy (back into the packs).
+  - `dean` **Craps Dean Strow** (Elite): craps payouts × `crDeanF(bet, n)` so every bet type's EV is +2.5% (math in the comment
+    above `crDeanF`; `crResolve(..., dean)`).
+  - `hof` **Heart of Finance** (Elite): Bank → "Borrow 10,000 BB" (`hofTake`): a normal `loans` doc with `lender:"house"`, `hof:true`,
+    5%/day, 1 payment of 10,500 after 24 h, gradual mode (late, default 7 days after due); auto-collected by the borrower's page like any
+    loan. One at a time; after a default the House won't lend again. Selling the card doesn't touch an open loan.
+  - `slop` **King Slop** (Grail): 5 roulette respins a day (`prefs.slopDay`/`slopUsed`, `divDay` boundary). After a losing spin,
+    "Respin (n left)" voids it: the same write takes the voided net back out of rlNet and adds the new spin's (`rlRespinNet`), no
+    extra rlSpins; the new result is final (respin again only while respins remain).
+  - `shrex` **Shrex** (Grail, art pending): blackjack streak bonuses ×2 and a green "swamp" glow on avatars/profile pictures (`.swamp`, replaces the Dragon glow).
+  - `social` **Diverse Family** (Rare, art pending): pulling it posts "<name> +10 million social credit score!" in league chat. No money.
+  - `div:6999` **Joe Camel** (Elite, art pending).
+  Tests: `node tools/test/mv-abilities.test.mjs` (craps factors exact + Monte Carlo through `crResolve`, tithe split math, respin math).
 - **Market**: list for price and/or trade wants (specific card or "rarity or better"), private listings (`only`).
 - **Offers** (`of*`): BB and/or cards on any open listing. Offered cards leave the offerer's prefs while pending
   (`esc`) and come back on decline/cancel/expiry (48 h)/failure (`returned`, offerer's page). Accept = status race on the

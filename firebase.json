@@ -66,6 +66,15 @@
             "value": "public, max-age=86400"
           }
         ]
+      },
+      {
+        "source": "/cards/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=604800"
+          }
+        ]
       }
     ]
   },
