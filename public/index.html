@@ -1660,6 +1660,8 @@ html.lite .aw.fx.au-zap::before{filter:url(#auZap) drop-shadow(0 0 calc(var(--s)
 .aw.lt.au-hearts::after{inset:-3px;box-shadow:0 0 6px 1px rgba(255,80,150,.8);animation:auBreath 1.4s ease-in-out infinite}
 @keyframes auHt{0%{opacity:0;transform:translate(0,0) scale(0)}12%{opacity:1;transform:translate(0,0) scale(1.15)}22%{transform:translate(calc(var(--s)*var(--dx)*.2),calc(var(--s)*-.05)) scale(1)}75%{opacity:.85}100%{opacity:0;transform:translate(calc(var(--s)*var(--dx)),calc(var(--s)*-.42)) scale(.7) rotate(calc(var(--dx)*80deg))}}
 /* celestial (mythic): divine rays, a slowly turning golden halo, orbiting orbs and stars */
+/* Celestial: the orbit layers stay as spinning squares (owner's pick), without the orbiting planets/stars */
+.au-celestial .co::before{display:none!important}
 .au-celestial>:not(u){box-shadow:0 0 0 calc(var(--s)*.02 + 1px) #fff3c0,0 0 calc(var(--s)*.28) calc(var(--s)*.07) rgba(255,214,90,.55)!important}
 .au-celestial::before{inset:calc(var(--s)*-.1);z-index:3;background:conic-gradient(from 0deg,#fff6c8,#ffcf2f,#a8740a,#ffe680,#fff,#ffcf2f,#a8740a,#ffeaa0,#fff6c8);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - var(--s)*.065 - 1px),#000 calc(100% - var(--s)*.065));mask:radial-gradient(farthest-side,transparent calc(100% - var(--s)*.065 - 1px),#000 calc(100% - var(--s)*.065));animation:auSpin 6s linear infinite}
 .au-celestial::after{inset:calc(var(--s)*-.42);z-index:0;background:repeating-conic-gradient(from 0deg,rgba(255,232,150,.42) 0 3deg,transparent 3deg 14deg);-webkit-mask:radial-gradient(closest-side,transparent 52%,#000 60%,transparent 100%);mask:radial-gradient(closest-side,transparent 52%,#000 60%,transparent 100%);animation:auSpinR 40s linear infinite}
@@ -1689,7 +1691,7 @@ html.lite .aw.fx.au-zap::before{filter:url(#auZap) drop-shadow(0 0 calc(var(--s)
 .auit.myth{grid-column:1/-1;background:radial-gradient(120% 90% at 50% 0,#2a2108,var(--paper,#131313) 70%);border-color:#6b5414}
 .auit b{font-size:16px;margin-top:10px}
 /* room for the whole effect inside the box (glows and particles reach ~30% past the picture; Celestial more) */
-.auit>.aw,.auhero>.aw{margin:calc(var(--s)*.3)}.auit.myth>.aw{margin:calc(var(--s)*.45)}.auhero>.aw{flex:none}.auit{padding-top:12px}.auit b{margin-top:0}.aupr{font:700 15px var(--display);color:var(--gold)}.aupr.own{color:#7dffa1}
+.auit>.aw,.auhero>.aw{margin:calc(var(--s)*.3)}.auit.myth>.aw,.auhero>.aw.au-celestial,.auit>.aw.au-celestial{margin:calc(var(--s)*.72) calc(var(--s)*.5)}.auhero{overflow:hidden}.auhero>.aw{flex:none}.auit{padding-top:12px}.auit b{margin-top:0}.aupr{font:700 15px var(--display);color:var(--gold)}.aupr.own{color:#7dffa1}
 .auown{position:absolute;top:8px;right:8px;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;background:#1f3a24;color:#7dffa1;border:1px solid #2d6b3a;border-radius:999px;padding:2px 7px}
 .aubtn{width:100%;min-height:42px;border-radius:999px;border:0;background:var(--gold);color:#000;font:800 15px var(--display);cursor:pointer}
 .aubtn.ghost{background:transparent;border:1px solid var(--line,#3a3420);color:var(--ink)}
@@ -2250,7 +2252,7 @@ function viewMembers(){
    (subtracted in ledger().balOf). Buying writes all three in ONE prefs update. Equipping/switching is free.
    Shown by av()/pic()/bigAv() through auWrap(); an equipped aura replaces the commish ring, Dragon glow and Shrex swamp glow. */
 const AURAS=[
-  {id:"celestial",n:"Celestial",t:"Mythic",p:1000000,d:"A turning golden halo, orbiting stars and divine light"},
+  {id:"celestial",n:"Celestial",t:"Mythic",p:1000000,d:"A golden halo inside spinning gold squares and divine light"},
   {id:"flames",n:"Flames",t:"Legendary",p:250000,d:"Flickering fire"},
   {id:"zap",n:"Electricity",t:"Legendary",p:250000,d:"Arcs crackle around your picture"},
   {id:"void",n:"Void",t:"Legendary",p:250000,d:"A dark swirl"},
@@ -6263,7 +6265,7 @@ function chatMsgHtml(m){
   if(m.type==="bet"&&m.kind==="plat-legend"&&m.cid&&cardById(m.cid))return pmChatHtml(m,when,del);
   if(m.type==="bet"){const bk=m.kind==="bank",tr=m.kind==="cardtrade"||/ traded .+ for .+ 🔁$/.test(String(m.text||"")),buy=bk||tr||m.kind==="cardbuy"||/ bought .+ for [\d,]+ BB.* 💸$/.test(String(m.text||""));return `<div class="cbet${buy?" cbuy":""}" data-hold="${esc(m.id)}"><div class="eyebrow">${bk?"🏦 Bank":tr?"Traded":buy?"Card sold":"Bet accepted"} · ${when}${del}</div><div class="cbtitle">${esc(m.text)}</div><div class="small">${esc(m.detail||"")}</div>${reactHtml(m)}</div>`;}
   const mine=m.uid===S.me;
-  return `<div class="cmsg${mine?" mine":""}${m.pending?" pending":""}">${mine?"":(logoOf(m.uid)?`<button type="button" class="zoombtn" data-zoom="${esc(m.uid)}" aria-label="View photo">${pic(m.uid)}</button>`:pic(m.uid))}<div class="cbody"><div class="cmeta">${mine?"You":`<button type="button" class="mlink" data-member="${esc(m.uid)}">${esc(nm(m.uid))}</button>`} · ${when}${del}</div><div class="ctext${m.gif?" hasgif":""}" data-hold="${esc(m.id)}">${m.gif||m.media?`<img class="cgif" data-mkey="${esc(m.id)}" alt="GIF">`:""}${m.text?esc(m.text):""}</div>${reactHtml(m)}</div></div>`;
+  return `<div class="cmsg${mine?" mine":""}${m.pending?" pending":""}">${mine?pic(m.uid):(logoOf(m.uid)?`<button type="button" class="zoombtn" data-zoom="${esc(m.uid)}" aria-label="View photo">${pic(m.uid)}</button>`:pic(m.uid))}<div class="cbody"><div class="cmeta">${mine?"You":`<button type="button" class="mlink" data-member="${esc(m.uid)}">${esc(nm(m.uid))}</button>`} · ${when}${del}</div><div class="ctext${m.gif?" hasgif":""}" data-hold="${esc(m.id)}">${m.gif||m.media?`<img class="cgif" data-mkey="${esc(m.id)}" alt="GIF">`:""}${m.text?esc(m.text):""}</div>${reactHtml(m)}</div></div>`;
 }
 /* Chat redraws are batched to one per frame and skipped when nothing in the list changed (no flicker, no re-decoding photos) */
 let CHAT_RAF=0;
@@ -6473,7 +6475,7 @@ function dmMsgHtml(m){const when=esc(new Date(m.at).toLocaleString([],{weekday:"
   if(m.kind==="offer")return ofBubble(m,when);
   if(m.kind==="sys")return `<div class="dmsys"><span>${esc(m.text||"")}</span><small>${when}</small></div>`;
   const mine=m.from===S.me;
-  return `<div class="cmsg${mine?" mine":""}${m.pending?" pending":""}">${mine?"":pic(m.from)}<div class="cbody"><div class="cmeta">${mine?"You":esc(nm(m.from))} · ${when}</div><div class="ctext${m.img?" hasgif":""}"${m.pending?"":` data-hold="${esc(m.id)}"`}>${m.img?`<img class="cgif" data-dmimg="${esc(m.id)}" alt="Photo">`:""}${m.text?esc(m.text):""}</div>${reactHtml(m,"dm")}</div></div>`}
+  return `<div class="cmsg${mine?" mine":""}${m.pending?" pending":""}">${pic(m.from)}<div class="cbody"><div class="cmeta">${mine?"You":esc(nm(m.from))} · ${when}</div><div class="ctext${m.img?" hasgif":""}"${m.pending?"":` data-hold="${esc(m.id)}"`}>${m.img?`<img class="cgif" data-dmimg="${esc(m.id)}" alt="Photo">`:""}${m.text?esc(m.text):""}</div>${reactHtml(m,"dm")}</div></div>`}
 function dmRender(){dmBadge();if(!(CHAT.open&&DM.mode==="dm"))return;const head=$("#dmHead"),list=$("#dmList"),form=$("#dmForm");if(!list)return;
   let hh="",html="";
   if(!DM.cur){form.hidden=true;
