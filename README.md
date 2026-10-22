@@ -222,7 +222,13 @@ for your two cards), so the app draws a server-run table with the same code.
 - The deck and everyone's hole cards live in `mpsecret/{rr|th}`, which no
   client can read. Shuffles and rolls use Node's crypto RNG. Russian Roulette
   chamber rolls (including "shoot someone" and return fire) are rolled on the
-  server too; only your aim (did you hit) comes from your page.
+  server too; only your aim (did you hit) comes from your page. Return fire
+  is real time: your gun kicks the moment you tap Fire, the server rolls that
+  shot as soon as your move arrives and adds it to the table (`rshot`), so
+  everyone sees it go off right away; bots fire back one by one a beat later,
+  and a live hit drops the shooter on the spot.
+- `rrMove` and `thMove` keep one instance warm (`minInstances: 1`, 256 MiB) so
+  a move never waits on a cold start; that costs a few dollars a month each.
 - Timers (the 30s Hold'em clock, Russian Roulette's turn and return-fire
   windows, bots "thinking", pauses between streets) are deadlines written in
   the table doc (`sv.dl`). Short ones are slept through by the function; when

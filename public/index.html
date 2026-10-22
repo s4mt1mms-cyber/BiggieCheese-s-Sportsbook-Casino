@@ -3138,7 +3138,9 @@ function rrAimUI(o){o=o||{};return new Promise(res=>{const c=S.rr3,stg=$("#rrSta
     if(fired){const rc=new T.Raycaster();rc.setFromCamera({x:0,y:0},c.cam);const bods=c.seats.map((s,k)=>k>0&&s.body&&s.body.visible&&!s.body.userData.dead&&rrSt().alive[k]?s.body:null);const objs=bods.filter(Boolean);const xs=rc.intersectObjects(objs,true);
       if(xs.length){let ob=xs[0].object;while(ob&&!bods.includes(ob))ob=ob.parent;if(ob)hit=bods.indexOf(ob)}
       rrTone("cock");}
+    if(fired&&clone){const r0=clone.rotation.x,z0=clone.position.z;rrTw(220,e=>{const k=Math.sin(e*Math.PI);clone.rotation.x=r0+k*.4;clone.position.z=z0+k*.07},"lin");haptic&&haptic()} /* my gun goes off the instant I tap: no waiting on the table */
     setTimeout(()=>{ov.remove();if(clone){c.cam.remove(clone)}},fired?500:0);res({fired,hit})};
+  if(o.ctl)o.ctl.close=()=>{o.ctl.shut=1;fin(false)};
   ov.querySelector(".rrfirenow").onclick=e=>{e.stopPropagation();fin(true)};
   if(o.timeout){const ce=ov.querySelector(".rrcount");iv=setInterval(()=>{const l=Math.max(0,o.timeout-(Date.now()-t0));if(ce)ce.textContent=Math.ceil(l/1000)+"s";if(l<=0)fin(false)},200)}})}
 function rrRetB(st){return rrAliveN(st)===2?3:Math.min(4,rrBullets(st)+1)}
@@ -3159,14 +3161,19 @@ async function rrShotA(i,shot,say){const st=rrSt(),c=S.rr3,T=c&&c.T;const N=k=>k
   if(!shot.live){rrTone("click");say(`<b>*click*</b> Misfire! Empty chamber.`);await rrWait(450);return[]}
   if(shot.tg==null){rrTone("bang");if(c){const fl=new T.PointLight(0xffb040,5,4);fl.position.set(0,.03,.32);c.gun.add(fl);setTimeout(()=>c.gun.remove(fl),110)}say(`<b>BANG!</b> ${NC(i)} missed!`);await rrWait(500);return[]}
   rrBang(shot.tg);st.alive[shot.tg]=0;st.safe=0;haptic&&haptic();say(`<span class="neg"><b>BANG.</b> ${NC(i)} shot ${N(shot.tg)}${shot.tg===0?". You're out.":"."}</span>`);await rrWait(2000);return[shot.tg]}
-/* everyone else fires back at once */
-async function rrShotB(i,rt,say){const st=rrSt(),c=S.rr3,T=c&&c.T;const N=k=>k===0?"you":esc(RR_SEATS[k].n.split(" ")[0]),NC=k=>k===0?"You":esc(RR_SEATS[k].n.split(" ")[0]);
-  for(const r of rt){if(c){if(r.i===0){const f=$("#rrFlash");if(f&&r.live){f.className="rrflash";void f.offsetWidth;f.className="rrflash on"}}else if(c.seats[r.i].body){const b=c.seats[r.i].body,hp=new T.Vector3();b.userData.head.getWorldPosition(hp);
+/* one return-fire shot at seat i by seat r.i (live: the chamber was loaded) */
+function rrShot1(i,r){const c=S.rr3,T=c&&c.T;{if(c){if(r.i===0){const f=$("#rrFlash");if(f&&r.live){f.className="rrflash";void f.offsetWidth;f.className="rrflash on"}}else if(c.seats[r.i].body){const b=c.seats[r.i].body,hp=new T.Vector3();b.userData.head.getWorldPosition(hp);
       const tp=new T.Vector3();if(i===0)c.cam.getWorldPosition(tp);else c.seats[i].body.userData.head.getWorldPosition(tp);rrArmTo(c,r.i,"R",tp);if(r.live){const fl=new T.PointLight(0xffb040,4,3);fl.position.copy(hp);c.sc.add(fl);setTimeout(()=>c.sc.remove(fl),120)}}}
-    rrTone(r.live?"bang":"click");await rrWait(120)}
-  const hits=rt.filter(r=>r.live&&r.hit);setTimeout(()=>rrXGuns(false),1300);if(c)setTimeout(()=>rt.forEach(r=>{if(r.i>0&&c.seats[r.i].body&&!c.seats[r.i].body.userData.dead)rrArmRest(c,r.i)}),900);
-  if(hits.length){rrBang(i);st.alive[i]=0;st.safe=0;haptic&&haptic();say(`<span class="neg"><b>BANG.</b> ${hits.map(r=>NC(r.i)).join(" & ")} got ${N(i)}${i===0?". You're out.":"."}</span>`);await rrWait(2000);return[i]}
-  const fired=rt.filter(r=>r.fired!==false);say(rt.length?`${fired.filter(r=>r.live).length?"Shots fired, nobody hit.":"Click, click… every gun misfired."} ${NC(i)} ${i===0?"live":"lives"} on.`:`${NC(i)} ${i===0?"live":"lives"} on.`);rrSafe(st);await rrWait(900);return[]}
+    rrTone(r.live?"bang":"click")}}
+/* the guns go down; down = seat i was already dropped by a shot as it happened */
+const rrNC=k=>k===0?"You":esc(RR_SEATS[k].n.split(" ")[0]),rrNm=k=>k===0?"you":esc(RR_SEATS[k].n.split(" ")[0]);
+function rrRetHit(i,by,say){const st=rrSt();rrBang(i);st.alive[i]=0;st.safe=0;haptic&&haptic();say(`<span class="neg"><b>BANG.</b> ${by.map(r=>rrNC(r.i)).join(" & ")} got ${rrNm(i)}${i===0?". You're out.":"."}</span>`)}
+async function rrShotEnd(i,rt,say,down){const st=rrSt(),c=S.rr3,NC=rrNC;
+  const hits=rt.filter(r=>r.live&&r.hit);setTimeout(()=>rrXGuns(false),1300);if(c)setTimeout(()=>{for(let k=1;k<4;k++)if(k!==i&&c.seats[k].body&&!c.seats[k].body.userData.dead)rrArmRest(c,k)},900);
+  if(hits.length||down){if(!down)rrRetHit(i,hits,say);await rrWait(down?1400:2000);return[i]}
+  const fired=rt.filter(r=>r.fired!==false);say(fired.length?`${fired.filter(r=>r.live).length?"Shots fired, nobody hit.":"Click, click… every gun misfired."} ${NC(i)} ${i===0?"live":"lives"} on.`:`${NC(i)} ${i===0?"live":"lives"} on.`);rrSafe(st);await rrWait(900);return[]}
+/* everyone else fires back (a phone host's table: the whole volley at once) */
+async function rrShotB(i,rt,say){for(const r of rt){rrShot1(i,r);await rrWait(120)}return rrShotEnd(i,rt,say,false)}
 /* solo: bots fire back (1 in 5 loaded, 60% aim); you get the reticle yourself */
 async function rrRetaliateSolo(st,i,say){const nb=rrRetB(st);rrXGuns(true,i);say(`<b>Everyone draws on ${i===0?"you":esc(RR_SEATS[i].n.split(" ")[0])}!</b>`);await rrWait(250);const out=[];
   for(const k of [0,1,2,3]){if(k===i||!st.alive[k])continue;if(k===0){const a=await rrAimUI({ret:true,timeout:6000,label:`Shoot ${esc(RR_SEATS[i].n.split(" ")[0])}!`});out.push({i:0,fired:a.fired,live:a.fired&&rrRandN(5)<nb,hit:a.hit===i})}else out.push({i:k,live:rrRandN(5)<nb,hit:rrRandN(100)<(rrNecked(i)?88:60)})}
@@ -3439,7 +3446,7 @@ function rlOnRoom(){const r=RL.room;mpAck("rr",r);if(S.tab==="rr")rrHud();if(!r)
   if(RL.on&&RL.gid===r.gid){(r.ev||[]).forEach(e=>{if(e.n>RL.seen){RL.q.push(e);RL.seen=e.n}});rlPump()}
   if(RL.on&&r.gid!==RL.gid&&!rlIsHostOf())rlAbort("The table was reset.")}
 function rlIsHostOf(){return RL.host===S.me}
-function rlPump(){while(RL.w.length&&RL.q.length){const w=RL.w[0],e=RL.q[0];RL.q.shift();const tm=Array.isArray(w.t)?w.t.includes(e.t):e.t===w.t;if(tm&&(!w.g&&w.g!==0||e.d.g===w.g)){RL.w.shift();w.res(Object.assign({_t:e.t},e.d))}}}
+function rlPump(){while(RL.w.length&&RL.q.length){const w=RL.w[0],e=RL.q[0];RL.q.shift();const tm=Array.isArray(w.t)?w.t.includes(e.t):e.t===w.t;if(tm&&(!w.g&&w.g!==0||e.d.g===w.g)){RL.w.shift();w.res(Object.assign({_t:e.t,_n:e.n},e.d))}}}
 function rlNeed(t,g){return new Promise(res=>{RL.w.push({t,g,res});rlPump()})}
 function rlEmit(t,d){if(RL.host!==S.me)return;RL.n=Math.max((RL.n||0)+1,Date.now());RL.ev=(RL.ev||[]).concat({n:RL.n,t,d}).slice(-40);rlDoc().update({ev:RL.ev,at:Date.now()}).catch(()=>{})}
 const rlG=l=>(l+RL.my)%4,rlL=g=>(g-RL.my+4)%4;
@@ -3459,8 +3466,24 @@ async function rlGate(l,step){if(!RL.on)return;const g=rlG(l),x=rlSeatHuman(l);i
 async function rlMyShot(step){const st=rrSt();if(step!=="fire"||st.tgt!=="aim"){st.tgt=null;return null}st.tgt=null;st.busy=true;st.log="Aim at someone and fire.";rrHud();
   const a=await rrAimUI({label:"Aim at someone, then fire"});return{aim:1,tg:a.hit==null?null:rlG(a.hit),live:rrRandN(5)<rrBullets(st)}}
 /* when a shooter misses, every other living player gets a reticle at the same time */
-async function rlRetAim(st,l){const a=await rrAimUI({ret:true,timeout:6000,label:`Shoot ${l===0?"…":esc(RR_SEATS[l].n.split(" ")[0])}!`});return{fired:a.fired,live:a.fired&&rrRandN(5)<rrRetB(st),hit:a.hit===l}}
-function rlRetMine(st,l){if(l===0||!st.alive[0]||RL.dead)return Promise.resolve();if(RL.srv)rlReady("ret");return rlRetAim(st,l).then(r=>{RL.inN=Math.max((RL.inN||0)+1,Date.now());return db.doc("rrin/"+S.me).set({gid:RL.gid,n:RL.inN,s:"ret",r,wk:rlWk(),at:Date.now()}).catch(()=>{})})}
+async function rlRetAim(st,l,ctl){const a=await rrAimUI({ret:true,timeout:6000,ctl,label:`Shoot ${l===0?"…":esc(RR_SEATS[l].n.split(" ")[0])}!`});return{fired:a.fired,live:a.fired&&rrRandN(5)<rrRetB(st),hit:a.hit===l}}
+function rlRetMine(st,l){if(l===0||!st.alive[0]||RL.dead)return Promise.resolve();if(RL.srv)rlReady("ret");const ctl=RL.retCtl={},wk=rlWk();
+  return rlRetAim(st,l,ctl).then(r=>{if(RL.retCtl===ctl)RL.retCtl=null;if(ctl.shut)return;RL.inN=Math.max((RL.inN||0)+1,Date.now());return db.doc("rrin/"+S.me).set({gid:RL.gid,n:RL.inN,s:"ret",r,wk:RL.srv?wk:rlWk(),at:Date.now()}).catch(()=>{})})}
+function rlRetClose(){const c=RL.retCtl;RL.retCtl=null;if(c&&c.close)c.close()}
+/* return fire as it happens: a server table sends each shot (rshot) the moment it's taken, so it plays right then
+   (keeping the server's spacing if this page is behind); rt closes the volley and carries every shot, so anything
+   not seen as an rshot (a phone host's table, an older server) plays from it. My own tap already played locally. */
+async function rlRetLive(st,l,say){const G=rlG(l),seen={},toL=x=>({i:rlL(x.g),live:!!x.live,hit:x.hit===true||x.hit===G,fired:x.fired});
+  const mine=rlRetMine(st,l);let rt=null,down=false,ln=0,lt=0;
+  while(RL.on){const e=await rlNeed(["rshot","rt"]);if(!RL.on)break;
+    if(e._t==="rt"){if(e.g!==G)continue;rt=e.rt||[];break}
+    if(e.G!==G||seen[e.g])continue;seen[e.g]=1;
+    if(ln&&e._n>ln){const gap=Math.min(1500,e._n-ln)-(performance.now()-lt);if(gap>0)await new Promise(r=>setTimeout(r,gap))}ln=e._n||0;lt=performance.now();
+    if(e.fired===false||down)continue;const r=toL(e);rrShot1(l,r);
+    if(r.live&&r.hit){down=true;rlRetClose();rrRetHit(l,[r],say)}}
+  rlRetClose();await mine;if(!RL.on)return[];
+  for(const x of rt){if(seen[x.g]||x.fired===false)continue;rrShot1(l,toL(x));await rrWait(120)}
+  return rrShotEnd(l,rt.map(toL),say,down)}
 /* the server's current wait; a move must name it, so a late answer can't land on a later question */
 const rlWk=()=>((RL.room||{}).sv||{}).wk||0;
 async function rlCollectRet(st,l){const G=rlG(l),out=[],wait=[];
@@ -3541,8 +3564,8 @@ async function rlTurn(l){const st=rrSt(),c=S.rr3,T=c&&c.T,F=rlName(l),say=t=>{st
   else{const e=await rlNeed(["fire","shot"],G);if(e._t==="shot"){const sh=e.shot||{};shotL={tg:sh.tg==null?null:rlL(sh.tg),aimAt:sh.aimAt==null?null:rlL(sh.aimAt),live:!!sh.live}}else bang=!!e.bang}
   if(shotL){let dead=await rrShotA(l,shotL,say);if(!RL.on)return false;
     if(!dead.length){rrXGuns(true,l);say(`<b>Everyone draws on ${l===0?"you":esc(F)}!</b>`);let rtG;
-      if(RL.host===S.me){rlEmit("ret",{g:G});rtG=await rlCollectRet(st,l)}else{await rlNeed("ret",G);const mine=rlRetMine(st,l);const e=await rlNeed("rt",G);await mine;rtG=e.rt||[]}
-      dead=await rrShotB(l,rtG.map(x=>({i:rlL(x.g),live:!!x.live,hit:x.hit===true||x.hit===G,fired:x.fired})),say)}
+      if(RL.host===S.me){rlEmit("ret",{g:G});rtG=await rlCollectRet(st,l);dead=await rrShotB(l,rtG.map(x=>({i:rlL(x.g),live:!!x.live,hit:x.hit===true||x.hit===G,fired:x.fired})),say)}
+      else{await rlNeed("ret",G);dead=await rlRetLive(st,l,say)}}
     if(c)c.act=null;
     if(dead.includes(0)){RL.dead=true;const f=$("#rrFlash");if(f)f.className="rrflash";const sp=$("#rrSplat");if(sp)sp.className="rrsplat";rlSpecBanner(true)}
     if(c){await rrGunRest(c,l);c.gunAt=l}if(dead.length&&!RL.dead&&st.alive[0]&&st.alive.reduce((a,b)=>a+b,0)>1)rlDDShow();return dead.length>0}

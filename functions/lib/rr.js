@@ -10,10 +10,13 @@
 // T = rrtable/live. T.sv = server state: phase, deadline, who's alive, the bullet count streak, whose turn,
 // away (went quiet: bot plays the seat), misses, the current wait and its key wk (inputs must quote it).
 // Events (t, d) — exactly what the host emitted:
-//   draw {h:[4 cards]} · step {g,s,away,t} · tick {bo:[g]} · fire {g,bang} · shot {g,shot} · ret {g} · rt {g,rt} · end {g}
+//   draw {h:[4 cards]} · step {g,s,away,t} · tick {bo:[g]} · fire {g,bang} · shot {g,shot} · ret {g} · rshot {g,G,fired,live,hit,wk} · rt {g,rt} · end {g}
+// Return fire is real time: each shot (a player's tap, or a bot a beat later) is rolled and emitted as an
+// rshot the moment it happens, and a live hit drops the shooter G right then. rt closes the volley with
+// every shot taken (older pages, and phone hosts, only read rt).
 import { liveSeats, leader, idle, cleanName, num, ANIMAL_G } from "./lobby.js";
 
-const GATE = 40000, RET = 9000;
+const GATE = 40000, RET = 9000, BOT_RET = [400, 1500]; // bots fire back 0.4–1.5s after the guns come out
 // rough replay times (ms) of the app's animations, so gates aren't timed out before a seat even sees them
 // (a page that reaches its own move says so — "ready" — and its clock restarts from then)
 const A = { boot: 6000, card: 2000, drawEnd: 1800, pick: 5000, fireSelf: 3000, click: 2500, bang: 3500, shot: 2000, kill: 2500, retAim: 1500, shotB: 2500, blackout: 1800, redraw: 900 };
@@ -145,11 +148,13 @@ function resolveShot(T, ctx, g, sh, hum) {
     if (sh.live && sh.tg != null) { sv.alive[sh.tg] = 0; sv.safe = 0; later(sv, ctx, A.kill); return afterTurn(T, ctx, true); }
     // misfire or a miss: everyone else draws on the shooter
     emit(T, ctx, "ret", { g });
-    const need = [0, 1, 2, 3].filter((k) => k !== g && sv.alive[k] && human(T, k));
+    const others = [0, 1, 2, 3].filter((k) => k !== g && sv.alive[k]), need = others.filter((k) => human(T, k));
+    const base = Math.max(ctx.now, sv.clk || 0) + A.retAim, bt = {};
+    for (const k of others) if (!need.includes(k)) bt[k] = base + BOT_RET[0] + ctx.randN(BOT_RET[1] - BOT_RET[0] + 1);
     sv.ph = "ret";
-    if (!need.length) { sv.w = { s: "ret", G: g, need: [], got: {} }; return finishRet(T, ctx); }
-    openWait(T, ctx, { s: "ret", G: g, need, got: {} }, RET);
-    return;
+    openWait(T, ctx, { s: "ret", G: g, need, got: {}, bt, sh: [] }, RET);
+    sv.w.end = sv.dl;
+    return retStep(T, ctx);
   }
   const bang = ctx.randN(5) < bullets(sv);
   emit(T, ctx, "fire", { g, bang });
@@ -158,15 +163,37 @@ function resolveShot(T, ctx, g, sh, hum) {
   afterTurn(T, ctx, true);
 }
 
+/* one return-fire shot by seat k, rolled and shown the moment it's taken (r = {fired, hit: aimed true at G}) */
+function retShot(T, ctx, k, r) {
+  const sv = T.sv, w = sv.w, G = w.G;
+  const s = { g: k, fired: !!r.fired, live: !!r.fired && ctx.randN(5) < retB(sv), hit: r.fired && r.hit ? G : null };
+  w.sh = (w.sh || []).concat(s);
+  if (w.bt) delete w.bt[k];
+  emit(T, ctx, "rshot", { ...s, G, wk: w.wk });
+  if (s.live && s.hit === G) w.kill = 1; // G is down: nobody else's shot matters
+}
+const botRet = (T, ctx, k) => retShot(T, ctx, k, { fired: true, hit: ctx.randN(100) < (necked(T, ctx, T.sv.w.G) ? 88 : 60) });
+const retDl = (w) => Math.min(w.end, ...Object.values(w.bt || {}));
+/* the return-fire wait: fire the bots that are due; it's over once G is hit, everyone has fired, or time is up */
+function retStep(T, ctx) {
+  const sv = T.sv, w = sv.w;
+  if (w.end == null) w.end = sv.dl || ctx.now; // a wait opened by the previous server version
+  const due = Object.keys(w.bt || {}).map(Number).filter((k) => w.bt[k] <= ctx.now).sort((a, b) => w.bt[a] - w.bt[b]);
+  for (const k of due) { if (w.kill) break; botRet(T, ctx, k); }
+  if (w.kill || ctx.now >= w.end || (!Object.keys(w.bt || {}).length && w.need.every((k) => w.got[k]))) return finishRet(T, ctx);
+  sv.dl = retDl(w);
+}
+
 function finishRet(T, ctx) {
-  const sv = T.sv, w = sv.w, G = w.G, nb = retB(sv), out = [];
-  for (const k of [0, 1, 2, 3]) {
-    if (k === G || !sv.alive[k]) continue;
-    if (w.need.includes(k)) {
-      const r = w.got[k];
-      out.push(r ? { g: k, fired: !!r.fired, live: !!r.fired && ctx.randN(5) < nb, hit: r.hit ? G : null } : { g: k, fired: false, live: false, hit: null });
-    } else out.push({ g: k, live: ctx.randN(5) < nb, hit: ctx.randN(100) < (necked(T, ctx, G) ? 88 : 60) ? G : null });
+  const sv = T.sv, w = sv.w, G = w.G;
+  for (const k of [0, 1, 2, 3]) { // anyone who hasn't fired yet: bots still do (unless G is already down); quiet players don't
+    if (k === G || !sv.alive[k] || w.kill || (w.sh || []).some((s) => s.g === k)) continue;
+    const r = w.got[k];
+    if (r) retShot(T, ctx, k, r); // answered under the previous server version
+    else if (!w.need.includes(k)) botRet(T, ctx, k);
   }
+  const out = (w.sh || []).slice();
+  if (!w.kill) for (const k of w.need) if (sv.alive[k] && !out.some((s) => s.g === k)) out.push({ g: k, fired: false, live: false, hit: null });
   closeWait(T);
   emit(T, ctx, "rt", { g: G, rt: out });
   later(sv, ctx, A.shotB);
@@ -201,7 +228,8 @@ export function rrInput(T, uid, x, ctx) {
       const g = w.need.find((k) => (seat(T, k) || {}).uid === uid);
       if (g == null || (w.rdy || {})[g]) return false;
       w.rdy = { ...(w.rdy || {}), [g]: 1 };
-      sv.dl = Math.max(sv.dl || 0, ctx.now + RET - 1000);
+      w.end = Math.max(w.end == null ? sv.dl || 0 : w.end, ctx.now + RET - 1000);
+      sv.dl = retDl(w);
       return true;
     }
     if ((seat(T, w.g) || {}).uid !== uid || w.rdy) return false;
@@ -215,7 +243,9 @@ export function rrInput(T, uid, x, ctx) {
     if (g == null || w.got[g]) return false;
     const r = x.r && typeof x.r === "object" ? x.r : {};
     w.got[g] = { fired: !!r.fired, hit: !!r.hit };
-    if (w.need.every((k) => w.got[k])) finishRet(T, ctx);
+    if (w.kill) return true; // G was already shot down by someone quicker
+    retShot(T, ctx, g, w.got[g]);
+    retStep(T, ctx);
     return true;
   }
   if ((seat(T, w.g) || {}).uid !== uid) return false;
@@ -230,7 +260,7 @@ export function rrAdvance(T, ctx) {
     if (T.state !== "play" || !sv || sv.gid !== T.gid || sv.ph === "done") return;
     if (sv.dl && sv.dl > ctx.now) return;
     if (sv.w) { // the wait ran out
-      if (sv.w.s === "ret") finishRet(T, ctx); else gateDone(T, ctx, null);
+      if (sv.w.s === "ret") retStep(T, ctx); else gateDone(T, ctx, null);
       continue;
     }
     sv.dl = 0;

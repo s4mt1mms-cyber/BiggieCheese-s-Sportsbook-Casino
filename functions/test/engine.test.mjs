@@ -86,6 +86,7 @@ let n = 0;
 }
 
 /* ---------------- Russian Roulette ---------------- */
+let retShots = 0, kills = 0;
 for (let game = 0; game < 30; game++) {
   const T = {};
   touch("A", "B");
@@ -99,7 +100,28 @@ for (let game = 0; game < 30; game++) {
     const sv = T.sv;
     if (sv.w) {
       const w = sv.w;
-      if (w.s === "ret") { for (const g of w.need) rrInput(T, T.seats["s" + g].uid, { gid: T.gid, s: "ret", wk: w.wk, r: { fired: true, hit: rng.rnd() < 0.5 } }, mk()); continue; }
+      if (w.s === "ret") {
+        // every shot resolves the moment it's taken: one rshot per shot, a live hit ends the volley on the spot
+        const G = w.G, ev0 = T.ev.length, bots = Object.keys(w.bt || {}).length;
+        assert.ok(Object.values(w.bt || {}).every((t) => t <= w.end) && sv.dl <= w.end, "bots fire inside the window");
+        const pend = w.need.filter((g) => !w.got[g]);
+        if (pend.length && !(game % 7 === 3 && pend.includes(1))) { // in some games B never fires back
+          const g = pend[0];
+          assert.ok(rrInput(T, T.seats["s" + g].uid, { gid: T.gid, s: "ret", wk: w.wk, r: { fired: true, hit: rng.rnd() < 0.5 } }, mk()));
+          const rs = T.ev.slice(ev0).filter((e) => e.t === "rshot");
+          assert.ok(rs.length >= 1 && rs[0].d.g === g && rs[0].d.G === G, "the player's shot shows at once");
+          retShots += rs.length;
+          if (!sv.w) { const rt = T.ev.slice(ev0).find((e) => e.t === "rt"); assert.ok(rt && rt.d.rt.length === sv.alive.filter((a, k) => a || k === G).length - 1 || rt.d.rt.some((r) => r.live && r.hit === G)); }
+          continue;
+        }
+        now = Math.max(now, sv.dl); // wait: the next bot shot, or the window closing
+        rrAdvance(T, mk());
+        const fired = T.ev.slice(ev0).filter((e) => e.t === "rshot");
+        retShots += fired.length;
+        if (sv.w && sv.w.s === "ret") assert.ok(fired.length >= 1 || bots === 0 || Object.keys(sv.w.bt).length < bots, "a due bot fires");
+        else { const rt = T.ev.slice(ev0).find((e) => e.t === "rt"); assert.ok(rt, "volley closes with rt"); if (rt.d.rt.some((r) => r.live && r.hit === G)) { assert.equal(sv.alive[G], 0); kills++; } }
+        continue;
+      }
       const uid = T.seats["s" + w.g].uid;
       if (game % 5 === 0 && uid === "B") { now = sv.dl; continue; } // B goes quiet: two misses and a bot plays the seat
       const dl0 = sv.dl; now += 20000; // the page is 20s behind; when it shows the move, the 40s clock restarts
@@ -118,5 +140,35 @@ for (let game = 0; game < 30; game++) {
   assert.ok(alive <= 1);
   if (game === 0) console.log("rr: events seen", [...seen].join(","), "away", JSON.stringify(T.sv.away));
 }
-console.log("rr: 30 games to completion");
+console.log("rr: 30 games to completion; return-fire shots", retShots, "return-fire kills", kills);
+assert.ok(retShots > 0, "return fire happened");
+
+/* return fire, shot by shot */
+{
+  const ret = (w, dl) => ({ state: "play", gid: 1, srv: true, seats: { s0: { uid: "A" }, s1: { uid: "B" } }, ev: [],
+    sv: { gid: 1, ph: "ret", alive: [1, 1, 1, 1], away: {}, miss: {}, safe: 0, turn: 2, clk: 0, evn: 0, wk: 5, w: { wk: 5, ...w }, dl } });
+  const fix = (v) => ({ ...mk(), randN: () => v }); // 0: every chamber live and every bot on target; 4: all empty
+  // A's live hit drops G at once: one rshot, the volley closes, the bot due later never fires
+  let T = ret({ s: "ret", G: 2, need: [0, 1], got: {}, bt: { 3: now + 1000 }, sh: [], end: now + 9000 }, now + 1000);
+  assert.ok(rrInput(T, "A", { gid: 1, s: "ret", wk: 5, r: { fired: true, hit: true } }, fix(0)));
+  assert.deepEqual(T.ev.map((e) => e.t), ["rshot", "rt"]);
+  assert.deepEqual(T.ev[0].d, { g: 0, fired: true, live: true, hit: 2, G: 2, wk: 5 });
+  assert.equal(T.sv.alive[2], 0); assert.equal(T.sv.w, null); assert.equal(T.ev[1].d.rt.length, 1);
+  assert.equal(rrInput(T, "B", { gid: 1, s: "ret", wk: 5, r: { fired: true, hit: true } }, fix(0)), false, "too late");
+  // a miss doesn't end it: the bot fires when due, B's window runs out, G lives on
+  T = ret({ s: "ret", G: 2, need: [0, 1], got: {}, bt: { 3: now + 1000 }, sh: [], end: now + 9000 }, now + 1000);
+  assert.ok(rrInput(T, "A", { gid: 1, s: "ret", wk: 5, r: { fired: true, hit: false } }, fix(4)));
+  assert.deepEqual(T.ev.map((e) => e.t), ["rshot"]); assert.equal(T.sv.dl, now + 1000, "next: the bot's shot");
+  rrAdvance(T, { ...fix(4), now: now + 1000 });
+  assert.deepEqual(T.ev.map((e) => e.t), ["rshot", "rshot"]); assert.equal(T.ev[1].d.g, 3); assert.equal(T.sv.dl, now + 9000);
+  rrAdvance(T, { ...fix(4), now: now + 9000 });
+  const rt = T.ev.find((e) => e.t === "rt").d.rt;
+  assert.deepEqual(rt.map((r) => [r.g, r.fired]), [[0, true], [3, true], [1, false]]); assert.equal(T.sv.alive[2], 1);
+  // a wait opened by the previous server version (no bt/sh/end; answers in got) still finishes as before
+  T = ret({ s: "ret", G: 2, need: [0, 1], got: { 0: { fired: true, hit: false } } }, now - 1);
+  rrAdvance(T, fix(4));
+  const old = T.ev.find((e) => e.t === "rt").d.rt;
+  assert.deepEqual(old.map((r) => r.g).sort(), [0, 1, 3]); assert.equal(T.ev.filter((e) => e.t === "rshot").length >= 2, true);
+  console.log("rr: return fire resolves shot by shot");
+}
 console.log("engine tests passed");

@@ -25,7 +25,12 @@ const db = getFirestore();
 // The region must be one Cloud Firestore triggers support for this project's database location (nam5 -> us-central1).
 setGlobalOptions({ region: "us-central1", memory: "256MiB", timeoutSeconds: 120, maxInstances: 10 });
 
-const CHAIN_WAIT = 8000;   // sleep through waits up to this long...
+// Moves are the latency players feel (a tap -> everyone sees it), so keep one instance of each move trigger
+// warm: no cold start on the first move after a quiet spell. The smallest size idles for a few dollars a month each.
+const WARM = { minInstances: 1, memory: "256MiB" };
+
+const CHAIN_WAIT = 8000;   // sleep through waits up to this long (return fire: RET_WAIT, so bots fire back on time)...
+const RET_WAIT = 30000;
 const CHAIN_BUDGET = 90000; // ...for at most this long per invocation (timeoutSeconds is 120)
 
 const TABLES = {
@@ -78,7 +83,7 @@ export async function step(tb, job) {
     if (JSON.stringify(sec) !== s0) tx.set(sRef, encode(sec));
     for (const h of ctx.holes) tx.set(db.doc("thhole/" + h.id), encode(h.data));
     for (const c of ctx.chat) tx.create(db.collection("chat").doc(), encode(c));
-    return { changed, dl: live ? T.sv.dl || 0 : 0 };
+    return { changed, dl: live ? T.sv.dl || 0 : 0, ret: !!(live && T.sv.w && T.sv.w.s === "ret") };
   });
 }
 
@@ -96,7 +101,7 @@ async function drive(tb, job, chain = true) {
   beat().catch(() => {});
   while (chain && r.changed && r.dl > 0) {
     const wait = r.dl - Date.now();
-    if (wait > CHAIN_WAIT || Date.now() - t0 + wait > CHAIN_BUDGET) break;
+    if (wait > (r.ret ? RET_WAIT : CHAIN_WAIT) || Date.now() - t0 + wait > CHAIN_BUDGET) break;
     await sleep(Math.max(0, wait) + 40);
     r = await step(tb, { kind: "tick" });
   }
@@ -129,13 +134,13 @@ export const mpTick = onDocumentWritten("mptick/{uid}", safely(async (ev) => {
   await drive(d.tb, { kind: "tick" });
 }));
 
-export const thMove = onDocumentWritten("thin/{uid}", safely(async (ev) => {
+export const thMove = onDocumentWritten({ document: "thin/{uid}", ...WARM }, safely(async (ev) => {
   const d = payload(ev);
   if (!d) return;
   await drive("th", { kind: "in", uid: ev.params.uid, data: decode(d) });
 }));
 
-export const rrMove = onDocumentWritten("rrin/{uid}", safely(async (ev) => {
+export const rrMove = onDocumentWritten({ document: "rrin/{uid}", ...WARM }, safely(async (ev) => {
   const d = payload(ev);
   if (!d) return;
   await drive("rr", { kind: "in", uid: ev.params.uid, data: decode(d) });
