@@ -19,3 +19,6 @@ Thumbs.db
 .vscode/
 .idea/
 tools/migrate/invites-*.csv
+
+# Python
+__pycache__/
