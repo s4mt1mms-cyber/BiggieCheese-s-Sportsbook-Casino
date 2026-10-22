@@ -189,6 +189,16 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
 - **Bank** (`bk*`): transfers; loans with optional collateral (seizure all-at-once or one card per interval),
   auto-collection ONLY on payment dates (takes all you have if short), pay in chunks anytime, early payoff =
   principal + interest accrued so far (loan rate & compounding, payments stop accruing when made), capped at the rest of the schedule, never below what is overdue.
+- **Aura Shop** (`au*`, side menu, tab `aura`, `viewAura`): glowing auras around profile pictures. Catalog `AURAS` (Mythic
+  Celestial 1,000,000; Legendary Flames/Electricity(`zap`)/Void 250,000; Animated Sparkles/Rainbow/Hearts 150,000; solid colors 25,000).
+  Data on the player's own prefs: `auras` {id:true} (owned forever), `aura` (equipped id, null = none), `auraSpent` (total BB spent,
+  subtracted in `ledger().balOf`). A purchase writes all three in ONE prefs update (`auBuy`, busy flag `S._auBusy`, confirm step
+  `S.auAsk` that ignores a confirm tap <450 ms after arming); equipping is free (`auEquip`). `auraOf(id)` (equipped AND owned) is
+  read by `av()`/`pic()`/`bigAv()`, which wrap the picture in `auWrap()` → `<span class="aw au-<id> lt|md|fx">`: `lt` = tiny
+  inline avatars (cheap ring), `md` = normal pics/chat (pseudo-elements only, no SVG filters/particles), `fx` = big pics (SVG filters
+  `#auFire`/`#auZap` in `<svg id="auFx">`, particle `<i>` spans). `--s` = avatar size per context. **Priority:** an equipped aura
+  replaces the commish ring (`picwrap.aura`/`avaura`; the "Commissioner" title stays), the Dragon glow and the Shrex swamp glow;
+  with None they come back. On `av()` the green online outline becomes a small green dot (`.aod`). Reduced motion stops the animations.
 - **Presence**: "● N online" pill, green avatar rings — from existing prefs stamps (no extra writes).
 - **Admin tab**: invite codes, data import, card tools, previews.
 
