@@ -176,6 +176,8 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
     extra rlSpins; the new result is final (respin again only while respins remain).
   - `shrex` **Shrex** (Grail, art pending): blackjack streak bonuses ×1.5 and a green "swamp" glow on avatars/profile pictures (`.swamp`, replaces the Dragon glow).
   - `social` **Diverse Family** (Rare, art pending): pulling it posts "<name> +10 million social credit score!" in league chat. No money.
+  - `hilo` **The Grail · Daddy Christian** (Grail, `mv-art-63` in meta/cards_mv; the ability is attached in code by `MV_ABIL` in `mvMerge`):
+    High-Low guesses after 4 right in a row (`st.n`, run counter, in `hlSnap`) are priced at `HL_CHR_EDGE` 1.02/p instead of 0.97/p (`hlMultX`).
   - `div:6999` **Joe Camel** (Elite, art pending).
   Tests: `node tools/test/mv-abilities.test.mjs` (craps factors exact + Monte Carlo through `crResolve`, tithe split math, respin math).
 - **Market**: list for price and/or trade wants (specific card or "rarity or better"), private listings (`only`).

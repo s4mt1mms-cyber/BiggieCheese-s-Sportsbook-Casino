@@ -3349,10 +3349,14 @@ async function crRoll(){const st=crState();if(st.rolling)return;if(crSum(st.bets
 /* ---------- High-Low vs the house: 3% edge, ties lose, cash out any time ---------- */
 const HL_EDGE=0.97,HL_R=["A","2","3","4","5","6","7","8","9","10","J","Q","K"],HL_S=["♠","♥","♦","♣"];
 const hlP=(r,g)=>(g==="hi"?13-r:r-1)/13;
-const hlMult=(r,g)=>{const p=hlP(r,g);return p>0?Math.floor(HL_EDGE/p*100)/100:0};
+const hlMult=(r,g,e)=>{const p=hlP(r,g);return p>0?Math.floor((e||HL_EDGE)/p*100)/100:0};
+/* Daddy Christian (abil "hilo"): once you have 4 right in a row, every guess after that is priced with a 2% edge for you */
+const HL_CHR_EDGE=1.02,HL_CHR_AFTER=4;
+const hlChr=st=>st.run&&(st.n||0)>=HL_CHR_AFTER&&hasAb("hilo");
+const hlMultX=(st,g)=>hlMult(st.card.r,g,hlChr(st)?HL_CHR_EDGE:0);
 const hlDraw=()=>{const u=new Uint32Array(2);crypto.getRandomValues(u);return{r:1+u[0]%13,s:u[1]%4}};
 const hlCard=(c,cls)=>`<div class="hlcard ${cls||""} ${c.s===1||c.s===2?"red":""}"><span>${HL_R[c.r-1]}</span><i>${HL_S[c.s]}</i><span class="br">${HL_R[c.r-1]}</span></div>`;
-function hlSt(){if(!S.hl){const p=S.prefs[S.me]||{};S.hl={stake:0,mult:1,card:(p.hlCard)||hlDraw(),run:false,busy:false,hist:[]}}return S.hl}
+function hlSt(){if(!S.hl){const p=S.prefs[S.me]||{};S.hl={stake:0,mult:1,n:0,card:(p.hlCard)||hlDraw(),run:false,busy:false,hist:[]}}return S.hl}
 function viewHilo(){if(!S.me)return `<div class="empty">Sign in to play.</div>`;
   return `<div class="hlwrap">${actBar("hl")}<div class="hltable">${gwBtn("hilo")}<div id="gwViewers" class="gwvw"></div><div class="eyebrow">Ties lose · 97% return</div><div class="hlrow"><div id="hlCard"></div><div class="hlside"><div class="stlbl">Riding</div><b class="num" id="hlRide">0 BB</b><div class="stlbl">Multiplier</div><b class="num" id="hlMult">1.00×</b></div></div>
   <div class="crmsg" id="hlMsg">Bet, then guess if the next card is higher or lower.</div><div class="hlhist" id="hlHist"></div></div>
@@ -3363,7 +3367,7 @@ function hlRefresh(){const st=hlSt(),p=S.prefs[S.me]||{},bal=Math.floor(ledger()
   const c=$("#hlCard");if(c&&!st.busy)c.innerHTML=hlCard(st.card);
   const set=(id,t)=>{const e=$(id);if(e)e.innerHTML=t};
   set("#hlRide",st.run?Math.floor(st.stake*st.mult).toLocaleString()+" BB":"0 BB");set("#hlMult",st.mult.toFixed(2)+"×");
-  const mh=hlMult(st.card.r,"hi"),ml=hlMult(st.card.r,"lo");set("#hlHi",mh?mh.toFixed(2)+"×":"—");set("#hlLo",ml?ml.toFixed(2)+"×":"—");
+  const mh=hlMultX(st,"hi"),ml=hlMultX(st,"lo");set("#hlHi",mh?mh.toFixed(2)+"×":"—");set("#hlLo",ml?ml.toFixed(2)+"×":"—");
   document.querySelectorAll("[data-hl]").forEach(b=>{b.disabled=st.busy||!hlMult(st.card.r,b.dataset.hl)||(!st.run&&!st.stake)});
   set("#hlStake",st.stake.toLocaleString()+" BB");set("#hlBal",(bal-(st.run?0:st.stake)).toLocaleString()+" BB");
   const cash=$("#hlCash");if(cash){cash.disabled=!st.run||st.busy;cash.textContent=st.run?`Cash out ${Math.floor(st.stake*st.mult).toLocaleString()}`:"Cash out"}
@@ -3376,19 +3380,19 @@ function hlRefresh(){const st=hlSt(),p=S.prefs[S.me]||{},bal=Math.floor(ledger()
     if(S._hlLB!==x){S._hlLB=x;lb.innerHTML=x}}}
 function hlMsg(t,cls){const m=$("#hlMsg");if(m){m.innerHTML=t;m.className="crmsg "+(cls||"")}}
 async function hlSave(patch){patch.hlLive=hlSnap();Object.assign(S.prefs[S.me]=S.prefs[S.me]||{},patch);try{await db.doc("prefs/"+S.me).update(patch)}catch(_){toast("That round didn't save. Check your connection.")}}
-async function hlGuess(g){const st=hlSt();if(st.busy)return;const m=hlMult(st.card.r,g);if(!m)return;
+async function hlGuess(g){const st=hlSt();if(st.busy)return;const m=hlMultX(st,g);if(!m)return;
   const p=S.prefs[S.me]||{};
   if(!st.run){if(!st.stake)return toast("Pick a bet first.");if(st.stake>Math.floor(ledger().balOf(S.me)))return toast("Not enough BiggieBucks.");
-    st.run=true;st.mult=1;hlSave({hlNet:(Number(p.hlNet)||0)-st.stake})}
+    st.run=true;st.mult=1;st.n=0;hlSave({hlNet:(Number(p.hlNet)||0)-st.stake})}
   st.busy=true;hlRefresh();const nx=hlDraw(),old=st.card;
   const box=$("#hlCard");if(box)box.innerHTML=hlCard(old,"out")+hlCard(nx,"in");
   await new Promise(r=>setTimeout(r,550));st.busy=false;st.card=nx;
   const won=g==="hi"?nx.r>old.r:nx.r<old.r;st.hist.unshift({r:nx.r,w:won});const q=S.prefs[S.me]||{};
-  if(won){st.mult=Math.floor(st.mult*m*100)/100;haptic&&haptic();hlMsg(`<span class="pos">${HL_R[nx.r-1]}! Riding ${Math.floor(st.stake*st.mult).toLocaleString()} BB.</span> Keep going or cash out.`,"win");hlSave({hlCard:nx})}
-  else{const lost=st.stake;st.run=false;st.mult=1;hlMsg(`<span class="neg">${HL_R[nx.r-1]}${nx.r===old.r?", same rank, house wins":""}. Lost <b class="num">−${lost.toLocaleString()} BB</b>.</span>`,"lose");
+  if(won){st.mult=Math.floor(st.mult*m*100)/100;st.n=(st.n||0)+1;haptic&&haptic();hlMsg(`<span class="pos">${HL_R[nx.r-1]}! Riding ${Math.floor(st.stake*st.mult).toLocaleString()} BB.</span>${hlChr(st)?" 🔥 Christian's 2% edge is on.":""} Keep going or cash out.`,"win");hlSave({hlCard:nx})}
+  else{const lost=st.stake;st.run=false;st.mult=1;st.n=0;hlMsg(`<span class="neg">${HL_R[nx.r-1]}${nx.r===old.r?", same rank, house wins":""}. Lost <b class="num">−${lost.toLocaleString()} BB</b>.</span>`,"lose");
     hlSave({hlCard:nx,hlRounds:(Number(q.hlRounds)||0)+1});if(st.stake>Math.floor(ledger().balOf(S.me)))st.stake=0}
   hlRefresh()}
-async function hlCash(){const st=hlSt();if(!st.run||st.busy)return;const pay=Math.floor(st.stake*st.mult),p=S.prefs[S.me]||{};st.run=false;st.mult=1;
+async function hlCash(){const st=hlSt();if(!st.run||st.busy)return;const pay=Math.floor(st.stake*st.mult),p=S.prefs[S.me]||{};st.run=false;st.mult=1;st.n=0;
   hlMsg(`<span class="pos">Cashed out <b class="num">+${(pay-st.stake).toLocaleString()} BB</b> profit.</span>`,"win");
   await hlSave(tiAdd({hlNet:(Number(p.hlNet)||0)+pay,hlRounds:(Number(p.hlRounds)||0)+1},pay-st.stake));if(st.stake>Math.floor(ledger().balOf(S.me)))st.stake=0;hlRefresh()}
 document.addEventListener("click",e=>{const t=e.target.closest("[data-hl],[data-hlchip],[data-hlact]");if(!t||S.tab!=="hilo")return;const st=hlSt();
@@ -4040,7 +4044,7 @@ function gwRender(){if(!S.gw)return;const g=S.gw.g;let o=$("#gwOv");if(!o){o=doc
 function gwBtn(g){return `<button type="button" class="gwbtn" data-gwopen="${g}">👁 Watch</button>`}
 document.addEventListener("click",e=>{if(e.target.closest("[data-chatopen]")){chatOpen(true);return}const b=e.target.closest("[data-gwopen]");if(b){e.preventDefault();gwOpen(b.dataset.gwopen);return}const w=e.target.closest("[data-gwwatch]");if(w){const[g,id]=w.dataset.gwwatch.split(":");gwSet(g,id)}});
 /* publishing my live state */
-function hlSnap(){const st=hlSt();let msg="";const m=$("#hlMsg");if(m)msg=m.textContent;return{card:st.card,stake:st.stake,mult:st.mult,run:st.run,hist:st.hist.slice(0,10),msg:msg.slice(0,140),at:Date.now()}}
+function hlSnap(){const st=hlSt();let msg="";const m=$("#hlMsg");if(m)msg=m.textContent;return{card:st.card,stake:st.stake,mult:st.mult,n:st.n||0,run:st.run,hist:st.hist.slice(0,10),msg:msg.slice(0,140),at:Date.now()}}
 function rrPub(now){if(S.rrSpec||RL.on)return;const st=rrSt();if(!S.me)return;const tmp=document.createElement("div");tmp.innerHTML=st.log||"";
   const L={phase:st.phase,alive:st.alive,turn:st.turn,paid:st.paid||0,cards:st.cards?st.cards.map(c=>c?c.t:null):null,log:esc(tmp.textContent.slice(0,160)),ev:S.rrEv||[],at:Date.now()};
   const sig=JSON.stringify({...L,at:0});if(sig===rrPub.sig&&!now)return;rrPub.sig=sig;clearTimeout(rrPub.t);const go=()=>{rrPub.last=Date.now();Object.assign(S.prefs[S.me]=S.prefs[S.me]||{},{rrLive:L});db.doc("prefs/"+S.me).update({rrLive:L}).catch(()=>{})};
@@ -4876,9 +4880,12 @@ const CARD_ABIL={
   hof:{n:"House Money",ic:"🏦",t:"While you hold it, borrow 10,000 BB from the House in the Bank for 1 day at 5%: pay back 10,500 BB after 24 hours (taken automatically on the due time, whatever you have if you're short). One loan at a time. The loan stays yours to repay even if you sell the card."},
   slop:{n:"Royal Respin",ic:"🎡",t:"5 roulette respins a day. After a spin that loses you money, tap Respin: that spin is cancelled and the wheel spins again with the exact same bets. The new result counts, win or lose. Resets at 1 AM ET. Extra copies don't stack."},
   shrex:{n:"Swamp Streak",ic:"🟢",t:"Blackjack win-streak bonuses pay 1.5× while you hold it, and your profile picture gets a green swamp glow. Extra copies don't stack."},
+  hilo:{n:"Hot Streak",ic:"🔥",t:"High-Low: once you have 4 right in a row, every guess after that pays with a 2% edge for you instead of the house's 3%. Cash out any time. Extra copies don't stack."},
   social:{n:"Social Credit",ic:"📣",t:"Whoever pulls this card from a pack gets announced in league chat: +10 million social credit score! No money involved."}};
 const mvAddCards=()=>MV_ADD.map(([k,r,name,o])=>{o=o||{};return{id:"mv-"+k,r,name,sub:"Multiverse",desc:o.desc||(o.img===false?"Art coming soon. Part of the Multiverse collection.":"Part of the Multiverse collection."),full:true,code:true,img:o.img===false?null:`/cards/mv/${k}.webp?v=${MV_IMGV}`,...(o.abil?{abil:o.abil}:{}),...(o.div!=null?{div:o.div}:{})}});
-function mvMerge(list){const ids=new Set(list.map(c=>c.id));return[...list,...mvAddCards().filter(c=>!ids.has(c.id))]}
+/* abilities for cards that live in meta/cards_mv (made with the Admin tools, so they carry no abil field) */
+const MV_ABIL={"mv-art-63":"hilo"};
+function mvMerge(list){const ids=new Set(list.map(c=>c.id));list=list.map(c=>MV_ABIL[c.id]&&!c.abil?{...c,abil:MV_ABIL[c.id]}:c);return[...list,...mvAddCards().filter(c=>!ids.has(c.id))]}
 /* daily dividend for one copy: a card's own div overrides the rarity table; the curse card pays nothing */
 const cardDiv=c=>!c||c.abil==="curse"?0:c.div!=null?Number(c.div)||0:CARD_DIV[c.r];
 /* what abilities a player holds right now: {abil: copies}; cached until the current task ends (like ledger()) */
@@ -4893,6 +4900,7 @@ function activeCards(id){id=id||S.me;const cs=myCards(id),out=[],seen=new Set(),
     else if(c.abil==="dean")add(k,"🎲",`+${(CR_EDGE*100).toFixed(2).replace(/0$/,"")}% edge at craps`,["cr"]);
     else if(c.abil==="slop")add(k,"🎡",me?`${slopLeft()} of ${SLOP_DAY} roulette respins left today`:`${SLOP_DAY} roulette respins a day`,["rl"]);
     else if(c.abil==="shrex")add(k,"🟢","Blackjack streak bonuses ×1.5 + swamp glow",["bj"]);
+    else if(c.abil==="hilo")add(k,"🔥","High-Low: 2% edge for you after 4 right in a row",["hl"]);
     else if(c.abil==="hof")add(k,"🏦","Borrow 10,000 BB from the House (Bank)",["bank"]);
     if(c.div!=null&&c.abil!=="curse")add(k,"💸",`Pays ${Number(c.div).toLocaleString()} BB a day`,["div"]);
     if(k==="pm-peter")add(k,"⚡",`Card dividend ×${Math.min(3,Math.pow(1.5,Math.min(3,Number(cs[k])||0)))}`,["div"]);
@@ -5458,6 +5466,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:30,d:"Oct 22",t:[["🔥","Daddy Christian has an ability: at High-Low, once you get 4 right in a row, every guess after that pays with a 2% edge for you"]]},
  {v:29,d:"Oct 22",t:[["⚡","See which of your cards are active: your collection lists every card giving you a boost or ability, and each game shows the ones working there"]]},
  {v:28,d:"Oct 22",t:[["🎲","Craps Dean Strow: 1.85% edge"]]},
  {v:27,d:"Oct 22",t:[["🎴","Pack odds tweak: Grail pack Elite 16.1%, Grail 5%; Dragon pack Elite 16%, Grail 5%. Dragon odds unchanged"],["🐉","Fixed: the Dragon pack no longer shows Sold out while better cards are still available"]]},
