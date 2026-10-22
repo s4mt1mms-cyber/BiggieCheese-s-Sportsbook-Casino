@@ -919,7 +919,10 @@ body.pkquake{animation:pkquake .12s linear 34}@keyframes pkquake{25%{transform:t
 .wkrecap .pos,.wkrecap .num.pos{color:#5cff72!important}.wkrecap .neg,.wkrecap .num.neg{color:#ff6262!important}
 .wkrecap.big .wkrgrid b{font-size:18px}.recapbox{gap:12px}
 /* profile popup: compact on phones so it fits */
-#memberView .mvbox{padding:14px 14px 16px;box-sizing:border-box;overflow-y:auto;-webkit-overflow-scrolling:touch;width:min(560px,calc(100vw - 24px))}
+#memberView{overflow:hidden!important;touch-action:pan-y;overscroll-behavior:none}
+#memberView .mvbox{padding:14px 14px 16px;box-sizing:border-box;overflow-x:hidden!important;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior:contain;width:min(560px,calc(100vw - 24px));max-width:calc(100vw - 24px)}
+#memberView .mvhead>div{min-width:0;max-width:100%}
+html.mvlock,html.mvlock body{overflow:hidden!important;overscroll-behavior:none}
 #memberView .mvhead{align-items:flex-start;gap:12px;padding-right:44px}
 #memberView .mvhead h2{font-size:clamp(20px,6vw,26px);line-height:1.1;margin:2px 0 4px;overflow-wrap:anywhere}
 #memberView .mvhead .stline{font-size:13px;gap:2px 12px;margin-top:4px}
@@ -6264,7 +6267,7 @@ function render(){if(S._rTab!==S.tab){const was=S._rTab;S._rTab=S.tab;try{if(was
   else{mountChat(false);S._bjSig=null;const x=({bank:viewBank,aura:viewAura,home:viewHome,board:viewBoard,futures:viewFutures,nfl:viewNfl,mine:viewMine,standings:viewStandings,setup:viewSetup}[S.tab]||viewBoard)();
     /* background snapshots (heartbeats, chat, other players' prefs) re-render often; skip the rebuild when this view's HTML is unchanged and nothing else touched it */
     if(viewDirty(v)||x!==v._gen||v._genTab!==S.tab){v.innerHTML=x;v._gen=x;v._genTab=S.tab}genRan=true}
-  const mv=$("#memberView");mv.hidden=!S.viewMember;if(S.viewMember){const x=memberOverlay();if(x!==S._mvHtml){S._mvHtml=x;mv.innerHTML=x}}else S._mvHtml=null;
+  const mv=$("#memberView");mv.hidden=!S.viewMember;document.documentElement.classList.toggle("mvlock",!!S.viewMember);if(S.viewMember){const x=memberOverlay();if(x!==S._mvHtml){S._mvHtml=x;mv.innerHTML=x}}else S._mvHtml=null;
   const pf=$("#profile");pf.hidden=!S.profileOpen;
   if(S.profileOpen&&S.me){const p=S.prefs[S.me]||{},pend=S.pendingPhoto,u=pend||logoOf(S.me);
     const html=`<div class="pickbox" role="dialog" aria-modal="true" aria-labelledby="pfTitle"><div class="eyebrow">Your profile</div>
