@@ -118,7 +118,7 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   `gameById()` synthesizes a game from the results doc (`nflGame`), `grade()` → `nflGrade` (OT counts; tie/exact line/void =
   push), so the ledger, My bets, recaps and standings need nothing special. Price is re-checked against `meta/nfl` on submit.
   Rules: NFL bets can only be created before `nfl/{wk}.g[id].kick`, and only admins can change them afterwards.
-- **Casino**: Blackjack (`bj*`; 2-deck shoes, streak bonuses 5:+2,500 · 6:+5,000 · 7–9:+15,000 · 10+:+50,000 at any bet,
+- **Casino**: Blackjack (`bj*`; 2-deck shoes, streak bonus = `bjStreakMult(n)` × the hand's bet (3 in a row 1×, 4 2×, then +2× per win: 5 4×, 6 6×, 7 8× …, no cap; Shrex 2×),
   0.5 s cooldown between deals), Roulette (`rl*` — note `rl` prefix is ALSO used for live Russian Roulette lobby code),
   Craps (`cr*`), High-Low (`hl*`), Flappy Cheese (25 BB/pipe, 10k/day cap; Vector card gives one 10× uncapped run/day),
   Revenge rat hunt (`revengeStart`), mining (25 BB/min while the app is on screen).
