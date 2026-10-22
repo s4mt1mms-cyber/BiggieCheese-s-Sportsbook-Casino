@@ -918,6 +918,18 @@ body.pkquake{animation:pkquake .12s linear 34}@keyframes pkquake{25%{transform:t
 .wkrgrid b{font-size:16px;font-weight:800}.wkrnet{font-weight:700}.wkrnet b{font-size:18px}
 .wkrecap .pos,.wkrecap .num.pos{color:#5cff72!important}.wkrecap .neg,.wkrecap .num.neg{color:#ff6262!important}
 .wkrecap.big .wkrgrid b{font-size:18px}.recapbox{gap:12px}
+/* profile popup: compact on phones so it fits */
+#memberView .mvbox{padding:14px 14px 16px;box-sizing:border-box;overflow-y:auto;-webkit-overflow-scrolling:touch;width:min(560px,calc(100vw - 24px))}
+#memberView .mvhead{align-items:flex-start;gap:12px;padding-right:44px}
+#memberView .mvhead h2{font-size:clamp(20px,6vw,26px);line-height:1.1;margin:2px 0 4px;overflow-wrap:anywhere}
+#memberView .mvhead .stline{font-size:13px;gap:2px 12px;margin-top:4px}
+#memberView .mvhead .pic.big,#memberView .mvhead .badge.pic.big{width:58px;height:58px;font-size:20px}
+#memberView .mvhead .aw.big{--s:58px}
+#memberView .mvhead .zoombtn{flex:none;padding:6px}
+#memberView .mvdm{min-height:36px;padding:0 14px;font-size:14px;margin-top:8px}
+#memberView .scgrid{max-width:300px;margin:0 auto}
+#memberView .profset{padding:9px 12px;font-size:14px}
+#memberView h3{font-size:18px;margin:12px 0 8px}
 .cdrg{border-color:transparent!important;background:linear-gradient(#120d18,#0b0910) padding-box,conic-gradient(from var(--dga,0deg),#ff6ad5,#ffe66a,#6affb0,#7fe8ff,#b06cff,#ff6ad5) border-box!important;border:2px solid transparent!important;animation:drgBorder 3s linear infinite;box-shadow:0 0 24px rgba(255,120,230,.35),0 0 40px rgba(120,230,255,.25)}
 .cdrg .eyebrow{background:linear-gradient(90deg,#ff9ee5,#ffe66a,#86ffd2,#7fe8ff,#c79bff);-webkit-background-clip:text;background-clip:text;color:transparent!important;font-weight:800}
 @property --dga{syntax:"<angle>";inherits:false;initial-value:0deg}@keyframes drgBorder{to{--dga:360deg}}
