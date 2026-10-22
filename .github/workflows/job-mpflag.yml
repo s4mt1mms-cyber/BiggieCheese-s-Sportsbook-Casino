@@ -1,0 +1,27 @@
+name: Live tables on the server (switch)
+
+on:
+  workflow_dispatch:
+    inputs:
+      state:
+        description: "on = server hosts live tables, off = players' phones host"
+        required: true
+        default: "on"
+        type: choice
+        options: ["on", "off"]
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install --quiet google-cloud-firestore==2.19.0
+      - name: Set config/mp.serverHost
+        working-directory: tools/jobs
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: python mpflag.py "${{ inputs.state }}"
