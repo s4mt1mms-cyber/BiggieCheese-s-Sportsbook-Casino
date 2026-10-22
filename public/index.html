@@ -912,6 +912,7 @@ body.pkquake{animation:pkquake .12s linear 34}@keyframes pkquake{25%{transform:t
 .wkrgrid b{font-size:16px;font-weight:800}.wkrnet{font-weight:700}.wkrnet b{font-size:18px}
 .wkrecap .pos,.wkrecap .num.pos{color:#5cff72!important}.wkrecap .neg,.wkrecap .num.neg{color:#ff6262!important}
 .wkrecap.big .wkrgrid b{font-size:18px}.recapbox{gap:12px}
+.aw.au-dragon::after,.aw.au-swamp::after{inset:0;z-index:3}.aw.au-dragon::after{animation:dglow 3s linear infinite}.aw.au-swamp::after{animation:swamp 3.4s ease-in-out infinite}
 .cbet .small{white-space:pre-line}
 .ffront{position:relative}.pkover{position:absolute;left:6%;right:6%;bottom:12%;z-index:5;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 6px;border-radius:10px;background:rgba(0,0,0,.85);border:1px solid #f5cf5d;text-align:center;line-height:1.2}.pkover b{color:#ff8a8a;font-size:12px;letter-spacing:.12em}.pkover span{color:#5cff72;font-weight:800;font-size:13px}
 .pksupply{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;padding:10px 12px;margin:8px 0 12px;border:1px solid var(--line);border-radius:12px;font-size:13px}.pksupply small{flex-basis:100%;font-size:12px}
@@ -2270,10 +2271,14 @@ const AURAS=[
   {id:"hearts",n:"Hearts",t:"Animated",p:150000,d:"Floating hearts"},
   {id:"gold",n:"Gold",t:"Solid colors",p:25000,c:1},{id:"crimson",n:"Crimson",t:"Solid colors",p:25000,c:1},
   {id:"ice",n:"Ice",t:"Solid colors",p:25000,c:1},{id:"emerald",n:"Emerald",t:"Solid colors",p:25000,c:1},
-  {id:"purple",n:"Royal Purple",t:"Solid colors",p:25000,c:1},{id:"pink",n:"Hot Pink",t:"Solid colors",p:25000,c:1}];
+  {id:"purple",n:"Royal Purple",t:"Solid colors",p:25000,c:1},{id:"pink",n:"Hot Pink",t:"Solid colors",p:25000,c:1},
+  /* card auras: not for sale; yours while you hold the card, gone when you sell or trade it */
+  {id:"dragon",n:"Dragon Glow",t:"From your cards",p:0,card:1,d:"Comes with owning a Dragon card"},
+  {id:"swamp",n:"Swamp Glow",t:"From your cards",p:0,card:1,d:"Comes with owning Shrex"}];
 const AURA_BY=Object.fromEntries(AURAS.map(a=>[a.id,a]));
 const AU_TIERS=[["Mythic",1000000],["Legendary",250000],["Animated",150000],["Solid colors",25000]];
-const auOwns=(id,a)=>!!((((S.prefs||{})[id]||{}).auras||{})[a]);
+const auCardHas=(id,a)=>a==="dragon"?hasDragon(id):a==="swamp"?hasAb("shrex",id):false;
+const auOwns=(id,a)=>AURA_BY[a]&&AURA_BY[a].card?auCardHas(id,a):!!((((S.prefs||{})[id]||{}).auras||{})[a]);
 const auraOf=id=>{const a=(((S.prefs||{})[id])||{}).aura;return a&&AURA_BY[a]&&auOwns(id,a)?a:""};
 function auExtras(a,lvl){if(lvl!=="fx")return"";
   if(a==="sparkles")return Array.from({length:7},(_,i)=>`<i class="sp" style="--a:${i*360/7+15}deg;--d:${((i*0.37)%1.8).toFixed(2)}s"></i>`).join("");
@@ -2315,10 +2320,11 @@ function viewAura(){if(!S.me)return `<div class="empty">Sign in to shop.</div>`;
     if(auOwns(me,a.id))return `<button type="button" class="aubtn ghost" data-au="eq" data-id="${a.id}">Equip</button>`;
     if(ask===a.id)return `<div class="auask"><button type="button" class="aubtn" data-au="ok" data-id="${a.id}">Buy for ${a.p.toLocaleString()} BB</button><button type="button" class="aubtn ghost" data-au="no">Cancel</button></div>`;
     return `<button type="button" class="aubtn${bal<a.p?" short":""}" data-au="buy" data-id="${a.id}">Buy</button>`};
-  const item=a=>{const o=auOwns(me,a.id);return `<div class="auit${cur===a.id?" on":""}${a.t==="Mythic"?" myth":""}" data-auitem="${a.id}">${o?`<span class="auown">Owned</span>`:""}${prev(a.id)}<b>${esc(a.n)}</b>${a.d&&a.t==="Mythic"?`<span class="small muted">${esc(a.d)}</span>`:""}<span class="aupr${o?" own":""}">${o?"Yours to keep":a.p.toLocaleString()+" BB"}</span>${btn(a)}</div>`};
+  const item=a=>{const o=auOwns(me,a.id);return `<div class="auit${cur===a.id?" on":""}${a.t==="Mythic"?" myth":""}" data-auitem="${a.id}">${o?`<span class="auown">Owned</span>`:""}${prev(a.id)}<b>${esc(a.n)}</b>${a.d&&a.t==="Mythic"?`<span class="small muted">${esc(a.d)}</span>`:""}<span class="aupr${o?" own":""}">${a.card?"While you hold the card":o?"Yours to keep":a.p.toLocaleString()+" BB"}</span>${btn(a)}</div>`};
   return `<div class="aushop"><div class="auhead"><h2>✨ Aura Shop</h2><div class="small">Balance <b class="num" style="color:#5cff72">${bal.toLocaleString()} BB</b></div></div>
   <div class="auhero">${prev(cur)}<div class="t"><span>Wearing now</span><b>${A?esc(A.n):"No aura"}</b><i>${A?"Shows around your picture everywhere: chat, profile, lists":"Your normal look: "+esc(auDefName(me))}</i>${A?`<button type="button" class="aubtn ghost" style="width:auto;min-height:34px;padding:0 16px;font-size:13px" data-au="eq" data-id="none">Take it off</button>`:""}</div></div>
-  <div class="small muted">You own ${own} of ${AURAS.length}. Auras are yours forever: switch between them anytime for free.</div>
+  <div class="small muted">You own ${AURAS.filter(a=>!a.card&&auOwns(me,a.id)).length} of ${AURAS.filter(a=>!a.card).length}. Auras are yours forever: switch between them anytime for free.</div>
+  ${(()=>{const mine=AURAS.filter(a=>a.card&&auOwns(me,a.id));return `<div class="aush"><span>From your cards</span><span>free</span></div>${mine.length?`<div class="augrid">${mine.map(item).join("")}</div>`:`<p class="small muted">Own a Dragon card or Shrex and its glow shows up here. It stays as long as you hold the card.</p>`}`})()}
   ${AU_TIERS.map(([t,p])=>`<div class="aush"><span>${t}</span><span>${p.toLocaleString()} BB</span></div><div class="augrid">${AURAS.filter(a=>a.t===t).map(item).join("")}</div>`).join("")}
   <div class="aush"><span>No aura</span><span>free</span></div><div class="augrid"><div class="auit${cur?"":" on"}">${prev("")}<b>None</b><span class="aupr own">${esc(auDefName(me))}</span>${cur?`<button type="button" class="aubtn ghost" data-au="eq" data-id="none">Equip</button>`:`<button type="button" class="aubtn eq" aria-disabled="true">✓ Equipped</button>`}</div></div>
   <p class="aunote">Purchases are permanent, play money only. Everyone sees your aura on your picture.</p></div>`}
@@ -5195,6 +5201,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:17,d:"Oct 22",t:[["🐉","Own a Dragon card or Shrex? Its glow now shows up in the Aura Shop under \"From your cards\" so you can equip it. It leaves if you sell or trade the card"]]},
  {v:16,d:"Oct 22",t:[["⛪","When someone pulls the cursed Jimmy Scroggins, league chat now shows how much each player got"]]},
  {v:15,d:"Oct 22",t:[["🎴","Pack odds never change with supply: if you pull a card that's already at max supply, it auto-sells for its quick-sell value"]]},
  {v:14,d:"Oct 22",t:[["🎴","The pack shop now shows how many copies of each rarity are left, and packs whose guaranteed cards can't be filled anymore show Sold out"]]},

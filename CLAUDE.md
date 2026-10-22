@@ -203,6 +203,8 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   `#auFire`/`#auZap` in `<svg id="auFx">`, particle `<i>` spans). `--s` = avatar size per context. **Priority:** an equipped aura
   replaces the commish ring (`picwrap.aura`/`avaura`; the "Commissioner" title stays), the Dragon glow and the Shrex swamp glow;
   with None they come back. On `av()` the green online outline becomes a small green dot (`.aod`). Reduced motion stops the animations.
+  Card auras (`card:1` in `AURAS`: `dragon` = hold any Dragon card, `swamp` = hold Shrex): free, listed under "From your cards" only
+  while held (`auCardHas`); `auOwns` checks the card, so selling/trading it drops the aura automatically.
   Dev fee: `shopFee(kind,id,price)` pays the owner 10% of every shop purchase from the house (`bank/shopfee_<buyer>_<kind>_<id>`, not on the owner's own buys).
 - **Presence**: "● N online" pill, green avatar rings — from existing prefs stamps (no extra writes).
 - **Admin tab**: invite codes, data import, card tools (per-card Preview + Add/Change image; a live preview of a card being added), previews.
