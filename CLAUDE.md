@@ -118,8 +118,7 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   `gameById()` synthesizes a game from the results doc (`nflGame`), `grade()` → `nflGrade` (OT counts; tie/exact line/void =
   push), so the ledger, My bets, recaps and standings need nothing special. Price is re-checked against `meta/nfl` on submit.
   Rules: NFL bets can only be created before `nfl/{wk}.g[id].kick`, and only admins can change them afterwards.
-- **Casino**: Blackjack (`bj*`; 2-deck shoes, streak bonus = `bjStreakMult(n)` × the hand's bet (3 in a row 1×, 4 2×, then +2× per win: 5 4×, 6 6×, 7 8× …, no cap; Shrex 2×),
-  pace: a new hand at most every 2 s and ≥1.5 s after the last one finished (`BJ_DEAL_GAP`/`BJ_AFTER_GAP`, checked inside `bjAction`)), Roulette (`rl*` — note `rl` prefix is ALSO used for live Russian Roulette lobby code),
+- **Casino**: Blackjack (`bj*`; 2-deck shoes, streak bonus = `bjStreakMult(n)` × the hand's bet (4 in a row 1×, 5 2×, then +2× per win: 6 4×, 7 6× …, no cap; Shrex ×1.5), no deal cooldown), Roulette (`rl*` — note `rl` prefix is ALSO used for live Russian Roulette lobby code),
   Craps (`cr*`), High-Low (`hl*`), Flappy Cheese = Cheese Farm (`fp*`: Press `FP_PRESS` 1/10/30/100/250/500 BB per pipe, Silo `FP_SILO` 5k…500k daily cap; levels
   `prefs.fpPress/fpSilo`, upgrade spend `prefs.farmSpent` in the ledger; Vector card gives one 10× uncapped run/day),
   Revenge rat hunt (`revengeStart`), mining (25 BB/min while the app is on screen).
@@ -165,7 +164,7 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
     Sports bets: `prefs.tiSb` = won bet ids seen since the curse started (`tiSbCheck`, uses `ledger().wins`). Not winnings: transfers,
     loans, market/offer sales, quick-sells. No dividend, no full-set credit, can't be quick-sold (`qsVal` 0); can be sold/traded;
     "Remove curse" (`tiUncurse`) costs 5,000 (`prefs.curseFee`, in the ledger) and burns one copy (back into the packs).
-  - `dean` **Craps Dean Strow** (Elite): craps payouts × `crDeanF(bet, n)` so every bet type's EV is +1.95% (`CR_EDGE`; winnings round up) (math in the comment
+  - `dean` **Craps Dean Strow** (Elite): craps payouts × `crDeanF(bet, n)` so every bet type's EV is +1.6% (`CR_EDGE`; winnings round up) (math in the comment
     above `crDeanF`; `crResolve(..., dean)`).
   - `hof` **Heart of Finance** (Elite): Bank → "Borrow 10,000 BB" (`hofTake`): a normal `loans` doc with `lender:"house"`, `hof:true`,
     5%/day, 1 payment of 10,500 after 24 h, gradual mode (late, default 7 days after due); auto-collected by the borrower's page like any
@@ -173,7 +172,7 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   - `slop` **King Slop** (Grail): 5 roulette respins a day (`prefs.slopDay`/`slopUsed`, `divDay` boundary). After a losing spin,
     "Respin (n left)" voids it: the same write takes the voided net back out of rlNet and adds the new spin's (`rlRespinNet`), no
     extra rlSpins; the new result is final (respin again only while respins remain).
-  - `shrex` **Shrex** (Grail, art pending): blackjack streak bonuses ×2 and a green "swamp" glow on avatars/profile pictures (`.swamp`, replaces the Dragon glow).
+  - `shrex` **Shrex** (Grail, art pending): blackjack streak bonuses ×1.5 and a green "swamp" glow on avatars/profile pictures (`.swamp`, replaces the Dragon glow).
   - `social` **Diverse Family** (Rare, art pending): pulling it posts "<name> +10 million social credit score!" in league chat. No money.
   - `div:6999` **Joe Camel** (Elite, art pending).
   Tests: `node tools/test/mv-abilities.test.mjs` (craps factors exact + Monte Carlo through `crResolve`, tithe split math, respin math).

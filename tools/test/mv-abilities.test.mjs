@@ -15,7 +15,7 @@ let n = 0;
 const ok = (name, fn) => { fn(); n++; console.log("ok -", name); };
 const near = (a, b, eps, msg) => assert.ok(Math.abs(a - b) <= eps, `${msg}: ${a} vs ${b}`);
 
-/* ---------- Craps Dean Strow: exact expected value per bet type = +1.95% ---------- */
+/* ---------- Craps Dean Strow: exact expected value per bet type = +1.6% ---------- */
 const W = { 4: 3, 5: 4, 6: 5, 8: 5, 9: 4, 10: 3 };
 const exact = [
   ["pass", 244 / 495, 251 / 495, 1, "pass"], ["come", 244 / 495, 251 / 495, 1, "come"], ["c6", 244 / 495, 251 / 495, 1, "c6"],
@@ -27,25 +27,25 @@ for (const x of [4, 5, 6, 8, 9, 10]) {
   exact.push([`odds on ${x}`, w / (w + 6), 6 / (w + 6), { 4: 2, 10: 2, 5: 1.5, 9: 1.5, 6: 1.2, 8: 1.2 }[x], "odds", x]);
   exact.push([`place ${x}`, w / (w + 6), 6 / (w + 6), { 4: 1.8, 10: 1.8, 5: 1.4, 9: 1.4, 6: 7 / 6, 8: 7 / 6 }[x], "p" + x]);
 }
-ok("craps edge factors give exactly +1.95% per bet type", () => {
+ok("craps edge factors give exactly +1.6% per bet type", () => {
   for (const [name, pw, pl, m, k, pt] of exact) {
     const f = M.crDeanF(k, pt);
     assert.ok(f > 1 && f < 1.4, `${name} factor ${f}`);
-    near(pw * m * f - pl, 0.0195, 1e-12, name);
+    near(pw * m * f - pl, 0.016, 1e-12, name);
   }
   // the base game really is house-favoured, so the factor is a boost, not a cut
   for (const [name, pw, pl, m] of exact) assert.ok(pw * m - pl <= 1e-12, `${name} base EV`);
   assert.equal(M.crDeanF("nope", 4), 1);
 });
 
-ok("pass-line/don't/field/odds factors match +1.95%", () => {
-  near(M.crDeanF("pass"), (0.0195*495+251) / 244, 1e-12, "pass");
-  near(M.crDeanF("dont"), (0.0195*1980+976) / 949, 1e-12, "dont");
-  near(M.crDeanF("field"), (0.0195*36+20) / 19, 1e-12, "field");
-  for (const x of [4, 5, 6, 8, 9, 10]) near(M.crDeanF("odds", x), 1 + 0.0195 / (6 / (W[x] + 6)), 1e-12, "odds " + x);
+ok("pass-line/don't/field/odds factors match +1.6%", () => {
+  near(M.crDeanF("pass"), (0.016*495+251) / 244, 1e-12, "pass");
+  near(M.crDeanF("dont"), (0.016*1980+976) / 949, 1e-12, "dont");
+  near(M.crDeanF("field"), (0.016*36+20) / 19, 1e-12, "field");
+  for (const x of [4, 5, 6, 8, 9, 10]) near(M.crDeanF("odds", x), 1 + 0.016 / (6 / (W[x] + 6)), 1e-12, "odds " + x);
 });
 
-/* Monte Carlo through the real crResolve with the edge on: each bet resolves at ~+1.95% (and at the normal house edge with it off) */
+/* Monte Carlo through the real crResolve with the edge on: each bet resolves at ~+1.6% (and at the normal house edge with it off) */
 let seed = 0x9e3779b9; // mulberry32: a decent fixed-seed generator so the run is repeatable
 const rnd = () => { seed = (seed + 0x6D2B79F5) | 0; let x = Math.imul(seed ^ (seed >>> 15), 1 | seed); x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x; return ((x ^ (x >>> 14)) >>> 0) / 4294967296; };
 const die = () => 1 + Math.floor(rnd() * 6);
@@ -71,7 +71,7 @@ function play(k, dean, V) {
   }
   throw new Error("didn't resolve");
 }
-ok("Monte Carlo through crResolve: +1.95% with the card, house edge without", () => {
+ok("Monte Carlo through crResolve: +1.6% with the card, house edge without", () => {
   const N = 300000, V = 1000000;
   for (const k of ["pass", "dont", "field", "any7", "craps", "yo", "odds4", "odds6", "p4", "p5", "p6"]) {
     let on = 0, off = 0;
@@ -80,8 +80,8 @@ ok("Monte Carlo through crResolve: +1.95% with the card, house edge without", ()
     const evOn = on / N / V, evOff = off / N / V;
     // standard error of a single bet is at most ~sqrt(15) for Yo; allow 4 sigma
     const tol = 4 * (k === "yo" ? 3.9 : k === "craps" ? 2.7 : k === "any7" ? 2.1 : 1.3) / Math.sqrt(N);
-    near(evOn, 0.0195, tol, k + " with Dean");
-    assert.ok(evOff < 0.0195 - 0.005, `${k} without Dean should lose (${evOff})`);
+    near(evOn, 0.016, tol, k + " with Dean");
+    assert.ok(evOff < 0.016 - 0.005, `${k} without Dean should lose (${evOff})`);
   }
 });
 
