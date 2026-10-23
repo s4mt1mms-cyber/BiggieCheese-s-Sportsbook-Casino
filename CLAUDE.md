@@ -250,8 +250,8 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   scratch `hbake/bfprep2.mjs` (meshopt to ~60k) → `bigfoot/step1*.py` (stick removed) → `bigfoot/bake9.py` (turned to face -z, bone envelopes + neighbour vote,
   arm/body joins cut) → `hbake/capbin.py` (closes every hole with lids, split per limb). `ds:1` = double-sided material (fur flaps), `gz` moves a skin forward on the chair.
   `capbin.py` works on any baked .bin; `dmr/stretch.cjs` lists triangles that over-stretch in test poses (fed back via STRETCH=).
-  Santa (rebuilt Oct 23): `RIGIDARM=1 RLUM=60 node hbake/bake8d.mjs santa.glb` (scan arms ride the coat, generated red sleeves shoulder→wrist + cuffs + mitts,
-  sleeve texel = a coat red) then `CUTY=-0.495 TEX=santa.jpg python3 hbake/capbin.py … 2.5` (drops the scan's base plate, lids get one rim colour).
+  Santa (Oct 23, owner: "build it like the original"): `STATIC=1 LEGY=0.64 LB0=0.47 LB1=0.63 node hbake/bake8d.mjs santa.glb` = the scan as-is, its fused arms ride the
+  body (no generated sleeves), legs blend up to y .64; then `CUTY=-0.495 TEX=santa.jpg python3 hbake/capbin.py … 2.5` (base plate off). Anime Girl `hid:1` since Oct 23.
   Unicorn eyes: `HUMAN_V.<id>.eyes=[x,y,z,r]` (from the neck joint) + `eyeYaw`/`iris`/`lid` → rrHuman builds animal-style eyes with blinking lids on the head.
   `uni` (Unicorn, rebuilt Oct 23 by scratch `hbake/bake6.mjs`): uses the GLB's own JOINTS_0/WEIGHTS_0 (its game rig, skeleton stripped) mapped onto our bones, no decimation,
   legs ×2 and arms ×1.35 stretched along the chains, lower legs repainted white with purple hooves (their UVs hit a dark strip). Older notes: chibi plush; lower body + feet rigid with the root (sits on the chair like a stuffed toy), `gy` lifts it onto the seat, negative `rise` (standing lowers it to the floor); `bake3.mjs`. Both files are v2 now and carry finger bones (`fingR`/`fingL`, parent = hand):
