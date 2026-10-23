@@ -3076,7 +3076,7 @@ function viewRoulette(){if(!S.me)return `<div class="empty">Sign in to play.</di
 function rlLiveHtml(){const ids=Object.keys(S.prefs).filter(id=>id!==S.me&&rlIsLive(id)).sort((a,b)=>lvAt(S.prefs[b],"rl",S.prefs[b].rlSeq)-lvAt(S.prefs[a],"rl",S.prefs[a].rlSeq));
   return `<section class="card bjlive"><h3>Live tables</h3>${ids.length?`<div class="livelist">${ids.map(id=>`<button type="button" class="livechip${S.rlWatch===id?" on":""}" data-rlwatch="${esc(id)}">${pic(id)}<span><span class="eyebrow"><span class="livedot"></span>Live</span><b>${esc(nm(id))}</b></span><span class="watchtxt">Watch</span></button>`).join("")}</div>`:`<p class="small muted">Nobody else is spinning right now. Anyone who spun in the last 3 minutes shows up here.</p>`}</section>`}
 function rlRefresh(){const st=rlState(),who=rlWho(),watching=who!==S.me,q=S.prefs[who]||{};
-  const b=$("#rlBal");if(b)b.textContent=Math.round(ledger().balOf(who)).toLocaleString()+" BB";
+  /* no spoilers: yours waits for the ball (myBalShow); someone you're watching keeps the old number until their ball lands */const b=$("#rlBal");if(b&&!(watching&&st.spinning))b.textContent=(watching?Math.round(ledger().balOf(who)):myBalShow()).toLocaleString()+" BB";
   /* watching: animate their new spins as they come in */
   if(watching){const L=q.rlLast;if(L&&Number(L.at)>(S._rlSeenAt||0)){const first=S._rlSeenAt==null;S._rlSeenAt=Number(L.at);if(!first&&!st.spinning)rlAnimate(L.n,L.delta,(Number(L.at)>>>3))}}
   const shown=watching?rlLB(q.rlLast):st.bets;
