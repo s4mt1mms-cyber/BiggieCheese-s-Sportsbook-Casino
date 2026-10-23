@@ -3851,12 +3851,12 @@ function rrFace(T,add,M,head,k,fur,lt){const dk=M(0x111111,{roughness:.25}),pink
    existing animation (sitting, IK arms, leaning, drinking, emotes) drives her; R_extra turns the T-pose limb into the rig's rest
    direction (thigh forward, arms down). The mesh attaches when the file arrives; until then the rig is invisible. */
 /* one entry per sculpted skin (rig proportions from its bake; v2 files carry their own bone list) */
-const HUMAN_V={diamond:{f:"diamond",hip:.11,thigh:.396,sh:[.173,.56,.024],L1:.281,L2:.243,head:[0,.704,.01],chest:[0,.214,-.055],rise:.396*1.12,lsOff:[.07,.2,-.15],mouth:[0,.085,-.085]},
-  ag:{f:"ag",v:9,nc:0xe9b8a2,hip:.11,thigh:.396,sh:[.173,.56,.024],L1:.281,L2:.243,head:[0,.704,.01],chest:[0,.214,-.055],rise:.396*1.12,lsOff:[.07,.2,-.15],mouth:[0,.062,-.088]},
-  uni:{f:"uni",v:2,nc:0xf1eef0,hip:.1287,thigh:.2241,sh:[.2681,.4449,.0357],L1:.1736,L2:.235,head:[0,.6075,.0179],rise:.1531,lsOff:[.08,.3,-.3],eyes:[.136,.2753,-.2733,.068],eyeYaw:.18,iris:0x0a0a0a,mouth:[0,.115,-.31],tgS:1.5},
-  pir:{f:"pirate",v:1,nc:0xe6dcc4,hip:.1336,thigh:.4641,sh:[.1906,.6677,.003],L1:.3909,L2:.287,head:[.0014,.8186,-.0133],rise:.4573,lsOff:[.07,.2,-.15],mouth:[0,.012,-.1]},
-  fox:{f:"fox",v:1,nc:0xcd4e22,hip:.11,thigh:.396,sh:[.173,.56,.024],L1:.281,L2:.243,head:[0,.704,.01],chest:[0,.214,-.055],rise:.396*1.12,lsOff:[.07,.24,-.2],eyes:[.056,.128,-.112,.036],eyeYaw:.32,iris:0x5aa03c,lid:0xcd4e22,mouth:[0,.03,-.2],tgS:1.1},
-  cerb:{f:"cerb",nc:0x24282e,emis:1,hip:.1038,thigh:.5398,sh:[.1868,.6,.0311],L1:.284,L2:.2475,head:[0,.7038,.0415],rise:.6046,lsOff:[.06,.2,-.12],mouth:[0,.1,-.2],tgS:1.2}};
+const HUMAN_V={diamond:{f:"diamond",hip:.11,thigh:.396,sh:[.173,.56,.024],L1:.281,L2:.243,head:[0,.704,.01],chest:[0,.214,-.055],rise:.396*1.12,lsOff:[.07,.2,-.15],mouth:[0,.085,-.085],nr:.048},
+  ag:{f:"ag",v:9,nc:0xe9b8a2,hip:.11,thigh:.396,sh:[.173,.56,.024],L1:.281,L2:.243,head:[0,.704,.01],chest:[0,.214,-.055],rise:.396*1.12,lsOff:[.07,.2,-.15],mouth:[0,.062,-.088],nr:.05},
+  uni:{f:"uni",v:2,nc:0xf1eef0,hip:.1287,thigh:.2241,sh:[.2681,.4449,.0357],L1:.1736,L2:.235,head:[0,.6075,.0179],rise:.1531,lsOff:[.08,.3,-.3],eyes:[.136,.2753,-.2733,.068],eyeYaw:.18,iris:0x0a0a0a,mouth:[0,.115,-.31],tgS:1.5,nr:.1},
+  pir:{f:"pirate",v:1,nc:0xe6dcc4,hip:.1336,thigh:.4641,sh:[.1906,.6677,.003],L1:.3909,L2:.287,head:[.0014,.8186,-.0133],rise:.4573,lsOff:[.07,.2,-.15],mouth:[0,.012,-.1],nr:.04},
+  fox:{f:"fox",v:1,nc:0xcd4e22,hip:.11,thigh:.396,sh:[.173,.56,.024],L1:.281,L2:.243,head:[0,.704,.01],chest:[0,.214,-.055],rise:.396*1.12,lsOff:[.07,.24,-.2],eyes:[.056,.128,-.112,.036],eyeYaw:.32,iris:0x5aa03c,lid:0xcd4e22,mouth:[0,.03,-.2],tgS:1.1,nr:.058},
+  cerb:{f:"cerb",nc:0x24282e,emis:1,hip:.1038,thigh:.5398,sh:[.1868,.6,.0311],L1:.284,L2:.2475,head:[0,.7038,.0415],rise:.6046,lsOff:[.06,.2,-.12],mouth:[0,.1,-.2],tgS:1.2,nr:.06}};
 const HUMAN_P={};
 function humanData(T,hv){const V=HUMAN_V[hv]||HUMAN_V.diamond;if(HUMAN_P[V.f])return HUMAN_P[V.f];return HUMAN_P[V.f]=fetch("/skins/"+V.f+".bin"+(V.v?"?v="+V.v:"")).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(buf=>{
   const dv=new DataView(buf),hl=dv.getUint32(0,true),h=JSON.parse(new TextDecoder().decode(new Uint8Array(buf,4,hl)).replace(/\0+$/,""));let o=4+hl;const pad=x=>(x+3)&~3,n=h.n;
@@ -3872,7 +3872,7 @@ function humanData(T,hv){const V=HUMAN_V[hv]||HUMAN_V.diamond;if(HUMAN_P[V.f])re
     for(const l of mp.values()){if(l.length<2)continue;let x=0,y=0,z=0;for(const i of l){x+=nr[i*3];y+=nr[i*3+1];z+=nr[i*3+2]}const d=Math.hypot(x,y,z)||1;for(const i of l){nr[i*3]=x/d;nr[i*3+1]=y/d;nr[i*3+2]=z/d}}}
   const ld=u=>{const t=new T.TextureLoader().load(u);t.flipY=false;t.encoding=T.sRGBEncoding;return t};
   return{g,tex:ld("/skins/"+V.f+".jpg"+(V.v?"?v="+V.v:"")),etex:V.emis?ld("/skins/"+V.f+"_e.jpg"):null,j:h.joints,bones:h.bones}}).catch(e=>{delete HUMAN_P[V.f];throw e})}
-function rrHuman(T,seat,add,M,par){const hv=HUMAN_V[seat.hv]?seat.hv:"diamond",H=HUMAN_V[hv],g=new T.Group();g.position.set(0,.6+(H.gy||0),-.02);g.scale.setScalar(1.12);par.add(g);const u=g.userData;u.human=true;u.rise=H.rise;u.lsOff=H.lsOff;u.mouth=H.mouth;u.tgS=H.tgS;/* stretched-neck gag: a neck in the skin colour instead of a grey pipe */u.neckMat=new T.MeshStandardMaterial({color:H.nc||0xd9a07e,roughness:.6});
+function rrHuman(T,seat,add,M,par){const hv=HUMAN_V[seat.hv]?seat.hv:"diamond",H=HUMAN_V[hv],g=new T.Group();g.position.set(0,.6+(H.gy||0),-.02);g.scale.setScalar(1.12);par.add(g);const u=g.userData;u.human=true;u.rise=H.rise;u.lsOff=H.lsOff;u.mouth=H.mouth;u.tgS=H.tgS;u.nr=H.nr;/* stretched-neck gag: a neck in the skin colour instead of a grey pipe */u.neckMat=new T.MeshStandardMaterial({color:H.nc||0xd9a07e,roughness:.6});
   const G=()=>new T.Group();
   u.legs=[-1,1].map(s=>{const hip=G();hip.position.set(s*H.hip,.05,0);hip.rotation.order="ZXY";g.add(hip);const kn=G();kn.position.set(0,0,-H.thigh);hip.add(kn);return{hip,kn,s}});
   const up=G();up.position.set(0,.06,0);g.add(up);const U=G();U.position.y=-.06;up.add(U);u.up=up;const torso=G();torso.position.y=.06;U.add(torso);u.torso=torso;u.ty=1;
@@ -3903,7 +3903,7 @@ function rrHuman(T,seat,add,M,par){const hv=HUMAN_V[seat.hv]?seat.hv:"diamond",H
     /* fingers: relaxed curl, a tighter grip while the hand is reaching for / holding something (gun, mug, cards), open during emotes */
     const nb=nm=>{const i=(D.bones||[]).findIndex(b=>b.nm===nm);return i<0?null:bones[i]},Z=new T.Vector3(0,0,1),tq=new T.Quaternion();
     const fing=[[nb("fingR"),Rr,-1],[nb("fingL"),L,1]].filter(f=>f[0]).map(([b,a,sg])=>({b,a,sg,rest:b.quaternion.clone(),c:.45}));
-    m.onBeforeRender=function(){let dirty=false;const want=head.visible?1:.001;if(hb.scale.x!==want){hb.scale.setScalar(want);hb.updateMatrixWorld(true);dirty=true}
+    u.skm=m;m.onBeforeRender=function(){let dirty=false;const want=head.visible?1:.001;if(hb.scale.x!==want){hb.scale.setScalar(want);hb.updateMatrixWorld(true);dirty=true}
       for(const f of fing){const tgt=f.a.em?.2:(f.a.goal&&f.a.goal.world)?1.2:.45;if(Math.abs(tgt-f.c)<.002)continue;f.c+=(tgt-f.c)*.18;f.b.quaternion.copy(tq.setFromAxisAngle(Z,f.sg*f.c)).multiply(f.rest);f.b.updateMatrixWorld(true);dirty=true}
       if(dirty)this.skeleton.update()};
     fing.forEach(f=>{f.b.quaternion.copy(tq.setFromAxisAngle(Z,f.sg*f.c)).multiply(f.rest)});u.skin=m}).catch(()=>{});
@@ -4580,9 +4580,18 @@ function rrNeckSet(on){S.rrNeck=!!on;const b=$("#rrNeck");if(b){b.textContent=on
 document.addEventListener("click",e=>{if(e.target.closest("#rrNeck")){rrNeckSet(!S.rrNeck);rrTone("click")}});
 function rrNeckAnim(i,u,dt){const want=rrNecked(i)?1:0;u.nk=(u.nk||0)+(want-(u.nk||0))*(1-Math.exp(-dt*7));const hd=u.head;if(!hd)return;if(!u.hHome)u.hHome=hd.position.clone();
   {const off=new THREE.Vector3(0,.12,-.9).applyEuler(new THREE.Euler(hd.rotation.x,hd.rotation.y,0,"YXZ")).multiplyScalar(u.nk);hd.position.set(u.hHome.x+off.x,u.hHome.y+off.y,u.hHome.z+off.z)}
-  if(u.nk>.02){if(!u.neck){const T=THREE,m=u.neckMat||(hd.children[0]&&hd.children[0].material);u.neck=new T.Mesh(new T.CylinderGeometry(u.human?.05:.065,u.human?.058:.075,1,12),m||new T.MeshStandardMaterial({color:0x888888}));hd.parent.add(u.neck)}
-    const a=new THREE.Vector3(u.hHome.x,u.hHome.y-.1,u.hHome.z),b=hd.position.clone().add(new THREE.Vector3(0,-.08,0)),d=b.clone().sub(a),L=d.length();u.neck.visible=true;u.neck.position.copy(a).addScaledVector(d,.5);u.neck.scale.set(1,Math.max(.01,L),1);u.neck.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize())}
+  if(u.nk>.02){if(!u.neck){const T=THREE,m=u.neckMat||(hd.children[0]&&hd.children[0].material);const nr=u.human?(u.nr||.05):.065;u.neck=new T.Mesh(new T.CylinderGeometry(nr,nr*1.12,1,16,1,true),m||new T.MeshStandardMaterial({color:0x888888}));if(u.human)u.neck.material.side=THREE.DoubleSide;hd.parent.add(u.neck)}
+    /* human skins: run exactly from the body's neck to the head's neck joint so it covers the stretched skin between them */const a=u.human?u.hHome.clone().add(new THREE.Vector3(0,-.03,0)):new THREE.Vector3(u.hHome.x,u.hHome.y-.1,u.hHome.z),b=u.human?hd.position.clone().add(new THREE.Vector3(0,.04,0)):hd.position.clone().add(new THREE.Vector3(0,-.08,0)),d=b.clone().sub(a),L=d.length();u.neck.visible=true;u.neck.position.copy(a).addScaledVector(d,.5);u.neck.scale.set(1,Math.max(.01,L),1);u.neck.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize())}
   else if(u.neck)u.neck.visible=false;
+  /* human skins: while the neck is out, skin that blends between chest and head would smear along the tube: snap it to one side, restore after */
+  if(u.human&&u.skm){const on=u.nk>.02;if(on!==!!u.nkSnap){if(!u.skmOwn){u.skm.geometry=u.skm.geometry.clone();u.skmOwn=true} /* the loaded geometry is shared by every seat wearing this skin */const g=u.skm.geometry,si=g.attributes.skinIndex,sw=g.attributes.skinWeight;
+    if(on){if(!u.nkW)u.nkW=Float32Array.from(sw.array);const w=sw.array,ix=si.array;for(let i=0;i<si.count;i++){const a=ix[i*4],b=ix[i*4+1];if(!((a===1&&b===2)||(a===2&&b===1)))continue;const h=a===2?w[i*4]:w[i*4+1],k=h>=.5?1:0;w[i*4]=a===2?k:1-k;w[i*4+1]=a===2?1-k:k}}
+    else sw.array.set(u.nkW);sw.needsUpdate=true;u.nkSnap=on;
+    /* and drop the triangles that would bridge body and head (they'd stretch into a strip along the neck) */
+    if(on){if(!u.nkIdx){u.nkIdx0=g.index;const w=sw.array,ix=si.array,src=g.index.array,hd=v=>(ix[v*4]===2&&w[v*4]>=.5)||(ix[v*4+1]===2&&w[v*4+1]>.5),keep=[];
+      for(let t=0;t<src.length;t+=3){const a=hd(src[t]),b=hd(src[t+1]),c=hd(src[t+2]);if(a===b&&b===c)keep.push(src[t],src[t+1],src[t+2])}
+      u.nkIdx=new THREE.BufferAttribute(src instanceof Uint32Array?Uint32Array.from(keep):Uint16Array.from(keep),1)}g.setIndex(u.nkIdx)}
+    else if(u.nkIdx0)g.setIndex(u.nkIdx0)}}
   (u.eyes||[]).forEach(e=>{const p=e.parent;if(p&&p!==u.head)p.scale.setScalar(1+u.nk)})}
 /* real players' heads follow where they're looking */
 function rlLookFor(l){if(!(RL.on||(TH.on&&S.tab==="th"))||!RR_SEATS[l]||!RR_SEATS[l].uid)return null;const L=RL.looks[RR_SEATS[l].uid];if(!L||Date.now()-(L.at||0)>8000)return null;const yw=Math.atan2(Math.sin(L.yaw||0),Math.cos(L.yaw||0));return{y:Math.max(-1.7,Math.min(1.7,yw)),p:Math.max(-.6,Math.min(.6,-(L.pitch||0)*.7))}}
@@ -5691,6 +5700,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:60,d:"Oct 23",t:[["🔍","Close-up neck stretch looks clean on all the human skins now (no more smeared skin)"]]},
  {v:59,d:"Oct 23",t:[["😜","New emote: Tongue Shake (250,000 BB). Aura Shop → Emotes"]]},
  {v:58,d:"Oct 23",t:[["🦊","New skin: Fox Girl (250,000 BB): orange fur, a big white-tipped tail and an orange bikini"],["🐒","Skins in the shop are now sorted from cheapest to most expensive"]]},
  {v:57,d:"Oct 23",t:[["🏴‍☠️","New skin: Skeleton Pirate (250,000 BB). Aura Shop → Skins"]]},
