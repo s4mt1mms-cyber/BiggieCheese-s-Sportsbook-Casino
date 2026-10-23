@@ -2330,16 +2330,16 @@ function viewMembers(){
    (subtracted in ledger().balOf). Buying writes all three in ONE prefs update. Equipping/switching is free.
    Shown by av()/pic()/bigAv() through auWrap(); an equipped aura replaces the commish ring, Dragon glow and Shrex swamp glow. */
 const AURAS=[
-  {id:"celestial",n:"Celestial",t:"Mythic",p:1000000,d:"A golden halo inside spinning gold squares and divine light"},
-  {id:"flames",n:"Flames",t:"Legendary",p:250000,d:"Flickering fire"},
-  {id:"zap",n:"Electricity",t:"Legendary",p:250000,d:"Arcs crackle around your picture"},
-  {id:"void",n:"Void",t:"Legendary",p:250000,d:"A dark swirl"},
-  {id:"sparkles",n:"Sparkles",t:"Animated",p:150000,d:"Twinkling stars"},
-  {id:"rainbow",n:"Rainbow",t:"Animated",p:150000,d:"A spinning rainbow"},
-  {id:"hearts",n:"Hearts",t:"Animated",p:150000,d:"Floating hearts"},
-  {id:"gold",n:"Gold",t:"Solid colors",p:25000,c:1},{id:"crimson",n:"Crimson",t:"Solid colors",p:25000,c:1},
-  {id:"ice",n:"Ice",t:"Solid colors",p:25000,c:1},{id:"emerald",n:"Emerald",t:"Solid colors",p:25000,c:1},
-  {id:"purple",n:"Royal Purple",t:"Solid colors",p:25000,c:1},{id:"pink",n:"Hot Pink",t:"Solid colors",p:25000,c:1},
+  {id:"celestial",n:"Celestial",t:"Mythic",p:500000,d:"A golden halo inside spinning gold squares and divine light"},
+  {id:"flames",n:"Flames",t:"Legendary",p:125000,d:"Flickering fire"},
+  {id:"zap",n:"Electricity",t:"Legendary",p:125000,d:"Arcs crackle around your picture"},
+  {id:"void",n:"Void",t:"Legendary",p:125000,d:"A dark swirl"},
+  {id:"sparkles",n:"Sparkles",t:"Animated",p:75000,d:"Twinkling stars"},
+  {id:"rainbow",n:"Rainbow",t:"Animated",p:75000,d:"A spinning rainbow"},
+  {id:"hearts",n:"Hearts",t:"Animated",p:75000,d:"Floating hearts"},
+  {id:"gold",n:"Gold",t:"Solid colors",p:12500,c:1},{id:"crimson",n:"Crimson",t:"Solid colors",p:12500,c:1},
+  {id:"ice",n:"Ice",t:"Solid colors",p:12500,c:1},{id:"emerald",n:"Emerald",t:"Solid colors",p:12500,c:1},
+  {id:"purple",n:"Royal Purple",t:"Solid colors",p:12500,c:1},{id:"pink",n:"Hot Pink",t:"Solid colors",p:12500,c:1},
   /* card auras: not for sale; yours while you hold the card, gone when you sell or trade it */
   {id:"dragon",n:"Dragon Glow",t:"From your cards",p:0,card:1,d:"Comes with owning a Dragon card"},
   {id:"swamp",n:"Swamp Glow",t:"From your cards",p:0,card:1,d:"Comes with owning Shrex"}];
@@ -6016,6 +6016,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:85,d:"Oct 23",t:[["✨","Auras are half price"]]},
  {v:84,d:"Oct 23",t:[["🏷️","A card's estimated value is now 2× its quick-sell value"]]},
  {v:83,d:"Oct 23",t:[["♠️","Hold'em now has a 5% house rake on every pot that sees a flop (no flop, no rake)"],["🏈","League odds now project every team's best possible lineup, so benching your players doesn't change your odds"]]},
  {v:82,d:"Oct 23",t:[["⛪","Jimmy Scroggins is everywhere now: he can turn up in League Moments, Multiverse and Fantasyland packs, and he's more likely to show up"],["🔥","His tithes don't go to the other players anymore. They burn"],["🏷️","Card sales between players have a 5% fee, taken from the seller and burned"]]},
