@@ -327,6 +327,8 @@ player's own client to prefs (`rrNet`/`thNet`).
 - `job-scoreboard.yml` hourly at :46 — Sleeper live scores/projections → fair moneylines → `meta/scoreboard`;
   then (separate step, runs even if the fantasy step exits early) `nfl.py` → `meta/nfl` lines + `nfl/{season}_{week}` results.
   Tests: `cd tools/jobs && python3 -m unittest test_nfl`.
+  Projections use each team's BEST lineup from its roster (`best_fill`; starters whose game started are locked at actual; taxi/IR out),
+  not the lineup they set — closes the bench-everyone-then-bet-yourself exploit (Oct 23). Tests: `python3 -m unittest test_scoreboard`.
 - `job-futures.yml` Tuesdays 2:45 AM ET — playoff/title odds simulation → `meta/futures`.
 - `job-grade.yml` manual — grades finished games from Sleeper.
 - `job-mpflag.yml` manual — live-tables server switch.

@@ -32,17 +32,60 @@ def proj_pts(pid, proj, scoring):
     return sum(v * scoring.get(k, 0) for k, v in st.items() if isinstance(v, (int, float)))
 
 
-def team(entry, proj, scoring, players, left):
+ELIG = {"QB": {"QB"}, "RB": {"RB"}, "WR": {"WR"}, "TE": {"TE"}, "K": {"K"}, "DEF": {"DEF"},
+        "FLEX": {"RB", "WR", "TE"}, "WRRB_FLEX": {"RB", "WR"}, "REC_FLEX": {"WR", "TE"}, "SUPER_FLEX": {"QB", "RB", "WR", "TE"}}
+
+
+def best_fill(slots, pool):
+    """Fill lineup slots with the highest-projected eligible players. pool = [(proj, pid, positions)].
+    Dedicated slots first, then the flex slots from narrowest to widest (optimal for these nested slot types)."""
+    order = sorted(range(len(slots)), key=lambda i: len(ELIG.get(slots[i], ())))
+    free = sorted(pool, key=lambda x: -x[0]); used = set(); out = {}
+    for i in order:
+        el = ELIG.get(slots[i])
+        if not el: continue
+        for pr, pid, pos in free:
+            if pid not in used and pos & el:
+                used.add(pid); out[i] = (pid, pr); break
+    return out
+
+
+def team(entry, proj, scoring, players, left, slots=None, bench_out=()):
+    """Odds use each team's BEST possible lineup from its roster, not the lineup it has set (owner, Oct 23: benching everyone
+    to tank the projection, betting yourself at +5000 and subbing back in). Starters whose NFL game has already started are
+    locked (their actual points count, as in Sleeper); every other starting slot is filled with the best eligible rostered
+    player whose game hasn't started (taxi/IR excluded). Actual points still only ever come from real starters."""
     pp = entry.get("players_points") or {}
     actual = rem = full = 0.0
-    for pid in entry.get("starters") or []:
-        if pid in (None, "0", 0): continue
-        pr = proj_pts(pid, proj, scoring); full += pr
-        a = float(pp.get(str(pid)) or 0)
-        nfl = (players.get(str(pid)) or {}).get("team") or (str(pid) if str(pid).isalpha() else None)
-        f = left.get(nfl, 1.0 if (nfl and not a) else 0.0)
-        if f >= 1.0 and not a: rem += pr
-        else: actual += a; rem += pr * f
+    starters = list(entry.get("starters") or [])
+    team_of = lambda pid: (players.get(str(pid)) or {}).get("team") or (str(pid) if str(pid).isalpha() else None)
+    def frac(pid):
+        a = float(pp.get(str(pid)) or 0); nfl = team_of(pid)
+        return a, left.get(nfl, 1.0 if (nfl and not a) else 0.0)
+    if not slots: slots = [None] * len(starters)
+    locked, open_slots = set(), []
+    for i, pid in enumerate(starters):
+        if pid in (None, "0", 0): open_slots.append(i); continue
+        a, f = frac(pid)
+        if f >= 1.0 and not a: open_slots.append(i); continue
+        locked.add(str(pid)); pr = proj_pts(pid, proj, scoring); full += pr; actual += a; rem += pr * f
+    if open_slots:
+        if any(slots[i] for i in open_slots):
+            pool = []
+            for pid in entry.get("players") or []:
+                pid = str(pid)
+                if pid in locked or pid in bench_out: continue
+                a, f = frac(pid)
+                if not (f >= 1.0 and not a): continue  # already playing / played: can't be moved into the lineup any more
+                pos = set((players.get(pid) or {}).get("pos") or [])
+                if pos: pool.append((proj_pts(pid, proj, scoring), pid, pos))
+            for i, (pid, pr) in best_fill([slots[i] for i in open_slots], pool).items():
+                full += pr; rem += pr
+        else:  # no slot info: the set lineup, as before
+            for i in open_slots:
+                pid = starters[i]
+                if pid in (None, "0", 0): continue
+                pr = proj_pts(pid, proj, scoring); full += pr; rem += pr
     return round(actual, 2), round(actual + rem, 2), rem, full
 
 
@@ -55,14 +98,15 @@ def fair(p):
     return o
 
 
-def build(week, matchups, proj, scoring, players, left, now):
+def build(week, matchups, proj, scoring, players, left, now, slots=None, out_by_roster=None):
     groups = {}
     for m in matchups: groups.setdefault(m["matchup_id"], []).append(m)
     out = []; live = False
     for g in groups.values():
         if len(g) != 2: continue
         x, y = g
-        xa, xp, xr, xf = team(x, proj, scoring, players, left); ya, yp, yr, yf = team(y, proj, scoring, players, left)
+        ob = out_by_roster or {}
+        xa, xp, xr, xf = team(x, proj, scoring, players, left, slots, ob.get(x["roster_id"], ())); ya, yp, yr, yf = team(y, proj, scoring, players, left, slots, ob.get(y["roster_id"], ()))
         if xa or ya: live = True
         if yp > xp: x, y, xa, xp, xr, xf, ya, yp, yr, yf = y, x, ya, yp, yr, yf, xa, xp, xr, xf
         tot = xf + yf; frac = (xr + yr) / tot if tot > 0 else 1.0
@@ -95,8 +139,14 @@ def main():
         print("ESPN unavailable:", e); espn = {"events": []}
     scoring = league["scoring_settings"]
     proj = {str(e["player_id"]): e.get("stats") or {} for e in projlist if isinstance(e, dict) and e.get("player_id")}
-    pl = {k: {"team": v.get("team")} for k, v in players.items() if isinstance(v, dict)}
-    sb = build(week, matchups, proj, scoring, pl, game_left(espn), now_ms())
+    pl = {k: {"team": v.get("team"), "pos": v.get("fantasy_positions") or ([v["position"]] if v.get("position") else [])} for k, v in players.items() if isinstance(v, dict)}
+    slots = [x for x in (league.get("roster_positions") or []) if x not in ("BN", "IR", "TAXI")]
+    try:
+        rosters = get_json(f"{SLEEPER}/rosters")
+        out = {r["roster_id"]: {str(p) for p in (r.get("taxi") or []) + (r.get("reserve") or [])} for r in rosters}
+    except Exception as e:
+        print("rosters unavailable:", e); out = {}
+    sb = build(week, matchups, proj, scoring, pl, game_left(espn), now_ms(), slots, out)
     if not sb["matchups"] or all(not (m["ap"] or m["bp"] or m["as"] or m["bs"]) for m in sb["matchups"]):
         print("All projected and actual points are 0 - nothing written."); return
     db().collection("meta").document("scoreboard").set(sb)
