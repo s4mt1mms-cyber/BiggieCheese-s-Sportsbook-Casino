@@ -239,6 +239,8 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   hard texture seam where they join (no UV blend across the atlas); the right arm is found by growing over the welded mesh from the
   elbow (stops at the shoulder plane, dark hair texels, 3.6 from the arm chain) and every arm/body triangle away from the shoulder is cut;
   the left arm stays in its posed hand-behind-head; bikini bottom/ties ride the hips. Bake source: scratch `hbake/bake5.mjs`.
+  `fox` (Fox Girl, Oct 23, original design from the owner's reference pictures): scratch `hbake/foxbake.mjs` (Diamond's body, generated fox head/ears/snout/neck,
+  bushy tail on bone 13 "tail" — Diamond's finger bones moved to 14/15) + `foxpaint.py` (paints fur regions into Diamond's UV layout, swatches in the right half).
   `pir` (Skeleton Pirate, Oct 23): rigged CC-BY-4.0 model “Skeleton Pirate The Drunk” by FireGoat (credit in the shop description, must stay); scratch `hbake/bake7.mjs`
   maps its own 72-joint skin weights onto our bones, drops the bottle (gear weighted to the left hand), body + gear textures atlased side by side in `pirate.jpg`.
   Unicorn eyes: `HUMAN_V.<id>.eyes=[x,y,z,r]` (from the neck joint) + `eyeYaw`/`iris`/`lid` → rrHuman builds animal-style eyes with blinking lids on the head.
