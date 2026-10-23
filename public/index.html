@@ -2451,7 +2451,8 @@ const SKINS=[{id:"lemur",n:"Ring-tailed Lemur",p:100000,c:0x4d4950,ic:"🐒",d:"
   {id:"uni",kind:"human",hv:"uni",n:"Unicorn",p:250000,c:0xf2f0f4,ic:"🦄",d:"A plushy unicorn with a pastel mane, a big horn and stubby legs"},
   {id:"pir",kind:"human",hv:"pir",n:"Skeleton Pirate",p:250000,c:0xe6dcc4,ic:"🏴‍☠️",d:"A salty skeleton pirate with his hat and gear. Model: “Skeleton Pirate The Drunk” by FireGoat (CC BY 4.0)"},
   {id:"fox",hid:1,kind:"human",hv:"fox",n:"Fox Girl",p:250000,c:0xcd4e22,ic:"🦊",d:"A red fox in an orange bikini, with a big white-tipped tail"},
-  {id:"santa",kind:"human",hv:"santa",n:"Santa",p:250000,c:0xb3121a,ic:"🎅",d:"Ho ho ho. The big man himself in his red suit. Model: “Santa Clause 3D Scan” by Christian Day (CC BY 4.0)"},
+  {id:"bigfoot",kind:"human",hv:"bigfoot",n:"Bigfoot",p:250000,c:0x3a2a1e,ic:"🦶",d:"The legend himself, fresh out of the woods and ready to gamble. Model: “primitive man ( aadimanav )” by iRahulRajput (CC BY 4.0)"},
+{id:"santa",hid:1,kind:"human",hv:"santa",n:"Santa",p:250000,c:0xb3121a,ic:"🎅",d:"Ho ho ho. The big man himself in his red suit. Model: “Santa Clause 3D Scan” by Christian Day (CC BY 4.0)"},
   {id:"cerb",kind:"human",hv:"cerb",n:"Cerberus",p:250000,c:0x2a2f36,ic:"🐺",d:"A tall jackal in black armor with glowing cyan fur and a long tail"},
   {id:"nfox",n:"Neon Fox",p:50000,c:0x0e1634,ic:"🦊",d:"Midnight-blue fur, a white chest and tail tip, glowing cyan stripes and eyes"}];
 const SKIN_BY=Object.fromEntries(SKINS.map(x=>[x.id,x]));
@@ -2470,7 +2471,7 @@ function skShopHtml(){const me=S.me,bal=Math.floor(ledger().balOf(me)),ask=S.skA
   const col=`<div class="auhero"><div class="skbig">${W?W.ic:"🐾"}</div><div class="t"><span>Wearing now</span><b>${W?esc(W.n):"Your normal animal"}</b><i>${W?"Everyone at the live tables sees it. Changes show the next time you sit down.":mine.length?"Pick one of your skins below.":"Buy a skin below and it shows up here."}</i>${W?`<button type="button" class="aubtn ghost" style="width:auto;min-height:34px;padding:0 16px;font-size:13px" data-sk="eq" data-id="none">Take it off</button>`:""}</div></div>
   <div class="aush"><span>My skins</span><span>${mine.length} owned</span></div>${mine.length?`<div class="skcol">${opts.map(x=>{const on=(cur||"none")===x.id;return `<button type="button" class="skchip${on?" on":""}"${on?' aria-pressed="true"':` data-sk="eq" data-id="${x.id}"`}><span class="ic" aria-hidden="true">${x.ic}</span><b>${esc(x.n)}</b><i>${on?"✓ Wearing":"Wear"}</i></button>`}).join("")}</div>`:`<p class="small muted">No skins yet.</p>`}`;
   return col+`<div class="aush"><span>Shop</span><span>from ${Math.min(...SKINS.map(x=>x.p)).toLocaleString()} BB</span></div><div class="small muted" style="margin:-4px 2px 10px">Show up as a different animal at the live Russian Roulette and Hold'em tables. Everyone at the table sees it. Takes effect the next time you sit down.</div>
-  <div class="augrid">${SKINS.filter(x=>!x.hid||S.canEdit||skOwns(me,x.id)).slice().sort((a,b)=>a.p-b.p).map(x=>{const o=skOwns(me,x.id);return `<div class="auit emit${cur===x.id?" on":""}" data-skitem="${x.id}">${o?`<span class="auown">Owned</span>`:""}<div class="emprev" data-emprev="skin:${x.id}"></div><b>${esc(x.ic+" "+x.n)}</b><span class="small muted">${esc(x.d)}</span><span class="aupr${o?" own":""}">${o?"Yours to keep":x.p.toLocaleString()+" BB"}</span>${btn(x)}</div>`}).join("")}</div>`}
+  <div class="augrid">${SKINS.filter(x=>!x.hid).slice().sort((a,b)=>a.p-b.p).map(x=>{const o=skOwns(me,x.id);return `<div class="auit emit${cur===x.id?" on":""}" data-skitem="${x.id}">${o?`<span class="auown">Owned</span>`:""}<div class="emprev" data-emprev="skin:${x.id}"></div><b>${esc(x.ic+" "+x.n)}</b><span class="small muted">${esc(x.d)}</span><span class="aupr${o?" own":""}">${o?"Yours to keep":x.p.toLocaleString()+" BB"}</span>${btn(x)}</div>`}).join("")}</div>`}
 function skClick(t){const k=t.dataset.sk,id=t.dataset.id;if(!S.me)return toast("Sign in first.");if(S.readOnly)return toast("View only. Ask the commish for access.");
   if(k==="no"){S.skAsk=null;render();return}
   if(k==="eq")return skEquip(id);
@@ -3863,7 +3864,8 @@ const HUMAN_V={diamond:{f:"diamond",hip:.11,thigh:.396,sh:[.173,.56,.024],L1:.28
   uni:{f:"uni",v:2,nc:0xf1eef0,hip:.1287,thigh:.2241,sh:[.2681,.4449,.0357],L1:.1736,L2:.235,head:[0,.6075,.0179],rise:.1531,lsOff:[.08,.3,-.3],eyes:[.136,.2753,-.2733,.068],eyeYaw:.18,iris:0x0a0a0a,mouth:[0,.115,-.31],tgS:1.5,nr:.1},
   pir:{f:"pirate",v:1,nc:0xe6dcc4,hip:.1336,thigh:.4641,sh:[.1906,.6677,.003],L1:.3909,L2:.287,head:[.0014,.8186,-.0133],rise:.4573,lsOff:[.07,.2,-.15],mouth:[0,.012,-.1],nr:.04},
   fox:{f:"fox",v:1,nc:0xcd4e22,hip:.11,thigh:.396,sh:[.173,.56,.024],L1:.281,L2:.243,head:[0,.704,.01],chest:[0,.214,-.055],rise:.396*1.12,lsOff:[.07,.24,-.2],eyes:[.056,.128,-.112,.036],eyeYaw:.32,iris:0x5aa03c,lid:0xcd4e22,mouth:[0,.03,-.2],tgS:1.1,nr:.058},
-  santa:{f:"santa",v:1,nc:0xb3121a,hip:.1216,thigh:.2947,sh:[.2816,.7156,0],L1:.2319,L2:.2077,head:[0,.8436,-.0256],rise:.0768,lsOff:[.07,.22,-.2],mouth:[0,.09,-.17],nr:.07},
+  bigfoot:{f:"bigfoot",v:1,ds:1,gy:.1,gz:-.1,nc:0x2b2019,hip:.145,thigh:.35,sh:[.32,.71,.03],L1:.3344,L2:.2835,head:[-.01,.87,-.13],rise:.1888,lsOff:[.08,.3,-.3],mouth:[0,.08,-.24],tgS:1.4,nr:.11},
+santa:{f:"santa",v:2,nc:0xb3121a,hip:.1216,thigh:.2947,sh:[.2816,.7156,0],L1:.2319,L2:.2077,head:[0,.8436,-.0256],rise:.0768,lsOff:[.07,.22,-.2],mouth:[0,.09,-.17],nr:.07},
   cerb:{f:"cerb",nc:0x24282e,emis:1,hip:.1038,thigh:.5398,sh:[.1868,.6,.0311],L1:.284,L2:.2475,head:[0,.7038,.0415],rise:.6046,lsOff:[.06,.2,-.12],mouth:[0,.1,-.2],tgS:1.2,nr:.06}};
 const HUMAN_P={};
 function humanData(T,hv){const V=HUMAN_V[hv]||HUMAN_V.diamond;if(HUMAN_P[V.f])return HUMAN_P[V.f];return HUMAN_P[V.f]=fetch("/skins/"+V.f+".bin"+(V.v?"?v="+V.v:"")).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(buf=>{
@@ -3880,7 +3882,7 @@ function humanData(T,hv){const V=HUMAN_V[hv]||HUMAN_V.diamond;if(HUMAN_P[V.f])re
     for(const l of mp.values()){if(l.length<2)continue;let x=0,y=0,z=0;for(const i of l){x+=nr[i*3];y+=nr[i*3+1];z+=nr[i*3+2]}const d=Math.hypot(x,y,z)||1;for(const i of l){nr[i*3]=x/d;nr[i*3+1]=y/d;nr[i*3+2]=z/d}}}
   const ld=u=>{const t=new T.TextureLoader().load(u);t.flipY=false;t.encoding=T.sRGBEncoding;return t};
   return{g,tex:ld("/skins/"+V.f+".jpg"+(V.v?"?v="+V.v:"")),etex:V.emis?ld("/skins/"+V.f+"_e.jpg"):null,j:h.joints,bones:h.bones}}).catch(e=>{delete HUMAN_P[V.f];throw e})}
-function rrHuman(T,seat,add,M,par){const hv=HUMAN_V[seat.hv]?seat.hv:"diamond",H=HUMAN_V[hv],g=new T.Group();g.position.set(0,.6+(H.gy||0),-.02);g.scale.setScalar(1.12);par.add(g);const u=g.userData;u.human=true;u.rise=H.rise;u.lsOff=H.lsOff;u.mouth=H.mouth;u.tgS=H.tgS;u.nr=H.nr;/* stretched-neck gag: a neck in the skin colour instead of a grey pipe */u.neckMat=new T.MeshStandardMaterial({color:H.nc||0xd9a07e,roughness:.6});
+function rrHuman(T,seat,add,M,par){const hv=HUMAN_V[seat.hv]?seat.hv:"diamond",H=HUMAN_V[hv],g=new T.Group();g.position.set(0,.6+(H.gy||0),-.02+(H.gz||0));g.scale.setScalar(1.12);par.add(g);const u=g.userData;u.human=true;u.rise=H.rise;u.lsOff=H.lsOff;u.mouth=H.mouth;u.tgS=H.tgS;u.nr=H.nr;/* stretched-neck gag: a neck in the skin colour instead of a grey pipe */u.neckMat=new T.MeshStandardMaterial({color:H.nc||0xd9a07e,roughness:.6});
   const G=()=>new T.Group();
   u.legs=[-1,1].map(s=>{const hip=G();hip.position.set(s*H.hip,.05,0);hip.rotation.order="ZXY";g.add(hip);const kn=G();kn.position.set(0,0,-H.thigh);hip.add(kn);return{hip,kn,s}});
   const up=G();up.position.set(0,.06,0);g.add(up);const U=G();U.position.y=-.06;up.add(U);u.up=up;const torso=G();torso.position.y=.06;U.add(torso);u.torso=torso;u.ty=1;
@@ -3904,7 +3906,7 @@ function rrHuman(T,seat,add,M,par){const hv=HUMAN_V[seat.hv]?seat.hv:"diamond",H
     const PAR={g,torso,head,hipR:u.legs[1].hip,hipL:u.legs[0].hip,knR:u.legs[1].kn,knL:u.legs[0].kn,shR:Rr.sh,shL:L.sh,elR:Rr.el,elL:L.el,handR:Rr.hand,handL:L.hand};
     if(D.bones){D.bones.forEach(b=>B.push([PAR[b.par]||g,b.lp,new T.Quaternion(...b.q),b.bj]))}
     const bones=[],inv=[];B.forEach(([p,lp,q,bj])=>{const b=new T.Bone();b.position.set(...lp);b.quaternion.copy(q);p.add(b);bones.push(b);inv.push(new T.Matrix4().makeTranslation(-bj[0],-bj[1],-bj[2]))});
-    const mat=new T.MeshStandardMaterial(Object.assign({map:D.tex,roughness:.5,metalness:0,skinning:true},D.etex?{emissiveMap:D.etex,emissive:new T.Color(0xffffff),emissiveIntensity:1}:{}));
+    const mat=new T.MeshStandardMaterial(Object.assign({map:D.tex,roughness:.5,metalness:0,skinning:true},H.ds?{side:T.DoubleSide}:{},D.etex?{emissiveMap:D.etex,emissive:new T.Color(0xffffff),emissiveIntensity:1}:{}));
     const m=new T.SkinnedMesh(D.g,mat);m.frustumCulled=false;m.castShadow=true;g.add(m);m.bind(new T.Skeleton(bones,inv),new T.Matrix4());
     /* your own body at the table: no head in front of the camera */
     const hb=bones[2];
@@ -5710,6 +5712,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:64,d:"Oct 23",t:[["🦶","New skin: Bigfoot (250,000 BB). Aura Shop → Skins"],["🎅","Santa is out of the shop for a quick fix-up (if you own him, he's still yours)"]]},
  {v:63,d:"Oct 23",t:[["🎅","New skin: Santa (250,000 BB). Aura Shop → Skins"],["🦊","Fox Girl has left the shop (if you own her, she's still yours)"]]},
  {v:62,d:"Oct 23",t:[["🫖","New emote: Table T-Bag (250,000 BB). Aura Shop → Emotes"]]},
  {v:61,d:"Oct 23",t:[["💸","Every card now shows how much it pays you per day in dividends (per copy, before set bonuses)"]]},

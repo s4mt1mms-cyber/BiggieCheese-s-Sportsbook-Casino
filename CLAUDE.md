@@ -246,6 +246,11 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   white cuffs and white mitts (texels picked from the coat and beard). `fox` is hidden from the shop since Oct 23 (owners keep it).
   `pir` (Skeleton Pirate, Oct 23): rigged CC-BY-4.0 model “Skeleton Pirate The Drunk” by FireGoat (credit in the shop description, must stay); scratch `hbake/bake7.mjs`
   maps its own 72-joint skin weights onto our bones, drops the bottle (gear weighted to the left hand), body + gear textures atlased side by side in `pirate.jpg`.
+  `bigfoot` (Bigfoot, Oct 23): CC-BY-4.0 “primitive man ( aadimanav )” by iRahulRajput (credit in the shop description, must stay). Unrigged 2M-tri fur sculpt:
+  scratch `hbake/bfprep2.mjs` (meshopt to ~60k) → `bigfoot/step1*.py` (stick removed) → `bigfoot/bake9.py` (turned to face -z, bone envelopes + neighbour vote,
+  arm/body joins cut) → `hbake/capbin.py` (closes every hole with lids, split per limb). `ds:1` = double-sided material (fur flaps), `gz` moves a skin forward on the chair.
+  `capbin.py` works on any baked .bin; `dmr/stretch.cjs` lists triangles that over-stretch in test poses (fed back via STRETCH=).
+  Santa is `hid:1` (out of the shop) until his arms are redone; his .bin is the bake8 output run through capbin (holes closed).
   Unicorn eyes: `HUMAN_V.<id>.eyes=[x,y,z,r]` (from the neck joint) + `eyeYaw`/`iris`/`lid` → rrHuman builds animal-style eyes with blinking lids on the head.
   `uni` (Unicorn, rebuilt Oct 23 by scratch `hbake/bake6.mjs`): uses the GLB's own JOINTS_0/WEIGHTS_0 (its game rig, skeleton stripped) mapped onto our bones, no decimation,
   legs ×2 and arms ×1.35 stretched along the chains, lower legs repainted white with purple hooves (their UVs hit a dark strip). Older notes: chibi plush; lower body + feet rigid with the root (sits on the chair like a stuffed toy), `gy` lifts it onto the seat, negative `rise` (standing lowers it to the floor); `bake3.mjs`. Both files are v2 now and carry finger bones (`fingR`/`fingL`, parent = hand):
