@@ -6,7 +6,7 @@ export const SEATBOT = [
   { n: "Vixen the Fox", k: "fox" },
 ];
 export const ANIMAL_G = { cat: 0, bear: 1, rat: 2, fox: 3 };
-const STALE_SEAT = 10 * 60000;
+const STALE_SEAT = 10 * 60000, OWN_STALE = 30 * 60000;
 
 /** Seats that still count (a chair from someone who wandered off 10+ minutes ago is open again). */
 export function liveSeats(T, ctx, me) {
@@ -15,7 +15,9 @@ export function liveSeats(T, ctx, me) {
     const x = ss["s" + g];
     if (!x || !x.uid) return null;
     const lk = ctx.looks[x.uid];
-    const live = T.state === "play" || x.uid === me || ctx.now - Math.max(x.at || 0, (lk && lk.at) || 0) < STALE_SEAT;
+    const age = ctx.now - Math.max(x.at || 0, (lk && lk.at) || 0);
+    // your own chair stays yours a while longer, but not forever (a 2-day-old seat used to block you from sitting anywhere)
+    const live = T.state === "play" || (x.uid === me && age < OWN_STALE) || age < STALE_SEAT;
     return live ? { ...x, k: SEATBOT[g].k } : null;
   });
 }

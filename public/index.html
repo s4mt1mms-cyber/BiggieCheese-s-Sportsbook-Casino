@@ -4318,7 +4318,7 @@ const RR_SOLO=RR_SEATS.map(s=>({...s}));
 const RL={room:null,on:false,looks:{},ins:{},subs:false};
 const rlDoc=()=>db.doc("rrtable/live");
 /* a chair belongs to one animal; seats left over from older versions, or from people who left long ago, count as open */
-const rlSeats=r=>[0,1,2,3].map(g=>{const x=((r||RL.room||{}).seats||{})["s"+g];if(!x||!x.uid)return null;const lk=RL.looks[x.uid];const live=(r||RL.room||{}).state==="play"||x.uid===S.me||Date.now()-Math.max(x.at||0,(lk&&lk.at)||0)<10*60000;return live?{...x,k:RL_SEATBOT[g].k}:null});
+const rlSeats=r=>[0,1,2,3].map(g=>{const x=((r||RL.room||{}).seats||{})["s"+g];if(!x||!x.uid)return null;const lk=RL.looks[x.uid];const age=Date.now()-Math.max(x.at||0,(lk&&lk.at)||0),live=(r||RL.room||{}).state==="play"||(x.uid===S.me&&age<30*60000)||age<10*60000;return live?{...x,k:RL_SEATBOT[g].k}:null});
 const rlMySeat=r=>rlSeats(r).findIndex(x=>x&&x.uid===S.me);
 const rlHost=r=>{r=r||RL.room;if(!r)return null;const ss=rlSeats(r);if(r.host&&ss.some(x=>x&&x.uid===r.host))return r.host;const f=ss.find(Boolean);return f?f.uid:null};
 const rlIsHost=()=>rlHost()===S.me;
@@ -4732,7 +4732,7 @@ async function thPlayHand(H,io){const sit=g=>!!H.pl[g]&&H.st[g]>0&&!H.out[g]&&!(
 const TH_TURN=30000;
 const TH={room:null,on:false,ins:{},inSeen:{},subs:false,pick:null,ps:null,hole:null,seen:0,recv:{},rz:0,rzOpen:false};
 const thDoc=()=>db.doc("thtable/live");
-const thSeats=r=>{r=r||TH.room||{};return[0,1,2,3].map(g=>{const x=(r.seats||{})["s"+g];if(!x||!x.uid)return null;const lk=RL.looks[x.uid];const live=r.state==="play"||x.uid===S.me||Date.now()-Math.max(x.at||0,(lk&&lk.at)||0)<10*60000;return live?{...x,k:RL_SEATBOT[g].k}:null})};
+const thSeats=r=>{r=r||TH.room||{};return[0,1,2,3].map(g=>{const x=(r.seats||{})["s"+g];if(!x||!x.uid)return null;const lk=RL.looks[x.uid];const age=Date.now()-Math.max(x.at||0,(lk&&lk.at)||0),live=r.state==="play"||(x.uid===S.me&&age<30*60000)||age<10*60000;return live?{...x,k:RL_SEATBOT[g].k}:null})};
 const thMySeat=r=>thSeats(r).findIndex(x=>x&&x.uid===S.me);
 const thHost=r=>{r=r||TH.room;if(!r)return null;const ss=thSeats(r);if(r.host&&ss.some(x=>x&&x.uid===r.host))return r.host;const f=ss.find(Boolean);return f?f.uid:null};
 const thBlinds=b=>({sb:Math.max(1,Math.floor(b/100)),bb:Math.max(2,Math.floor(b/50))});
