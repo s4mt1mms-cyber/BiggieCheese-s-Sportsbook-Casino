@@ -2438,13 +2438,14 @@ function emShopHtml(){const me=S.me,bal=Math.floor(ledger().balOf(me)),ask=S.emA
    prefs.skins {id:true} owned forever, prefs.skin = the one you wear (null = your seat's normal animal), prefs.skinSpent (in the ledger).
    The table builds your animal with skSeat(); an emote, a head tag etc. work the same on any animal. */
 const SKINS=[{id:"lemur",n:"Ring-tailed Lemur",p:250000,c:0x4d4950,ic:"🐒",d:"Grey fur, a black-and-white ringed tail and big orange eyes"},
+  {id:"diamond",kind:"human",n:"Diamond",p:250000,c:0xd9a88a,ic:"💎",d:"Sit at the table as a human player instead of an animal"},
   {id:"nfox",n:"Neon Fox",p:250000,c:0x0e1634,ic:"🦊",d:"Midnight-blue fur, a white chest and tail tip, glowing cyan stripes and eyes"}];
 const SKIN_BY=Object.fromEntries(SKINS.map(x=>[x.id,x]));
 const skOwns=(id,k)=>!!((((S.prefs||{})[id]||{}).skins||{})[k]);
 const skinOf=id=>{const q=((S.prefs||{})[id])||{};return q.skin&&SKIN_BY[q.skin]&&skOwns(id,q.skin)?q.skin:null};
-const skSeat=(seat,uid)=>{const k=uid&&skinOf(uid);return k?{...seat,k,c:SKIN_BY[k].c}:seat};
+const skSeat=(seat,uid)=>{const k=uid&&skinOf(uid);return k?{...seat,k:SKIN_BY[k].kind||k,c:SKIN_BY[k].c}:seat};
 /* shop preview: the animal on its chair, slowly turning so you see the tail, with a little wave */
-const SK_PREV=Object.fromEntries(SKINS.map(x=>["skin:"+x.id,{len:6,spin:1,kind:x.id,c:x.c,prev:{cam:[0,1.5,-2.9],tgt:[0,1.2,-.05]},f:k=>{const P=emLerp(emLDance(0),0),w=emSS(Math.min(1,(k-1)/.4))-emSS(Math.min(1,Math.max(0,(k-3.2)/.4)));P.ral=Math.max(0,w);P.rpx=.55;P.rpy=.55+.18*Math.sin(k*9);P.rpz=-.35;return P}}]));
+const SK_PREV=Object.fromEntries(SKINS.map(x=>["skin:"+x.id,{len:6,spin:1,kind:x.kind||x.id,c:x.c,prev:{cam:[0,1.5,-2.9],tgt:[0,1.2,-.05]},f:k=>{const P=emLerp(emLDance(0),0),w=emSS(Math.min(1,(k-1)/.4))-emSS(Math.min(1,Math.max(0,(k-3.2)/.4)));P.ral=Math.max(0,w);P.rpx=.55;P.rpy=.55+.18*Math.sin(k*9);P.rpz=-.35;return P}}]));
 function skShopHtml(){const me=S.me,bal=Math.floor(ledger().balOf(me)),ask=S.skAsk&&S.skAsk.id,cur=skinOf(me);
   const btn=x=>{if(cur===x.id)return `<button type="button" class="aubtn eq" data-sk="eq" data-id="none">✓ Wearing · take off</button>`;
     if(skOwns(me,x.id))return `<button type="button" class="aubtn ghost" data-sk="eq" data-id="${x.id}">Wear it</button>`;
@@ -2562,22 +2563,22 @@ function emTwerk(k){const seg=(a,b)=>emSS((k-a)/(b-a)),lin=(a,b)=>Math.max(0,Mat
   return P}
 function emLerp(P,f){const o={};for(const k in P)o[k]=(P[k]||0)*f;return o}
 /* the right paw's L: index finger up, thumb across, on the forehead (lives on the head so it reads from every seat) */
-function emLSign(T,u){if(u.lsign)return u.lsign;const g=new T.Group(),m=u.pawMat||new T.MeshStandardMaterial({color:0xc9bfb4});g.position.set(.09,.03,-.25);u.head.add(g);
+function emLSign(T,u){if(u.lsign)return u.lsign;const g=new T.Group(),m=u.pawMat||new T.MeshStandardMaterial({color:0xc9bfb4});g.position.set(...(u.lsOff||[.09,.03,-.25]));u.head.add(g);
   const fin=new T.Mesh(new T.CylinderGeometry(.019,.021,.14,10),m);fin.position.set(0,.09,-.005);g.add(fin);const ft=new T.Mesh(new T.SphereGeometry(.02,10,8),m);ft.position.set(0,.16,-.005);g.add(ft);
   const th=new T.Mesh(new T.CylinderGeometry(.019,.021,.1,10),m);th.rotation.z=Math.PI/2;th.position.set(-.07,-.005,-.012);g.add(th);const tt=new T.Mesh(new T.SphereGeometry(.02,10,8),m);tt.position.set(-.12,-.005,-.012);g.add(tt);
   g.traverse(o=>{if(o.isMesh)o.castShadow=true});g.visible=false;u.lsign=g;return g}
 /* put body, legs, arms, head and chair in pose P, relative to how they sat when the emote started (u.em) */
 function emApply(T,sp,P){const b=sp.body,u=b.userData,E=u.em,ch=sp.chair,a=sp.a||0;
   ch.position.set(E.cp.x+Math.sin(a)*P.cb,E.cp.y,E.cp.z+Math.cos(a)*P.cb);
-  b.position.set(E.bp.x+P.x,E.bp.y+P.rise*EM_RISE+P.y,E.bp.z+P.z-P.cb);b.rotation.set(E.br.x+(P.rx||0),E.br.y+P.ry,E.br.z+P.rz);
+  b.position.set(E.bp.x+P.x,E.bp.y+P.rise*(u.rise||EM_RISE)+P.y,E.bp.z+P.z-P.cb);b.rotation.set(E.br.x+(P.rx||0),E.br.y+P.ry,E.br.z+P.rz);
   (u.legs||[]).forEach((L,j)=>{L.hip.rotation.set(-P.rise*Math.PI/2+(j?P.lh1:P.lh0),0,L.s*(j?P.lz1:P.lz0));L.kn.rotation.set(P.rise*Math.PI/2-(j?P.lk1:P.lk0),0,0)});
   u.leanT=0;u.up.rotation.x=0;u.head.rotation.set(E.hr.x*(1-P.rise)+P.hx,E.hr.y*(1-P.rise)+P.hy,E.hr.z*(1-P.rise)+P.hz);
   const mix=(p,q,t)=>p.map((v,i)=>v+(q[i]-v)*t),reach=(A,d)=>{const v=new T.Vector3(...d);if(v.lengthSq()<1e-6)v.set(0,-1,0);return A.sh.position.clone().addScaledVector(v.normalize(),(A.L1+A.L2)*.8)};
-  const pr=reach(u.armR,mix(u.restR,[.3,-.95,-.05],P.rise));if(P.la>0){const fh=new T.Vector3(.09,.03,-.25).applyEuler(u.head.rotation).add(u.head.position);pr.lerp(fh,P.la)}if(P.ral>0)pr.lerp(reach(u.armR,[P.rpx,P.rpy,P.rpz]),P.ral);u.armR.em={loc:pr};
+  const pr=reach(u.armR,mix(u.restR,[.3,-.95,-.05],P.rise));if(P.la>0){const fh=new T.Vector3(...(u.lsOff||[.09,.03,-.25])).applyEuler(u.head.rotation).add(u.head.position);pr.lerp(fh,P.la)}if(P.ral>0)pr.lerp(reach(u.armR,[P.rpx,P.rpy,P.rpz]),P.ral);u.armR.em={loc:pr};
   const pl=reach(u.armL,mix(u.restL,[-.3,-.95,-.05],P.rise));if(P.lal>0)pl.lerp(reach(u.armL,[P.lpx,P.lpy,P.lpz]),P.lal);u.armL.em={loc:pl};
   const ls=emLSign(T,u);ls.visible=P.ls>.02;if(ls.visible)ls.scale.setScalar(Math.max(.02,P.ls));
   /* Table Twerk: a cartoon pair of cheeks grows in (P.bt = size 0..1) and jiggles (P.bj, opposite phase per side) */
-  if(P.bt>.01||u.butt){const bu=emButt(T,u,b);bu.visible=P.bt>.01;if(bu.visible){const sz=Math.max(.01,P.bt),j=P.bj||0;bu.children.forEach((m,i)=>{const q=i?-j:j;m.scale.set(sz*(1.04-.1*q),sz*(1+.28*q),sz*(1.08-.06*q));m.position.y=.035*q})}}}
+  if((P.bt>.01||u.butt)&&!u.human){const bu=emButt(T,u,b);bu.visible=P.bt>.01;if(bu.visible){const sz=Math.max(.01,P.bt),j=P.bj||0;bu.children.forEach((m,i)=>{const q=i?-j:j;m.scale.set(sz*(1.04-.1*q),sz*(1+.28*q),sz*(1.08-.06*q));m.position.y=.035*q})}}}
 function emButt(T,u,b){if(u.butt)return u.butt;const g=new T.Group();g.position.set(0,.08,.22);b.add(g);
   const leg=(u.legs||[])[0],fm=(leg&&leg.hip.children.find(o=>o.isMesh)||{}).material||new T.MeshStandardMaterial({color:0x9a6b3f,roughness:.85});
   [-1,1].forEach(s=>{const m=new T.Mesh(new T.SphereGeometry(.2,24,20),fm);m.position.set(s*.14,0,0);m.castShadow=true;g.add(m)});g.visible=false;u.butt=g;return g}
@@ -3816,7 +3817,46 @@ function rrFace(T,add,M,head,k,fur,lt){const dk=M(0x111111,{roughness:.25}),pink
   const jaw=new T.Group();jaw.position.set(0,jawY,jawZ+.03);head.add(jaw);const jm=add(S_(jawW,16,10,0,Math.PI*2,Math.PI/2,Math.PI/2),lt,0,0,-jawL*.35,jaw);jm.scale.set(1,.55,jawL/jawW*.9);
   const inner=add(S_(jawW*.85,14,8),M(0x3a0a0e,{roughness:.6}),0,.006,-jawL*.35,jaw);inner.scale.set(.9,.3,jawL/jawW*.8);const tg=add(S_(jawW*.5,12,8),pink,0,.012,-jawL*.45,jaw);tg.scale.set(1,.3,1.4);
   F.jaw=jaw;return F}
-function rrAnimal(T,seat,add,M,par){const k=seat.k,g=new T.Group();g.position.set(0,.6,-.02);g.scale.setScalar(1.12);par.add(g);
+/* ---------- Human skin ("Diamond"): a sculpted model with no rig of its own, skinned onto our animal rig ----------
+   public/skins/diamond.bin = baked offline from the uploaded T-pose model (decimated to ~40k tris, quantized; header JSON =
+   joints in rig units). Every bone is a child of the matching rig object (hip/knee/shoulder/elbow/hand/torso/head/body), so the
+   existing animation (sitting, IK arms, leaning, drinking, emotes) drives her; R_extra turns the T-pose limb into the rig's rest
+   direction (thigh forward, arms down). The mesh attaches when the file arrives; until then the rig is invisible. */
+const HUMAN={hip:.11,thigh:.396,sh:[.173,.56,.024],L1:.281,L2:.243,head:[0,.704,.01],chest:[0,.214,-.055],rise:.396*1.12};
+let HUMAN_P=null;
+function humanData(T){if(HUMAN_P)return HUMAN_P;HUMAN_P=fetch("/skins/diamond.bin").then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(buf=>{
+  const dv=new DataView(buf),hl=dv.getUint32(0,true),h=JSON.parse(new TextDecoder().decode(new Uint8Array(buf,4,hl)).replace(/\0+$/,""));let o=4+hl;const pad=x=>(x+3)&~3,n=h.n;
+  const qp=new Int16Array(buf,o,n*3);o+=pad(n*6);const qu=new Uint16Array(buf,o,n*2);o+=pad(n*4);const ni=h.tris*3;const qi=h.i32?new Uint32Array(buf,o,ni):new Uint16Array(buf,o,ni);o+=pad(ni*(h.i32?4:2));
+  const bi=new Uint8Array(buf,o,n*2);o+=pad(n*2);const bw=new Uint8Array(buf,o,n);
+  const pos=new Float32Array(n*3),uv=new Float32Array(n*2),si=new Uint16Array(n*4),sw=new Float32Array(n*4);
+  for(let i=0;i<n;i++){for(let k=0;k<3;k++)pos[i*3+k]=h.lo[k]+(qp[i*3+k]+32768)/65535*(h.hi[k]-h.lo[k]);uv[i*2]=qu[i*2]/65535;uv[i*2+1]=qu[i*2+1]/65535;
+    si[i*4]=bi[i*2];si[i*4+1]=bi[i*2+1];const w=bw[i]/255;sw[i*4]=w;sw[i*4+1]=1-w}
+  const g=new T.BufferGeometry();g.setAttribute("position",new T.BufferAttribute(pos,3));g.setAttribute("uv",new T.BufferAttribute(uv,2));
+  g.setAttribute("skinIndex",new T.Uint16BufferAttribute(si,4));g.setAttribute("skinWeight",new T.Float32BufferAttribute(sw,4));g.setIndex(new T.BufferAttribute(h.i32?new Uint32Array(qi):new Uint16Array(qi),1));g.computeVertexNormals();
+  const tex=new T.TextureLoader().load("/skins/diamond.jpg");tex.flipY=false;tex.encoding=T.sRGBEncoding;return{g,tex,j:h.joints}}).catch(e=>{HUMAN_P=null;throw e});return HUMAN_P}
+function rrHuman(T,seat,add,M,par){const g=new T.Group();g.position.set(0,.6,-.02);g.scale.setScalar(1.12);par.add(g);const H=HUMAN,u=g.userData;u.human=true;u.rise=H.rise;u.lsOff=[.07,.2,-.15];
+  const G=()=>new T.Group();
+  u.legs=[-1,1].map(s=>{const hip=G();hip.position.set(s*H.hip,.05,0);hip.rotation.order="ZXY";g.add(hip);const kn=G();kn.position.set(0,0,-H.thigh);hip.add(kn);return{hip,kn,s}});
+  const up=G();up.position.set(0,.06,0);g.add(up);const U=G();U.position.y=-.06;up.add(U);u.up=up;const torso=G();torso.position.y=.06;U.add(torso);u.torso=torso;u.ty=1;
+  const head=G();head.position.set(...H.head);U.add(head);u.head=head;
+  /* face bits the idle animation pokes at: invisible stand-ins */
+  const dummy=()=>{const d=G();head.add(d);return d};u.lids=[dummy(),dummy()];u.eyes=[dummy(),dummy()];u.ears=[dummy(),dummy()];u.jaw=dummy();u.brows=[-1,1].map(s=>{const b=dummy();b.userData.s=s;return b});
+  const arm=s=>{const sh=G();sh.position.set(s*H.sh[0],H.sh[1],H.sh[2]);U.add(sh);const el=G();el.position.set(0,-H.L1,0);sh.add(el);const hand=G();hand.position.set(0,-H.L2-.02,0);el.add(hand);return{sh,el,hand,s,L1:H.L1,L2:H.L2,cur:null,goal:null,bob:0}};
+  const L=arm(-1),Rr=arm(1);u.armL=L;u.armR=Rr;u.arm=Rr.sh;u.hand=Rr.hand;u.pawMat=new T.MeshStandardMaterial({color:0xd9a88a,roughness:.6});
+  u.restL=[-.12,-.55,-.83];u.restR=[.12,-.55,-.83];L.goal={dir:u.restL};Rr.goal={dir:u.restR};
+  humanData(T).then(D=>{if(!g.parent)return;const J=D.j,rx=new T.Quaternion().setFromAxisAngle(new T.Vector3(1,0,0),Math.PI/2),
+      rzR=new T.Quaternion().setFromAxisAngle(new T.Vector3(0,0,1),-Math.PI/2),rzL=new T.Quaternion().setFromAxisAngle(new T.Vector3(0,0,1),Math.PI/2),id=new T.Quaternion();
+    /* [parent, local position, rest rotation, bind joint] in skin-index order (see the bake script) */
+    const B=[[g,J.root,id,J.root],[torso,[J.chest[0],J.chest[1]-.06,J.chest[2]],id,J.chest],[head,[0,0,0],id,J.head],
+      [u.legs[1].hip,[0,0,0],rx,J.hipR],[u.legs[0].hip,[0,0,0],rx,J.hipL],[u.legs[1].kn,[0,0,0],id,J.kneeR],[u.legs[0].kn,[0,0,0],id,J.kneeL],
+      [Rr.sh,[0,0,0],rzR,J.shR],[L.sh,[0,0,0],rzL,J.shL],[Rr.el,[0,0,0],rzR,J.elR],[L.el,[0,0,0],rzL,J.elL],[Rr.hand,[0,0,0],rzR,J.wrR],[L.hand,[0,0,0],rzL,J.wrL]];
+    const bones=[],inv=[];B.forEach(([p,lp,q,bj])=>{const b=new T.Bone();b.position.set(...lp);b.quaternion.copy(q);p.add(b);bones.push(b);inv.push(new T.Matrix4().makeTranslation(-bj[0],-bj[1],-bj[2]))});
+    const mat=new T.MeshStandardMaterial({map:D.tex,roughness:.5,metalness:0,skinning:true});
+    const m=new T.SkinnedMesh(D.g,mat);m.frustumCulled=false;m.castShadow=true;g.add(m);m.bind(new T.Skeleton(bones,inv),new T.Matrix4());
+    /* your own body at the table: no head in front of the camera */
+    const hb=bones[2];m.onBeforeRender=function(){const want=head.visible?1:.001;if(hb.scale.x!==want){hb.scale.setScalar(want);hb.updateMatrixWorld(true);this.skeleton.update()}};u.skin=m}).catch(()=>{});
+  return g}
+function rrAnimal(T,seat,add,M,par){if(seat.k==="human")return rrHuman(T,seat,add,M,par);const k=seat.k,g=new T.Group();g.position.set(0,.6,-.02);g.scale.setScalar(1.12);par.add(g);
   const fur=M(seat.c,{roughness:.85}),lt=M(k==="fox"?0xf4ead8:k==="bear"?0xb98a5a:k==="lemur"?0xf2efe8:k==="nfox"?0xe6e9f0:0xc9bfb4,{roughness:.85}),dk=M(0x111111,{roughness:.25}),pink=M(0xe8a0a4,{roughness:.6});
   const S_=(r,a,b)=>new T.SphereGeometry(r,a||24,b||18),C_=(a,b,h,s)=>new T.CylinderGeometry(a,b,h,s||16);
   /* sl = limb thickness (the lemur and the neon fox are long and skinny) */const sl=k==="lemur"?.66:k==="nfox"?.74:1;
@@ -5578,6 +5618,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:43,d:"Oct 22",t:[["💎","New skin: Diamond (250,000 BB). Sit at the live tables as a human player. Aura Shop → Skins"]]},
  {v:42,d:"Oct 22",t:[["🟢","Shrex has a new ability: every blackjack you're dealt pays 3× your bet"]]},
  {v:41,d:"Oct 22",t:[["🦊","New skin: the Neon Fox (250,000 BB). Midnight-blue fur with glowing cyan stripes. Aura Shop → Skins"]]},
  {v:40,d:"Oct 22",t:[["🐒","New in the Aura Shop: Skins. First up, the Ring-tailed Lemur (250,000 BB). Show up as him at the live Russian Roulette and Hold'em tables"]]},

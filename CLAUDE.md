@@ -226,6 +226,10 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   Shop preview (`emPrevSync`/`emPrevBuild`): the bear on its chair (`rrChairParts` + `rrAnimal`), renderer only while the card is
   on screen (IntersectionObserver), disposed when it scrolls off or you leave. Add an emote: one `EMOTES` row + a pose function.
 - **Skins** (`sk*`, Aura Shop → Skins tab): look like another animal at the live tables. Catalog `SKINS` (`lemur` Ring-tailed Lemur, `nfox` Neon Fox: fox face, slim, emissive cyan limb rings; 250,000 each).
+  `diamond` (kind `human`): an uploaded sculpted model with no rig, baked offline (meshopt decimation to ~40k tris, quantized) into
+  `public/skins/diamond.bin` + `diamond.jpg` (texture = the GLB's EMBEDDED basecolor; the loose textures in the upload didn't match the UVs).
+  `rrHuman` builds the same joint groups as `rrAnimal` (with `HUMAN` proportions) and skins the mesh to bones parented to them, so all
+  table animation/IK/emotes drive her (`u.rise` = standing height, `u.lsOff` = L-sign spot, no emote cheeks). Head bone shrinks for your own seat.
   prefs `skins` {id:true}, `skin` (worn, null = your seat's animal), `skinSpent` (ledger). `skinOf(id)`; the table builds animals through
   `skSeat(seat, uid)` in `rrBuild` (takes effect when the scene is built, i.e. next time you sit). The animal model is a kind in `rrAnimal`/`rrFace`
   (`k==="lemur"`: ringed tail, mask, orange eyes). Shop preview reuses `emPrevBuild` via `SK_PREV["skin:<id>"]` (turntable + wave). 10% `shopFee("skin")`.
