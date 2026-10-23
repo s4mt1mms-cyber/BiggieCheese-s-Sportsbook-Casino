@@ -338,7 +338,7 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   `rookie` (rat ×2), `gooner` (roulette wins +%), `vail` (`pkPrice`). Bets snapshot bonuses in `bx:{playerId:%}` at create/accept (`bxOf`); the ledger adds
   floor(win·%) to the winner. Daddy Christian: after 6 right in a row the High-Low multiplier doubles. Die for the Whale / Cryptid – Bigfoot: no ability (owner).
 
-- **Pack prices (owner, Oct 23 17:36):** Common 1,000 · Uncommon 2,500 · Rare 5,000 · SR 10,000 · Elite 25,000 · Grail 35,000 · Dragon 85,000 (odds unchanged).
+- **Pack prices (owner, Oct 23 17:36):** ÷4 from the 13:03 prices: Common 750 · Uncommon 1,875 · Rare 3,750 · SR 7,500 · Elite 18,750 · Grail 25,000 · Dragon 62,500 (odds unchanged).
 - **Oct 23 evening:** Vector = 2 boosted runs a day (`FP_BOOST_DAY`, `prefs.flapBoostDay/flapBoostN`); Debbie · Dynasty Grail (`mv-art-65`) dividend 750 (`MV_DIV` in `mvMerge`). Crafting Guide (`cfGuide`), picker Close bar (`.cfpkfoot`), ability cards first (`cfHasAb`).
 
 ## Live multiplayer (server host)
