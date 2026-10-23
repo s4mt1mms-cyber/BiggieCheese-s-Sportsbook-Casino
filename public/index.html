@@ -3075,7 +3075,7 @@ function rlRefresh(){const st=rlState(),who=rlWho(),watching=who!==S.me,q=S.pref
   const b=$("#rlBal");if(b)b.textContent=Math.round(ledger().balOf(who)).toLocaleString()+" BB";
   /* watching: animate their new spins as they come in */
   if(watching){const L=q.rlLast;if(L&&Number(L.at)>(S._rlSeenAt||0)){const first=S._rlSeenAt==null;S._rlSeenAt=Number(L.at);if(!first&&!st.spinning)rlAnimate(L.n,L.delta,(Number(L.at)>>>3))}}
-  const shown=watching?((q.rlLast&&q.rlLast.bets)||{}):st.bets;
+  const shown=watching?rlLB(q.rlLast):st.bets;
   const cnts=watching?{}:(st.cnt||{});
   document.querySelectorAll("[data-rl]").forEach(el=>{const k=el.dataset.rl,v=shown[k]||0;const i=el.querySelector("i");if(i){i.textContent=v?(v>=1000?(Math.round(v/100)/10)+"K":v):"";i.className=v?"on":"";
     const n=Math.min(5,Math.max(v?1:0,cnts[k]||(v?Math.min(5,Math.ceil(Math.log2(v/10+1))):0)));i.style.boxShadow=Array.from({length:Math.max(0,n-1)},(_,j)=>`0 ${(j+1)*3}px 0 -1px #b8860b,0 ${(j+1)*3+1}px 0 -1px #000`).join(",")||"none"}});
@@ -3111,10 +3111,13 @@ function rlPlace(k){if(rlWho()!==S.me)return;const st=rlState();if(st.spinning)r
 /* King Slop (card ability): 5 respins a day. A respin voids the last spin if it lost money: its net comes back out of rlNet
    in the same write that adds the new spin's net, so only the new result ever counts (rlRespinNet). The voided spin was a loss,
    so it never added curse tithe; the new spin tithes like any spin. rlLast.rs marks a respin result. */
+/* rlLast.bj = the spin's bets as a JSON string. (rlLast.bets was a map, and the live-doc merge kept old spots from earlier
+   spins in it, so a respin replayed a mix of old bets. A string always replaces; bets:null clears the old map.) */
+function rlLB(L){if(!L)return {};if(typeof L.bj==="string"){try{return JSON.parse(L.bj)||{}}catch(_){return {}}}return L.bets||{}}
 function slopLeft(){const q=S.prefs[S.me]||{};return q.slopDay===divDay()?Math.max(0,SLOP_DAY-(Number(q.slopUsed)||0)):SLOP_DAY}
-function rlCanRespin(){const q=S.prefs[S.me]||{},L=q.rlLast,st=rlState();return !!(hasAb("slop")&&rlWho()===S.me&&!st.spinning&&L&&Number(L.delta)<0&&L.bets&&Object.keys(L.bets).length)}
+function rlCanRespin(){const q=S.prefs[S.me]||{},L=q.rlLast,st=rlState();return !!(hasAb("slop")&&rlWho()===S.me&&!st.spinning&&L&&Number(L.delta)<0&&typeof L.bj==="string"&&Object.keys(rlLB(L)).length)}
 async function rlSpin(rs){const st=rlState();if(st.spinning||rlWho()!==S.me)return;const p0=S.prefs[S.me]||{};let back=0;
-  if(rs){if(!rlCanRespin())return;if(slopLeft()<=0)return toast("No respins left today.");const L0=p0.rlLast;back=-Number(L0.delta);st.bets={...L0.bets};st.cnt={...(st.lastCnt||{})};if(st.hist[0]===L0.n)st.hist.shift()}
+  if(rs){if(!rlCanRespin())return;if(slopLeft()<=0)return toast("No respins left today.");const L0=p0.rlLast;back=-Number(L0.delta);st.bets={...rlLB(L0)};st.cnt={...(st.lastCnt||{})};if(st.hist[0]===L0.n)st.hist.shift()}
   const tot=rlTotal(),bal=Math.floor(ledger().balOf(S.me))+back;
   if(tot<10)return toast("Minimum total bet is 10 BB.");if(tot>bal){if(rs){st.bets={};st.cnt={}}return toast("Not enough BiggieBucks for those bets.")}
   const u=new Uint32Array(1);crypto.getRandomValues(u);const n=RL_ORDER[u[0]%37];
@@ -3123,7 +3126,7 @@ async function rlSpin(rs){const st=rlState();if(st.spinning||rlWho()!==S.me)retu
   /* tell watchers right away so their wheel spins with ours */
   const p=S.prefs[S.me]||{};const patch={rlNet:rlRespinNet(Number(p.rlNet)||0,-back,delta),rlSpins:(Number(p.rlSpins)||0)+(rs?0:1)};tiAdd(patch,delta);
   const dir=rs?{slopDay:divDay(),slopUsed:SLOP_DAY-slopLeft()+1}:{};if(rs)Object.assign(p,dir);
-  const saved=db.doc("prefs/"+S.me).update({rlLast:{n,at:now,bets,delta,...(rs?{rs:1}:{})},rlSeq:now,...patch,...dir});saved.catch(()=>{});
+  const saved=db.doc("prefs/"+S.me).update({rlLast:{n,at:now,bj:JSON.stringify(bets),bets:null,delta,rs:rs?1:0},rlSeq:now,...patch,...dir});saved.catch(()=>{});
   rlRefresh();const anim=rlAnimate(n,delta,u[0]>>>8);rlRefresh();await anim;
   Object.assign(S.prefs[S.me]=S.prefs[S.me]||{},patch);
   st.hist.unshift(n);st.bets={};st.cnt={};if(delta>0)haptic&&haptic();rlRefresh();
@@ -5541,6 +5544,10 @@ const ZB_ONCE={id:"devfee_zartog_once",to:"u_jzH6I8emDBcqWaXJhIX_HA",amt:50000};
 async function zbOnce(){if(!db||S.me!=="u_IfmXeDmDg1B3W4naCzVbSA"||!S.ready||!Array.isArray(S.bank))return;if(S.bank.some(t=>t.id===ZB_ONCE.id))return;
   try{const ref=db.doc("bank/"+ZB_ONCE.id);const ex=await ref.get();if(ex.exists)return;await ref.set({from:"house",to:ZB_ONCE.to,amt:ZB_ONCE.amt,note:"Dev fee · one-time",kind:"shopfee",at:Date.now()});
     try{db.collection("chat").add({type:"bet",kind:"bank",uid:S.me,poster:S.me,at:Date.now(),text:`🏦 The house paid ${nm(ZB_ONCE.to)} a one-time 50,000 BB dev fee`})}catch(_){}}catch(_){}}
+/* one-time (owner, Oct 22): give back today's King Slop respins after the respin bet mix-up */
+async function slopFixOnce(){if(!db||S.me!=="u_IfmXeDmDg1B3W4naCzVbSA"||!S.ready)return;const q=S.prefs[S.me];if(!q||q.slopFix==="1022")return;
+  const d={slopUsed:0,slopDay:divDay(),slopFix:"1022"};Object.assign(q,d);try{await db.doc("prefs/"+S.me).update(d);renderSoon()}catch(_){delete q.slopFix}}
+setTimeout(slopFixOnce,6000);setInterval(slopFixOnce,120000);
 setTimeout(zbOnce,9000);setInterval(zbOnce,120000);setInterval(chatPrune,30*60000);
 async function quickSell(cid){if(S._qsBusy)return;S._qsBusy=true;try{await quickSell_(cid)}finally{S._qsBusy=false}}
 async function quickSell_(cid){const c=cardById(cid);if(!c||cardCount(cid)<1)return toast("You don't have that card.");const v=qsVal(c);if(!(v>0))return toast("This card can't be quick-sold.");const q=S.prefs[S.me];const left=cardCount(cid)-1,qs=(Number(q.quickSold)||0)+v;
