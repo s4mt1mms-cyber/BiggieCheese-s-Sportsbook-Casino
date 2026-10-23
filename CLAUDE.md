@@ -250,8 +250,8 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   scratch `hbake/bfprep2.mjs` (meshopt to ~60k) → `bigfoot/step1*.py` (stick removed) → `bigfoot/bake9.py` (turned to face -z, bone envelopes + neighbour vote,
   arm/body joins cut) → `hbake/capbin.py` (closes every hole with lids, split per limb). `ds:1` = double-sided material (fur flaps), `gz` moves a skin forward on the chair.
   `capbin.py` works on any baked .bin; `dmr/stretch.cjs` lists triangles that over-stretch in test poses (fed back via STRETCH=).
-  Santa (Oct 23, owner: "build it like the original"): `STATIC=1 LEGY=0.64 LB0=0.47 LB1=0.63 node hbake/bake8d.mjs santa.glb` = the scan as-is, its fused arms ride the
-  body (no generated sleeves), legs blend up to y .64; then `CUTY=-0.495 TEX=santa.jpg python3 hbake/capbin.py … 2.5` (base plate off). Anime Girl `hid:1` since Oct 23.
+  Santa (Oct 23, owner: "build it like the original"): `LEGS=1.45 STATIC=1 LEGY=0.64 LB0=0.47 LB1=0.63 node hbake/bake8d.mjs santa.glb` (LEGS stretches everything below the hip ×1.45) = the scan as-is, its fused arms ride the
+  body (no generated sleeves), legs blend up to y .64; then `CUTY=-0.741 TEX=santa.jpg python3 hbake/capbin.py … 2.5` (base plate off). Anime Girl `hid:1` since Oct 23.
   Unicorn eyes: `HUMAN_V.<id>.eyes=[x,y,z,r]` (from the neck joint) + `eyeYaw`/`iris`/`lid` → rrHuman builds animal-style eyes with blinking lids on the head.
   `uni` (Unicorn, rebuilt Oct 23 by scratch `hbake/bake6.mjs`): uses the GLB's own JOINTS_0/WEIGHTS_0 (its game rig, skeleton stripped) mapped onto our bones, no decimation,
   legs ×2 and arms ×1.35 stretched along the chains, lower legs repainted white with purple hooves (their UVs hit a dark strip). Older notes: chibi plush; lower body + feet rigid with the root (sits on the chair like a stuffed toy), `gy` lifts it onto the seat, negative `rise` (standing lowers it to the floor); `bake3.mjs`. Both files are v2 now and carry finger bones (`fingR`/`fingL`, parent = hand):
@@ -259,6 +259,9 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   prefs `skins` {id:true}, `skin` (worn, null = your seat's animal), `skinSpent` (ledger). `skinOf(id)`; the table builds animals through
   `skSeat(seat, uid)` in `rrBuild` (takes effect when the scene is built, i.e. next time you sit). The animal model is a kind in `rrAnimal`/`rrFace`
   (`k==="lemur"`: lathed body, canvas fur texture `lemFur` as map+bump, tapered tube tail with painted rings `lemRings`, mask, cheek ruffs, orange eyes). Shop preview reuses `emPrevBuild` via `SK_PREV["skin:<id>"]` (turntable + wave). 10% `shopFee("skin")`.
+- **Camera toggle** (`camTP`, Oct 23): 🎥 `#camBtn` at RR + Hold'em flips `S.camTP` (localStorage `camTP`); `camTP(ctx)` runs every frame after the
+  per-frame camera position: eases (`c.tpK`) to behind + above your seat with a little extra pitch down, shows your own head; drops back to first
+  person while the revolver is camera-mounted (`c.gun.parent===cam`). Emote camera (`emCam`) still wins while you dance.
 - **Table head tags**: over each seated animal at RR / Hold'em, real players show their profile picture in their aura (`hdPic`,
   `md` level, cached; tap for the name), bots their name. RR: HTML `#rrTags` moved by `rrTagsTick` (replaced the canvas sprites);
   Hold'em: inside `thTags`.
