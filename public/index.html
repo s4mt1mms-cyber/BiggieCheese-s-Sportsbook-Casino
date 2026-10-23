@@ -3809,7 +3809,8 @@ function rrFace(T,add,M,head,k,fur,lt){const dk=M(0x111111,{roughness:.25}),pink
     [-1,1].forEach(s=>{const m=add(S_(.062,20,16),mk,s*.07,.035,-.15,head);m.scale.set(1.1,.95,.55);m.rotation.z=s*.35});
     [-1,1].forEach(s=>eye(s*.07,.04,-.165,.047));
     [-1,1].forEach(s=>ear(s*.14,.15,.02,(eg)=>{const e=add(new T.ConeGeometry(.06,.12,16),fur,0,.04,0,eg);e.scale.z=.5;e.rotation.z=-s*.55;const ei=add(new T.ConeGeometry(.04,.08,16),lt,0,.035,-.015,eg);ei.scale.z=.35;ei.rotation.z=-s*.55}));
-    const sn=add(snoutG(.19,.075,.026),mk,0,-.05,-.14,head);sn.scale.y=.78;add(S_(.027,16,12),M(0x0c0c0c,{roughness:.2}),0,-.047,-.335,head).scale.set(1.2,.85,1);
+    [-1,1].forEach(s=>{const ru=add(S_(.07,20,16),lt,s*.115,-.04,-.06,head);ru.scale.set(.7,1.15,.9);ru.rotation.z=s*.4});const cr=add(S_(.15,28,20),fur,0,.07,.0,head);cr.scale.set(.95,.55,1.05);
+    const sn=add(snoutG(.21,.07,.024),mk,0,-.05,-.14,head);sn.scale.y=.78;add(S_(.027,16,12),M(0x0c0c0c,{roughness:.2}),0,-.047,-.355,head).scale.set(1.2,.85,1);
     [-1,1].forEach(s=>add(S_(.06),lt,s*.06,-.085,-.12,head).scale.set(.85,.65,.85));jawY=-.105;jawZ=-.15;jawL=.15;jawW=.055}
   if(k==="bunny"){[-1,1].forEach(s=>eye(s*.085,.04,-.165,.042));[-1,1].forEach(s=>ear(s*.07,.16,0,(eg)=>{const e=add(S_(.055,14,12),fur,0,.17,0,eg);e.scale.set(1,3.4,.55);const ei=add(S_(.032,12,10),pink,0,.17,-.025,eg);ei.scale.set(1,3,.35);eg.rotation.z=-s*.18}));
     const mz=add(S_(.07),lt,0,-.06,-.16,head);mz.scale.set(1.3,.8,.9);add(S_(.022,12,10),pink,0,-.03,-.225,head);jawY=-.09;jawZ=-.15;jawW=.05;jawL=.07}
@@ -3870,8 +3871,18 @@ function rrHuman(T,seat,add,M,par){const g=new T.Group();g.position.set(0,.6,-.0
       if(dirty)this.skeleton.update()};
     fing.forEach(f=>{f.b.quaternion.copy(tq.setFromAxisAngle(Z,f.sg*f.c)).multiply(f.rest)});u.skin=m}).catch(()=>{});
   return g}
+/* lemur: soft fur (canvas strand noise as color + bump), a smooth lathed body and a tapered tube tail with painted rings */
+const LEM={};
+function lemFur(T){if(LEM.fur)return LEM.fur;const c=document.createElement("canvas");c.width=c.height=256;const x=c.getContext("2d");x.fillStyle="#d8d8d8";x.fillRect(0,0,256,256);
+  let sd=7;const rnd=()=>(sd=(sd*16807)%2147483647)/2147483647;
+  for(let i=0;i<5200;i++){const px=rnd()*256,py=rnd()*256,l=4+rnd()*9,a=Math.PI/2+(rnd()-.5)*.6,v=150+rnd()*105|0;x.strokeStyle=`rgba(${v},${v},${v},${.25+rnd()*.45})`;x.lineWidth=.6+rnd()*.9;
+    x.beginPath();x.moveTo(px,py);x.lineTo(px+Math.cos(a)*l,py+Math.sin(a)*l);x.stroke()}
+  const t=new T.CanvasTexture(c);t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(3,3);return LEM.fur=t}
+function lemRings(T){if(LEM.ring)return LEM.ring;const c=document.createElement("canvas");c.width=512;c.height=16;const x=c.getContext("2d"),N=13;
+  for(let i=0;i<N;i++){x.fillStyle=i%2?"#f2efe8":"#161416";x.fillRect(i*512/N,0,512/N+1,16)}const g=x.createLinearGradient(0,0,512,0);g.addColorStop(0,"rgba(80,76,80,.9)");g.addColorStop(.06,"rgba(80,76,80,0)");x.fillStyle=g;x.fillRect(0,0,512,16);
+  const t=new T.CanvasTexture(c);return LEM.ring=t}
 function rrAnimal(T,seat,add,M,par){if(seat.k==="human")return rrHuman(T,seat,add,M,par);const k=seat.k,g=new T.Group();g.position.set(0,.6,-.02);g.scale.setScalar(1.12);par.add(g);
-  const fur=M(seat.c,{roughness:.85}),lt=M(k==="fox"?0xf4ead8:k==="bear"?0xb98a5a:k==="lemur"?0xf2efe8:k==="nfox"?0xe6e9f0:0xc9bfb4,{roughness:.85}),dk=M(0x111111,{roughness:.25}),pink=M(0xe8a0a4,{roughness:.6});
+  const lf=k==="lemur"?{map:lemFur(T),bumpMap:lemFur(T),bumpScale:.004,roughness:.95}:{},fur=M(seat.c,{roughness:.85,...lf}),lt=M(k==="fox"?0xf4ead8:k==="bear"?0xb98a5a:k==="lemur"?0xf2efe8:k==="nfox"?0xe6e9f0:0xc9bfb4,{roughness:.85,...lf}),dk=M(0x111111,{roughness:.25}),pink=M(0xe8a0a4,{roughness:.6});
   const S_=(r,a,b)=>new T.SphereGeometry(r,a||24,b||18),C_=(a,b,h,s)=>new T.CylinderGeometry(a,b,h,s||16);
   /* sl = limb thickness (the lemur and the neon fox are long and skinny) */const sl=k==="lemur"?.66:k==="nfox"?.74:1;
   /* legs, seated (stay on the chair) */
@@ -3879,7 +3890,7 @@ function rrAnimal(T,seat,add,M,par){if(seat.k==="human")return rrHuman(T,seat,ad
     const kn=new T.Group();kn.position.set(0,0,-.32);hip.add(kn);add(S_(.085*sl),fur,0,0,0,kn);add(C_(.065*sl,.06*sl,.46),fur,0,-.25,-.01,kn);add(S_(.075,16,12),k==="bear"||k==="lemur"?dk:lt,0,-.51,-.06,kn).scale.set(k==="lemur"?.75:1,.55,k==="lemur"?1.7:1.5);return{hip,kn,s}});
   /* upper body pivots at the hips so it can lean to reach */
   const up=new T.Group();up.position.set(0,.06,0);g.add(up);const U=new T.Group();U.position.y=-.06;up.add(U);g.userData.up=up;
-  const torso=new T.Group();torso.position.y=.06;U.add(torso);const tb=add(S_(.27),fur,0,.3,0,torso);const sw=k==="lemur"?.66:k==="nfox"?.74:1;tb.scale.set(sw,1.3,.85*(k==="lemur"?.72:k==="nfox"?.8:1));add(S_(.2),lt,0,.27,-.14*(k==="lemur"?.72:1),torso).scale.set(.85*sw*(k==="lemur"?.8:1),k==="lemur"?1.05:1.15,.5);
+  const torso=new T.Group();torso.position.y=.06;U.add(torso);const tb=k==="lemur"?add(new T.LatheGeometry([[0,-.02],[.13,0],[.19,.07],[.2,.16],[.175,.27],[.185,.38],[.19,.47],[.16,.56],[.11,.62],[.07,.65],[0,.66]].map(p=>new T.Vector2(p[0],p[1])),40),fur,0,-.035,0,torso):add(S_(.27),fur,0,.3,0,torso);const sw=k==="lemur"?.66:k==="nfox"?.74:1;if(k==="lemur")tb.scale.set(1,1,.78);else tb.scale.set(sw,1.3,.85*(k==="nfox"?.8:1));add(S_(.2),lt,0,.27,-.14*(k==="lemur"?.72:1),torso).scale.set(.85*sw*(k==="lemur"?.8:1),k==="lemur"?1.05:1.15,.5);
   g.userData.torso=torso;g.userData.ty=1;
   if(k==="rat"){const v=add(S_(.275,24,18),M(0x141414,{roughness:.55}),0,.3,.005,torso);v.scale.set(1.02,1.28,.86);const shirt=add(new T.ConeGeometry(.1,.3,3),M(0xefe8da),0,.4,-.205,torso);shirt.rotation.set(-.1,Math.PI,Math.PI);
     [-1,1].forEach(s=>{const bw=add(new T.ConeGeometry(.045,.07,4),M(0x8a0f2e,{roughness:.4}),s*.04,.6,-.2,torso);bw.rotation.z=s*Math.PI/2});add(S_(.022,10,8),M(0x8a0f2e),0,.6,-.21,torso);
@@ -3890,9 +3901,12 @@ function rrAnimal(T,seat,add,M,par){if(seat.k==="human")return rrHuman(T,seat,ad
   if(k==="nfox"){/* big bushy midnight tail with a white tip; glowing cyan stripes on the arms and legs (added below) */
     const tail=new T.Group();tail.position.set(0,.12,.24);tail.rotation.x=-.35;g.add(tail);const t1=add(S_(.15),fur,0,.04,.17,tail);t1.scale.set(.85,.85,2.2);const t2=add(S_(.12),fur,.02,.1,.42,tail);t2.scale.set(.9,.95,1.5);add(S_(.1),lt,.02,.14,.6,tail).scale.set(.9,.9,1.3);g.userData.tail=tail}
   if(k==="lemur"){/* the long black-and-white ringed tail, held up in a curl behind the chair */
-    const tail=new T.Group();tail.position.set(0,.08,.2);g.add(tail);const blk=M(0x1b191b,{roughness:.8}),wht=M(0xf4f2ec,{roughness:.8});
-    const cv=new T.CatmullRomCurve3([[0,0,0],[0,-.02,.18],[0,.12,.4],[0,.42,.5],[0,.72,.42],[0,.9,.24],[0,.86,.08],[0,.74,.06]].map(p=>new T.Vector3(...p)));
-    const N=34;for(let n=0;n<=N;n++){const t=n/N,r=.058-.022*t;add(S_(r,12,10),Math.floor(n/2.5)%2?wht:blk,...cv.getPoint(t).toArray(),tail)}g.userData.tail=tail}
+    const tail=new T.Group();tail.position.set(0,.08,.2);g.add(tail);
+    const cv=new T.CatmullRomCurve3([[0,0,0],[0,-.03,.2],[0,.1,.42],[0,.4,.54],[0,.72,.46],[0,.92,.26],[0,.9,.08],[0,.78,.03]].map(p=>new T.Vector3(...p)));
+    const TS=90,RS=14,tg=new T.TubeGeometry(cv,TS,.055,RS,false),pa=tg.attributes.position,ctr=new T.Vector3(),v=new T.Vector3();
+    for(let i=0;i<=TS;i++){const u=i/TS;cv.getPointAt(u,ctr);const r=1-.5*u-.25*Math.max(0,(u-.85)/.15);for(let j=0;j<=RS;j++){const k2=i*(RS+1)+j;v.fromBufferAttribute(pa,k2).sub(ctr).multiplyScalar(r).add(ctr);pa.setXYZ(k2,v.x,v.y,v.z)}}
+    tg.computeVertexNormals();add(tg,M(0xffffff,{map:lemRings(T),bumpMap:lemFur(T),bumpScale:.004,roughness:.95}),0,0,0,tail);
+    const tip=add(S_(.03,16,12),M(0x161416,{roughness:.9}),...cv.getPointAt(1).toArray(),tail);g.userData.tail=tail}
   add(C_(.09*sl,.11*sl,k==="lemur"?.16:.12),fur,0,.7,0,U);
   const head=new T.Group();head.position.set(0,.86,0);U.add(head);g.userData.head=head;add(S_(.21,28,22),fur,0,0,0,head).scale.set(k==="lemur"?.82:1,k==="lemur"?.9:.95,k==="lemur"?.92:1);
   const F=rrFace(T,add,M,head,k,fur,lt);Object.assign(g.userData,{lids:F.lids,brows:F.brows,ears:F.ears,eyes:F.eyes,jaw:F.jaw});
@@ -5632,6 +5646,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:46,d:"Oct 22",t:[["🐒","The Ring-tailed Lemur skin got a makeover: soft fur, a smoother body and a real ringed tail"],["✋","Diamond and Cerberus now grip the gun, drinks and cards with their fingers"]]},
  {v:45,d:"Oct 22",t:[["🕺","Your emotes now work in solo Russian Roulette against the bots too"]]},
  {v:44,d:"Oct 22",t:[["🐺","New skin: Cerberus (250,000 BB), an armored jackal with a glowing cyan mane. Aura Shop → Skins"],["🍑","Table Twerk: your camera now watches from across the table"]]},
  {v:43,d:"Oct 22",t:[["💎","New skin: Diamond (250,000 BB). Sit at the live tables as a human player. Aura Shop → Skins"]]},

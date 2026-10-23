@@ -236,7 +236,7 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   `rrHuman` curls them (relaxed .45 rad, 1.2 while the arm IK goal is a world target = gripping gun/mug/cards, .2 in emotes).
   prefs `skins` {id:true}, `skin` (worn, null = your seat's animal), `skinSpent` (ledger). `skinOf(id)`; the table builds animals through
   `skSeat(seat, uid)` in `rrBuild` (takes effect when the scene is built, i.e. next time you sit). The animal model is a kind in `rrAnimal`/`rrFace`
-  (`k==="lemur"`: ringed tail, mask, orange eyes). Shop preview reuses `emPrevBuild` via `SK_PREV["skin:<id>"]` (turntable + wave). 10% `shopFee("skin")`.
+  (`k==="lemur"`: lathed body, canvas fur texture `lemFur` as map+bump, tapered tube tail with painted rings `lemRings`, mask, cheek ruffs, orange eyes). Shop preview reuses `emPrevBuild` via `SK_PREV["skin:<id>"]` (turntable + wave). 10% `shopFee("skin")`.
 - **Table head tags**: over each seated animal at RR / Hold'em, real players show their profile picture in their aura (`hdPic`,
   `md` level, cached; tap for the name), bots their name. RR: HTML `#rrTags` moved by `rrTagsTick` (replaced the canvas sprites);
   Hold'em: inside `thTags`.
