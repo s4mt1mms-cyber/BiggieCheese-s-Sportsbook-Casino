@@ -8,7 +8,7 @@ on:
         required: true
         default: "on"
         type: choice
-        options: ["on", "off"]
+        options: ["on", "off", "status"]
 
 jobs:
   run:
