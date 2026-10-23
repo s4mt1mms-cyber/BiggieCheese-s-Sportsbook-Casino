@@ -2437,7 +2437,7 @@ function emShopHtml(){const me=S.me,bal=Math.floor(ledger().balOf(me)),ask=S.emA
 /* ---------- Skins (Aura Shop → Skins): look like a different animal at the live Russian Roulette + Hold'em tables ----------
    prefs.skins {id:true} owned forever, prefs.skin = the one you wear (null = your seat's normal animal), prefs.skinSpent (in the ledger).
    The table builds your animal with skSeat(); an emote, a head tag etc. work the same on any animal. */
-const SKINS=[{id:"lemur",n:"Ring-tailed Lemur",p:250000,c:0x6c686e,ic:"🐒",d:"Grey fur, a black-and-white ringed tail and big orange eyes"}];
+const SKINS=[{id:"lemur",n:"Ring-tailed Lemur",p:250000,c:0x4d4950,ic:"🐒",d:"Grey fur, a black-and-white ringed tail and big orange eyes"}];
 const SKIN_BY=Object.fromEntries(SKINS.map(x=>[x.id,x]));
 const skOwns=(id,k)=>!!((((S.prefs||{})[id]||{}).skins||{})[k]);
 const skinOf=id=>{const q=((S.prefs||{})[id])||{};return q.skin&&SKIN_BY[q.skin]&&skOwns(id,q.skin)?q.skin:null};
@@ -3801,12 +3801,12 @@ function rrFace(T,add,M,head,k,fur,lt){const dk=M(0x111111,{roughness:.25}),pink
     [-1,1].forEach(s=>[0,1].forEach(n=>{const w=add(C_(.002,.002,.2,4),M(0xffffff),s*.11,-.05+n*.015,-.2,head);w.rotation.z=Math.PI/2+s*(n-.5)*.2}));jawY=-.09;jawZ=-.15;jawW=.05;jawL=.07;
     const bow=new T.Group();bow.position.set(.11,.16,-.04);head.add(bow);[-1,1].forEach(s=>{const b=add(new T.ConeGeometry(.035,.06,4),M(0xd81b60,{roughness:.4}),s*.03,0,0,bow);b.rotation.z=s*Math.PI/2});add(S_(.014),M(0xd81b60),0,0,0,bow)}
   if(k==="lemur"){/* white face, black mask around big orange eyes, a dark pointed snout, small furry ears */
-    const fw=add(S_(.175,28,22),lt,0,-.02,-.075,head);fw.scale.set(1.08,.95,.8);const mk=M(0x1d1b1d,{roughness:.7});
-    [-1,1].forEach(s=>{const m=add(S_(.068,20,16),mk,s*.078,.035,-.155,head);m.scale.set(1.1,.95,.55);m.rotation.z=s*.35});
-    [-1,1].forEach(s=>eye(s*.078,.04,-.172,.05));
+    const fw=add(S_(.165,28,22),lt,0,-.02,-.07,head);fw.scale.set(.9,.9,.8);const mk=M(0x1d1b1d,{roughness:.7});
+    [-1,1].forEach(s=>{const m=add(S_(.062,20,16),mk,s*.07,.035,-.15,head);m.scale.set(1.1,.95,.55);m.rotation.z=s*.35});
+    [-1,1].forEach(s=>eye(s*.07,.04,-.165,.047));
     [-1,1].forEach(s=>ear(s*.14,.15,.02,(eg)=>{const e=add(new T.ConeGeometry(.06,.12,16),fur,0,.04,0,eg);e.scale.z=.5;e.rotation.z=-s*.55;const ei=add(new T.ConeGeometry(.04,.08,16),lt,0,.035,-.015,eg);ei.scale.z=.35;ei.rotation.z=-s*.55}));
-    const sn=add(snoutG(.15,.085,.03),mk,0,-.05,-.15,head);sn.scale.y=.8;add(S_(.03,16,12),M(0x0c0c0c,{roughness:.2}),0,-.045,-.305,head).scale.set(1.2,.85,1);
-    [-1,1].forEach(s=>add(S_(.07),lt,s*.075,-.085,-.12,head).scale.set(.9,.7,.85));jawY=-.105;jawZ=-.15;jawL=.15;jawW=.055}
+    const sn=add(snoutG(.19,.075,.026),mk,0,-.05,-.14,head);sn.scale.y=.78;add(S_(.027,16,12),M(0x0c0c0c,{roughness:.2}),0,-.047,-.335,head).scale.set(1.2,.85,1);
+    [-1,1].forEach(s=>add(S_(.06),lt,s*.06,-.085,-.12,head).scale.set(.85,.65,.85));jawY=-.105;jawZ=-.15;jawL=.15;jawW=.055}
   if(k==="bunny"){[-1,1].forEach(s=>eye(s*.085,.04,-.165,.042));[-1,1].forEach(s=>ear(s*.07,.16,0,(eg)=>{const e=add(S_(.055,14,12),fur,0,.17,0,eg);e.scale.set(1,3.4,.55);const ei=add(S_(.032,12,10),pink,0,.17,-.025,eg);ei.scale.set(1,3,.35);eg.rotation.z=-s*.18}));
     const mz=add(S_(.07),lt,0,-.06,-.16,head);mz.scale.set(1.3,.8,.9);add(S_(.022,12,10),pink,0,-.03,-.225,head);jawY=-.09;jawZ=-.15;jawW=.05;jawL=.07}
   /* brows */
@@ -3818,12 +3818,13 @@ function rrFace(T,add,M,head,k,fur,lt){const dk=M(0x111111,{roughness:.25}),pink
 function rrAnimal(T,seat,add,M,par){const k=seat.k,g=new T.Group();g.position.set(0,.6,-.02);g.scale.setScalar(1.12);par.add(g);
   const fur=M(seat.c,{roughness:.85}),lt=M(k==="fox"?0xf4ead8:k==="bear"?0xb98a5a:k==="lemur"?0xf2efe8:0xc9bfb4,{roughness:.85}),dk=M(0x111111,{roughness:.25}),pink=M(0xe8a0a4,{roughness:.6});
   const S_=(r,a,b)=>new T.SphereGeometry(r,a||24,b||18),C_=(a,b,h,s)=>new T.CylinderGeometry(a,b,h,s||16);
+  /* sl = limb thickness (the lemur is long and skinny) */const sl=k==="lemur"?.66:1;
   /* legs, seated (stay on the chair) */
-  g.userData.legs=[-1,1].map(s=>{const hip=new T.Group();hip.position.set(s*.12,.05,0);hip.rotation.order="ZXY";g.add(hip);const th=add(C_(.075,.085,.34),fur,0,0,-.15,hip);th.rotation.x=Math.PI/2;
-    const kn=new T.Group();kn.position.set(0,0,-.32);hip.add(kn);add(S_(.085),fur,0,0,0,kn);add(C_(.065,.06,.46),fur,0,-.25,-.01,kn);add(S_(.075,16,12),k==="bear"?dk:lt,0,-.51,-.06,kn).scale.set(1,.55,1.5);return{hip,kn,s}});
+  g.userData.legs=[-1,1].map(s=>{const hip=new T.Group();hip.position.set(s*.12,.05,0);hip.rotation.order="ZXY";g.add(hip);const th=add(C_(.075*sl,.085*sl,.34),fur,0,0,-.15,hip);th.rotation.x=Math.PI/2;
+    const kn=new T.Group();kn.position.set(0,0,-.32);hip.add(kn);add(S_(.085*sl),fur,0,0,0,kn);add(C_(.065*sl,.06*sl,.46),fur,0,-.25,-.01,kn);add(S_(.075,16,12),k==="bear"||k==="lemur"?dk:lt,0,-.51,-.06,kn).scale.set(k==="lemur"?.75:1,.55,k==="lemur"?1.7:1.5);return{hip,kn,s}});
   /* upper body pivots at the hips so it can lean to reach */
   const up=new T.Group();up.position.set(0,.06,0);g.add(up);const U=new T.Group();U.position.y=-.06;up.add(U);g.userData.up=up;
-  const torso=new T.Group();torso.position.y=.06;U.add(torso);const tb=add(S_(.27),fur,0,.3,0,torso);tb.scale.set(1,1.28,.85);add(S_(.2),lt,0,.27,-.14,torso).scale.set(.85,1.15,.5);
+  const torso=new T.Group();torso.position.y=.06;U.add(torso);const tb=add(S_(.27),fur,0,.3,0,torso);const sw=k==="lemur"?.66:1;tb.scale.set(sw,1.3,.85*(k==="lemur"?.72:1));add(S_(.2),lt,0,.27,-.14*(k==="lemur"?.72:1),torso).scale.set(.85*sw*(k==="lemur"?.8:1),k==="lemur"?1.05:1.15,.5);
   g.userData.torso=torso;g.userData.ty=1;
   if(k==="rat"){const v=add(S_(.275,24,18),M(0x141414,{roughness:.55}),0,.3,.005,torso);v.scale.set(1.02,1.28,.86);const shirt=add(new T.ConeGeometry(.1,.3,3),M(0xefe8da),0,.4,-.205,torso);shirt.rotation.set(-.1,Math.PI,Math.PI);
     [-1,1].forEach(s=>{const bw=add(new T.ConeGeometry(.045,.07,4),M(0x8a0f2e,{roughness:.4}),s*.04,.6,-.2,torso);bw.rotation.z=s*Math.PI/2});add(S_(.022,10,8),M(0x8a0f2e),0,.6,-.21,torso);
@@ -3835,14 +3836,14 @@ function rrAnimal(T,seat,add,M,par){const k=seat.k,g=new T.Group();g.position.se
     const tail=new T.Group();tail.position.set(0,.08,.2);g.add(tail);const blk=M(0x1b191b,{roughness:.8}),wht=M(0xf4f2ec,{roughness:.8});
     const cv=new T.CatmullRomCurve3([[0,0,0],[0,-.02,.18],[0,.12,.4],[0,.42,.5],[0,.72,.42],[0,.9,.24],[0,.86,.08],[0,.74,.06]].map(p=>new T.Vector3(...p)));
     const N=34;for(let n=0;n<=N;n++){const t=n/N,r=.058-.022*t;add(S_(r,12,10),Math.floor(n/2.5)%2?wht:blk,...cv.getPoint(t).toArray(),tail)}g.userData.tail=tail}
-  add(C_(.09,.11,.12),fur,0,.7,0,U);
-  const head=new T.Group();head.position.set(0,.86,0);U.add(head);g.userData.head=head;add(S_(.21,28,22),fur,0,0,0,head).scale.set(1,.95,1);
+  add(C_(.09*sl,.11*sl,k==="lemur"?.16:.12),fur,0,.7,0,U);
+  const head=new T.Group();head.position.set(0,.86,0);U.add(head);g.userData.head=head;add(S_(.21,28,22),fur,0,0,0,head).scale.set(k==="lemur"?.82:1,k==="lemur"?.9:.95,k==="lemur"?.92:1);
   const F=rrFace(T,add,M,head,k,fur,lt);Object.assign(g.userData,{lids:F.lids,brows:F.brows,ears:F.ears,eyes:F.eyes,jaw:F.jaw});
   /* two-bone arms: shoulder -> elbow -> paw (solved with IK every frame) */
   const L1=.23,L2=.22;
-  const arm=(s)=>{const sh=new T.Group();sh.position.set(s*.27,.55,-.03);U.add(sh);add(S_(.078,16,12),fur,0,0,0,sh);add(C_(.064,.058,L1),fur,0,-L1/2,0,sh);
-    const el=new T.Group();el.position.set(0,-L1,0);sh.add(el);add(S_(.058,14,10),fur,0,0,0,el);add(C_(.056,.05,L2),fur,0,-L2/2,0,el);
-    const hand=new T.Group();hand.position.set(0,-L2-.02,0);el.add(hand);const pc=k==="bear"?fur:k==="lemur"?M(0x2b2729,{roughness:.7}):lt;add(S_(.068,16,12),pc,0,0,0,hand).scale.set(1,.85,1.1);
+  const arm=(s)=>{const sh=new T.Group();sh.position.set(s*.27*(k==="lemur"?.72:1),.55,-.03);U.add(sh);add(S_(.078*sl,16,12),fur,0,0,0,sh);add(C_(.064*sl,.058*sl,L1),fur,0,-L1/2,0,sh);
+    const el=new T.Group();el.position.set(0,-L1,0);sh.add(el);add(S_(.058*sl,14,10),fur,0,0,0,el);add(C_(.056*sl,.05*sl,L2),fur,0,-L2/2,0,el);
+    const hand=new T.Group();hand.position.set(0,-L2-.02,0);el.add(hand);const pc=k==="bear"?fur:k==="lemur"?M(0x2b2729,{roughness:.7}):lt;add(S_(.068*(k==="lemur"?.75:1),16,12),pc,0,0,0,hand).scale.set(1,.85,1.1);
     for(let n=0;n<3;n++)add(S_(.025,10,8),pc,(n-1)*.03,-.045,-.04,hand);add(S_(.024,10,8),pc,-s*.055,-.01,-.04,hand);
     if(k==="bear")for(let n=0;n<3;n++)add(new T.ConeGeometry(.007,.025,6),M(0xe8e0d0),(n-1)*.03,-.07,-.055,hand).rotation.x=Math.PI;
     const a={sh,el,hand,s,L1,L2,cur:null,goal:null,bob:0};return a};
