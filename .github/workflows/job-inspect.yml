@@ -1,0 +1,26 @@
+name: Inspect a player (read-only)
+
+on:
+  workflow_dispatch:
+    inputs:
+      team:
+        description: "Team name (or part of it)"
+        required: true
+        type: string
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install --quiet google-cloud-firestore==2.19.0
+      - name: Inspect
+        working-directory: tools/jobs
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          TEAM: ${{ inputs.team }}
+        run: python inspect_player.py "$TEAM"
