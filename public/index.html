@@ -4956,8 +4956,15 @@ const cardCount=(cid,id)=>Number(myCards(id)[cid])||0;
 function cardMoney(id){let v=-(Number((S.prefs[id]||{}).packSpent)||0)+(Number((S.prefs[id]||{}).quickSold)||0);for(const l of S.market||[]){if(l.status!=="sold")continue;if(l.seller===id)v+=Number(l.price)||0;if(l.buyer===id)v-=Number(l.price)||0}return v}
 const pkRand=()=>{const u=new Uint32Array(1);crypto.getRandomValues(u);return u[0]/4294967296};
 function pkPullTier(p,i,set){const w=pkSlot(p,i,set);let x=pkRand();for(let r=0;r<w.length;r++){x-=w[r];if(x<0)return r}return w.length-1}
-/* pick one card from a rarity's pool; c.pw = how likely vs a normal card (Jimmy .15 = 85% less likely, owner Oct 22) */
-function pkPick(pool){const w=c=>c.pw!=null?Number(c.pw):1;let x=pkRand()*pool.reduce((a,c)=>a+w(c),0);for(const c of pool){x-=w(c);if(x<0)return c}return pool[pool.length-1]}
+/* pick one card of the rolled rarity. pool = its cards with copies left, all = every card of it.
+   c.pw (Jimmy .15, owner Oct 22) = a card's chance vs a normal card, counted against the WHOLE rarity (sold-out cards too),
+   so a card with pw stays rare even when most of its rarity is sold out. Everything else works as before: a normal pick is
+   any normal card with copies left; if none has copies left, it's an over-supply pull (auto-sold). Returns {c, over}. */
+function pkPick(pool,all){const w=c=>c.pw!=null?Number(c.pw):1,uni=a=>a[Math.floor(pkRand()*a.length)];
+  let x=pkRand()*all.reduce((a,c)=>a+w(c),0);for(const c of all){if(c.pw==null)continue;x-=w(c);if(x<0){if(pool.includes(c))return{c};break}}
+  const avail=pool.filter(c=>c.pw==null);if(avail.length)return{c:uni(avail)};
+  const norm=all.filter(c=>c.pw==null);if(norm.length)return{c:uni(norm),over:true};
+  return pool.length?{c:uni(pool)}:{c:uni(all),over:true}}
 function pkOpen(p,set){const cat=cardsCat(set),used={};const left=c=>c.lim-minted(c.id)-(used[c.id]||0);
   /* owner's rule: odds never change with supply. If the rolled rarity has no copies left, you still pull a card of that
      rarity, but it's over the max supply: it isn't added to your collection and is auto-sold at its quick-sell value
@@ -4966,9 +4973,9 @@ function pkOpen(p,set){const cat=cardsCat(set),used={};const left=c=>c.lim-minte
      Exception (owner, Oct 22): a Dragon that's already in someone's collection can't be pulled again: a Dragon roll with no
      Dragon copies left drops to the best rarity below that still has copies. */
   const out=Array.from({length:p.n},(_,i)=>{let r=pkPullTier(p,i,set);let pool=cat.filter(c=>c.r===r&&left(c)>0);
-    if(!pool.length&&r!==6){const all=cat.filter(c=>c.r===r);if(all.length)return{cid:pkPick(all).id,over:true}}
+    if(r!==6){const all=cat.filter(c=>c.r===r);if(all.length){const k=pkPick(pool,all);if(k.over)return{cid:k.c.id,over:true};used[k.c.id]=(used[k.c.id]||0)+1;return{cid:k.c.id,over:false}}}
     let k=r;while(!pool.length&&k>0){k--;pool=cat.filter(c=>c.r===k&&left(c)>0)}
-    if(!pool.length)return null;const c=pkPick(pool);used[c.id]=(used[c.id]||0)+1;return{cid:c.id,over:false}}).filter(Boolean).sort((a,b)=>cardById(a.cid).r-cardById(b.cid).r);
+    if(!pool.length)return null;const c=pool[Math.floor(pkRand()*pool.length)];used[c.id]=(used[c.id]||0)+1;return{cid:c.id,over:false}}).filter(Boolean).sort((a,b)=>cardById(a.cid).r-cardById(b.cid).r);
   const ids=out.map(x=>x.cid);ids.over=out.map(x=>x.over);return ids}
 /* copies left to mint per rarity in a collection (Infinity = unlimited) */
 function pkLeft(set){const out=[0,0,0,0,0,0,0];for(const c of cardsCat(set)){if(c.r>6)continue;out[c.r]+=isFinite(c.lim)?Math.max(0,c.lim-minted(c.id)):Infinity}return out}
