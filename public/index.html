@@ -2410,7 +2410,7 @@ function auClick(t){const k=t.dataset.au,id=t.dataset.id;if(!S.me)return toast("
   if(k==="ok"){if(!S.auAsk||S.auAsk.id!==id||Date.now()-S.auAsk.t<450)return;S.auAsk=null;t.disabled=true;auBuy(id)}}
 /* Shop dev fee (owner): 10% of every Aura Shop purchase (auras, and later emotes), paid by the house to the owner; not on the
    owner's own purchases. One bank doc per purchase, id tied to the item so a retry can't pay twice. */
-const SHOP_DEV="u_IfmXeDmDg1B3W4naCzVbSA",SHOP_FEE=.10;
+const SHOP_DEV="u_IfmXeDmDg1B3W4naCzVbSA",SHOP_FEE=0/* Oct 23 (owner): shop dev fee removed (was .10) */;
 async function shopFee(kind,id,price){if(!S.me||S.me===SHOP_DEV)return;const amt=Math.round(price*SHOP_FEE);if(!(amt>0))return;
   const ref=db.doc(`bank/shopfee_${S.me}_${kind}_${id}`),doc={from:"house",to:SHOP_DEV,amt,note:"Dev fee · Aura Shop",kind:"shopfee",buyer:S.me,item:kind+":"+id,at:Date.now()};
   for(let t=0;t<3;t++){try{await ref.set(doc);return}catch(_){await new Promise(r=>setTimeout(r,800))}}}
@@ -5321,7 +5321,7 @@ const MV_ADD=[
   ["goat-fuel",2,"Goat Fuel"],["root-beer-knight",2,"Root Beer Knight"],["millar-monday",2,"Millar Monday"],["cheetoh-bros",2,"Cheetoh Bros"],
   ["diverse-family",2,"Diverse Family",{abil:"social",img:false}],
   ["die-for-the-whale",3,"Die for the Whale"],["caf-gang",3,"Caf Gang"],
-  ["jimmy-scroggins-rookie",3,"Jimmy Scroggins Rookie",{abil:"curse",lim:3,pw:.15,desc:"A cursed rookie card."}],
+  ["jimmy-scroggins-rookie",3,"Jimmy Scroggins Rookie",{abil:"curse",lim:3,pw:.5,desc:"A cursed rookie card."}],
   ["craps-dean-strow",4,"Craps Dean Strow",{abil:"dean"}],["heart-of-finance",4,"Heart of Finance",{abil:"hof"}],
   ["joe-camel",4,"Joe Camel",{div:700,img:false}],
   ["king-slop",5,"King Slop",{abil:"slop"}],["shrex",5,"Shrex",{abil:"shrex",img:false}]];
@@ -5349,7 +5349,7 @@ let _FLC=null;const flCards=()=>_FLC||(_FLC=FL_ADD.map(([k,r,name,o])=>{o=o||{};
 /* abilities shown on the card back under the description (heading "Ability · name") */
 const CURSE_FEE=5000,SLOP_DAY=2;
 const CARD_ABIL={
-  curse:{n:"Curse · Tithe",ic:"⛪",t:"THANK YOU FOR TITHING. Pulling it tithes 10% of your balance to the rest of the league. While you hold it, 10% of all your winnings (casino, sports bets, dividends, mining, Flappy Cheese, rat hunt, Debby) goes to the other players. No dividend, no full-set credit, can't be quick-sold. Sell or trade it, or pay 5,000 BB to burn it and lift the curse. Extra copies don't add more."},
+  curse:{n:"Curse · Tithe",ic:"⛪",t:"THANK YOU FOR TITHING. Pulling it burns 10% of your balance. While you hold it, 10% of all your winnings (casino, sports bets, dividends, Cheese Farm, rat hunt, Debby) burns too. It can turn up in League Moments, Multiverse and Fantasyland packs. No dividend, no full-set credit, can't be quick-sold. Sell or trade it, or pay 5,000 BB to burn it and lift the curse. Extra copies don't add more."},
   dean:{n:"Card Counter",ic:"🎲",t:"While you hold him you play craps with a 1.5% edge over the house: every winning craps bet pays a little extra, so each bet type returns +1.5% on average instead of losing. Craps only. Extra copies don't stack."},
   hof:{n:"House Money",ic:"🏦",t:"While you hold it, borrow 10,000 BB from the House in the Bank for 1 day at 5%: pay back 10,500 BB after 24 hours (taken automatically on the due time, whatever you have if you're short). One loan at a time. The loan stays yours to repay even if you sell the card."},
   slop:{n:"Royal Respin",ic:"🎡",t:"2 roulette respins a day. After a spin that loses you money, tap Respin: that spin is cancelled and the wheel spins again with the exact same bets. The new result counts, win or lose. Resets at 1 AM ET. Extra copies don't stack."},
@@ -5373,7 +5373,7 @@ const hasAb=(k,id)=>!!abOf(id||S.me)[k];
 function activeCards(id){id=id||S.me;const cs=myCards(id),out=[],seen=new Set(),me=id===S.me;
   const add=(cid,ic,t,g,bad)=>{if(seen.has(cid+t))return;seen.add(cid+t);const c=cardById(cid);out.push({cid,ic,name:c?c.name:cid,t,g:g||[],bad:!!bad})};
   for(const k in cs){if(!(Number(cs[k])>0))continue;const c=cardById(k);if(!c)continue;
-    if(c.abil==="curse")add(k,"⛪","Cursed: 10% of your winnings go to the league",["all"],true);
+    if(c.abil==="curse")add(k,"⛪","Cursed: 10% of your winnings burn",["all"],true);
     else if(c.abil==="dean")add(k,"🎲",`+${(CR_EDGE*100).toFixed(2).replace(/0$/,"")}% edge at craps`,["cr"]);
     else if(c.abil==="slop")add(k,"🎡",me?`${slopLeft()} of ${SLOP_DAY} roulette respins left today`:`${SLOP_DAY} roulette respins a day`,["rl"]);
     else if(c.abil==="shrex")add(k,"🟢","Blackjacks pay 3× your bet + swamp glow",["bj"]);
@@ -5422,7 +5422,9 @@ function minted(cid){return mintedAll().get(cid)||0}
 const myCards=id=>((S.prefs[id||S.me]||{}).cards)||{};
 const cardCount=(cid,id)=>Number(myCards(id)[cid])||0;
 /* money: packs bought live in prefs.packSpent; marketplace money is read from the sold listings themselves */
-function cardMoney(id){let v=-(Number((S.prefs[id]||{}).packSpent)||0)+(Number((S.prefs[id]||{}).quickSold)||0);for(const l of S.market||[]){if(l.status!=="sold")continue;if(l.seller===id)v+=Number(l.price)||0;if(l.buyer===id)v-=Number(l.price)||0}return v}
+/* Oct 23 (owner): 5% of the BB in every card sale between players is burned, taken from the seller (sales after MK_FEE_AT) */
+const MK_FEE=.05,MK_FEE_AT=Date.parse("2026-10-23T19:10:00Z"),mkFee=l=>(Number(l.soldAt)||0)>=MK_FEE_AT?Math.round((Number(l.price)||0)*MK_FEE):0;
+function cardMoney(id){let v=-(Number((S.prefs[id]||{}).packSpent)||0)+(Number((S.prefs[id]||{}).quickSold)||0);for(const l of S.market||[]){if(l.status!=="sold")continue;if(l.seller===id)v+=(Number(l.price)||0)-mkFee(l);if(l.buyer===id)v-=Number(l.price)||0}return v}
 const pkRand=()=>{const u=new Uint32Array(1);crypto.getRandomValues(u);return u[0]/4294967296};
 function pkPullTier(p,i,set){const w=pkSlot(p,i,set);let x=pkRand();for(let r=0;r<w.length;r++){x-=w[r];if(x<0)return r}return w.length-1}
 /* pick one card of the rolled rarity. pool = its cards with copies left, all = every card of it.
@@ -5435,7 +5437,9 @@ function pkPick(pool,all){const w=c=>c.pw!=null?Number(c.pw):1,uni=a=>a[Math.flo
   const norm=all.filter(c=>c.pw==null);if(norm.length)return{c:uni(norm),over:true};
   return pool.length?{c:uni(pool)}:{c:uni(all),over:true}}
 /* a pack only ever pulls cards of its own collection (id prefix = the set), even if a catalog doc ever lists another set's card */
-const packCat=set=>cardsCat(set).filter(c=>cardSet(c.id)===set);
+const packCat=set=>{const own=cardsCat(set).filter(c=>cardSet(c.id)===set);return set==="lm"||set==="fl"?[...own,...curseCards()]:own};
+/* Jimmy (the curse) lives in Multiverse but is pulled from League Moments and Fantasyland packs too, and shows in those collections (owner, Oct 23). Same 3 copies in total. */
+const curseCards=()=>cardsCat("mv").filter(c=>c.abil==="curse");
 function pkOpen(p,set){const cat=packCat(set),used={};const left=c=>c.lim-minted(c.id)-(used[c.id]||0);
   /* owner's rule: odds never change with supply. If the rolled rarity has no copies left, you still pull a card of that
      rarity, but it's over the max supply: it isn't added to your collection and is auto-sold at its quick-sell value
@@ -5483,7 +5487,7 @@ const PM_PACK={price:55000,n:5,packs:30};
 /* Pack commissions, paid by the house (the buyer pays only the pack price): the dev gets 7.5% of every pack, the Multiverse
    creator (Chancellor Zartog) 5% of every Multiverse pack. Not paid to yourself. One bank doc per buyer, recipient and day
    (amt = that day's running total) so the bank collection stays small. Platinum Mysterio packs keep their own PM_FEES. */
-const PACK_FEES=[{k:"dev",to:"u_IfmXeDmDg1B3W4naCzVbSA",pct:.075,note:"Dev fee · packs"}];/* Zartog's 5% Multiverse creator fee ended Oct 22 (owner); paid out a one-time 50,000 instead (ZB_ONCE) */
+const PACK_FEES=[];/* Oct 23 (owner): dev fee (7.5% of packs) removed *//* Zartog's 5% Multiverse creator fee ended Oct 22 (owner); paid out a one-time 50,000 instead (ZB_ONCE) */
 async function pkFees(p,set){if(!S.me||!db)return;const day=divDay();
   for(const f of PACK_FEES){if((f.set&&f.set!==set)||f.to===S.me)continue;const fee=Math.round(p.price*f.pct);if(!(fee>0))continue;
     const ref=db.doc(`bank/packfee_${S.me}_${f.to}_${day}_${f.k}`);
@@ -5739,7 +5743,7 @@ function viewPacks(){if(!S.me)return `<div class="empty">Sign in to collect card
         <div class="pkodds">${[3,4,5,6].map(r=>`<span style="color:${CR[r].c}">${CR[r].n.split(" ")[0]} ${pkChance(p,r)>0?fmtPct(pkChance(p,r)):"✕"}</span>`).join("")}</div>
         <button type="button" class="btn" data-pkbuy="${p.id}" ${bal<p.price||blk?"disabled":""}>${blk?"Sold out":`Open · ${p.price.toLocaleString()} BB`}</button></div></div>`}).join("")}</div>
       <p class="small muted">Odds shown are the chance of at least one card of that rarity or better in the pack.</p>`}
-  if(st.tab==="coll"){const sets=Object.keys(CSETS).filter(setOpen);const cs_=st.cset&&sets.includes(st.cset)?st.cset:sets[0];const who=st.who&&S.prefs[st.who]?st.who:S.me,mine=who===S.me;const cat=cardsCat(cs_);const have=cat.filter(c=>cardCount(c.id,who)>0).length;const isPm=cs_==="pm";const tiers=isPm?[8,7]:(cat.some(c=>c.abil==="curse")?["curse",6,5,4,3,2,1,0]:[6,5,4,3,2,1,0]);const inT=(c,r)=>r==="curse"?c.abil==="curse":c.r===r&&c.abil!=="curse";
+  if(st.tab==="coll"){const sets=Object.keys(CSETS).filter(setOpen);const cs_=st.cset&&sets.includes(st.cset)?st.cset:sets[0];const who=st.who&&S.prefs[st.who]?st.who:S.me,mine=who===S.me;const cat=cs_==="lm"||cs_==="fl"?[...cardsCat(cs_),...curseCards()]:cardsCat(cs_);const have=cat.filter(c=>cardCount(c.id,who)>0).length;const isPm=cs_==="pm";const tiers=isPm?[8,7]:(cat.some(c=>c.abil==="curse")?["curse",6,5,4,3,2,1,0]:[6,5,4,3,2,1,0]);const inT=(c,r)=>r==="curse"?c.abil==="curse":c.r===r&&c.abil!=="curse";
     const head=(r,txt)=>`<div class="crhead" style="--rc:${(r==="curse"?CR_CURSE:CR[r]).c}"><span class="crdot"></span><b>${esc((r==="curse"?CR_CURSE:CR[r]).n)}</b><span class="small muted">${txt}</span></div>`;
     const got=tiers.map(r=>{const cs=cat.filter(c=>inT(c,r)&&cardCount(c.id,who)>0);if(!cs.length)return "";return head(r,isPm?`${cs.length} owned`:`${cs.length}/${cat.filter(c=>inT(c,r)).length}`)+`<div class="cgrid">${cs.map(c=>cardHtml(c,{count:cardCount(c.id,who),click:true,small:true,who:mine?null:who})).join("")}</div>`}).join("");
     const hsh=x=>{let h=7;for(const ch of x)h=(h*31+ch.charCodeAt(0))>>>0;return h};const unseen=isPm?cat.filter(c=>!cardCount(c.id,who)&&!pmSeen(c.id)).sort((a,b)=>hsh(a.id)-hsh(b.id)):[];
@@ -5766,7 +5770,7 @@ async function pkBuy(id){const set=pkSt().set||"lm";const p=PACKS.find(x=>x.id==
     Object.assign(q,{packSpent:patch.packSpent,cards,packsOpened:patch.packsOpened},autoQS>0?{quickSold:patch.quickSold}:{});
     await db.doc("prefs/"+S.me).update(patch);
     /* Jimmy Scroggins (curse): every copy pulled tithes 10% of the balance right now; the popup shows when its card flips */
-    const nCurse=pulls.filter((x,i)=>!ov[i]&&(cardById(x)||{}).abil==="curse").length;if(nCurse){try{const t=await tiPull(nCurse);if(t.amts.length){S._tiPop=t;try{db.collection("chat").add({type:"bet",kind:"bank",uid:S.me,poster:S.me,at:Date.now(),text:`⛪ ${nm(S.me)} pulled the cursed Jimmy Scroggins Rookie and tithed ${t.amts.reduce((a,b)=>a+b,0).toLocaleString()} BB to the league. THANK YOU FOR TITHING.`,detail:(()=>{const per=t.eachs.reduce((a,b)=>a+b,0);return t.tos.map(id=>`→ ${nm(id)}: +${per.toLocaleString()} BB`).join("\n")})()})}catch(_){}}}catch(_){}}
+    const nCurse=pulls.filter((x,i)=>!ov[i]&&(cardById(x)||{}).abil==="curse").length;if(nCurse){try{const t=await tiPull(nCurse);if(t.amts.length){S._tiPop=t;try{db.collection("chat").add({type:"bet",kind:"bank",uid:S.me,poster:S.me,at:Date.now(),text:`⛪ ${nm(S.me)} pulled the cursed Jimmy Scroggins Rookie and tithed ${t.amts.reduce((a,b)=>a+b,0).toLocaleString()} BB${t.tos.length?" to the league":" into the fire"}. THANK YOU FOR TITHING.`,detail:(()=>{const per=t.eachs.reduce((a,b)=>a+b,0);if(!t.tos.length)return "";return t.tos.map(id=>`→ ${nm(id)}: +${per.toLocaleString()} BB`).join("\n")})()})}catch(_){}}}catch(_){}}
     /* Dragon bounty (owner): every Dragon you pull (and keep), everyone else pays you 20,000 BB once (capped at what they have) */
     {const nDr=pulls.filter((x,i)=>!ov[i]&&(cardById(x)||{}).r===6).length;for(let k=0;k<nDr;k++){try{const L0=ledger(),pay={};let tot=0;
       for(const id of tiRecips(S.me)){const a=Math.min(DRAGON_BOUNTY,Math.max(0,Math.floor(L0.balOf(id))));if(a>0){pay[id]=a;tot+=a}}
@@ -5832,7 +5836,7 @@ function pkCardView(cid,L,who){const c=cardById(cid);if(!c)return;const n=cardCo
     <div class="tbstats"><span>Owned <b>${n}</b></span><span>Pays <b>${cardDiv(c).toLocaleString()} BB</b>/day each</span>${cardSet(cid)==="pm"?`<span>${pmBurned(cid)&&!minted(cid)?`<b>Destroyed forever</b>`:`Pulled <b>${pmPulled()[cid]||0}/${c.lim}</b>${pmState().live?"":" · final"}`}</span>`:`<span>Minted <b>${isFinite(c.lim)?`${minted(cid)}/${c.lim}`:minted(cid).toLocaleString()}</b></span>`}</div><div class="tbval">Est. value <b>${E.v.toLocaleString()}${c.r===6&&!E.n?"+":""} BB</b><small class="muted">${E.src==="card"?`from ${E.n} recent sale${E.n>1?"s":""}`:E.src==="rarity"?`from recent ${esc(R.n)} sales`:"no sales yet"}</small></div>${SL.length?`<div class="tbhist"><span class="small muted">Sale history</span>${SL.slice(0,4).map(l=>`<span>${Number(l.price).toLocaleString()} BB <small class="muted">${new Date(l.soldAt).toLocaleDateString(undefined,{month:"short",day:"numeric"})}</small></span>`).join("")}</div>`:""}<div class="tbset">${esc((CSETS[cardSet(cid)]||{}).name||"")} · ${esc(R.n)}</div></div></div></div>`;
   o.innerHTML=`<div class="pkview"><div class="cflip" title="Tap to flip"><div class="cff">${cardHtml(c,{count:n})}</div><div class="cfb">${back}</div></div><div class="small muted">Tap the card to flip it</div>
     ${L?`<div class="mkpeek"><div class="small muted">Listed by ${esc(nm(L.seller))}</div>${L.price>0?`<b class="num">${Number(L.price).toLocaleString()} BB</b>`:""}${L.want?`<span class="mkwant">🔁 Trade for <b>${esc(mkWantTxt(L.want))}</b></span>`:""}${onlyBadge(L)}
-      <div class="mkbtns">${L.seller===S.me?`<button type="button" class="btn ghost" data-mkcancel="${L.id}">Take down</button>`:!canTake(L)?`<button type="button" class="btn ghost" disabled>Private listing</button>`:`${L.price>0?`<button type="button" class="btn" data-mkbuy="${L.id}" ${Math.floor(ledger().balOf(S.me))<L.price?"disabled":""}>Buy · ${Number(L.price).toLocaleString()} BB</button>`:""}${L.want?`<button type="button" class="btn ghost" data-mktrade="${L.id}" ${mkMatches(L).length?"":"disabled"}>${mkMatches(L).length?"Trade":"You don't have it"}</button>`:""}${ofMineOn(L.id)?`<button type="button" class="btn ghost" data-dmgo="${esc(L.seller)}">Offer sent ✓</button>`:`<button type="button" class="btn ghost" data-mkoffer="${L.id}">Make an offer</button>`}<button type="button" class="btn ghost" data-dmgo="${esc(L.seller)}">💬 Message</button>`}</div>${L.seller===S.me&&ofPendingOn(L.id).length?`<p class="small mkofn">📨 ${ofPendingOn(L.id).length} offer${ofPendingOn(L.id).length>1?"s":""}: see Your listings on the Marketplace</p>`:""}</div>`:W?ofDirHtml(cid,W):n>0?`<form class="mklist" data-mklist="${cid}"><div class="stlbl">List on the market</div><label>Sell price (BB, optional)<input name="price" type="number" min="1" step="1" inputmode="numeric" placeholder="e.g. 2500"></label>
+      <div class="mkbtns">${L.seller===S.me?`<button type="button" class="btn ghost" data-mkcancel="${L.id}">Take down</button>`:!canTake(L)?`<button type="button" class="btn ghost" disabled>Private listing</button>`:`${L.price>0?`<button type="button" class="btn" data-mkbuy="${L.id}" ${Math.floor(ledger().balOf(S.me))<L.price?"disabled":""}>Buy · ${Number(L.price).toLocaleString()} BB</button>`:""}${L.want?`<button type="button" class="btn ghost" data-mktrade="${L.id}" ${mkMatches(L).length?"":"disabled"}>${mkMatches(L).length?"Trade":"You don't have it"}</button>`:""}${ofMineOn(L.id)?`<button type="button" class="btn ghost" data-dmgo="${esc(L.seller)}">Offer sent ✓</button>`:`<button type="button" class="btn ghost" data-mkoffer="${L.id}">Make an offer</button>`}<button type="button" class="btn ghost" data-dmgo="${esc(L.seller)}">💬 Message</button>`}</div>${L.seller===S.me&&ofPendingOn(L.id).length?`<p class="small mkofn">📨 ${ofPendingOn(L.id).length} offer${ofPendingOn(L.id).length>1?"s":""}: see Your listings on the Marketplace</p>`:""}</div>`:W?ofDirHtml(cid,W):n>0?`<form class="mklist" data-mklist="${cid}"><div class="stlbl">List on the market</div><label>Sell price (BB, optional · 5% sales fee is burned)<input name="price" type="number" min="1" step="1" inputmode="numeric" placeholder="e.g. 2500"></label>
       <div class="mkwants"><div class="stlbl">Trade for (optional)</div><div class="mkwrows"></div><button type="button" class="btn ghost mkwadd">+ Add a card you want</button><p class="small muted mkwnote" hidden>They have to give you all of these together.</p></div>
       <div class="mkwho">${whoPickHtml([],'name="only"')}</div><button class="btn" type="submit">List it</button><p class="small muted">Set a price, a trade, or both. Whoever takes it first gets it.</p></form>${c.abil==="curse"?`<div class="qsell"><button type="button" class="btn ghost curseoff" data-uncurse="${cid}">⛪ Remove curse · ${CURSE_FEE.toLocaleString()} BB</button><p class="small muted">Burns one copy for good (it goes back into the pack supply). Cursed cards can't be quick-sold, but you can sell or trade them.</p></div>`:qsVal(c)>0?`<div class="qsell"><button type="button" class="btn ghost" data-qsell="${cid}">${cid==="pm-claire"?"🔥 Burn Claire":"⚡ Instant sell"} · ${qsVal(c).toLocaleString()} BB</button><p class="small muted">${cid==="pm-claire"?"Scorched Earth: the house pays 35,000 BB and Claire is destroyed forever. She never comes back.":cardSet(cid)==="pm"?"The house pays 5,000 BB. Platinum Mysterio cards never go back into any supply.":"Last resort: the house pays a low price, and the card goes back into the pack supply. You'll usually get much more on the Marketplace."}</p></div>`:cardSet(cid)==="pm"?`<p class="small muted">This Legendary can't be quick-sold.</p>`:""}`:""}<button type="button" class="btn ghost" data-pkclose>Close</button></div>`;document.body.appendChild(o);
   o.addEventListener("click",e=>{if(e.target===o||e.target.closest("[data-pkclose]"))return o.remove();const uc=e.target.closest("[data-uncurse]");if(uc){if(!uc.dataset.arm){uc.dataset.arm=1;uc.textContent=`Tap again to pay ${CURSE_FEE.toLocaleString()} BB and burn it`;return}uc.disabled=true;tiUncurse(cid).then(()=>o.remove());return}const qs=e.target.closest("[data-qsell]");if(qs){if(!qs.dataset.arm){qs.dataset.arm=1;qs.textContent=(cid==="pm-claire"?"Tap again to burn her forever · ":"Tap again to confirm · ")+qsVal(c).toLocaleString()+" BB";return}qs.disabled=true;quickSell(cid).then(()=>o.remove());return}if(e.target.closest("[data-mkbuy],[data-mktrade],[data-mkcancel],[data-mkoffer],[data-ofdirect],[data-cardpeek]")){setTimeout(()=>o.remove(),0);return}const f=e.target.closest(".cflip");if(f)f.classList.toggle("on")});
@@ -5953,17 +5957,19 @@ setInterval(divCheck,30000);setTimeout(divCheck,4000);
 const TI={conf:null,busy:false,sb:false},TI_EVERY=3*60000,TI_BATCH=2000;
 const tiCursed=id=>hasAb("curse",id);
 function tiAdd(patch,amt){amt=Math.floor(Number(amt)||0);if(amt>0&&S.me&&tiCursed(S.me)){const q=S.prefs[S.me]||{};const v=(Number(q.tiWin)||0)+amt;q.tiWin=v;patch.tiWin=v}return patch}
+/* Oct 23 (owner): the curse burns its tithes — nobody receives them, the BB just leaves the league */
+const TI_BURN=true;
 function tiRecips(me){let r=members().filter(id=>id!==me&&id!=="house"&&teamOf(id));if(!r.length)r=members().filter(id=>id!==me&&id!=="house");return r.sort()}
-async function tiPull(k){const me=S.me,tos=tiRecips(me);let bal=Math.floor(ledger().balOf(me));const amts=[],eachs=[];let each=0;
-  for(let i=0;i<k;i++){const amt=tiPullAmt(bal);if(amt<=0)break;each=tiSplit(amt,tos.length).each;
+async function tiPull(k){const me=S.me,tos=TI_BURN?[]:tiRecips(me);let bal=Math.floor(ledger().balOf(me));const amts=[],eachs=[];let each=0;
+  for(let i=0;i<k;i++){const amt=tiPullAmt(bal);if(amt<=0)break;each=TI_BURN?0:tiSplit(amt,tos.length).each;
     await db.collection("bank").add({from:me,tos,each,amt,kind:"tithe",src:"pull",note:"Tithe",at:Date.now()});bal-=amt;amts.push(amt);eachs.push(each)}
   return{amts,each,eachs,tos,n:tos.length}}
 function tiPopShow(){const t=S._tiPop;if(!t||$("#tiOv"))return;S._tiPop=null;const tot=t.amts.reduce((a,b)=>a+b,0);
-  const o=document.createElement("div");o.id="tiOv";o.className="overlay tiov";o.innerHTML=`<div class="pickbox recapbox tibox"><div class="tihd">THANK YOU FOR TITHING</div><div class="tisub">10% of current balance</div><div class="tiamt num">−${tot.toLocaleString()} BB</div><p class="small muted">Split among the other ${t.n} player${t.n===1?"":"s"}: ${t.each.toLocaleString()} BB each${t.amts.length>1?` (×${t.amts.length} copies)`:""}. While this card is in your collection, 10% of your winnings go to the league too.</p><button class="btn" type="button" id="tiOk">Amen</button></div>`;
+  const o=document.createElement("div");o.id="tiOv";o.className="overlay tiov";o.innerHTML=`<div class="pickbox recapbox tibox"><div class="tihd">THANK YOU FOR TITHING</div><div class="tisub">10% of current balance</div><div class="tiamt num">−${tot.toLocaleString()} BB</div><p class="small muted">${t.n?`Split among the other ${t.n} player${t.n===1?"":"s"}: ${t.each.toLocaleString()} BB each`:"Burned. It's gone for good"}${t.amts.length>1?` (×${t.amts.length} copies)`:""}. While this card is in your collection, 10% of your winnings burn too.</p><button class="btn" type="button" id="tiOk">Amen</button></div>`;
   document.body.appendChild(o);const close=()=>{o.remove();render()};o.querySelector("#tiOk").onclick=close;o.addEventListener("click",e=>{if(e.target===o)close()})}
 /* the server-confirmed tiWin: what the last flush wrote, or the prefs doc as loaded */
 function tiConf(){if(TI.conf!=null)return TI.conf;const raw=typeof LV!=="undefined"&&LV.on?(LV.rows[S.me]||null):S.prefs[S.me];if(!raw)return null;if(typeof LV!=="undefined"&&LV.on&&LV.q.length)return null;return TI.conf=Number(raw.tiWin)||0}
-async function tiSettle(force){if(!S.ready||!S.me||!db||TI.busy||S.readOnly)return;const me=S.me,conf=tiConf();if(conf==null)return;
+async function tiSettle(force){if(TI_BURN)return;/* burned: balOf already takes 10% of tiWin; nothing to hand out */if(!S.ready||!S.me||!db||TI.busy||S.readOnly)return;const me=S.me,conf=tiConf();if(conf==null)return;
   const L=ledger(),paid=L.tiPaid[me]||0,owed=tiOwed(conf,paid),tos=tiRecips(me);if(!tos.length||owed<tos.length)return;
   if(!force&&owed<TI_BATCH&&Date.now()-(L.tiLast[me]||0)<TI_EVERY)return;const sp=tiSplit(owed,tos.length);
   TI.busy=true;try{const ref=db.doc("bank/ti_"+me+"_"+paid);const ex=await ref.get();if(!ex.exists)await ref.set({from:me,tos,each:sp.each,amt:sp.paid,kind:"tithe",src:"win",note:"Tithe",at:Date.now()})}catch(_){}finally{TI.busy=false}}
@@ -5998,10 +6004,11 @@ function hofHtml(){if(!S.me)return "";const ls=hofLoans(S.me),open=ls.find(l=>l.
   return `<section class="card hofbox"><h3>💗 Heart of Finance · House loan</h3>${open?`<p class="small">Your House loan is open: see it under Your loans below. ${own?"You can borrow again once it's repaid.":"It stays yours to repay even without the card."}</p>`:ls.some(l=>l.status==="defaulted")?`<p class="small neg">You defaulted on a House loan, so the House won't lend to you again.</p>`:`<p class="small muted">Borrow ${HOF_T.P.toLocaleString()} BB from the House for 1 day at 5%. ${(bkCalc(HOF_T)||{}).total.toLocaleString()} BB comes out of your balance automatically after 24 hours (whatever you have if you're short). Pay it off early any time.</p><button type="button" class="btn" data-hoftake>Borrow ${HOF_T.P.toLocaleString()} BB</button>`}</section>`}
 document.addEventListener("click",e=>{if(e.target.closest("[data-hoftake]"))hofTake()});
 function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=ledger(),owed=tiOwed(q.tiWin,L.tiPaid[me]||0),cur=tiCursed(me);if(!cur&&owed<=0)return "";
-  return `<section class="card"><h3>⛪ Tithe</h3><p class="small">${cur?"You hold the cursed Jimmy Scroggins Rookie: 10% of everything you win goes to the other players.":"You're no longer cursed."} Tithed from winnings so far: <b class="num">${Math.floor((Number(q.tiWin)||0)/10).toLocaleString()} BB</b>${owed>0?` · <span class="tiowe">${owed.toLocaleString()} BB already taken from your balance, on its way to the league</span>`:""}.</p></section>`}
+  return `<section class="card"><h3>⛪ Tithe</h3><p class="small">${cur?"You hold the cursed Jimmy Scroggins Rookie: 10% of everything you win burns.":"You're no longer cursed."} Tithed from winnings so far: <b class="num">${Math.floor((Number(q.tiWin)||0)/10).toLocaleString()} BB</b>${owed>0?` · <span class="tiowe">${owed.toLocaleString()} BB already taken from your balance, on its way to the league</span>`:""}.</p></section>`}
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:82,d:"Oct 23",t:[["⛪","Jimmy Scroggins is everywhere now: he can turn up in League Moments, Multiverse and Fantasyland packs, and he's more likely to show up"],["🔥","His tithes don't go to the other players anymore. They burn"],["🏷️","Card sales between players have a 5% fee, taken from the seller and burned"]]},
  {v:81,d:"Oct 23",t:[["🎟️","My bets now shows all your live and pending bets and parlays at the top, plus your settled parlays"]]},
  {v:80,d:"Oct 23",t:[["🌈","New collection: Fantasyland is open! Find it in Cards → Shop"]]},
  {v:79,d:"Oct 23",t:[["📊","Every casino game now shows how much you're up or down this session, under your all-time total"]]},
@@ -6431,7 +6438,7 @@ function bkActivity(me){const out=[],E=(at,v,h,bad)=>{if(at)out.push({at:Number(
   for(const t of S.bank||[]){if(t.kind==="bounty"){const pay=t.pay||{},tot=Object.entries(pay).reduce((x,[id,v])=>x+(id!==t.to?Math.floor(Number(v))||0:0),0);
       if(t.to===me)E(t.at,tot,`🐉 Dragon bounty · everyone paid you`);else if(Math.floor(Number(pay[me]))>0)E(t.at,-Math.floor(Number(pay[me])),`🐉 Dragon bounty to ${esc(nm(t.to))}`);continue}
     if(t.kind==="tithe"){const e=Math.floor(Number(t.each))||0,a=Math.floor(Number(t.amt))||0,tos=Array.isArray(t.tos)?t.tos:[];
-      if(t.from===me)E(t.at,t.src==="win"?0:-a,t.src==="win"?`⛪ Tithe · ${a.toLocaleString()} BB of your winnings paid out to ${tos.length} players`:`⛪ Tithe · 10% of your balance to the league`);
+      if(t.from===me)E(t.at,t.src==="win"?0:-a,t.src==="win"?`⛪ Tithe · ${a.toLocaleString()} BB of your winnings paid out to ${tos.length} players`:(tos.length?`⛪ Tithe · 10% of your balance to the league`:`⛪ Tithe · 10% of your balance burned`));
       else if(tos.includes(me)&&e>0)E(t.at,e,`⛪ Tithe from ${esc(nm(t.from))}`);continue}
     const a=Math.floor(Number(t.amt))||0;if(!(a>0)||t.from===t.to)continue;const note=t.note&&t.kind!=="debby"?` <span class="bknote">· ${esc(t.note)}</span>`:"";
     if(t.kind==="tax"){if(t.from===me)E(t.at,-a,`🏛️ Rich tax · ${esc(t.note||"1 AM")}`,true);continue}

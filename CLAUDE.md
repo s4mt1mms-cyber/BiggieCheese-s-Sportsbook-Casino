@@ -311,6 +311,10 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
 - **Skin `monk` "Shadow Monk" (150,000):** CC-BY-4.0 “Shadow Monk Assassin - Dark Fantasy” by Pigcraft. Scratch `monk/bake11.py`: staff below the left hand cut,
   left arm + staff static on the chest, right arm rigged.
 
+- **Oct 23 later (owner):** Jimmy (curse) `pw:.5` and pulled from League Moments + Fantasyland packs too (`packCat` adds `curseCards()`; also shown in those
+  collections; still 3 copies total); his tithes burn (`TI_BURN`: pull docs have `tos:[]`, `tiSettle` does nothing — balOf already takes floor(tiWin/10)).
+  Dev fees removed (`PACK_FEES=[]`, `SHOP_FEE=0`). 5% of every player-to-player card sale burned from the seller (`mkFee`, sales with soldAt ≥ `MK_FEE_AT`, in `cardMoney`).
+
 ## Live multiplayer (server host)
 `config/mp.serverHost = true` → Cloud Functions host Russian Roulette + Hold'em: clients write inputs
 (`rrin/{id}`, `thin/{id}`, `mpreq/{id}`, `mptick/{id}`), the server runs the game in Firestore transactions and
