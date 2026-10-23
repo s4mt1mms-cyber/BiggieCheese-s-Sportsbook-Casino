@@ -2439,7 +2439,7 @@ function emShopHtml(){const me=S.me,bal=Math.floor(ledger().balOf(me)),ask=S.emA
    The table builds your animal with skSeat(); an emote, a head tag etc. work the same on any animal. */
 const SKINS=[{id:"lemur",n:"Ring-tailed Lemur",p:100000,c:0x4d4950,ic:"🐒",d:"Grey fur, a black-and-white ringed tail and big orange eyes"},
   {id:"diamond",kind:"human",hv:"diamond",n:"Diamond",p:250000,c:0xd9a88a,ic:"💎",d:"Sit at the table as a human player instead of an animal"},
-  {id:"ag",hid:1,kind:"human",hv:"ag",n:"Anime Girl",p:250000,c:0xe9b8a2,ic:"🌸",d:"An anime-style human player. Model: “Anime girl” by Imran Aziz (CC BY 4.0)"},
+  {id:"ag",kind:"human",hv:"ag",n:"Anime Girl",p:250000,c:0xe9b8a2,ic:"🌸",d:"An anime-style human player. Model: “Anime girl” by Imran Aziz (CC BY 4.0)"},
   {id:"uni",kind:"human",hv:"uni",n:"Unicorn",p:250000,c:0xf2f0f4,ic:"🦄",d:"A plushy unicorn with a pastel mane, a big horn and stubby legs"},
   {id:"cerb",kind:"human",hv:"cerb",n:"Cerberus",p:250000,c:0x2a2f36,ic:"🐺",d:"A tall jackal in black armor with glowing cyan fur and a long tail"},
   {id:"nfox",n:"Neon Fox",p:250000,c:0x0e1634,ic:"🦊",d:"Midnight-blue fur, a white chest and tail tip, glowing cyan stripes and eyes"}];
@@ -5658,6 +5658,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:50,d:"Oct 22",t:[["🌸","Anime Girl is back in the shop with fixed legs and hips (no more holes when she sits)"]]},
  {v:49,d:"Oct 22",t:[["🌸","New skin: Anime Girl (250,000 BB). Aura Shop → Skins"],["🃏","Hold'em: players who sit down late no longer show up invisible"]]},
  {v:48,d:"Oct 22",t:[["🐒","Ring-tailed Lemur skin is now 100,000 BB"],["🦄","Unicorn got longer arms and legs"]]},
  {v:47,d:"Oct 22",t:[["🦄","New skin: Unicorn (250,000 BB). Aura Shop → Skins"]]},
