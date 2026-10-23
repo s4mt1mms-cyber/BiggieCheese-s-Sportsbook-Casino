@@ -2439,7 +2439,7 @@ function emShopHtml(){const me=S.me,bal=Math.floor(ledger().balOf(me)),ask=S.emA
    The table builds your animal with skSeat(); an emote, a head tag etc. work the same on any animal. */
 const SKINS=[{id:"lemur",n:"Ring-tailed Lemur",p:100000,c:0x4d4950,ic:"🐒",d:"Grey fur, a black-and-white ringed tail and big orange eyes"},
   {id:"diamond",kind:"human",hv:"diamond",n:"Diamond",p:250000,c:0xd9a88a,ic:"💎",d:"Sit at the table as a human player instead of an animal"},
-  {id:"ag",kind:"human",hv:"ag",n:"Anime Girl",p:250000,c:0xe9b8a2,ic:"🌸",d:"An anime-style human player. Model: “Anime girl” by Imran Aziz (CC BY 4.0)"},
+  {id:"ag",hid:1,kind:"human",hv:"ag",n:"Anime Girl",p:250000,c:0xe9b8a2,ic:"🌸",d:"An anime-style human player. Model: “Anime girl” by Imran Aziz (CC BY 4.0)"},
   {id:"uni",kind:"human",hv:"uni",n:"Unicorn",p:250000,c:0xf2f0f4,ic:"🦄",d:"A plushy unicorn with a pastel mane, a big horn and stubby legs"},
   {id:"cerb",kind:"human",hv:"cerb",n:"Cerberus",p:250000,c:0x2a2f36,ic:"🐺",d:"A tall jackal in black armor with glowing cyan fur and a long tail"},
   {id:"nfox",n:"Neon Fox",p:250000,c:0x0e1634,ic:"🦊",d:"Midnight-blue fur, a white chest and tail tip, glowing cyan stripes and eyes"}];
@@ -2455,7 +2455,7 @@ function skShopHtml(){const me=S.me,bal=Math.floor(ledger().balOf(me)),ask=S.skA
     if(ask===x.id)return `<div class="auask"><button type="button" class="aubtn" data-sk="ok" data-id="${x.id}">Buy for ${x.p.toLocaleString()} BB</button><button type="button" class="aubtn ghost" data-sk="no">Cancel</button></div>`;
     return `<button type="button" class="aubtn${bal<x.p?" short":""}" data-sk="buy" data-id="${x.id}">Buy</button>`};
   return `<div class="aush"><span>Skins</span><span>from ${Math.min(...SKINS.map(x=>x.p)).toLocaleString()} BB</span></div><div class="small muted" style="margin:-4px 2px 10px">Show up as a different animal at the live Russian Roulette and Hold'em tables. Everyone at the table sees it. Takes effect the next time you sit down.</div>
-  <div class="augrid">${SKINS.map(x=>{const o=skOwns(me,x.id);return `<div class="auit emit${cur===x.id?" on":""}" data-skitem="${x.id}">${o?`<span class="auown">Owned</span>`:""}<div class="emprev" data-emprev="skin:${x.id}"></div><b>${esc(x.ic+" "+x.n)}</b><span class="small muted">${esc(x.d)}</span><span class="aupr${o?" own":""}">${o?"Yours to keep":x.p.toLocaleString()+" BB"}</span>${btn(x)}</div>`}).join("")}</div>`}
+  <div class="augrid">${SKINS.filter(x=>!x.hid||S.canEdit||skOwns(me,x.id)).map(x=>{const o=skOwns(me,x.id);return `<div class="auit emit${cur===x.id?" on":""}" data-skitem="${x.id}">${o?`<span class="auown">Owned</span>`:""}<div class="emprev" data-emprev="skin:${x.id}"></div><b>${esc(x.ic+" "+x.n)}</b><span class="small muted">${esc(x.d)}</span><span class="aupr${o?" own":""}">${o?"Yours to keep":x.p.toLocaleString()+" BB"}</span>${btn(x)}</div>`}).join("")}</div>`}
 function skClick(t){const k=t.dataset.sk,id=t.dataset.id;if(!S.me)return toast("Sign in first.");if(S.readOnly)return toast("View only. Ask the commish for access.");
   if(k==="no"){S.skAsk=null;render();return}
   if(k==="eq")return skEquip(id);
@@ -3842,6 +3842,9 @@ function humanData(T,hv){const V=HUMAN_V[hv]||HUMAN_V.diamond;if(HUMAN_P[V.f])re
     si[i*4]=bi[i*2];si[i*4+1]=bi[i*2+1];const w=bw[i]/255;sw[i*4]=w;sw[i*4+1]=1-w}
   const g=new T.BufferGeometry();g.setAttribute("position",new T.BufferAttribute(pos,3));g.setAttribute("uv",new T.BufferAttribute(uv,2));
   g.setAttribute("skinIndex",new T.Uint16BufferAttribute(si,4));g.setAttribute("skinWeight",new T.Float32BufferAttribute(sw,4));g.setIndex(new T.BufferAttribute(h.i32?new Uint32Array(qi):new Uint16Array(qi),1));g.computeVertexNormals();
+  {/* smooth across texture seams: vertices at the same spot share one normal (no lit-up lines where UV islands meet) */const nr=g.attributes.normal.array,mp=new Map();
+    for(let i=0;i<n;i++){const k=qp[i*3]+","+qp[i*3+1]+","+qp[i*3+2],j=mp.get(k);if(j===undefined)mp.set(k,[i]);else j.push(i)}
+    for(const l of mp.values()){if(l.length<2)continue;let x=0,y=0,z=0;for(const i of l){x+=nr[i*3];y+=nr[i*3+1];z+=nr[i*3+2]}const d=Math.hypot(x,y,z)||1;for(const i of l){nr[i*3]=x/d;nr[i*3+1]=y/d;nr[i*3+2]=z/d}}}
   const ld=u=>{const t=new T.TextureLoader().load(u);t.flipY=false;t.encoding=T.sRGBEncoding;return t};
   return{g,tex:ld("/skins/"+V.f+".jpg"),etex:V.emis?ld("/skins/"+V.f+"_e.jpg"):null,j:h.joints,bones:h.bones}}).catch(e=>{delete HUMAN_P[V.f];throw e})}
 function rrHuman(T,seat,add,M,par){const hv=HUMAN_V[seat.hv]?seat.hv:"diamond",H=HUMAN_V[hv],g=new T.Group();g.position.set(0,.6+(H.gy||0),-.02);g.scale.setScalar(1.12);par.add(g);const u=g.userData;u.human=true;u.rise=H.rise;u.lsOff=H.lsOff;/* stretched-neck gag: a neck in the skin colour instead of a grey pipe */u.neckMat=new T.MeshStandardMaterial({color:H.nc||0xd9a07e,roughness:.6});
