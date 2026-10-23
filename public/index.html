@@ -3861,7 +3861,14 @@ function rrHuman(T,seat,add,M,par){const g=new T.Group();g.position.set(0,.6,-.0
     const mat=new T.MeshStandardMaterial(Object.assign({map:D.tex,roughness:.5,metalness:0,skinning:true},D.etex?{emissiveMap:D.etex,emissive:new T.Color(0xffffff),emissiveIntensity:1}:{}));
     const m=new T.SkinnedMesh(D.g,mat);m.frustumCulled=false;m.castShadow=true;g.add(m);m.bind(new T.Skeleton(bones,inv),new T.Matrix4());
     /* your own body at the table: no head in front of the camera */
-    const hb=bones[2];m.onBeforeRender=function(){const want=head.visible?1:.001;if(hb.scale.x!==want){hb.scale.setScalar(want);hb.updateMatrixWorld(true);this.skeleton.update()}};u.skin=m}).catch(()=>{});
+    const hb=bones[2];
+    /* fingers: relaxed curl, a tighter grip while the hand is reaching for / holding something (gun, mug, cards), open during emotes */
+    const nb=nm=>{const i=(D.bones||[]).findIndex(b=>b.nm===nm);return i<0?null:bones[i]},Z=new T.Vector3(0,0,1),tq=new T.Quaternion();
+    const fing=[[nb("fingR"),Rr,-1],[nb("fingL"),L,1]].filter(f=>f[0]).map(([b,a,sg])=>({b,a,sg,rest:b.quaternion.clone(),c:.45}));
+    m.onBeforeRender=function(){let dirty=false;const want=head.visible?1:.001;if(hb.scale.x!==want){hb.scale.setScalar(want);hb.updateMatrixWorld(true);dirty=true}
+      for(const f of fing){const tgt=f.a.em?.2:(f.a.goal&&f.a.goal.world)?1.2:.45;if(Math.abs(tgt-f.c)<.002)continue;f.c+=(tgt-f.c)*.18;f.b.quaternion.copy(tq.setFromAxisAngle(Z,f.sg*f.c)).multiply(f.rest);f.b.updateMatrixWorld(true);dirty=true}
+      if(dirty)this.skeleton.update()};
+    fing.forEach(f=>{f.b.quaternion.copy(tq.setFromAxisAngle(Z,f.sg*f.c)).multiply(f.rest)});u.skin=m}).catch(()=>{});
   return g}
 function rrAnimal(T,seat,add,M,par){if(seat.k==="human")return rrHuman(T,seat,add,M,par);const k=seat.k,g=new T.Group();g.position.set(0,.6,-.02);g.scale.setScalar(1.12);par.add(g);
   const fur=M(seat.c,{roughness:.85}),lt=M(k==="fox"?0xf4ead8:k==="bear"?0xb98a5a:k==="lemur"?0xf2efe8:k==="nfox"?0xe6e9f0:0xc9bfb4,{roughness:.85}),dk=M(0x111111,{roughness:.25}),pink=M(0xe8a0a4,{roughness:.6});
