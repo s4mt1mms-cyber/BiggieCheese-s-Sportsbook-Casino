@@ -171,7 +171,7 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   - `hof` **Heart of Finance** (Elite): Bank → "Borrow 10,000 BB" (`hofTake`): a normal `loans` doc with `lender:"house"`, `hof:true`,
     5%/day, 1 payment of 10,500 after 24 h, gradual mode (late, default 7 days after due); auto-collected by the borrower's page like any
     loan. One at a time; after a default the House won't lend again. Selling the card doesn't touch an open loan.
-  - `slop` **King Slop** (Grail): 5 roulette respins a day (`prefs.slopDay`/`slopUsed`, `divDay` boundary). After a losing spin,
+  - `slop` **King Slop** (Grail): 3 roulette respins a day (`SLOP_DAY`) (`prefs.slopDay`/`slopUsed`, `divDay` boundary). After a losing spin,
     "Respin (n left)" voids it: the same write takes the voided net back out of rlNet and adds the new spin's (`rlRespinNet`), no
     extra rlSpins; the new result is final (respin again only while respins remain).
   - `shrex` **Shrex** (Grail, art pending): blackjack streak bonuses ×1.5 and a green "swamp" glow on avatars/profile pictures (`.swamp`, replaces the Dragon glow).
