@@ -2,11 +2,11 @@
 
 Lines are OURS, not a sportsbook's. Win probability comes from ESPN's matchup predictor (FPI);
 if a game has no predictor, a small margin-based rating model from this season's results is used.
-Pricing rule from the owner: no house edge, the House is down 1%. For a side with win probability p
-the decimal payout is 1.01 / p, turned into American odds rounded in the player's favor.
+Pricing rule from the owner (Oct 23): a standard casino edge. For a side with win probability p the decimal payout
+is (2.1/2.2) / p (a 50/50 side pays -110), turned into American odds rounded in the House's favor.
 Spreads come from our win probability (normal margin, sd 13.5) and totals use the posted over/under
 number from the free scoreboard feed (just the number) or team scoring averages. Spread and total
-sides are ~50/50 by construction, so both pay decimal 2.02 (+102).
+sides are ~50/50 by construction, so both pay -110.
 
 The same run records scores/finals in nfl/{season}_{week} so NFL bets grade themselves on every
 player's page. A game that isn't final by the end of the Wednesday after its scheduled kickoff (ET)
@@ -20,11 +20,11 @@ from common import ET, get_json, now_ms
 SB = "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard"
 PRED = "https://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/{e}/competitions/{e}/predictor"
 SUMMARY = "https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary?event={e}"
-EDGE = 1.01          # players' edge: decimal odds = EDGE / p
+EDGE = 2.1 / 2.2     # house edge (standard -110): decimal odds = EDGE / p
 SD = 13.5            # NFL final-margin standard deviation (points)
 HFA = 1.5            # home field (points) for the fallback model
 P_MIN, P_MAX = 0.02, 0.98
-HALF_PRICE = 102     # spread / total sides: 1.01 / 0.5 = 2.02 decimal = +102
+HALF_PRICE = -110    # spread / total sides: (2.1/2.2) / 0.5 = 1.909 decimal = -110
 N = NormalDist()
 
 
@@ -35,14 +35,14 @@ def dec_of(am):
 
 
 def american(p):
-    """American odds paying at least 1.01/p (rounded in the player's favor)."""
+    """American odds paying at most EDGE/p (rounded in the House's favor)."""
     p = min(max(float(p), P_MIN), P_MAX)
-    d = EDGE / p
+    d = max(1.01, EDGE / p)
     if d >= 2:
-        am = math.ceil(round((d - 1) * 100, 6))
+        am = math.floor(round((d - 1) * 100, 6))
     else:
-        am = -math.floor(round(100 / (d - 1), 6))
-        if am >= -100: am = 100
+        am = -math.ceil(round(100 / (d - 1), 6))
+        if am >= -100: am = -101
     return int(am)
 
 

@@ -11,39 +11,36 @@ def ms(y, m, d, h=13, mi=0):
 
 
 class Pricing(unittest.TestCase):
-    def test_both_sides_pay_at_least_101_over_p(self):
+    def test_both_sides_pay_at_most_edge_over_p(self):
+        # Oct 23: standard casino edge, decimal (2.1/2.2)/p, rounded in the House's favor by at most one American point
         for i in range(2, 99):
             p = i / 100
             ml = moneyline(p)
-            self.assertGreaterEqual(dec_of(ml["home"]) + 1e-12, EDGE / p, p)
-            self.assertGreaterEqual(dec_of(ml["away"]) + 1e-12, EDGE / (1 - p), p)
-            # rounded in the player's favor by at most one American point
             for side, q in (("home", p), ("away", 1 - p)):
                 am = ml[side]
-                worse = am - 1
-                if am > 0 and worse < 100: continue
-                self.assertLess(dec_of(worse), EDGE / q + 1e-12, (p, side, am))
+                self.assertLessEqual(dec_of(am), max(1.01, EDGE / q) + 1e-12, (p, side, am))
+                better = am + 1 if am > 0 or am < -101 else None
+                if better is not None and not (-100 <= better <= 99):
+                    self.assertGreater(dec_of(better), EDGE / q - 1e-12, (p, side, am))
 
-    def test_players_have_the_edge(self):
-        # implied probabilities of the two sides add up to about 99% (House is down ~1%)
+    def test_house_has_the_edge(self):
+        # implied probabilities of the two sides add up to about 105% (-110 / -110)
         for p in (0.3, 0.5, 0.6, 0.75):
             ml = moneyline(p)
             s = 1 / dec_of(ml["home"]) + 1 / dec_of(ml["away"])
-            self.assertLessEqual(s, 1 / EDGE + 1e-9)
-            self.assertGreater(s, 0.97)
+            self.assertGreaterEqual(s, 1 / EDGE - 1e-9)
+            self.assertLess(s, 1.08)
 
     def test_american_examples(self):
-        self.assertEqual(american(0.5), 102)        # 2.02
-        self.assertEqual(american(0.6), -146)       # 1.6833 -> -146.3 -> -146
-        self.assertEqual(american(0.4), 153)        # 2.525 -> +152.5 -> +153
-        self.assertEqual(american(0.505), 100)      # exactly 2.00
-        self.assertEqual(american(0.25), 304)       # 4.04
-        self.assertEqual(american(0.8), -380)       # 1.2625: 100/0.2625 = 380.95 -> -380
+        self.assertEqual(american(0.5), -110)
+        self.assertEqual(american(0.6), -170)
+        self.assertEqual(american(0.4), 138)
+        self.assertEqual(american(0.25), 281)
         self.assertEqual(dec_of(-200), 1.5)
         self.assertEqual(dec_of(150), 2.5)
 
     def test_half_price(self):
-        self.assertEqual(HALF_PRICE, 102)
+        self.assertEqual(HALF_PRICE, -110)
         self.assertAlmostEqual(dec_of(HALF_PRICE), EDGE / 0.5, places=9)
 
 

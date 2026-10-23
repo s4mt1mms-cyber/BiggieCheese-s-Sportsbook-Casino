@@ -281,6 +281,18 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   Uploading an image for a code-defined card (MV_ADD) writes `cardimg/<id>` and flags `imgOver.<id>` on that collection's meta doc,
   so the upload overrides the static WebP for everyone.
 
+## Oct 23 deflation & balance update (owner)
+- One-time per player (`dflRun`/`dflPatch`, `DFL_V`): balance ÷15 with a 10,000 minimum, stored as `prefs.rb15` (new − old, added in `ledger().balOf`)
+  + `rbFrom/rbTo/dflAt`; Flappy levels reset (`fpPress/fpSilo` 0, `farmSpent` kept); rat hunt counter → `revMark` (1 hunt per `REV_N`=6 dealer 21s, leftover hunts kept).
+  Own page runs it once bank/market/loans/adjust have loaded (`S.ld`, UI blocked by `#dflOv`); the admin's page also migrates offline players. Shown in the Bank statement.
+- Rich tax (`richTax`, `taxOf`, `TAX_BR`): at the 1 AM `divCheck`, marginal 5% 100–200k / 10% 200–500k / 15% 500k+, burned: `bank/tax_<me>_<day>` {kind:"tax", to:"house"}.
+- Prices: packs ÷5, `QS_VAL` ÷15 (Claire burn 33,333), `CARD_DIV` [0,0,3,20,100,500,10000,25,0] (Joe Camel 700), emotes/skins ÷3 rounded up to 5k,
+  `FP_*_COST` ×1.5. `pkHalf` (inside `pkSlot`): every chance above a slot's lowest rarity halved, removed chance → that lowest rarity.
+  Set bonuses 1.25× each (full rarity set / own every copy), Super Rare–Grail only. No BJ streak bonus (`BJ_STREAK_BB=0`). Rat ×2 speed, 500 body / 1,000 head.
+  King Slop 2/day, Dean `CR_EDGE` 1.5%. Jimmy shows as rarity "Curse" (`CR_CURSE`, `crOf(c)`; still rolled as a Super Rare, excluded from SR counts).
+- House sports lines: `hv(ml)` prices each side at (2.1/2.2)/p (−110 on a coin flip) from the fair feed lines (scoreboard/futures stay fair; game docs keep
+  fair odds); NFL: `tools/jobs/nfl.py` EDGE = 2.1/2.2, spreads/totals −110.
+
 ## Live multiplayer (server host)
 `config/mp.serverHost = true` → Cloud Functions host Russian Roulette + Hold'em: clients write inputs
 (`rrin/{id}`, `thin/{id}`, `mpreq/{id}`, `mptick/{id}`), the server runs the game in Firestore transactions and
