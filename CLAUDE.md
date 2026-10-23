@@ -225,7 +225,7 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   `emLSign` on the head); `emEnd` restores the captured seat/chair exactly. Your own dance swings your camera out (`emCam`).
   Shop preview (`emPrevSync`/`emPrevBuild`): the bear on its chair (`rrChairParts` + `rrAnimal`), renderer only while the card is
   on screen (IntersectionObserver), disposed when it scrolls off or you leave. Add an emote: one `EMOTES` row + a pose function.
-- **Skins** (`sk*`, Aura Shop → Skins tab): look like another animal at the live tables. Catalog `SKINS` (`lemur` Ring-tailed Lemur 250,000).
+- **Skins** (`sk*`, Aura Shop → Skins tab): look like another animal at the live tables. Catalog `SKINS` (`lemur` Ring-tailed Lemur, `nfox` Neon Fox: fox face, slim, emissive cyan limb rings; 250,000 each).
   prefs `skins` {id:true}, `skin` (worn, null = your seat's animal), `skinSpent` (ledger). `skinOf(id)`; the table builds animals through
   `skSeat(seat, uid)` in `rrBuild` (takes effect when the scene is built, i.e. next time you sit). The animal model is a kind in `rrAnimal`/`rrFace`
   (`k==="lemur"`: ringed tail, mask, orange eyes). Shop preview reuses `emPrevBuild` via `SK_PREV["skin:<id>"]` (turntable + wave). 10% `shopFee("skin")`.
