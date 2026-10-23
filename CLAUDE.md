@@ -319,6 +319,25 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   (admin fix job `statreset`), shown through `stq(q)` (value − sb0; Flappy best = `prefs.flapBestS`, best since the reset). Betting: `ledger().rec/net/wagered`
   only count bets accepted/created from `STAT_RESET_AT`; balances, weekly nets and recaps still use every bet. Auras ½ price, skins −25%, emotes ½ (same day).
 
+- **Card levels & crafting (Oct 23, owner spec + New_Card_Expansion_Database.xlsx):** a leveled copy is its own key in `prefs.cards`: `"<cardId>@<level>"`
+  (`baseOf`, `lvOf`, `lvK`); `cardById("x@2")` = base card + `{id, base, lv}`. Level 1 = the plain id. Leveled keys never count toward the print run
+  (`minted()` only sees plain ids) and move through market/offers/trades/loans like any card. `cardCount(key)` = that exact key; `cardCountAll(id)` = all
+  levels (ownership, set completion); `ownCards()` = every key held (use it for "my cards" pickers). Images/`data-cimg` normalize to the base id.
+  Craftable = Multiverse/Fantasyland, Common–Elite, not the curse (`craftable`); `LV_MAX=[7,5,3,2,2]`; dividends `DIV_LV` (Joe Camel 700/1,200 via `DIV_LV_JOE`);
+  `divCalc`: per card only the top-level copy pays its level, the rest pay LV 1; full rarity set (any level) 1.25× for SR–Grail; the "own every copy" bonus is gone.
+  Card Crafting tab (`viewCraft`, state `S.cf`, recipes `CRAFT`, pickers `cfPick`, `cfAuto`): `craftDo` re-reads prefs, then ONE prefs update (cards, `craftSpent`
+  += fee (burned, in balOf), `craftLog.<at>` → Bank statement line). Animation `cfAnim` (+ `cfSfx`; `pkCalm()` = short version). Crafting to MAX posts in chat.
+  Level badge `lvBadge` in `cardHtml` (MAX for non-craftable). Wants/collateral may carry `lv` (`mkFits`; "Any level" when omitted).
+- **Level abilities (`AB2`, keyed `set:nmKey(name)`; `ab2(k,id)` = the player's best value = their top-level copy):** Common–Super Rare are OFF at LV 1 and use
+  the sheet's value for that level from LV 2 ("option A"); Elite/Grail work at LV 1. Wired: `vontrap` (+X BB/day per LV2+ copy, divCalc `vt`), `dwillie`
+  (all-in loss refund: roulette/BJ/High-Low, `abWin(d,extra,allin)`), `shock` (+% on casino wins and on bets via `bx`), `luke` (Bank: steal % of a balance 1/day,
+  bank kind "luke"), `thanos`/`caked`/`darth` (in `bjSettle`, `r.bonus`), `logan` (daily free bet on NFL/NBA/House straight bets: bet `free:true`, ledger: loser
+  poster pays 0, not in pending; `freeHtml`/`freeUse`, `prefs.freeDay`), `shabbat` (Bank: lend 25,000, bank kind "shabbat" {back:26250}: ledger repays 1/24 per
+  full hour), `bucket` (+% on live RR/Hold'em profit), `shine` (Fridays in divCheck: 65% paid, `prefs.shineEarn` in balOf, `shineLog`, popup), `diva` (`divaP`
+  skins/emotes), `rinker` (Flappy cap + run bonus), `crew` (parlays via `bx`), `paradise` (`prefs.paraN`/`freePacks`, free Common pack), `crndd` (`crnddKill`/`crnddBO`),
+  `rookie` (rat ×2), `gooner` (roulette wins +%), `vail` (`pkPrice`). Bets snapshot bonuses in `bx:{playerId:%}` at create/accept (`bxOf`); the ledger adds
+  floor(win·%) to the winner. Daddy Christian: after 6 right in a row the High-Low multiplier doubles. Die for the Whale / Cryptid – Bigfoot: no ability (owner).
+
 ## Live multiplayer (server host)
 `config/mp.serverHost = true` → Cloud Functions host Russian Roulette + Hold'em: clients write inputs
 (`rrin/{id}`, `thin/{id}`, `mpreq/{id}`, `mptick/{id}`), the server runs the game in Firestore transactions and
