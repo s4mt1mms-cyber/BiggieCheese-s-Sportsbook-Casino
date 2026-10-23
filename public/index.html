@@ -1943,7 +1943,7 @@ function ledger0(){
   const lastWk=Math.max(curWeek(),...events.map(e=>e.wk));
   for(let wk=1;wk<=lastWk;wk++){
     for(const e of events)if(e.wk===wk){bal[e.w]=B(e.w)+e.amt;bal[e.l]=B(e.l)-e.amt}
-    if(Date.now()>=allowanceTime(wk))for(const id of people){const b=B(id);if(b<REFILL_CAP){bal[id]=Math.min(REFILL_CAP,b+WEEKLY);refills[id]=(refills[id]||0)+(Math.min(REFILL_CAP,b+WEEKLY)-b)}}
+    if(Date.now()>=allowanceTime(wk)&&allowanceTime(wk)<WEEKLY_END)/* weekly top-up ended Oct 23 (daily topUp now) */for(const id of people){const b=B(id);if(b<REFILL_CAP){bal[id]=Math.min(REFILL_CAP,b+WEEKLY);refills[id]=(refills[id]||0)+(Math.min(REFILL_CAP,b+WEEKLY)-b)}}
   }
   /* Money on the line comes out of your balance right away, like a real sportsbook:
      accepted bets that aren't graded yet, plus your own open offers until they're taken, cancelled or expire */
@@ -1964,7 +1964,7 @@ function ledger0(){
     const a=Math.floor(Number(t.amt));if(!(a>0)||!t.from||!t.to||t.from===t.to)continue;bkA(t.from,-a);bkA(t.to,a)}
   for(const l of S.loans||[]){if(!l.borrower||!l.takenAt||!["active","late","repaid","defaulted"].includes(l.status))continue;const P=Math.floor(Number(l.P))||0;bkA(l.lender,-P);bkA(l.borrower,P);
     const seen=new Set();for(const p of l.payments||[]){if(seen.has(p.k))continue;seen.add(p.k);const a=Math.floor(Number(p.amt))||0;bkA(l.borrower,-a);bkA(l.lender,a)}}
-  return{rec,net,byWeek,wagered,bal,refills,pending,bkNet,wins,tiPaid,tiLast,balOf:id=>(bkNet[id]||0)+B(id)+(Number(S.prefs[id]&&S.prefs[id].rb15)||0)-(Number(S.prefs[id]&&S.prefs[id].curseFee)||0)-(Number(S.prefs[id]&&S.prefs[id].auraSpent)||0)-(Number(S.prefs[id]&&S.prefs[id].emoteSpent)||0)-(Number(S.prefs[id]&&S.prefs[id].skinSpent)||0)-(Number(S.prefs[id]&&S.prefs[id].farmSpent)||0)-Math.floor((Number(S.prefs[id]&&S.prefs[id].tiWin)||0)/10)+cardMoney(id)-(pending[id]||0)+(Number(S.prefs[id]&&S.prefs[id].bjNet)||0)+(Number(S.prefs[id]&&S.prefs[id].gift)||0)+(Number(S.prefs[id]&&S.prefs[id].flapEarn)||0)+(Number(S.prefs[id]&&S.prefs[id].mineEarn)||0)+(Number(S.prefs[id]&&S.prefs[id].rlNet)||0)+(Number(S.prefs[id]&&S.prefs[id].revengeEarn)||0)+((S.adjust&&S.adjust[id])||0)+(Number(S.prefs[id]&&S.prefs[id].bjBonus)||0)+(Number(S.prefs[id]&&S.prefs[id].crNet)||0)+(Number(S.prefs[id]&&S.prefs[id].hlNet)||0)+(Number(S.prefs[id]&&S.prefs[id].rrNet)||0)+(Number(S.prefs[id]&&S.prefs[id].thNet)||0)+(Number(S.prefs[id]&&S.prefs[id].divEarn)||0),inPlay:id=>pending[id]||0};
+  return{rec,net,byWeek,wagered,bal,refills,pending,bkNet,wins,tiPaid,tiLast,balOf:id=>(bkNet[id]||0)+B(id)+(Number(S.prefs[id]&&S.prefs[id].rb15)||0)+(Number(S.prefs[id]&&S.prefs[id].topUp)||0)-(Number(S.prefs[id]&&S.prefs[id].curseFee)||0)-(Number(S.prefs[id]&&S.prefs[id].auraSpent)||0)-(Number(S.prefs[id]&&S.prefs[id].emoteSpent)||0)-(Number(S.prefs[id]&&S.prefs[id].skinSpent)||0)-(Number(S.prefs[id]&&S.prefs[id].farmSpent)||0)-Math.floor((Number(S.prefs[id]&&S.prefs[id].tiWin)||0)/10)+cardMoney(id)-(pending[id]||0)+(Number(S.prefs[id]&&S.prefs[id].bjNet)||0)+(Number(S.prefs[id]&&S.prefs[id].gift)||0)+(Number(S.prefs[id]&&S.prefs[id].flapEarn)||0)+(Number(S.prefs[id]&&S.prefs[id].mineEarn)||0)+(Number(S.prefs[id]&&S.prefs[id].rlNet)||0)+(Number(S.prefs[id]&&S.prefs[id].revengeEarn)||0)+((S.adjust&&S.adjust[id])||0)+(Number(S.prefs[id]&&S.prefs[id].bjBonus)||0)+(Number(S.prefs[id]&&S.prefs[id].crNet)||0)+(Number(S.prefs[id]&&S.prefs[id].hlNet)||0)+(Number(S.prefs[id]&&S.prefs[id].rrNet)||0)+(Number(S.prefs[id]&&S.prefs[id].thNet)||0)+(Number(S.prefs[id]&&S.prefs[id].divEarn)||0),inPlay:id=>pending[id]||0};
 }
 const START_BAL=25000,WEEKLY=2500,REFILL_CAP=10000;
 /* Tuesday 2:30 AM ET after week wk ends (weeks run Tuesday to Monday) */
@@ -2463,7 +2463,8 @@ const SKINS=[{id:"lemur",n:"Ring-tailed Lemur",p:35000,c:0x4d4950,ic:"🐒",d:"G
   {id:"uni",kind:"human",hv:"uni",n:"Unicorn",p:85000,c:0xf2f0f4,ic:"🦄",d:"A plushy unicorn with a pastel mane, a big horn and stubby legs"},
   {id:"pir",kind:"human",hv:"pir",n:"Skeleton Pirate",p:85000,c:0xe6dcc4,ic:"🏴‍☠️",d:"A salty skeleton pirate with his hat and gear. Model: “Skeleton Pirate The Drunk” by FireGoat (CC BY 4.0)"},
   {id:"fox",hid:1,kind:"human",hv:"fox",n:"Fox Girl",p:85000,c:0xcd4e22,ic:"🦊",d:"A red fox in an orange bikini, with a big white-tipped tail"},
-  {id:"bigfoot",kind:"human",hv:"bigfoot",n:"Bigfoot",p:85000,c:0x3a2a1e,ic:"🦶",d:"The legend himself, fresh out of the woods and ready to gamble. Model: “primitive man ( aadimanav )” by iRahulRajput (CC BY 4.0)"},
+  {id:"paladin",kind:"human",hv:"paladin",n:"The Crusader",p:150000,c:0x8a1010,ic:"⚔️",d:"A blood-soaked dark fantasy paladin in full plate. Model: “THE SAVIOR — Dark Fantasy Paladin” by Atahan (CC BY 4.0)"},
+{id:"bigfoot",kind:"human",hv:"bigfoot",n:"Bigfoot",p:85000,c:0x3a2a1e,ic:"🦶",d:"The legend himself, fresh out of the woods and ready to gamble. Model: “primitive man ( aadimanav )” by iRahulRajput (CC BY 4.0)"},
 {id:"santa",kind:"human",hv:"santa",n:"Santa",p:85000,c:0xb3121a,ic:"🎅",d:"Ho ho ho. The big man himself in his red suit. Model: “Santa Clause 3D Scan” by Christian Day (CC BY 4.0)"},
   {id:"cerb",kind:"human",hv:"cerb",n:"Cerberus",p:85000,c:0x2a2f36,ic:"🐺",d:"A tall jackal in black armor with glowing cyan fur and a long tail"},
   {id:"nfox",n:"Neon Fox",p:20000,c:0x0e1634,ic:"🦊",d:"Midnight-blue fur, a white chest and tail tip, glowing cyan stripes and eyes"}];
@@ -3903,7 +3904,8 @@ const HUMAN_V={diamond:{f:"diamond",hip:.11,thigh:.396,sh:[.173,.56,.024],L1:.28
   uni:{f:"uni",v:2,nc:0xf1eef0,hip:.1287,thigh:.2241,sh:[.2681,.4449,.0357],L1:.1736,L2:.235,head:[0,.6075,.0179],rise:.1531,lsOff:[.08,.3,-.3],eyes:[.136,.2753,-.2733,.068],eyeYaw:.18,iris:0x0a0a0a,mouth:[0,.115,-.31],tgS:1.5,nr:.1},
   pir:{f:"pirate",v:1,nc:0xe6dcc4,hip:.1336,thigh:.4641,sh:[.1906,.6677,.003],L1:.3909,L2:.287,head:[.0014,.8186,-.0133],rise:.4573,lsOff:[.07,.2,-.15],mouth:[0,.012,-.1],nr:.04},
   fox:{f:"fox",v:1,nc:0xcd4e22,hip:.11,thigh:.396,sh:[.173,.56,.024],L1:.281,L2:.243,head:[0,.704,.01],chest:[0,.214,-.055],rise:.396*1.12,lsOff:[.07,.24,-.2],eyes:[.056,.128,-.112,.036],eyeYaw:.32,iris:0x5aa03c,lid:0xcd4e22,mouth:[0,.03,-.2],tgS:1.1,nr:.058},
-  bigfoot:{f:"bigfoot",v:2,ds:1,gy:.1,gz:-.1,nc:0x2b2019,hip:.145,thigh:.35,sh:[.32,.71,.03],L1:.3344,L2:.2835,head:[-.01,.87,-.13],rise:.1888,lsOff:[.08,.3,-.3],mouth:[0,.08,-.24],tgS:1.4,nr:.11},
+  paladin:{f:"paladin",v:1,ds:1,nc:0x3a3a42,hip:.1233,thigh:.4429,sh:[.2569,.5331,0],L1:.2869,L2:.2452,head:[0,.6769,.0206],rise:.4536,lsOff:[.07,.22,-.2],mouth:[0,.06,-.15],tgS:1.1,nr:.07},
+bigfoot:{f:"bigfoot",v:2,ds:1,gy:.1,gz:-.1,nc:0x2b2019,hip:.145,thigh:.35,sh:[.32,.71,.03],L1:.3344,L2:.2835,head:[-.01,.87,-.13],rise:.1888,lsOff:[.08,.3,-.3],mouth:[0,.08,-.24],tgS:1.4,nr:.11},
 santa:{f:"santa",v:5,nc:0xb3121a,hip:.1216,thigh:.2947,sh:[.2816,.7156,0],L1:.2319,L2:.2077,head:[0,.8436,-.0256],rise:.0768,lsOff:[.07,.22,-.2],mouth:[0,.09,-.17],nr:.07},
   cerb:{f:"cerb",nc:0x24282e,emis:1,hip:.1038,thigh:.5398,sh:[.1868,.6,.0311],L1:.284,L2:.2475,head:[0,.7038,.0415],rise:.6046,lsOff:[.06,.2,-.12],mouth:[0,.1,-.2],tgS:1.2,nr:.06}};
 const HUMAN_P={};
@@ -5107,16 +5109,25 @@ const PACKS=[
   {id:"green",r:1,name:"Uncommon Pack",price:3000,n:5,odds:[69.394,24,5,.9,.505,.201,0],floors:[1,0,0,0,0]},
   {id:"blue",r:2,name:"Rare Pack",price:7500,n:5,odds:[54.597,30,12,2.5,.5,.403,0],floors:[2,0,0,0,0]},
   {id:"purple",r:3,name:"Super Rare Pack",price:20000,n:5,odds:[36.627,33,19,8.94,1.6,.813,.02],floors:[2,2,0,0,0]},
-  {id:"red",r:4,name:"Elite Pack",price:40000,n:5,coin:{0:3},odds:[27.979,32,25,10,4,.971,.05],floors:[3,2,0,0,0]},
-  {id:"gold",r:5,name:"Grail Pack",price:75000,n:5,odds:[21,20,22,16,16.1,5,.1],floors:[3,3,3,0,0]},
-  {id:"plat",r:6,name:"Dragon Pack",price:250000,n:5,odds:[21,20,22,16,16,5,.2],fixed:[3,4],custom:{2:[0,0,65,30,5,0,0],3:[0,0,0,0,1,0,0]},floors:[0,0,2,4,4],last:"renorm",lastOdds:[0,0,0,0,50,45,5]}];
+  {id:"red",r:4,name:"Elite Pack",price:40000,n:5,coin:{0:3},tune:[[3,.55]],odds:[27.979,32,25,10,4,.971,.05],floors:[3,2,0,0,0]},
+  {id:"gold",r:5,name:"Grail Pack",price:75000,n:5,tune:[[4,.205],[5,.125,6]],odds:[21,20,22,16,16.1,5,.1],floors:[3,3,3,0,0]},
+  {id:"plat",r:6,name:"Dragon Pack",price:250000,n:5,tune:[[5,.20,6]],odds:[21,20,22,16,16,5,.2],fixed:[3,4],custom:{2:[0,0,65,30,5,0,0],3:[0,0,0,0,1,0,0]},floors:[0,0,2,4,4],last:"renorm",lastOdds:[0,0,0,0,50,45,5]}];
 function pkOdds(p){return p.odds}
 /* chance of each rarity for one slot: fixed slots are exact; floors lift anything below up to the floor (so floors don't inflate the rare odds),
    except a "renorm" slot, which keeps the table's relative odds above the floor (the Dragon pack's last card) */
 /* Oct 23 deflation (owner): every chance above a slot's lowest possible rarity is cut in half; the removed chance goes to that lowest rarity */
 function pkHalf(a){const lo=a.findIndex(x=>x>0);if(lo<0)return a;const b=a.slice();for(let r=lo+1;r<b.length;r++){b[lo]+=b[r]*.5;b[r]*=.5}return b}
 /* p.coin {slot: r}: that slot only has a 50% chance at rarity r or better, otherwise it's one rarity lower (owner, Oct 23: Elite pack's Super Rare slot) */
-function pkSlot(p,i,set){const a=pkHalf(pkSlot0(p,i,set));const r=p.coin&&p.coin[i];if(r==null)return a;const b=a.map((x,k)=>k>=r?x*.5:0);b[r-1]+=.5;return b}
+function pkSlotB(p,i,set){const a=pkHalf(pkSlot0(p,i,set));const r=p.coin&&p.coin[i];if(r==null)return a;const b=a.map((x,k)=>k>=r?x*.5:0);b[r-1]+=.5;return b}
+/* p.tune = [[r, target], …] (owner, Oct 23): the shop's "chance of at least one r-or-better" for the pack is set exactly to target. Highest r first:
+   that band (r and up, below the next tuned r) is scaled by one factor in every slot, the difference goes to (or comes from) the slot's lowest rarity. */
+const PK_TF={};
+function pkScale(a,lo,hi,f){const b=a.slice(),l=b.findIndex(x=>x>0);if(l<0||l>=lo)return b;let d=0;for(let k=lo;k<hi&&k<b.length;k++){const n=b[k]*f;d+=n-b[k];b[k]=n}if(d>b[l])return null;b[l]-=d;return b}
+function pkTuned(p,i,set,fs){let a=pkSlotB(p,i,set);const T=(p.tune||[]).slice().sort((x,y)=>y[0]-x[0]);T.forEach(([r,,h],k)=>{const hi=h||(k?T[k-1][0]:99);const b=pkScale(a,r,hi,fs[k]);if(b)a=b});return a}
+function pkFactors(p,set){if(PK_TF[p.id])return PK_TF[p.id];const T=(p.tune||[]).slice().sort((x,y)=>y[0]-x[0]),fs=T.map(()=>1);
+  const ch=(r)=>{let miss=1;for(let i=0;i<p.n;i++){const w=pkTuned(p,i,set,fs);miss*=1-w.reduce((a,x,k)=>a+(k>=r?x:0),0)}return 1-miss};
+  T.forEach(([r,t],k)=>{let lo=0,hi=6;for(let it=0;it<60;it++){fs[k]=(lo+hi)/2;if(ch(r)>t)hi=fs[k];else lo=fs[k]}fs[k]=(lo+hi)/2});return PK_TF[p.id]=fs}
+function pkSlot(p,i,set){return p.tune?pkTuned(p,i,set,pkFactors(p,set)):pkSlotB(p,i,set)}
 function pkSlot0(p,i,set){if(p.fixed&&i<p.fixed.length){const a=[0,0,0,0,0,0,0];a[p.fixed[i]]=1;return a}if(p.custom&&p.custom[i]){const w=p.custom[i],t=w.reduce((a,b)=>a+b,0);return w.map(x=>x/t)}const f=p.floors[i]||0;
   if(p.last==="renorm"&&i===p.n-1){const w=p.lastOdds.map((o,r)=>r>=f?o:0),tt=w.reduce((a,b)=>a+b,0);return w.map(x=>x/tt)}
   const od=pkOdds(p,set),t=od.reduce((a,b)=>a+b,0);const a=od.map(o=>o/t);let low=0;for(let r=0;r<f;r++){low+=a[r];a[r]=0}a[f]+=low;return a}
@@ -5207,7 +5218,7 @@ function activeCards(id){id=id||S.me;const cs=myCards(id),out=[],seen=new Set(),
     else if(c.abil==="bers")add(k,"🪓",me?`${bersLeft()} of ${BERS_DAY} rat-hunt auto-kills left today`:`${BERS_DAY} rat-hunt auto-kills a day`,["bj"]);
     if(c.div!=null&&c.abil!=="curse")add(k,"💸",`Pays ${Number(c.div).toLocaleString()} BB a day`,["div"]);
     if(k==="pm-peter")add(k,"⚡",`Card dividend ×${Math.min(3,Math.pow(1.5,Math.min(3,Number(cs[k])||0)))}`,["div"]);
-    if(k==="pm-debby")add(k,"🧙‍♀️","Steals 10,000 BB a day from someone",["div"]);
+    if(k==="pm-debby")add(k,"🧙‍♀️","Steals 5,000 BB a day from someone",["div"]);
     if(k==="pm-claire")add(k,"🔥","Can be burned for 500,000 BB",[]);
     if(k===FP_BOOST_CARD)add(k,"⚡",me?(fpBoostLeft()>0?"10× Flappy run recharging":"10× Flappy run ready"):"One 10× Flappy run a day",["fp"]);
     if(c.r===6)add(k,"🐉",`Dragon: ${CARD_DIV[6].toLocaleString()} BB a day + Dragon Glow`,["div"])}
@@ -5315,7 +5326,7 @@ const PM_FEES=[{k:"dev",to:"u_IfmXeDmDg1B3W4naCzVbSA",amt:1500,note:"Dev fee"},{
 const PM_PLAT_DESC="Part of the limited time platinum mysterio collection. 💸 Pays 250 BB a day per copy.";
 const PM_CARDS=[
   ["claire",8,"Claire Predtechenskis","Destroyer of Worlds",1,"flame","Destroyer of Worlds. Only one exists. Ability · Scorched Earth: cash her in for 500,000 BB, and she burns herself out of existence forever. No dividend, no second copy, no take-backs. Choose wisely."],
-  ["debby",8,"Evil Witch","“Debby”",1,"gold","Debby. Only one exists. Ability · Hex Tax: every day at the 1 AM dividend, Debby flies off and steals 10,000 BB from a random league member who can afford it, and hands it to whoever holds her. No dividend. Can't be quick-sold."],
+  ["debby",8,"Evil Witch","“Debby”",1,"gold","Debby. Only one exists. Ability · Hex Tax: every day at the 1 AM dividend, Debby flies off and steals 5,000 BB from a random league member who can afford it, and hands it to whoever holds her. No dividend. Can't be quick-sold."],
   ["peter",8,"Peter Griffin","Lightning Series",3,"zap","Hehehehe. Ability · Freakin' Sweet: multiplies your ENTIRE daily card dividend by 1.5× per Peter you hold (1 → 1.5×, 2 → 2.25×, all 3 → 3×). Only 3 exist. No dividend of his own. Can't be quick-sold."],
   ["ddom",7,"Deepthroat Dominators","Platinum",10],["aiden",7,"Aiden Carroll","Platinum",15],["hong",7,"Mr. Hong","Platinum",15],["dim",7,"Dim Futures","Platinum",15],
   ["motis",7,"Moti's Restaurant","Platinum",15],["giga",7,"Gigachad","Platinum",15],["500cig",7,"500 Cigarettes","Platinum",15],["pitstop",7,"Pit Stop","Platinum",15],
@@ -5417,7 +5428,7 @@ function pmTest(legId){if(!S.canEdit)return;const ids=[];cardsCat("pm").filter(c
 /* Dragon pull in chat: the card itself inside a wild iridescent aura, plus who paid what */
 function dragonChatHtml(m,when,del){const c=cardById(m.cid);
   return `<div class="cbet cdrg" data-hold="${esc(m.id)}"><div class="eyebrow">🐉 Dragon pull · ${when}${del}</div><div class="cpmrow"><div class="cpmcard drgfx"><i class="drgring"></i><i class="drghalo"></i>${cardHtml(c,{click:true})}</div><div style="min-width:0"><div class="cbtitle">${esc(m.text)}</div><div class="small">${esc(m.detail||"")}</div></div></div>${reactHtml(m)}</div>`}
-function pmChatHtml(m,when,del){const c=cardById(m.cid);const ab=m.cid==="pm-claire"?"🔥 Scorched Earth: burn her for 500,000 BB":m.cid==="pm-debby"?"🧙‍♀️ Hex Tax: steals 10,000 BB a day from someone":"⚡ Freakin' Sweet: 1.5× on every card dividend";
+function pmChatHtml(m,when,del){const c=cardById(m.cid);const ab=m.cid==="pm-claire"?"🔥 Scorched Earth: burn her for 500,000 BB":m.cid==="pm-debby"?"🧙‍♀️ Hex Tax: steals 5,000 BB a day from someone":"⚡ Freakin' Sweet: 1.5× on every card dividend";
   return `<div class="cbet cpm" data-hold="${esc(m.id)}"><div class="eyebrow">💠 Platinum Mysterio · Legendary pull · ${when}${del}</div><div class="cpmrow"><div class="cpmcard">${cardHtml(c,{click:true})}<span class="pmbadge">${pmBadge(c)}${c.lim===1?" · only one exists":""}</span></div><div style="min-width:0"><div class="cbtitle">${esc(m.text)}</div><div class="small" style="color:${pmTheme(c).hc}">${esc(ab)}</div></div></div>${reactHtml(m)}</div>`}
 
 /* ---- legendary explosion: a full-screen canvas particle storm themed per card ---- */
@@ -5715,25 +5726,32 @@ async function richTax(day){const id="tax_"+S.me+"_"+day,ref=db.doc("bank/"+id);
 /* ===== Oct 23 deflation (owner): every balance ÷15 with a 10,000 minimum, Flappy Cheese upgrades reset, rat hunt counter moved to 1 per 6 dealer 21s.
    One-time per player, stored on prefs: rb15 = new − old balance (added in ledger().balOf), rbFrom/rbTo, dfl, dflAt. A player's own page does it
    as soon as everything that feeds the balance has loaded (UI blocked until then); the admin's page also does it for players who are offline. */
-const DFL_V=1,DFL_DIV=15,DFL_MIN=10000;S.ld={};
+const DFL_V=1,DFL_DIV=15,DFL_MIN=10000;/* outstanding bets placed before the deflation went live: stake (and takerStake) ÷10, run once by the admin's page */const BET_CUT_AT=Date.parse("2026-10-23T16:46:00Z");S.ld={};
 function dflPatch(id){const q=S.prefs[id]||{},bal=Math.floor(ledger().balOf(id)),to=Math.max(DFL_MIN,Math.floor(bal/DFL_DIV)),d21=Number(q.bjDealer21)||0,left=Math.max(0,Math.floor(d21/4)-(Number(q.revengeUsed)||0));
   return {dfl:DFL_V,dflAt:Date.now(),rb15:to-bal,rbFrom:bal,rbTo:to,fpPress:0,fpSilo:0,revMark:d21-left*REV_N,revengeUsed:0}}
 const dflLoaded=()=>S.ready&&S.ld.bank&&S.ld.market&&S.ld.loans&&S.ld.adjust&&Date.now()-S.ld.at>4000;
 async function dflOne(id){const ref=db.doc("prefs/"+id),f=await ref.get();if(!f.exists||(f.data()||{}).dfl)return false;const patch=dflPatch(id);await ref.update(patch);Object.assign(S.prefs[id]||{},patch);return true}
 async function dflRun(){if(S._dflBusy||!db||!S.me||!dflLoaded())return;S._dflBusy=true;
   try{const q=S.prefs[S.me];if(q&&!q.dfl){if(await dflOne(S.me)){renderSoon();setTimeout(()=>{const x=S.prefs[S.me]||{};toast(`📉 Deflation: your balance is now ${(Number(x.rbTo)||0).toLocaleString()} BB`)},300)}}
+    if(S.canEdit&&!S._betCut){S._betCut=1;let k=0;for(const b of S.bets||[]){if(b.cut10||!["open","live"].includes(b.status)||!((b.createdAt||0)<BET_CUT_AT))continue;if(b.type!=="parlay"){const g=gameById(b.gameId);if(g&&grade(b,g))continue}else if(gradeParlay(b))continue;
+      const pt={cut10:true,stake0:Number(b.stake)||0,stake:Math.floor((Number(b.stake)||0)/10)};if(b.takerStake!=null){pt.takerStake0=Number(b.takerStake)||0;pt.takerStake=Math.floor((Number(b.takerStake)||0)/10)}
+      try{await db.doc("bets/"+b.id).update(pt);Object.assign(b,pt);k++}catch(e){console.warn("bet cut",b.id,e)}}if(k)toast(`Cut ${k} outstanding bet${k>1?"s":""} to 1/10`)}
     if(S.canEdit)for(const id of members()){const p=S.prefs[id];if(!p||p.dfl||id===S.me||isOnline(id))continue;try{await dflOne(id)}catch(_){}}
   }catch(e){console.warn("deflation",e)}finally{S._dflBusy=false;dflGate()}}
 function dflGate(){const q=S.me&&S.prefs[S.me];const need=!!(db&&S.me&&S.ready&&q&&!q.dfl);let o=document.getElementById("dflOv");
   if(need&&!o){o=document.createElement("div");o.id="dflOv";o.innerHTML=`<div><b>📉 Updating your balance…</b><span>Deflation update: one moment.</span></div>`;document.body.appendChild(o)}else if(!need&&o)o.remove()}
 setInterval(()=>{dflGate();dflRun()},1500);
+const DEBBY_AMT=5000;/* Oct 23: was 10,000 */
+/* Daily top-up (owner, Oct 23; replaces the Tuesday +2,500): at the 1 AM reset, a balance under 10,000 gets +1,000 (never above 10,000). prefs.topUp = running total (ledger) */
+const TOPUP_AMT=1000,TOPUP_CAP=10000,WEEKLY_END=Date.parse("2026-10-23T17:00:00Z");
+async function topUp(day){const q=S.prefs[S.me];if(!q||q.topDay===day)return;const bal=Math.floor(ledger().balOf(S.me)),add=bal<TOPUP_CAP?Math.min(TOPUP_AMT,TOPUP_CAP-bal):0;const patch={topDay:day};if(add>0)patch.topUp=(Number(q.topUp)||0)+add;await db.doc("prefs/"+S.me).update(patch);Object.assign(q,patch);if(add>0)setTimeout(()=>toast(`💵 Daily top-up: +${add.toLocaleString()} BB`),1500)}
 async function divCheck(){if(!S.ready||!S.me||!db||S._divBusy)return;const q=S.prefs[S.me];if(!q||!q.dfl)return;const day=divDay();if(q.divDay===day)return;
   const {amt,n,byR,full,mono,pk,mult,base}=divCalc(S.me);
   /* Evil Witch (Debby): once a day her holder takes 10,000 BB from a random league member who can cover it */
   let deb=null;const hasDeb=cardCount("pm-debby")>0&&q.debbyDay!==day;
-  S._divBusy=true;const patch={divDay:day,divEarn:(Number(q.divEarn)||0)+amt};if(hasDeb)patch.debbyDay=day;tiAdd(patch,amt);try{await db.doc("prefs/"+S.me).update(patch);Object.assign(q,patch);richTax(day).catch(()=>{});
-    if(hasDeb){try{const ref=db.doc("bank/debby_"+day);const ex=await ref.get();if(!ex.exists){const L=ledger();let pool=members().filter(id=>id!==S.me&&teamOf(id)&&Math.floor(L.balOf(id))>=10000);if(!pool.length)pool=members().filter(id=>id!==S.me&&Math.floor(L.balOf(id))>=10000);
-      if(pool.length){const v=pool[Math.floor(pkRand()*pool.length)];await ref.set({from:v,to:S.me,amt:10000,note:"Via Debby",kind:"debby",at:Date.now()});deb={v,amt:10000};{const tp=tiAdd({},10000);if(tp.tiWin!=null)db.doc("prefs/"+S.me).update(tp).catch(()=>{})}try{db.collection("chat").add({type:"bet",kind:"bank",uid:S.me,poster:S.me,at:Date.now(),text:`Via Debby: ${nm(S.me)} took 10,000 BB from ${nm(v)} 🧙‍♀️`})}catch(_){}}}}catch(_){}}
+  S._divBusy=true;const patch={divDay:day,divEarn:(Number(q.divEarn)||0)+amt};if(hasDeb)patch.debbyDay=day;tiAdd(patch,amt);try{await db.doc("prefs/"+S.me).update(patch);Object.assign(q,patch);richTax(day).then(()=>topUp(day)).catch(()=>{});
+    if(hasDeb){try{const ref=db.doc("bank/debby_"+day);const ex=await ref.get();if(!ex.exists){const L=ledger();let pool=members().filter(id=>id!==S.me&&teamOf(id)&&Math.floor(L.balOf(id))>=DEBBY_AMT);if(!pool.length)pool=members().filter(id=>id!==S.me&&Math.floor(L.balOf(id))>=DEBBY_AMT);
+      if(pool.length){const v=pool[Math.floor(pkRand()*pool.length)];await ref.set({from:v,to:S.me,amt:DEBBY_AMT,note:"Via Debby",kind:"debby",at:Date.now()});deb={v,amt:DEBBY_AMT};{const tp=tiAdd({},DEBBY_AMT);if(tp.tiWin!=null)db.doc("prefs/"+S.me).update(tp).catch(()=>{})}try{db.collection("chat").add({type:"bet",kind:"bank",uid:S.me,poster:S.me,at:Date.now(),text:`Via Debby: ${nm(S.me)} took ${DEBBY_AMT.toLocaleString()} BB from ${nm(v)} 🧙‍♀️`})}catch(_){}}}}catch(_){}}
     if(amt>0||deb){divPopup(amt,n,byR,full.size,mono,{pk,mult,base,deb});renderSoon()}}catch(_){}S._divBusy=false}
 function divPopup(amt,n,byR,sets,mono,X){X=X||{};const show=()=>{if($("#recapOv")||$("#divOv")){setTimeout(show,1500);return}
   const rows=byR.map((x,r)=>x.n?`<div class="divrow"><span style="color:${CR[r].c}">${CR[r].n}</span><span class="muted">×${x.n}</span><b class="num pos">+${x.amt.toLocaleString()}</b></div>`:"").join("");
@@ -5804,6 +5822,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:73,d:"Oct 23",t:[["🎯","Pack odds: Elite pack 55% for a Super Rare or better · Grail pack 20.5% Elite or better, 12.5% Grail · Dragon pack 20% Grail or better"],["🧾","Bets that were still open from before the deflation were cut to 1/10 of their size"],["🧙‍♀️","Debby now steals 5,000 a day"],["💵","Top-up is now daily: under 10,000 at 1 AM gets +1,000 (up to 10,000). The Tuesday top-up is gone"],["⚔️","New skin: The Crusader, a dark fantasy paladin (150,000 BB). Aura Shop → Skins"]]},
  {v:72,d:"Oct 23",t:[["🃏","New pack prices: Common 1,500 · Uncommon 3,000 · Rare 7,500 · Super Rare 20,000 · Elite 40,000 · Grail 75,000 · Dragon 250,000"],["🎲","Elite pack: its Super Rare slot is now a 50% chance (otherwise a Rare)"]]},
  {v:71,d:"Oct 23",t:[["📉","Deflation update: every balance was divided by 15 (nobody goes below 10,000). Packs cost 5× less, quick-sell values are ÷15, card dividends are ÷10 (Commons and Uncommons pay nothing), emotes and skins are 3× cheaper"],["🏛️","New rich tax at 1 AM: 5% of what you hold between 100k and 200k, 10% from 200k to 500k, 15% above 500k (see your Bank statement)"],["🃏","Packs: every chance at a better card is cut in half. Set bonuses are now 1.25× and only for Super Rare and up"],["🎯","Blackjack: no more win-streak bonus. The rat hunt comes every 6 dealer 21s, the rat runs twice as fast, and pays 500 (1,000 headshot)"],["⚖️","House sports lines now carry a standard casino edge. King Slop: 2 respins a day. Dean Strow: 1.5% edge. Jimmy Scroggins has his own Curse rarity. Cheese Farm upgrades reset and cost 1.5× more"]]},
  {v:70,d:"Oct 23",t:[["🔒","Fantasyland packs are locked for now. They'll open soon"]]},
@@ -6600,7 +6619,7 @@ function viewStandings(){
   const bjOf=id=>{const q=S.prefs[id]||{};return bjPL(q)+(Number(q.rlNet)||0)+crPL(q)+(Number(q.hlNet)||0)+(Number(q.rrNet)||0)+(Number(q.thNet)||0)};
   const rows=[...ids].map(id=>({id,r:L.rec[id]||{w:0,l:0,p:0},net:(L.net[id]||0)+(inc?bjOf(id):0),bj:bjOf(id)})).sort((a,b)=>b.net-a.net||b.r.w-a.r.w);
   const cl=v=>v>0?"pos":v<0?"neg":"";
-  let h=`<div class="sthead"><h2>Season standings</h2><button type="button" class="tgl" role="switch" aria-checked="${inc}" data-stbj="${inc?0:1}"><span class="tgllbl">Include casino</span><span class="track"><span class="knob"></span></span></button></div>${inc?`<p class="note">Showing betting profit <strong>plus</strong> casino winnings and losses (blackjack, roulette and craps).</p>`:""}<p class="small muted">Ranked by profit: BiggieBucks won minus BiggieBucks lost on graded bets. Everyone starts with 25,000 BB, and anyone under 10,000 gets +2,500 every Tuesday morning (up to 10,000). The weekly top-up doesn't count as profit.</p>
+  let h=`<div class="sthead"><h2>Season standings</h2><button type="button" class="tgl" role="switch" aria-checked="${inc}" data-stbj="${inc?0:1}"><span class="tgllbl">Include casino</span><span class="track"><span class="knob"></span></span></button></div>${inc?`<p class="note">Showing betting profit <strong>plus</strong> casino winnings and losses (blackjack, roulette and craps).</p>`:""}<p class="small muted">Ranked by profit: BiggieBucks won minus BiggieBucks lost on graded bets. Everyone starts with 25,000 BB, and anyone under 10,000 gets +1,000 a day at 1 AM (up to 10,000). Top-ups don't count as profit.</p>
   <div class="card stlist">${rows.map((x,i)=>`<button type="button" class="strow" data-member="${esc(x.id)}">
     <span class="strank num">${i+1}</span>${pic(x.id)}
     <span class="stmain"><span class="mrname">${esc(nm(x.id))}${x.id===S.me?' <span class="muted small">(you)</span>':""}</span>

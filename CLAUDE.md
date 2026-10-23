@@ -290,6 +290,12 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   `FP_*_COST` ×1.5. `pkHalf` (inside `pkSlot`): every chance above a slot's lowest rarity halved, removed chance → that lowest rarity.
   Set bonuses 1.25× each (full rarity set / own every copy), Super Rare–Grail only. No BJ streak bonus (`BJ_STREAK_BB=0`). Rat ×2 speed, 500 body / 1,000 head.
   King Slop 2/day, Dean `CR_EDGE` 1.5%. Jimmy shows as rarity "Curse" (`CR_CURSE`, `crOf(c)`; still rolled as a Super Rare, excluded from SR counts).
+- Later the same day: outstanding bets created before `BET_CUT_AT` cut to 1/10 (stake/takerStake, `cut10`, originals in `stake0`/`takerStake0`; run once by
+  the admin's page in `dflRun`); Debby `DEBBY_AMT` 5,000; weekly +2,500 top-up ended (`WEEKLY_END`), replaced by a daily `topUp` at 1 AM (+1,000 when under 10,000,
+  `prefs.topUp/topDay`, in balOf). Pack `tune:[[r,target,hiExclusive?]]` sets the shop's "at least one r+" chance exactly (`pkFactors` bisection):
+  Elite pack SR+ 55%, Grail pack Elite+ 20.5% / Grail+ 12.5%, Dragon pack Grail+ 20%.
+- Skin `paladin` "The Crusader" (150,000): CC-BY-4.0 “THE SAVIOR — Dark Fantasy Paladin” by Atahan (credit in the description). Scratch `pal/bake10.py`:
+  axe removed (handle/blade cut by position), arms static on the chest, legs + robe by side; then `hbake/capbin.py`.
 - House sports lines: `hv(ml)` prices each side at (2.1/2.2)/p (−110 on a coin flip) from the fair feed lines (scoreboard/futures stay fair; game docs keep
   fair odds); NFL: `tools/jobs/nfl.py` EDGE = 2.1/2.2, spreads/totals −110.
 
