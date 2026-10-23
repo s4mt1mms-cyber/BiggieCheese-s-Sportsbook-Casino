@@ -2422,7 +2422,7 @@ async function auEquip(id){if(!S.me)return;if(S.readOnly)return toast("View only
    Add an emote: one EMOTES row + its pose function f(seconds) → pose numbers (all 0 = seated normally; see emLDance). */
 const EMOTES_PUBLIC=true;
 const EMOTES=[{id:"ldance",n:"L Dance",p:500000,d:"Stand up from your chair and hit the L dance",ic:"🕺",len:7,f:k=>emLDance(k)},
-  {id:"twerk",n:"Table Twerk",p:500000,d:"Hop up on the table and twerk",ic:"🍑",len:9,f:k=>emTwerk(k),cam:[2.2,2.35,2.75],prev:{table:1,cam:[2.9,2.75,-5.1],tgt:[0,1.62,-.9]}}];
+  {id:"twerk",n:"Table Twerk",p:500000,d:"Hop up on the table and twerk",ic:"🍑",len:9,f:k=>emTwerk(k),cam:[1.05,2.55,-2.55],prev:{table:1,cam:[2.9,2.75,-5.1],tgt:[0,1.62,-.9]}}];
 const EM_BY=Object.fromEntries(EMOTES.map(e=>[e.id,e]));
 const EM_CD=8000;const EM={seen:{}};
 const emOn=()=>EMOTES_PUBLIC||!!S.canEdit;
