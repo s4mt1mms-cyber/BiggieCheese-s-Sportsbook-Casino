@@ -5103,19 +5103,20 @@ const CARD_VAL=[500,1500,5000,20000,60000,150000,1500000,25000,1000000];
 const PK_EM=["","◆","★","✦","🔥","🏆","🐉","💗","👑"];
 const QS_VAL=[20,60,200,800,2400,6000,66667,333,0];/* Oct 23 deflation: ÷15 */
 const PACKS=[
-  {id:"grey",r:0,name:"Common Pack",price:1000,n:5,odds:[84.698,13,1.8,.2,.302,0,0],floors:[0,0,0,0,0]},
-  {id:"green",r:1,name:"Uncommon Pack",price:2000,n:5,odds:[69.394,24,5,.9,.505,.201,0],floors:[1,0,0,0,0]},
-  {id:"blue",r:2,name:"Rare Pack",price:5000,n:5,odds:[54.597,30,12,2.5,.5,.403,0],floors:[2,0,0,0,0]},
-  {id:"purple",r:3,name:"Super Rare Pack",price:10000,n:5,odds:[36.627,33,19,8.94,1.6,.813,.02],floors:[2,2,0,0,0]},
-  {id:"red",r:4,name:"Elite Pack",price:20000,n:5,odds:[27.979,32,25,10,4,.971,.05],floors:[3,2,0,0,0]},
-  {id:"gold",r:5,name:"Grail Pack",price:50000,n:5,odds:[21,20,22,16,16.1,5,.1],floors:[3,3,3,0,0]},
-  {id:"plat",r:6,name:"Dragon Pack",price:153086,n:5,odds:[21,20,22,16,16,5,.2],fixed:[3,4],custom:{2:[0,0,65,30,5,0,0],3:[0,0,0,0,1,0,0]},floors:[0,0,2,4,4],last:"renorm",lastOdds:[0,0,0,0,50,45,5]}];
+  {id:"grey",r:0,name:"Common Pack",price:1500,n:5,odds:[84.698,13,1.8,.2,.302,0,0],floors:[0,0,0,0,0]},
+  {id:"green",r:1,name:"Uncommon Pack",price:3000,n:5,odds:[69.394,24,5,.9,.505,.201,0],floors:[1,0,0,0,0]},
+  {id:"blue",r:2,name:"Rare Pack",price:7500,n:5,odds:[54.597,30,12,2.5,.5,.403,0],floors:[2,0,0,0,0]},
+  {id:"purple",r:3,name:"Super Rare Pack",price:20000,n:5,odds:[36.627,33,19,8.94,1.6,.813,.02],floors:[2,2,0,0,0]},
+  {id:"red",r:4,name:"Elite Pack",price:40000,n:5,coin:{0:3},odds:[27.979,32,25,10,4,.971,.05],floors:[3,2,0,0,0]},
+  {id:"gold",r:5,name:"Grail Pack",price:75000,n:5,odds:[21,20,22,16,16.1,5,.1],floors:[3,3,3,0,0]},
+  {id:"plat",r:6,name:"Dragon Pack",price:250000,n:5,odds:[21,20,22,16,16,5,.2],fixed:[3,4],custom:{2:[0,0,65,30,5,0,0],3:[0,0,0,0,1,0,0]},floors:[0,0,2,4,4],last:"renorm",lastOdds:[0,0,0,0,50,45,5]}];
 function pkOdds(p){return p.odds}
 /* chance of each rarity for one slot: fixed slots are exact; floors lift anything below up to the floor (so floors don't inflate the rare odds),
    except a "renorm" slot, which keeps the table's relative odds above the floor (the Dragon pack's last card) */
 /* Oct 23 deflation (owner): every chance above a slot's lowest possible rarity is cut in half; the removed chance goes to that lowest rarity */
 function pkHalf(a){const lo=a.findIndex(x=>x>0);if(lo<0)return a;const b=a.slice();for(let r=lo+1;r<b.length;r++){b[lo]+=b[r]*.5;b[r]*=.5}return b}
-function pkSlot(p,i,set){return pkHalf(pkSlot0(p,i,set))}
+/* p.coin {slot: r}: that slot only has a 50% chance at rarity r or better, otherwise it's one rarity lower (owner, Oct 23: Elite pack's Super Rare slot) */
+function pkSlot(p,i,set){const a=pkHalf(pkSlot0(p,i,set));const r=p.coin&&p.coin[i];if(r==null)return a;const b=a.map((x,k)=>k>=r?x*.5:0);b[r-1]+=.5;return b}
 function pkSlot0(p,i,set){if(p.fixed&&i<p.fixed.length){const a=[0,0,0,0,0,0,0];a[p.fixed[i]]=1;return a}if(p.custom&&p.custom[i]){const w=p.custom[i],t=w.reduce((a,b)=>a+b,0);return w.map(x=>x/t)}const f=p.floors[i]||0;
   if(p.last==="renorm"&&i===p.n-1){const w=p.lastOdds.map((o,r)=>r>=f?o:0),tt=w.reduce((a,b)=>a+b,0);return w.map(x=>x/tt)}
   const od=pkOdds(p,set),t=od.reduce((a,b)=>a+b,0);const a=od.map(o=>o/t);let low=0;for(let r=0;r<f;r++){low+=a[r];a[r]=0}a[f]+=low;return a}
@@ -5554,7 +5555,7 @@ function viewPacks(){if(!S.me)return `<div class="empty">Sign in to collect card
         <span class="setprog"><span>${have}/${cat.length} collected</span><i><b style="width:${Math.round(have/cat.length*100)}%"></b></i></span><span class="setgo">${real?"Open ›":"🔒 Soon"}</span></button>`}).join("")}</div>`)}
   const SET=CSETS[st.set]||CSETS.lm;
   let body="";
-  if(st.tab==="shop"){body=`<p class="small muted">Every pack can pull any card. Better packs raise the floor and the odds of the rare ones.</p>${(()=>{const L=pkLeft(pkSt().set);return `<div class="pksupply"><span class="stlbl">Copies left</span>${[2,3,4,5,6].map(r=>`<span style="color:${CR[r].c}">${CR[r].n.split(" ")[0]} <b class="num${L[r]>0?"":" neg"}">${L[r]>0?(isFinite(L[r])?L[r].toLocaleString():"∞"):"Sold out"}</b></span>`).join("")}<small class="muted">Odds never change. If you pull a sold-out card, it\'s over max supply and auto-sells for its quick-sell value.</small></div>`})()}<div class="pkgrid">${PACKS.map(p=>{const R=CR[p.r];const blk=pkBlocked(p,pkSt().set);const fl={},fx={};for(let i=0;i<p.n;i++){if(p.fixed&&i<p.fixed.length)fx[p.fixed[i]]=(fx[p.fixed[i]]||0)+1;else if(p.custom&&p.custom[i]){fl[4]=(fl[4]||0)+1}else{const f=p.floors[i]||0;if(f>0)fl[f]=(fl[f]||0)+1}}
+  if(st.tab==="shop"){body=`<p class="small muted">Every pack can pull any card. Better packs raise the floor and the odds of the rare ones.</p>${(()=>{const L=pkLeft(pkSt().set);return `<div class="pksupply"><span class="stlbl">Copies left</span>${[2,3,4,5,6].map(r=>`<span style="color:${CR[r].c}">${CR[r].n.split(" ")[0]} <b class="num${L[r]>0?"":" neg"}">${L[r]>0?(isFinite(L[r])?L[r].toLocaleString():"∞"):"Sold out"}</b></span>`).join("")}<small class="muted">Odds never change. If you pull a sold-out card, it\'s over max supply and auto-sells for its quick-sell value.</small></div>`})()}<div class="pkgrid">${PACKS.map(p=>{const R=CR[p.r];const blk=pkBlocked(p,pkSt().set);const fl={},fx={};for(let i=0;i<p.n;i++){if(p.fixed&&i<p.fixed.length)fx[p.fixed[i]]=(fx[p.fixed[i]]||0)+1;else if(p.custom&&p.custom[i]){fl[4]=(fl[4]||0)+1}else{const f=p.coin&&p.coin[i]!=null?p.coin[i]-1:p.floors[i]||0;if(f>0)fl[f]=(fl[f]||0)+1}}
       const g=[...Object.keys(fx).map(Number).sort((a,b)=>b-a).map(f=>`<span style="color:${CR[f].c}">${fx[f]}× ${CR[f].n}</span>`),...Object.keys(fl).map(Number).sort((a,b)=>b-a).map(f=>`<span style="color:${CR[f].c}">${fl[f]}× ${CR[f].n}+</span>`)].join(" · ")||`<span class="muted">No guarantees, pure luck</span>`;
       return `<div class="pack" style="--rc:${R.c};--rg:${R.g}"><div class="packart pt${p.r}"><i class="crimp t"></i><i class="crimp b"></i><div class="packfoil"><span class="pklogo">${LOGO[pkSt().set]||""}</span><span class="pkem">${PK_EM[p.r]}</span><span class="pkset">${esc(SET.name)}</span><b>${esc(p.name)}</b><span class="pkn">${p.n} card${p.n>1?"s":""}</span></div></div>
         <div class="pkinfo"><div class="pkg"><span class="stlbl">Guaranteed</span> ${g}</div>
@@ -5803,6 +5804,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:72,d:"Oct 23",t:[["🃏","New pack prices: Common 1,500 · Uncommon 3,000 · Rare 7,500 · Super Rare 20,000 · Elite 40,000 · Grail 75,000 · Dragon 250,000"],["🎲","Elite pack: its Super Rare slot is now a 50% chance (otherwise a Rare)"]]},
  {v:71,d:"Oct 23",t:[["📉","Deflation update: every balance was divided by 15 (nobody goes below 10,000). Packs cost 5× less, quick-sell values are ÷15, card dividends are ÷10 (Commons and Uncommons pay nothing), emotes and skins are 3× cheaper"],["🏛️","New rich tax at 1 AM: 5% of what you hold between 100k and 200k, 10% from 200k to 500k, 15% above 500k (see your Bank statement)"],["🃏","Packs: every chance at a better card is cut in half. Set bonuses are now 1.25× and only for Super Rare and up"],["🎯","Blackjack: no more win-streak bonus. The rat hunt comes every 6 dealer 21s, the rat runs twice as fast, and pays 500 (1,000 headshot)"],["⚖️","House sports lines now carry a standard casino edge. King Slop: 2 respins a day. Dean Strow: 1.5% edge. Jimmy Scroggins has his own Curse rarity. Cheese Farm upgrades reset and cost 1.5× more"]]},
  {v:70,d:"Oct 23",t:[["🔒","Fantasyland packs are locked for now. They'll open soon"]]},
  {v:69,d:"Oct 23",t:[["🌈","New card collection: Fantasyland! 51 cards, open its packs in Cards"],["🪓","Berserker (Elite) gives you 3 auto-kills a day in the Blackjack rat hunt"],["⚡","Fantasyland Grails come with their own card auras"],["🪑","Fixed: an old seat at a live table could stop you from sitting down"]]},
