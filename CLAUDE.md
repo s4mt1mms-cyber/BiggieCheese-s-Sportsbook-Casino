@@ -230,6 +230,9 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   `public/skins/diamond.bin` + `diamond.jpg` (texture = the GLB's EMBEDDED basecolor; the loose textures in the upload didn't match the UVs).
   `rrHuman` builds the same joint groups as `rrAnimal` (with `HUMAN` proportions) and skins the mesh to bones parented to them, so all
   table animation/IK/emotes drive her (`u.rise` = standing height, `u.lsOff` = L-sign spot, no emote cheeks). Head bone shrinks for your own seat.
+  `cerb` (Cerberus, `HUMAN_V.cerb`): multi-material A-pose model → v2 file: header `bones` list (parent rig object, local pos, rest quaternion,
+  bind joint) incl. a rigid tail bone swung back behind the chair; textures atlased 2×2 into `cerb.jpg` + emissive `cerb_e.jpg`; joins between
+  the hanging arms and the body were cut in the bake. Bake scripts: scratch `hbake/bake.mjs` (T-pose) / `bake2.mjs` (hand-measured joints).
   prefs `skins` {id:true}, `skin` (worn, null = your seat's animal), `skinSpent` (ledger). `skinOf(id)`; the table builds animals through
   `skSeat(seat, uid)` in `rrBuild` (takes effect when the scene is built, i.e. next time you sit). The animal model is a kind in `rrAnimal`/`rrFace`
   (`k==="lemur"`: ringed tail, mask, orange eyes). Shop preview reuses `emPrevBuild` via `SK_PREV["skin:<id>"]` (turntable + wave). 10% `shopFee("skin")`.
