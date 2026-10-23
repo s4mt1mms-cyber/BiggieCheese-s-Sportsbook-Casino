@@ -1946,7 +1946,7 @@ function ledger0(){
     const a=Math.floor(Number(t.amt));if(!(a>0)||!t.from||!t.to||t.from===t.to)continue;bkA(t.from,-a);bkA(t.to,a)}
   for(const l of S.loans||[]){if(!l.borrower||!l.takenAt||!["active","late","repaid","defaulted"].includes(l.status))continue;const P=Math.floor(Number(l.P))||0;bkA(l.lender,-P);bkA(l.borrower,P);
     const seen=new Set();for(const p of l.payments||[]){if(seen.has(p.k))continue;seen.add(p.k);const a=Math.floor(Number(p.amt))||0;bkA(l.borrower,-a);bkA(l.lender,a)}}
-  return{rec,net,byWeek,wagered,bal,refills,pending,bkNet,wins,tiPaid,tiLast,balOf:id=>(bkNet[id]||0)+B(id)-(Number(S.prefs[id]&&S.prefs[id].curseFee)||0)-(Number(S.prefs[id]&&S.prefs[id].auraSpent)||0)-(Number(S.prefs[id]&&S.prefs[id].emoteSpent)||0)-(Number(S.prefs[id]&&S.prefs[id].farmSpent)||0)-Math.floor((Number(S.prefs[id]&&S.prefs[id].tiWin)||0)/10)+cardMoney(id)-(pending[id]||0)+(Number(S.prefs[id]&&S.prefs[id].bjNet)||0)+(Number(S.prefs[id]&&S.prefs[id].gift)||0)+(Number(S.prefs[id]&&S.prefs[id].flapEarn)||0)+(Number(S.prefs[id]&&S.prefs[id].mineEarn)||0)+(Number(S.prefs[id]&&S.prefs[id].rlNet)||0)+(Number(S.prefs[id]&&S.prefs[id].revengeEarn)||0)+((S.adjust&&S.adjust[id])||0)+(Number(S.prefs[id]&&S.prefs[id].bjBonus)||0)+(Number(S.prefs[id]&&S.prefs[id].crNet)||0)+(Number(S.prefs[id]&&S.prefs[id].hlNet)||0)+(Number(S.prefs[id]&&S.prefs[id].rrNet)||0)+(Number(S.prefs[id]&&S.prefs[id].thNet)||0)+(Number(S.prefs[id]&&S.prefs[id].divEarn)||0),inPlay:id=>pending[id]||0};
+  return{rec,net,byWeek,wagered,bal,refills,pending,bkNet,wins,tiPaid,tiLast,balOf:id=>(bkNet[id]||0)+B(id)-(Number(S.prefs[id]&&S.prefs[id].curseFee)||0)-(Number(S.prefs[id]&&S.prefs[id].auraSpent)||0)-(Number(S.prefs[id]&&S.prefs[id].emoteSpent)||0)-(Number(S.prefs[id]&&S.prefs[id].skinSpent)||0)-(Number(S.prefs[id]&&S.prefs[id].farmSpent)||0)-Math.floor((Number(S.prefs[id]&&S.prefs[id].tiWin)||0)/10)+cardMoney(id)-(pending[id]||0)+(Number(S.prefs[id]&&S.prefs[id].bjNet)||0)+(Number(S.prefs[id]&&S.prefs[id].gift)||0)+(Number(S.prefs[id]&&S.prefs[id].flapEarn)||0)+(Number(S.prefs[id]&&S.prefs[id].mineEarn)||0)+(Number(S.prefs[id]&&S.prefs[id].rlNet)||0)+(Number(S.prefs[id]&&S.prefs[id].revengeEarn)||0)+((S.adjust&&S.adjust[id])||0)+(Number(S.prefs[id]&&S.prefs[id].bjBonus)||0)+(Number(S.prefs[id]&&S.prefs[id].crNet)||0)+(Number(S.prefs[id]&&S.prefs[id].hlNet)||0)+(Number(S.prefs[id]&&S.prefs[id].rrNet)||0)+(Number(S.prefs[id]&&S.prefs[id].thNet)||0)+(Number(S.prefs[id]&&S.prefs[id].divEarn)||0),inPlay:id=>pending[id]||0};
 }
 const START_BAL=25000,WEEKLY=2500,REFILL_CAP=10000;
 /* Tuesday 2:30 AM ET after week wk ends (weeks run Tuesday to Monday) */
@@ -2371,10 +2371,11 @@ function viewAura(){if(!S.me)return `<div class="empty">Sign in to shop.</div>`;
     if(ask===a.id)return `<div class="auask"><button type="button" class="aubtn" data-au="ok" data-id="${a.id}">Buy for ${a.p.toLocaleString()} BB</button><button type="button" class="aubtn ghost" data-au="no">Cancel</button></div>`;
     return `<button type="button" class="aubtn${bal<a.p?" short":""}" data-au="buy" data-id="${a.id}">Buy</button>`};
   const item=a=>{const o=auOwns(me,a.id);return `<div class="auit${cur===a.id?" on":""}${a.t==="Mythic"?" myth":""}" data-auitem="${a.id}">${o?`<span class="auown">Owned</span>`:""}${prev(a.id)}<b>${esc(a.n)}</b>${a.d&&a.t==="Mythic"?`<span class="small muted">${esc(a.d)}</span>`:""}<span class="aupr${o?" own":""}">${a.card?"While you hold the card":o?"Yours to keep":a.p.toLocaleString()+" BB"}</span>${btn(a)}</div>`};
-  const tabs=emOn(),tab=tabs&&S.auTab==="emote"?"emote":"aura";
-  const bar=tabs?`<div class="pktabs autabs"><button type="button" class="pktab${tab==="aura"?" on":""}" data-autab="aura">✨ Auras</button><button type="button" class="pktab${tab==="emote"?" on":""}" data-autab="emote">🕺 Emotes</button></div>`:"";
+  const tabs=emOn(),tab=tabs&&S.auTab==="emote"?"emote":S.auTab==="skin"?"skin":"aura";
+  const bar=tabs?`<div class="pktabs autabs"><button type="button" class="pktab${tab==="aura"?" on":""}" data-autab="aura">✨ Auras</button><button type="button" class="pktab${tab==="emote"?" on":""}" data-autab="emote">🕺 Emotes</button><button type="button" class="pktab${tab==="skin"?" on":""}" data-autab="skin">🐒 Skins</button></div>`:`<div class="pktabs autabs"><button type="button" class="pktab${tab==="aura"?" on":""}" data-autab="aura">✨ Auras</button><button type="button" class="pktab${tab==="skin"?" on":""}" data-autab="skin">🐒 Skins</button></div>`;
   const head=`<div class="aushop"><div class="auhead"><h2>✨ Aura Shop</h2><div class="small">Balance <b class="num" style="color:#5cff72">${bal.toLocaleString()} BB</b></div></div>${bar}`;
   if(tab==="emote")return head+`${emShopHtml()}<p class="aunote">Purchases are permanent, play money only.</p></div>`;
+  if(tab==="skin")return head+`${skShopHtml()}<p class="aunote">Purchases are permanent, play money only.</p></div>`;
   return head+`
   <div class="auhero">${prev(cur)}<div class="t"><span>Wearing now</span><b>${A?esc(A.n):"No aura"}</b><i>${A?"Shows around your picture everywhere: chat, profile, lists":"Your normal look: "+esc(auDefName(me))}</i>${A?`<button type="button" class="aubtn ghost" style="width:auto;min-height:34px;padding:0 16px;font-size:13px" data-au="eq" data-id="none">Take it off</button>`:""}</div></div>
   <div class="small muted">You own ${AURAS.filter(a=>!a.card&&auOwns(me,a.id)).length} of ${AURAS.filter(a=>!a.card).length}. Auras are yours forever: switch between them anytime for free.</div>
@@ -2433,6 +2434,41 @@ function emShopHtml(){const me=S.me,bal=Math.floor(ledger().balOf(me)),ask=S.emA
     return `<button type="button" class="aubtn${bal<e.p?" short":""}" data-em="buy" data-id="${e.id}">Buy</button>`};
   return `<div class="aush"><span>Emotes</span><span>${EMOTES_PUBLIC?"":"Admin preview · "}${(EMOTES[0]||{p:0}).p.toLocaleString()} BB</span></div><div class="small muted" style="margin:-4px 2px 10px">Use them at the live Russian Roulette and Hold'em tables. Everyone at the table sees it.</div>
   <div class="augrid">${EMOTES.map(e=>{const o=emOwns(me,e.id);return `<div class="auit emit" data-emitem="${e.id}">${o?`<span class="auown">Owned</span>`:""}<div class="emprev" data-emprev="${e.id}"></div><b>${esc(e.ic+" "+e.n)}</b><span class="small muted">${esc(e.d)}</span><span class="aupr${o?" own":""}">${o?"Yours to keep · tap 🕺 at a live table":e.p.toLocaleString()+" BB"}</span>${btn(e)}</div>`}).join("")}</div>`}
+/* ---------- Skins (Aura Shop → Skins): look like a different animal at the live Russian Roulette + Hold'em tables ----------
+   prefs.skins {id:true} owned forever, prefs.skin = the one you wear (null = your seat's normal animal), prefs.skinSpent (in the ledger).
+   The table builds your animal with skSeat(); an emote, a head tag etc. work the same on any animal. */
+const SKINS=[{id:"lemur",n:"Ring-tailed Lemur",p:250000,c:0x6c686e,ic:"🐒",d:"Grey fur, a black-and-white ringed tail and big orange eyes"}];
+const SKIN_BY=Object.fromEntries(SKINS.map(x=>[x.id,x]));
+const skOwns=(id,k)=>!!((((S.prefs||{})[id]||{}).skins||{})[k]);
+const skinOf=id=>{const q=((S.prefs||{})[id])||{};return q.skin&&SKIN_BY[q.skin]&&skOwns(id,q.skin)?q.skin:null};
+const skSeat=(seat,uid)=>{const k=uid&&skinOf(uid);return k?{...seat,k,c:SKIN_BY[k].c}:seat};
+/* shop preview: the animal on its chair, slowly turning so you see the tail, with a little wave */
+const SK_PREV=Object.fromEntries(SKINS.map(x=>["skin:"+x.id,{len:6,spin:1,kind:x.id,c:x.c,prev:{cam:[0,1.5,-2.9],tgt:[0,1.2,-.05]},f:k=>{const P=emLerp(emLDance(0),0),w=emSS(Math.min(1,(k-1)/.4))-emSS(Math.min(1,Math.max(0,(k-3.2)/.4)));P.ral=Math.max(0,w);P.rpx=.55;P.rpy=.55+.18*Math.sin(k*9);P.rpz=-.35;return P}}]));
+function skShopHtml(){const me=S.me,bal=Math.floor(ledger().balOf(me)),ask=S.skAsk&&S.skAsk.id,cur=skinOf(me);
+  const btn=x=>{if(cur===x.id)return `<button type="button" class="aubtn eq" data-sk="eq" data-id="none">✓ Wearing · take off</button>`;
+    if(skOwns(me,x.id))return `<button type="button" class="aubtn ghost" data-sk="eq" data-id="${x.id}">Wear it</button>`;
+    if(ask===x.id)return `<div class="auask"><button type="button" class="aubtn" data-sk="ok" data-id="${x.id}">Buy for ${x.p.toLocaleString()} BB</button><button type="button" class="aubtn ghost" data-sk="no">Cancel</button></div>`;
+    return `<button type="button" class="aubtn${bal<x.p?" short":""}" data-sk="buy" data-id="${x.id}">Buy</button>`};
+  return `<div class="aush"><span>Skins</span><span>${(SKINS[0]||{p:0}).p.toLocaleString()} BB</span></div><div class="small muted" style="margin:-4px 2px 10px">Show up as a different animal at the live Russian Roulette and Hold'em tables. Everyone at the table sees it. Takes effect the next time you sit down.</div>
+  <div class="augrid">${SKINS.map(x=>{const o=skOwns(me,x.id);return `<div class="auit emit${cur===x.id?" on":""}" data-skitem="${x.id}">${o?`<span class="auown">Owned</span>`:""}<div class="emprev" data-emprev="skin:${x.id}"></div><b>${esc(x.ic+" "+x.n)}</b><span class="small muted">${esc(x.d)}</span><span class="aupr${o?" own":""}">${o?"Yours to keep":x.p.toLocaleString()+" BB"}</span>${btn(x)}</div>`}).join("")}</div>`}
+function skClick(t){const k=t.dataset.sk,id=t.dataset.id;if(!S.me)return toast("Sign in first.");if(S.readOnly)return toast("View only. Ask the commish for access.");
+  if(k==="no"){S.skAsk=null;render();return}
+  if(k==="eq")return skEquip(id);
+  const X=SKIN_BY[id];if(!X)return;
+  if(k==="buy"){if(skOwns(S.me,id))return;const bal=Math.floor(ledger().balOf(S.me));if(bal<X.p)return toast(`You need ${X.p.toLocaleString()} BB for the ${X.n}. You have ${bal.toLocaleString()} BB.`);S.skAsk={id,t:Date.now()};render();return}
+  if(k==="ok"){if(!S.skAsk||S.skAsk.id!==id||Date.now()-S.skAsk.t<450)return;S.skAsk=null;t.disabled=true;skBuy(id)}}
+async function skBuy(id){const X=SKIN_BY[id];if(!X||!S.me)return;if(S._skBusy)return;S._skBusy=true;
+  try{const q=S.prefs[S.me]||{};if(skOwns(S.me,id))return;
+    if(Math.floor(ledger().balOf(S.me))<X.p)return toast(`You need ${X.p.toLocaleString()} BB for the ${X.n}.`);
+    const spent=(Number(q.skinSpent)||0)+X.p;
+    await db.doc("prefs/"+S.me).update({skins:{[id]:true},skin:id,skinSpent:spent});
+    q.skins={...(q.skins||{}),[id]:true};q.skin=id;q.skinSpent=spent;shopFee("skin",id,X.p);
+    toast(`${X.ic} You're the ${X.n} now. It shows the next time you sit at a live table.`)}
+  catch(e){toast("That didn't save. Check your connection and try again.")}
+  finally{S._skBusy=false;render()}}
+async function skEquip(id){if(!S.me)return;const v=id==="none"?null:id;if(v&&!skOwns(S.me,v))return;const q=S.prefs[S.me]=S.prefs[S.me]||{};
+  try{await db.doc("prefs/"+S.me).update({skin:v});q.skin=v;toast(v?`${SKIN_BY[v].ic} Wearing the ${SKIN_BY[v].n}.`:"Back to your normal animal.")}catch(_){toast("That didn't save. Check your connection and try again.")}render()}
+document.addEventListener("click",e=>{const t=e.target.closest("[data-sk]");if(t&&S.tab==="aura")skClick(t)});
 function emClick(t){const k=t.dataset.em,id=t.dataset.id;if(!S.me)return toast("Sign in first.");
   if(k==="tap"){const mine=emMine();if(mine.length===1)return emPlay(mine[0].id);const m=$("#emMenu");if(m){if(!m.hidden){m.hidden=true;return}m.innerHTML=mine.map(e=>`<button type="button" data-em="play" data-id="${e.id}">${esc(e.ic+" "+e.n)}</button>`).join("");m.style.bottom=(parseFloat(getComputedStyle(t).bottom)||300)+"px";m.hidden=false}return}
   if(k==="play"){const m=$("#emMenu");if(m)m.hidden=true;return emPlay(id)}
@@ -2591,12 +2627,12 @@ function emPrevStop(id,drop){const p=EMP[id];if(!p||id==="_io")return;const g=p.
   if(drop){if(p.el&&EMP._io)EMP._io.unobserve(p.el);delete EMP[id]}}
 function emPrevStart(id){const p=EMP[id];if(!p||p.g||p.loading)return;p.loading=true;
   rrLoad().then(()=>{p.loading=false;if(EMP[id]!==p||!p.vis||p.g||S.tab!=="aura"||!p.cv.isConnected)return;p.g=emPrevBuild(p.cv,id)}).catch(()=>{p.loading=false})}
-function emPrevBuild(cv,id){const T=THREE,E=EM_BY[id];const R=new T.WebGLRenderer({canvas:cv,antialias:true,alpha:true});R.setPixelRatio(Math.min(1.5,devicePixelRatio||1));R.outputEncoding=T.sRGBEncoding;R.toneMapping=T.ACESFilmicToneMapping;R.toneMappingExposure=1;
+function emPrevBuild(cv,id){const T=THREE,E=EM_BY[id]||SK_PREV[id];const R=new T.WebGLRenderer({canvas:cv,antialias:true,alpha:true});R.setPixelRatio(Math.min(1.5,devicePixelRatio||1));R.outputEncoding=T.sRGBEncoding;R.toneMapping=T.ACESFilmicToneMapping;R.toneMappingExposure=1;
   const sc=new T.Scene(),cam=new T.PerspectiveCamera(36,1,.05,30);
   const M=(c,o)=>new T.MeshStandardMaterial(Object.assign({color:c,roughness:.75},o||{}));const add=(geo,mat,x,y,z,par)=>{const m=new T.Mesh(geo,mat);m.position.set(x||0,y||0,z||0);(par||sc).add(m);return m};
   const fl=add(new T.CircleGeometry(1.9,40),M(0xffffff,{map:rrWood("#4a2b16","rgba(20,10,4,.6)",[3,3]),roughness:.6}),0,0,-.1);fl.rotation.x=-Math.PI/2;
   const chair=new T.Group();sc.add(chair);rrChairParts(T,add,chair,M(0xffffff,{map:rrWood("#4a2812","rgba(0,0,0,.3)",[1,1]),roughness:.5}),M(0x5a1010,{roughness:.55}));
-  const body=rrAnimal(T,{k:"bear",c:RL_ANIMALS.bear.c},add,M,chair);const u=body.userData,sp={chair,body,a:0};
+  const body=rrAnimal(T,E.kind?{k:E.kind,c:E.c}:{k:"bear",c:RL_ANIMALS.bear.c},add,M,chair);const u=body.userData,sp={chair,body,a:0};
   u.em={id,t0:0,cp:chair.position.clone(),bp:body.position.clone(),br:body.rotation.clone(),hr:u.head.rotation.clone()};
   sc.add(new T.HemisphereLight(0xffe2c4,0x2a1a10,.5));const key=new T.DirectionalLight(0xffd8a8,.85);key.position.set(1.4,3.2,-2.6);sc.add(key);const rim=new T.PointLight(0xff9a60,.7,7);rim.position.set(-1.6,2.2,1.4);sc.add(rim);
   if(E.prev&&E.prev.table){const felt=add(new T.CylinderGeometry(1.25,1.25,.06,48),M(0x0d6b33,{roughness:1}),0,.87,-1.78);const rl=add(new T.TorusGeometry(1.27,.07,12,48),M(0xffffff,{map:rrWood("#5a3018","rgba(0,0,0,.3)",[8,1]),roughness:.35}),0,.9,-1.78);rl.rotation.x=Math.PI/2;
@@ -2606,7 +2642,7 @@ function emPrevBuild(cv,id){const T=THREE,E=EM_BY[id];const R=new T.WebGLRendere
   const frame=now=>{if(!cv.isConnected){const p=EMP[id];if(p&&p.g===g)emPrevStop(id);return}g.raf=requestAnimationFrame(frame);if(document.hidden)return;
     const dt=Math.min(.1,(now-(g.lt||now))/1000);g.lt=now;const sm=r=>1-Math.exp(-dt*r);const w=cv.clientWidth,h=cv.clientHeight;if(!w||!h)return;
     if(cv.width!==Math.floor(w*R.getPixelRatio())||cv.height!==Math.floor(h*R.getPixelRatio())){R.setSize(w,h,false);cam.aspect=w/h;cam.fov=w/h<1.1?46:36;cam.updateProjectionMatrix()}
-    const k=((now-g.t0)/1000)%(E.len+1.4);emApply(T,sp,k<E.len?E.f(k):emLerp(E.f(0),0));
+    const k=((now-g.t0)/1000)%(E.len+1.4);emApply(T,sp,k<E.len?E.f(k):emLerp(E.f(0),0));if(E.spin)chair.rotation.y=Math.PI*.15+Math.sin((now-g.t0)/1000*.8)*1.25;
     u.torso.scale.y=1+Math.sin(now/450)*.012;if(Math.sin(now/1400)>.995)u.lids.forEach(l=>l.scale.y=1);else u.lids.forEach(l=>l.scale.y=Math.max(.1,l.scale.y*.8));
     sc.updateMatrixWorld();[u.armL,u.armR].forEach(a=>rrSolveArm(T,body,a,sm));R.render(sc,cam)};
   g.raf=requestAnimationFrame(frame);return g}
@@ -3576,7 +3612,7 @@ function rrBuild(cv){const T=THREE;if(S.rr3&&S.rr3.cv===cv)return;rrStop();
   const seats=[];const RAD=1.78,chairW=M(0xffffff,{map:rrWood("#4a2812","rgba(0,0,0,.3)",[1,1]),roughness:.5}),leather=M(0x5a1010,{roughness:.55});
   for(let i=0;i<4;i++){const a=RR_ANG[i],x=Math.sin(a)*RAD,z=Math.cos(a)*RAD;const chair=new T.Group();chair.position.set(x,0,z);chair.rotation.y=a;chair.visible=true;sc.add(chair);
     rrChairParts(T,add,chair,chairW,leather);
-    const myK=i?null:window.RR_SELFK||(RL.on&&RL.seats&&RL.seats[RL.my]?RL.seats[RL.my].k:"cat");const body=i?rrAnimal(T,RR_SEATS[i],add,M,chair):rrAnimal(T,{k:myK,c:(RL_ANIMALS[myK]||RL_ANIMALS.cat).c},add,M,chair);if(!i){body.userData.self=true;body.userData.head.visible=false;body.position.set(0,.55,.26);body.userData.selfPos=body.position.clone()}
+    const myK=i?null:window.RR_SELFK||(RL.on&&RL.seats&&RL.seats[RL.my]?RL.seats[RL.my].k:"cat");const body=i?rrAnimal(T,skSeat(RR_SEATS[i],RR_SEATS[i].uid),add,M,chair):rrAnimal(T,skSeat({k:myK,c:(RL_ANIMALS[myK]||RL_ANIMALS.cat).c},S.me),add,M,chair);if(!i){body.userData.self=true;body.userData.head.visible=false;body.position.set(0,.55,.26);body.userData.selfPos=body.position.clone()}
     if(body&&i){const mg=new T.Group();const ma=a-.42,mp=new T.Vector3(Math.sin(ma)*1.05,.9,Math.cos(ma)*1.05);mg.position.copy(mp);sc.add(mg);
       add(Cy(.045,.042,.13,18),M(0xe8f4ff,{transparent:true,opacity:.35,roughness:.05}),0,.065,0,mg);add(Cy(.04,.038,.1,18),M(0xd9951a,{transparent:true,opacity:.85,roughness:.2,emissive:0x4a2a00}),0,.055,0,mg);add(Cy(.042,.042,.025,18),M(0xfff8e8,{roughness:.9}),0,.12,0,mg);
       const hn=add(new T.TorusGeometry(.03,.008,8,14,Math.PI),M(0xe8f4ff,{transparent:true,opacity:.5}),.045,.065,0,mg);hn.rotation.z=-Math.PI/2;body.userData.mug=mg;body.userData.mugHome=mp.clone()}
@@ -3743,7 +3779,7 @@ function rrGun(T,add,M){const gun=new T.Group();const gm=M(0x2b2b30,{metalness:.
 function rrFace(T,add,M,head,k,fur,lt){const dk=M(0x111111,{roughness:.25}),pink=M(0xe8a0a4,{roughness:.6}),white=M(0xffffff,{roughness:.3}),S_=(r,a,b,...x)=>new T.SphereGeometry(r,a||24,b||18,...x),C_=(a,b,h,s,...x)=>new T.CylinderGeometry(a,b,h,s||16,...x);
   const F={eyes:[],lids:[],ears:[]};
   const snoutG=(len,r0,r1)=>{const pts=[];for(let n=0;n<=12;n++){const t=n/12;pts.push(new T.Vector2(r1+(r0-r1)*Math.pow(1-t,.9),t*len))}for(let n=1;n<=6;n++){const a=n/6*Math.PI/2;pts.push(new T.Vector2(r1*Math.cos(a),len+r1*Math.sin(a)*.8))}const g=new T.LatheGeometry(pts,40);g.rotateX(-Math.PI/2);return g};
-  const iris={fox:0x9a5a0a,cat:0x4a9a3a,bunny:0x6a3a2a,bear:0x3a220e,rat:0x1a0a0a}[k]||0x2a1a0a;
+  const iris={lemur:0xff9410,fox:0x9a5a0a,cat:0x4a9a3a,bunny:0x6a3a2a,bear:0x3a220e,rat:0x1a0a0a}[k]||0x2a1a0a;
   const eye=(x,y,z,r)=>{const e=new T.Group();e.position.set(x,y,z);head.add(e);add(S_(r,20,14),white,0,0,0,e);const ball=new T.Group();e.add(ball);
     add(S_(r*.64,16,12),M(iris,{roughness:.1}),0,0,-r*.48,ball);add(S_(r*.36,12,10),dk,0,0,-r*.76,ball);add(S_(r*.15,8,6),M(0xffffff,{emissive:0xffffff,emissiveIntensity:.8}),r*.24,r*.24,-r*.92,ball);
     const lid=add(S_(r*1.1,18,10,0,Math.PI*2,0,Math.PI/2),fur,0,0,0,e);lid.scale.y=.08;const low=add(S_(r*1.1,18,10,0,Math.PI*2,Math.PI/2,Math.PI/2),fur,0,0,0,e);low.scale.y=.12;
@@ -3764,6 +3800,13 @@ function rrFace(T,add,M,head,k,fur,lt){const dk=M(0x111111,{roughness:.25}),pink
     const mz=add(S_(.07),lt,0,-.06,-.16,head);mz.scale.set(1.3,.8,.9);add(new T.ConeGeometry(.018,.02,3),pink,0,-.025,-.225,head).rotation.x=Math.PI/2+.4;
     [-1,1].forEach(s=>[0,1].forEach(n=>{const w=add(C_(.002,.002,.2,4),M(0xffffff),s*.11,-.05+n*.015,-.2,head);w.rotation.z=Math.PI/2+s*(n-.5)*.2}));jawY=-.09;jawZ=-.15;jawW=.05;jawL=.07;
     const bow=new T.Group();bow.position.set(.11,.16,-.04);head.add(bow);[-1,1].forEach(s=>{const b=add(new T.ConeGeometry(.035,.06,4),M(0xd81b60,{roughness:.4}),s*.03,0,0,bow);b.rotation.z=s*Math.PI/2});add(S_(.014),M(0xd81b60),0,0,0,bow)}
+  if(k==="lemur"){/* white face, black mask around big orange eyes, a dark pointed snout, small furry ears */
+    const fw=add(S_(.175,28,22),lt,0,-.02,-.075,head);fw.scale.set(1.08,.95,.8);const mk=M(0x1d1b1d,{roughness:.7});
+    [-1,1].forEach(s=>{const m=add(S_(.068,20,16),mk,s*.078,.035,-.155,head);m.scale.set(1.1,.95,.55);m.rotation.z=s*.35});
+    [-1,1].forEach(s=>eye(s*.078,.04,-.172,.05));
+    [-1,1].forEach(s=>ear(s*.14,.15,.02,(eg)=>{const e=add(new T.ConeGeometry(.06,.12,16),fur,0,.04,0,eg);e.scale.z=.5;e.rotation.z=-s*.55;const ei=add(new T.ConeGeometry(.04,.08,16),lt,0,.035,-.015,eg);ei.scale.z=.35;ei.rotation.z=-s*.55}));
+    const sn=add(snoutG(.15,.085,.03),mk,0,-.05,-.15,head);sn.scale.y=.8;add(S_(.03,16,12),M(0x0c0c0c,{roughness:.2}),0,-.045,-.305,head).scale.set(1.2,.85,1);
+    [-1,1].forEach(s=>add(S_(.07),lt,s*.075,-.085,-.12,head).scale.set(.9,.7,.85));jawY=-.105;jawZ=-.15;jawL=.15;jawW=.055}
   if(k==="bunny"){[-1,1].forEach(s=>eye(s*.085,.04,-.165,.042));[-1,1].forEach(s=>ear(s*.07,.16,0,(eg)=>{const e=add(S_(.055,14,12),fur,0,.17,0,eg);e.scale.set(1,3.4,.55);const ei=add(S_(.032,12,10),pink,0,.17,-.025,eg);ei.scale.set(1,3,.35);eg.rotation.z=-s*.18}));
     const mz=add(S_(.07),lt,0,-.06,-.16,head);mz.scale.set(1.3,.8,.9);add(S_(.022,12,10),pink,0,-.03,-.225,head);jawY=-.09;jawZ=-.15;jawW=.05;jawL=.07}
   /* brows */
@@ -3773,7 +3816,7 @@ function rrFace(T,add,M,head,k,fur,lt){const dk=M(0x111111,{roughness:.25}),pink
   const inner=add(S_(jawW*.85,14,8),M(0x3a0a0e,{roughness:.6}),0,.006,-jawL*.35,jaw);inner.scale.set(.9,.3,jawL/jawW*.8);const tg=add(S_(jawW*.5,12,8),pink,0,.012,-jawL*.45,jaw);tg.scale.set(1,.3,1.4);
   F.jaw=jaw;return F}
 function rrAnimal(T,seat,add,M,par){const k=seat.k,g=new T.Group();g.position.set(0,.6,-.02);g.scale.setScalar(1.12);par.add(g);
-  const fur=M(seat.c,{roughness:.85}),lt=M(k==="fox"?0xf4ead8:k==="bear"?0xb98a5a:0xc9bfb4,{roughness:.85}),dk=M(0x111111,{roughness:.25}),pink=M(0xe8a0a4,{roughness:.6});
+  const fur=M(seat.c,{roughness:.85}),lt=M(k==="fox"?0xf4ead8:k==="bear"?0xb98a5a:k==="lemur"?0xf2efe8:0xc9bfb4,{roughness:.85}),dk=M(0x111111,{roughness:.25}),pink=M(0xe8a0a4,{roughness:.6});
   const S_=(r,a,b)=>new T.SphereGeometry(r,a||24,b||18),C_=(a,b,h,s)=>new T.CylinderGeometry(a,b,h,s||16);
   /* legs, seated (stay on the chair) */
   g.userData.legs=[-1,1].map(s=>{const hip=new T.Group();hip.position.set(s*.12,.05,0);hip.rotation.order="ZXY";g.add(hip);const th=add(C_(.075,.085,.34),fur,0,0,-.15,hip);th.rotation.x=Math.PI/2;
@@ -3788,6 +3831,10 @@ function rrAnimal(T,seat,add,M,par){const k=seat.k,g=new T.Group();g.position.se
     const pts=[[0,.1,.2],[0,.0,.45],[.15,-.25,.6],[.35,-.5,.5],[.45,-.6,.2]].map(p=>new T.Vector3(...p));add(new T.TubeGeometry(new T.CatmullRomCurve3(pts),24,.022,8),pink,0,0,0,g)}
   if(k==="fox"){const sc_=add(new T.TorusGeometry(.14,.05,10,24),M(0x2f6b3a,{roughness:.9}),0,.62,-.02,torso);sc_.rotation.x=Math.PI/2+.2;const tl=add(C_(.04,.07,.25,10),M(0x2f6b3a),.08,.5,-.17,torso);tl.rotation.z=.2;
     const tail=new T.Group();tail.position.set(0,.15,.25);g.add(tail);const t1=add(S_(.12),fur,0,.05,.12,tail);t1.scale.set(.9,.9,2);add(S_(.08),lt,0,.12,.38,tail).scale.set(1,1,1.4);g.userData.tail=tail}
+  if(k==="lemur"){/* the long black-and-white ringed tail, held up in a curl behind the chair */
+    const tail=new T.Group();tail.position.set(0,.08,.2);g.add(tail);const blk=M(0x1b191b,{roughness:.8}),wht=M(0xf4f2ec,{roughness:.8});
+    const cv=new T.CatmullRomCurve3([[0,0,0],[0,-.02,.18],[0,.12,.4],[0,.42,.5],[0,.72,.42],[0,.9,.24],[0,.86,.08],[0,.74,.06]].map(p=>new T.Vector3(...p)));
+    const N=34;for(let n=0;n<=N;n++){const t=n/N,r=.058-.022*t;add(S_(r,12,10),Math.floor(n/2.5)%2?wht:blk,...cv.getPoint(t).toArray(),tail)}g.userData.tail=tail}
   add(C_(.09,.11,.12),fur,0,.7,0,U);
   const head=new T.Group();head.position.set(0,.86,0);U.add(head);g.userData.head=head;add(S_(.21,28,22),fur,0,0,0,head).scale.set(1,.95,1);
   const F=rrFace(T,add,M,head,k,fur,lt);Object.assign(g.userData,{lids:F.lids,brows:F.brows,ears:F.ears,eyes:F.eyes,jaw:F.jaw});
@@ -3795,11 +3842,11 @@ function rrAnimal(T,seat,add,M,par){const k=seat.k,g=new T.Group();g.position.se
   const L1=.23,L2=.22;
   const arm=(s)=>{const sh=new T.Group();sh.position.set(s*.27,.55,-.03);U.add(sh);add(S_(.078,16,12),fur,0,0,0,sh);add(C_(.064,.058,L1),fur,0,-L1/2,0,sh);
     const el=new T.Group();el.position.set(0,-L1,0);sh.add(el);add(S_(.058,14,10),fur,0,0,0,el);add(C_(.056,.05,L2),fur,0,-L2/2,0,el);
-    const hand=new T.Group();hand.position.set(0,-L2-.02,0);el.add(hand);const pc=k==="bear"?fur:lt;add(S_(.068,16,12),pc,0,0,0,hand).scale.set(1,.85,1.1);
+    const hand=new T.Group();hand.position.set(0,-L2-.02,0);el.add(hand);const pc=k==="bear"?fur:k==="lemur"?M(0x2b2729,{roughness:.7}):lt;add(S_(.068,16,12),pc,0,0,0,hand).scale.set(1,.85,1.1);
     for(let n=0;n<3;n++)add(S_(.025,10,8),pc,(n-1)*.03,-.045,-.04,hand);add(S_(.024,10,8),pc,-s*.055,-.01,-.04,hand);
     if(k==="bear")for(let n=0;n<3;n++)add(new T.ConeGeometry(.007,.025,6),M(0xe8e0d0),(n-1)*.03,-.07,-.055,hand).rotation.x=Math.PI;
     const a={sh,el,hand,s,L1,L2,cur:null,goal:null,bob:0};return a};
-  const L=arm(-1),Rr=arm(1);g.userData.pawMat=k==="bear"?fur:lt;g.userData.armL=L;g.userData.armR=Rr;g.userData.arm=Rr.sh;g.userData.hand=Rr.hand;
+  const L=arm(-1),Rr=arm(1);g.userData.pawMat=k==="bear"?fur:k==="lemur"?M(0x2b2729,{roughness:.7}):lt;g.userData.armL=L;g.userData.armR=Rr;g.userData.arm=Rr.sh;g.userData.hand=Rr.hand;
   g.userData.restL=[-.12,-.55,-.83];g.userData.restR=[.12,-.55,-.83];L.goal={dir:g.userData.restL};Rr.goal={dir:g.userData.restR};
   return g}
 /* aim an animal's paw at a world point (or a direction from the shoulder) */
@@ -5524,6 +5571,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:40,d:"Oct 22",t:[["🐒","New in the Aura Shop: Skins. First up, the Ring-tailed Lemur (250,000 BB). Show up as him at the live Russian Roulette and Hold'em tables"]]},
  {v:39,d:"Oct 22",t:[["🍑","New emote in the Aura Shop: Table Twerk. Hop up on the table and shake it at the live Russian Roulette and Hold'em tables"]]},
  {v:38,d:"Oct 22",t:[["🃏","Blackjack: your smallest bet is now your smallest chip on the table"]]},
  {v:37,d:"Oct 22",t:[["🃏","Blackjack streaks changed: every 5 wins in a row pays an extra 1,000 BB"]]},
