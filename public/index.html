@@ -2440,7 +2440,7 @@ function emShopHtml(){const me=S.me,bal=Math.floor(ledger().balOf(me)),ask=S.emA
 const SKINS=[{id:"lemur",n:"Ring-tailed Lemur",p:100000,c:0x4d4950,ic:"🐒",d:"Grey fur, a black-and-white ringed tail and big orange eyes"},
   {id:"diamond",kind:"human",hv:"diamond",n:"Diamond",p:250000,c:0xd9a88a,ic:"💎",d:"Sit at the table as a human player instead of an animal"},
   {id:"ag",kind:"human",hv:"ag",n:"Anime Girl",p:250000,c:0xe9b8a2,ic:"🌸",d:"An anime-style human player. Model: “Anime girl” by Imran Aziz (CC BY 4.0)"},
-  {id:"uni",kind:"human",hv:"uni",n:"Unicorn",p:250000,c:0xf2f0f4,ic:"🦄",d:"A plushy unicorn with a pastel mane, a big horn and stubby legs"},
+  {id:"uni",hid:1,kind:"human",hv:"uni",n:"Unicorn",p:250000,c:0xf2f0f4,ic:"🦄",d:"A plushy unicorn with a pastel mane, a big horn and stubby legs"},
   {id:"cerb",kind:"human",hv:"cerb",n:"Cerberus",p:250000,c:0x2a2f36,ic:"🐺",d:"A tall jackal in black armor with glowing cyan fur and a long tail"},
   {id:"nfox",n:"Neon Fox",p:250000,c:0x0e1634,ic:"🦊",d:"Midnight-blue fur, a white chest and tail tip, glowing cyan stripes and eyes"}];
 const SKIN_BY=Object.fromEntries(SKINS.map(x=>[x.id,x]));
