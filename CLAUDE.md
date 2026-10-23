@@ -325,7 +325,7 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   levels (ownership, set completion); `ownCards()` = every key held (use it for "my cards" pickers). Images/`data-cimg` normalize to the base id.
   Craftable = Multiverse/Fantasyland, Common–Elite, not the curse (`craftable`); `LV_MAX=[7,5,3,2,2]`; dividends `DIV_LV` (Joe Camel 700/1,200 via `DIV_LV_JOE`);
   `divCalc`: per card only the top-level copy pays its level, the rest pay LV 1; full rarity set (any level) 1.25× for SR–Grail; the "own every copy" bonus is gone.
-  Card Crafting tab (`viewCraft`, state `S.cf`, recipes `CRAFT`, pickers `cfPick`, `cfAuto`): `craftDo` re-reads prefs, then ONE prefs update (cards, `craftSpent`
+  Every craft needs copies of the same card (`cfAny` false, owner Oct 23). Card Crafting tab (`viewCraft`, state `S.cf`, recipes `CRAFT`, pickers `cfPick`, `cfAuto`): `craftDo` re-reads prefs, then ONE prefs update (cards, `craftSpent`
   += fee (burned, in balOf), `craftLog.<at>` → Bank statement line). Animation `cfAnim` (+ `cfSfx`; `pkCalm()` = short version). Crafting to MAX posts in chat.
   Level badge `lvBadge` in `cardHtml` (MAX for non-craftable). Wants/collateral may carry `lv` (`mkFits`; "Any level" when omitted).
 - **Level abilities (`AB2`, keyed `set:nmKey(name)`; `ab2(k,id)` = the player's best value = their top-level copy):** Common–Super Rare are OFF at LV 1 and use

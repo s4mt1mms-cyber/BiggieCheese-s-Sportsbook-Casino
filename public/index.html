@@ -5985,7 +5985,7 @@ let _AB2=null;function ab2(k,id){id=id||S.me;if(!_AB2){_AB2={};queueMicrotask(()
    supply), one copy of the target one level up is added, and the fee is burned (prefs.craftSpent, in the ledger) — one prefs write. */
 const CRAFT=[[[3,50],[3,50],[2,50],[2,50],[2,100],[2,800]],[[3,150],[3,150],[2,500],[2,2800]],[[4,700],[3,6500]],[[3,12000]],[[3,12000]]];
 const cfSt=()=>S.cf||(S.cf={r:null,L:null,slots:[],ask:0});
-const cfAny=r=>r<=1;
+const cfAny=r=>false;/* owner, Oct 23: every rarity needs copies of the same card (was: Common/Uncommon could mix cards) */
 const cfBal=()=>Math.floor(ledger().balOf(S.me));
 function cfKeys(r,L){const cs=myCards();return Object.keys(cs).filter(k=>Number(cs[k])>0&&lvOf(k)===L).map(k=>cardById(k)).filter(c=>c&&craftable(c)&&c.r===r)}
 function cfLeft(k,slots,skip){let u=0;slots.forEach((x,i)=>{if(x===k&&i!==skip)u++});return cardCount(k)-u}
@@ -6206,6 +6206,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:89,d:"Oct 23",t:[["🔨","Crafting now always needs copies of the same card, at every rarity"]]},
  {v:88,d:"Oct 23",t:[["🔨","Card Crafting is here (side menu): combine copies to level cards up. Higher levels pay bigger dividends and unlock stronger abilities"],["🏷️","Every card shows its level. Only your highest-level copy of a card pays its level's dividend"],["⚡","Lots of Multiverse and Fantasyland cards have new abilities. Common to Super Rare abilities switch on at LV 2; Elite and Grail work right away"],["🔁","Trades and loan collateral can ask for a card at a specific level"],["📉","The extra bonus for owning every copy of a card is gone. Full rarity sets still pay 1.25×"]]},
  {v:87,d:"Oct 23",t:[["🎡","Roulette always has a 100 BB chip now"]]},
  {v:86,d:"Oct 23",t:[["🕺","Skins are 25% off and emotes are half price"],["📊","All casino and betting leaderboards and stats have been reset. Everything counts from today on (your balance didn't change)"]]},
