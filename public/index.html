@@ -2953,7 +2953,7 @@ function card3d(c,{hidden=false,flip=false,deal=false,delay=0,flipDelay=null}={}
 try{S.stBJ=localStorage.getItem("sab-stbj")==="1"}catch(e){}
 try{S.bjBet=Number(localStorage.getItem("sab-bjbet"))||100}catch(e){S.bjBet=100}
 S.bjMode="add";
-function dealBtn(d){const bet=Math.max(0,Math.min(S.bjBet||0,BJ_MAX));return `<div class="bjacts fadein" style="animation-delay:${d}s"><button class="btn deal" data-bj="deal" ${bet<10?"disabled":""}>Deal · ${bet.toLocaleString()} BB</button></div>`}
+function dealBtn(d){const bet=Math.max(0,Math.min(S.bjBet||0,BJ_MAX)),mb=bjMinBet(Math.floor(ledger().balOf(S.me)));return `<div class="bjacts fadein" style="animation-delay:${d}s"><button class="btn deal" data-bj="deal" ${bet<mb?"disabled":""}>Deal · ${bet.toLocaleString()} BB</button></div>`}
 /* Key order can differ between the local copy and the saved copy, so compare with sorted keys */
 function stableStr(v){if(Array.isArray(v))return "["+v.map(stableStr).join(",")+"]";if(v&&typeof v==="object")return "{"+Object.keys(v).sort().filter(k=>v[k]!==undefined).map(k=>JSON.stringify(k)+":"+stableStr(v[k])).join(",")+"}";return JSON.stringify(v===undefined?null:v)}
 /* Only your own table goes in the signature; other players' results refresh the leaderboard on its own */
@@ -5487,6 +5487,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:38,d:"Oct 22",t:[["🃏","Blackjack: your smallest bet is now your smallest chip on the table"]]},
  {v:37,d:"Oct 22",t:[["🃏","Blackjack streaks changed: every 5 wins in a row pays an extra 1,000 BB"]]},
  {v:36,d:"Oct 22",t:[["🃏","Blackjack streak bonus: 4–5 in a row = 1× your bet, then +0.5× every 2 wins (6–7 = 1.5×, 8–9 = 2×…)"]]},
  {v:35,d:"Oct 22",t:[["🃏","Blackjack streak bonus now goes up every 2 wins: 4–5 in a row = 1× your bet, 6–7 = 1.75×, 8–9 = 2.5×, and so on"]]},
@@ -6096,6 +6097,8 @@ function ratGruntSound(){try{const AC=window.AudioContext||window.webkitAudioCon
   o.connect(f);o2.connect(f);f.connect(g);g.connect(ac.destination);o.start(t);o2.start(t);o.stop(t+.4);o2.stop(t+.4)}catch(_){}}
 /* Chip set grows with your bank: the biggest chip is at most 20% of your balance; always show 6 chips */
 const BJ_DENOMS=[10,25,100,250,500,1000,2500,5000,10000,25000,50000,100000,250000,500000,1000000];
+/* smallest bet allowed = your smallest chip (owner, Oct 22: no farming with tiny bets once the small chips are gone) */
+const bjMinBet=bal=>Math.max(10,bjChips(Math.max(0,bal))[0]||10);
 function bjChips(bal){const cap=Math.max(1000,bal*0.2);const ok=BJ_DENOMS.filter(v=>v<=cap);return ok.slice(-6)}
 function viewBJ(){
   if(!S.me)return `<div class="empty">Sign in to play.</div>`;
@@ -6199,7 +6202,7 @@ async function bjAction(kind){
     else await bjSave({bjHand:r,bjShoe:Array.from(shoe),bjNet:netBase,...shufPatch})};
   if(kind==="deal"||kind==="again"){
     const bet=Math.round(S.bjBet||0);
-    if(!(bet>=10))return toast("Minimum bet is 10 BB.");if(bet>BJ_MAX)return toast(`Max bet is ${BJ_MAX.toLocaleString()} BB.`);if(bet>bal)return toast("Not enough BiggieBucks for that bet.");
+    {const mb=bjMinBet(bal);if(!(bet>=mb))return toast(`Minimum bet is ${mb.toLocaleString()} BB (your smallest chip).`)}if(bet>BJ_MAX)return toast(`Max bet is ${BJ_MAX.toLocaleString()} BB.`);if(bet>bal)return toast("Not enough BiggieBucks for that bet.");
     const pc=[draw(shoe)],dc=[draw(shoe)];pc.push(draw(shoe));dc.push(draw(shoe));
     r={at:Date.now(),bet,hid:1,hands:[{id:1,cards:pc,bet}],active:0,dealer:dc,done:false};
     netBase-=bet;
