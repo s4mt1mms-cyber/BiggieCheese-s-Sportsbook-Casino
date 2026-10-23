@@ -3395,7 +3395,7 @@ function rlRefresh(){const st=rlState(),who=rlWho(),watching=who!==S.me,q=S.pref
     const x=`<section class="card bjlb"><h3>Roulette leaderboard</h3>${rows.length?rows.map((r,i)=>`<button type="button" class="strow" data-member="${esc(r.id)}"><span class="strank num">${i+1}</span>${pic(r.id)}<span class="stmain"><span class="mrname">${esc(nm(r.id))}${r.id===S.me?' <span class="muted small">(you)</span>':""}</span><span class="stline"><span><span class="stlbl">Up/down</span> <span class="num ${r.net>0?"pos":r.net<0?"neg":""}">${r.net>0?"+":r.net<0?"−":""}${Math.abs(r.net).toLocaleString()} BB</span></span><span><span class="stlbl">Spins</span> <span class="num">${r.n}</span></span></span></span></button>`).join(""):`<p class="small muted">No spins yet. Be the first.</p>`}</section>`;
     if(x!==S._rlLB){S._rlLB=x;lb.innerHTML=x}}
   const lv=$("#rlLive");if(lv){const x=rlLiveHtml();if(x!==S._rlLiveH){S._rlLiveH=x;lv.innerHTML=x}}
-  const net=Number(q.rlNet)||0;const ft=$("#rlFoot");if(ft)ft.innerHTML=`${watching?esc(nm(who))+" · ":""}Roulette ${net>=0?"up":"down"} <strong class="num ${net>0?"pos":net<0?"neg":""}">${net>0?"+":net<0?"−":""}${Math.abs(net).toLocaleString()} BB</strong> all-time · ${Number(q.rlSpins)||0} spins · single zero. Number 35:1 · dozens/columns 2:1 · red/black, odd/even, 1–18/19–36 1:1. Doesn't count toward the betting leaderboard.${watching?"":sessLn("rl",net)}`}
+  const nh=!watching&&S.rlNetHold&&Date.now()<S.rlNetHold.until?S.rlNetHold:null,net=nh?nh.v:Number(q.rlNet)||0;const ft=$("#rlFoot");if(ft)ft.innerHTML=`${watching?esc(nm(who))+" · ":""}Roulette ${net>=0?"up":"down"} <strong class="num ${net>0?"pos":net<0?"neg":""}">${net>0?"+":net<0?"−":""}${Math.abs(net).toLocaleString()} BB</strong> all-time · ${Number(q.rlSpins)||0} spins · single zero. Number 35:1 · dozens/columns 2:1 · red/black, odd/even, 1–18/19–36 1:1. Doesn't count toward the betting leaderboard.${watching?"":sessLn("rl",net)}`}
 function rlMount(){const st=rlState();S._rlLB=null;S._rlLiveH=null;const w=$("#rlWheel"),b=$("#rlBall");if(w)w.style.transform=`rotate(${st.wheel}deg)`;if(b)b.style.transform=`rotate(${st.ball}deg)`;
   if(rlWho()!==S.me){S._rlSeenAt=null;S._rlWHist=[];const L=(S.prefs[rlWho()]||{}).rlLast;if(L){S._rlWHist=[L.n]}}rlRefresh()}
 /* Spin the wheel and ball to land on n; shows the result and the rat's reaction when it stops */
@@ -3430,10 +3430,10 @@ async function rlSpin(rs){const st=rlState();if(st.spinning||rlWho()!==S.me)retu
   let win=0;for(const[k,v]of Object.entries(st.bets)){const s=rlSpot(k);if(s&&s.win(n))win+=v*(s.pay+1)}
   const delta=win-tot,now=Date.now(),bets={...st.bets};S.balHold={v:Math.round(ledger().balOf(S.me)+back)-tot,until:now+12000};st.lastBets=bets;st.lastCnt={...(st.cnt||{})};try{localStorage.setItem("sab-rllast",JSON.stringify({b:bets,c:st.lastCnt}))}catch(_){}
   /* tell watchers right away so their wheel spins with ours */
-  const p=S.prefs[S.me]||{};const patch={rlNet:rlRespinNet(Number(p.rlNet)||0,-back,delta),rlSpins:(Number(p.rlSpins)||0)+(rs?0:1)};tiAdd(patch,delta);
+  const p=S.prefs[S.me]||{};S.rlNetHold={v:Number(p.rlNet)||0,until:now+12000};/* the all-time + session numbers wait for the ball too */const patch={rlNet:rlRespinNet(Number(p.rlNet)||0,-back,delta),rlSpins:(Number(p.rlSpins)||0)+(rs?0:1)};tiAdd(patch,delta);
   const dir=rs?{slopDay:divDay(),slopUsed:SLOP_DAY-slopLeft()+1}:{};if(rs)Object.assign(p,dir);
   const saved=db.doc("prefs/"+S.me).update({rlLast:{n,at:now,bj:JSON.stringify(bets),bets:null,delta,rs:rs?1:0},rlSeq:now,...patch,...dir});saved.catch(()=>{});
-  rlRefresh();const anim=rlAnimate(n,delta,u[0]>>>8);rlRefresh();await anim;S.balHold=null;try{setMe();sideRender()}catch(_){}
+  rlRefresh();const anim=rlAnimate(n,delta,u[0]>>>8);rlRefresh();await anim;S.balHold=null;S.rlNetHold=null;rlRefresh();try{setMe();sideRender()}catch(_){}
   Object.assign(S.prefs[S.me]=S.prefs[S.me]||{},patch);
   st.hist.unshift(n);st.bets={};st.cnt={};if(delta>0)haptic&&haptic();rlRefresh();
   try{await saved}catch(_){toast("That spin didn't save. Check your connection.")}}
