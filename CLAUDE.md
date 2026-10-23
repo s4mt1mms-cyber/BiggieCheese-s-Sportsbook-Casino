@@ -326,6 +326,10 @@ player's own client to prefs (`rrNet`/`thNet`).
 - `job-futures.yml` Tuesdays 2:45 AM ET — playoff/title odds simulation → `meta/futures`.
 - `job-grade.yml` manual — grades finished games from Sleeper.
 - `job-mpflag.yml` manual — live-tables server switch.
+- `job-econ.yml` manual, read-only — dumps prefs/bets/games/bank/market/loans/adjust/offers/plat/meta/nfl/nba/profiles as a 1-day private artifact
+  (`gh run download <id> -n econ`; load into the emulator with tools/migrate/import.js, then read `ledger()`/`divCalc` in the app). Never commit it.
+- `job-fix.yml` manual — named one-off data fixes in `tools/jobs/admin_fix.py` (each recorded in config/fixes; `kjflap` = King Julian farm usage −5,000 on Oct 23).
+- Session counter (Oct 23): `sessLn(game, net, inPlay)` fills the `sessChip(game)` pill next to each game's balance (3D tables: `.sessstg` at the top); counts settled results only.
 All use the `FIREBASE_SERVICE_ACCOUNT` repo secret.
 
 ## Testing
