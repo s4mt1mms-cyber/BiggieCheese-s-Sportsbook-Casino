@@ -2452,7 +2452,7 @@ const SKINS=[{id:"lemur",n:"Ring-tailed Lemur",p:100000,c:0x4d4950,ic:"🐒",d:"
   {id:"pir",kind:"human",hv:"pir",n:"Skeleton Pirate",p:250000,c:0xe6dcc4,ic:"🏴‍☠️",d:"A salty skeleton pirate with his hat and gear. Model: “Skeleton Pirate The Drunk” by FireGoat (CC BY 4.0)"},
   {id:"fox",hid:1,kind:"human",hv:"fox",n:"Fox Girl",p:250000,c:0xcd4e22,ic:"🦊",d:"A red fox in an orange bikini, with a big white-tipped tail"},
   {id:"bigfoot",kind:"human",hv:"bigfoot",n:"Bigfoot",p:250000,c:0x3a2a1e,ic:"🦶",d:"The legend himself, fresh out of the woods and ready to gamble. Model: “primitive man ( aadimanav )” by iRahulRajput (CC BY 4.0)"},
-{id:"santa",hid:1,kind:"human",hv:"santa",n:"Santa",p:250000,c:0xb3121a,ic:"🎅",d:"Ho ho ho. The big man himself in his red suit. Model: “Santa Clause 3D Scan” by Christian Day (CC BY 4.0)"},
+{id:"santa",kind:"human",hv:"santa",n:"Santa",p:250000,c:0xb3121a,ic:"🎅",d:"Ho ho ho. The big man himself in his red suit. Model: “Santa Clause 3D Scan” by Christian Day (CC BY 4.0)"},
   {id:"cerb",kind:"human",hv:"cerb",n:"Cerberus",p:250000,c:0x2a2f36,ic:"🐺",d:"A tall jackal in black armor with glowing cyan fur and a long tail"},
   {id:"nfox",n:"Neon Fox",p:50000,c:0x0e1634,ic:"🦊",d:"Midnight-blue fur, a white chest and tail tip, glowing cyan stripes and eyes"}];
 const SKIN_BY=Object.fromEntries(SKINS.map(x=>[x.id,x]));
@@ -3865,7 +3865,7 @@ const HUMAN_V={diamond:{f:"diamond",hip:.11,thigh:.396,sh:[.173,.56,.024],L1:.28
   pir:{f:"pirate",v:1,nc:0xe6dcc4,hip:.1336,thigh:.4641,sh:[.1906,.6677,.003],L1:.3909,L2:.287,head:[.0014,.8186,-.0133],rise:.4573,lsOff:[.07,.2,-.15],mouth:[0,.012,-.1],nr:.04},
   fox:{f:"fox",v:1,nc:0xcd4e22,hip:.11,thigh:.396,sh:[.173,.56,.024],L1:.281,L2:.243,head:[0,.704,.01],chest:[0,.214,-.055],rise:.396*1.12,lsOff:[.07,.24,-.2],eyes:[.056,.128,-.112,.036],eyeYaw:.32,iris:0x5aa03c,lid:0xcd4e22,mouth:[0,.03,-.2],tgS:1.1,nr:.058},
   bigfoot:{f:"bigfoot",v:2,ds:1,gy:.1,gz:-.1,nc:0x2b2019,hip:.145,thigh:.35,sh:[.32,.71,.03],L1:.3344,L2:.2835,head:[-.01,.87,-.13],rise:.1888,lsOff:[.08,.3,-.3],mouth:[0,.08,-.24],tgS:1.4,nr:.11},
-santa:{f:"santa",v:2,nc:0xb3121a,hip:.1216,thigh:.2947,sh:[.2816,.7156,0],L1:.2319,L2:.2077,head:[0,.8436,-.0256],rise:.0768,lsOff:[.07,.22,-.2],mouth:[0,.09,-.17],nr:.07},
+santa:{f:"santa",v:3,nc:0xb3121a,hip:.1216,thigh:.2947,sh:[.2816,.7156,0],L1:.2319,L2:.2077,head:[0,.8436,-.0256],rise:.0768,lsOff:[.07,.22,-.2],mouth:[0,.09,-.17],nr:.07},
   cerb:{f:"cerb",nc:0x24282e,emis:1,hip:.1038,thigh:.5398,sh:[.1868,.6,.0311],L1:.284,L2:.2475,head:[0,.7038,.0415],rise:.6046,lsOff:[.06,.2,-.12],mouth:[0,.1,-.2],tgS:1.2,nr:.06}};
 const HUMAN_P={};
 function humanData(T,hv){const V=HUMAN_V[hv]||HUMAN_V.diamond;if(HUMAN_P[V.f])return HUMAN_P[V.f];return HUMAN_P[V.f]=fetch("/skins/"+V.f+".bin"+(V.v?"?v="+V.v:"")).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(buf=>{
@@ -5712,6 +5712,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:65,d:"Oct 23",t:[["🎅","Santa is back in the shop, fixed up: new sleeves, no gaps, and he lost the base under his boots"]]},
  {v:64,d:"Oct 23",t:[["🦶","New skin: Bigfoot (250,000 BB). Aura Shop → Skins"],["🎅","Santa is out of the shop for a quick fix-up (if you own him, he's still yours)"]]},
  {v:63,d:"Oct 23",t:[["🎅","New skin: Santa (250,000 BB). Aura Shop → Skins"],["🦊","Fox Girl has left the shop (if you own her, she's still yours)"]]},
  {v:62,d:"Oct 23",t:[["🫖","New emote: Table T-Bag (250,000 BB). Aura Shop → Emotes"]]},
