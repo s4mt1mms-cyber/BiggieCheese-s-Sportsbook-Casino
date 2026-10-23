@@ -5080,7 +5080,9 @@ const CSETS={lm:{name:"League Moments",doc:"cards_lm",tag:"Debbie's Dynasty Doze
 const CR_LIM=[Infinity,1000,100,10,5,3,1,15,1]; /* print run per card by rarity (commons are unlimited; Common/Uncommon/Rare always use these) */
 const limTxt=l=>isFinite(l)?Number(l).toLocaleString():"∞";
 /* a set opens once it has cards; until it is marked live, only the admin can see it (for testing) */
-const setOpen=k=>{if(k==="lm"||k==="fl")return true;if(k==="pm")return pmLaunched();const m=(S.cardMeta||{})[k];return !!(m&&(m.cards||[]).length&&(m.live||S.canEdit))};
+/* Fantasyland is locked (owner, Oct 23) until he says to unlock: flip FL_OPEN to true. Until then only the admin sees/opens it */
+const FL_OPEN=false;
+const setOpen=k=>{if(k==="lm")return true;if(k==="fl")return FL_OPEN||!!S.canEdit;if(k==="pm")return pmLaunched();const m=(S.cardMeta||{})[k];return !!(m&&(m.cards||[]).length&&(m.live||S.canEdit))};
 const cardSet=cid=>String(cid).split("-")[0];
 /* per-slot odds (%) by pack before floors; floors = minimum rarity for each slot */
 /* Card values (for pricing): Common 500 · Uncommon 1,500 · Rare 5,000 · Super Rare 20,000 · Elite 60,000 · Grail 150,000 · Dragon 1,500,000.
@@ -5766,6 +5768,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:70,d:"Oct 23",t:[["🔒","Fantasyland packs are locked for now. They'll open soon"]]},
  {v:69,d:"Oct 23",t:[["🌈","New card collection: Fantasyland! 51 cards, open its packs in Cards"],["🪓","Berserker (Elite) gives you 3 auto-kills a day in the Blackjack rat hunt"],["⚡","Fantasyland Grails come with their own card auras"],["🪑","Fixed: an old seat at a live table could stop you from sitting down"]]},
  {v:68,d:"Oct 23",t:[["⛏️","The BB miner is turned off. You no longer earn BB just for having the app open (what you already mined stays yours)"],["🎥","Third person now sits your character properly on the chair, and you can see your own neck stretch when you zoom in"]]},
  {v:67,d:"Oct 23",t:[["🎥","New camera button at Russian Roulette and Hold'em: switch between first person and third person (behind your own character)"],["🎅","Santa got real legs"]]},
