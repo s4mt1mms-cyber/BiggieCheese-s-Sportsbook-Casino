@@ -2420,7 +2420,8 @@ async function auEquip(id){if(!S.me)return;if(S.readOnly)return toast("View only
    Roulette turn, blacked out or with your chair on the floor; a fire-back or your turn cuts a dance short and sits you back down.
    Add an emote: one EMOTES row + its pose function f(seconds) → pose numbers (all 0 = seated normally; see emLDance). */
 const EMOTES_PUBLIC=true;
-const EMOTES=[{id:"ldance",n:"L Dance",p:500000,d:"Stand up from your chair and hit the L dance",ic:"🕺",len:7,f:k=>emLDance(k)}];
+const EMOTES=[{id:"ldance",n:"L Dance",p:500000,d:"Stand up from your chair and hit the L dance",ic:"🕺",len:7,f:k=>emLDance(k)},
+  {id:"twerk",n:"Table Twerk",p:500000,d:"Hop up on the table and twerk",ic:"🍑",len:9,f:k=>emTwerk(k),cam:[2.2,2.35,2.75],prev:{table:1,cam:[2.9,2.75,-5.1],tgt:[0,1.62,-.9]}}];
 const EM_BY=Object.fromEntries(EMOTES.map(e=>[e.id,e]));
 const EM_CD=8000;const EM={seen:{}};
 const emOn=()=>EMOTES_PUBLIC||!!S.canEdit;
@@ -2493,6 +2494,35 @@ function emLDance(k){const seg=(a,b)=>emSS((k-a)/(b-a));
       P.lpx=-.7;P.lpy=-.6+1.2*hop;P.lpz=-.3-.15*hop}}
   else if(k>=d1&&k<5.6){/* freeze: lean in with the L */const q=seg(d1,d1+.15);P.rz=.1*q;P.hz=-.18*q;P.hx=-.05*q;P.lpx=-.85;P.lpy=.35;P.lpz=-.3}
   return P}
+/* Table Twerk: chair slides back, up on its feet, a step to the table, crouch and jump up onto it, turn around, squat with
+   paws on knees and bounce the hips (with a slow sway and a look back over the shoulder), turn back, hop down, sit. ~9 s.
+   Seat frame: -z = toward the table centre. The felt is .9 up; standing there = +.9 on y. */
+const EM_TW={z0:-.3,z1:-1.08,top:.9};
+function emTwerk(k){const seg=(a,b)=>emSS((k-a)/(b-a)),lin=(a,b)=>Math.max(0,Math.min(1,(k-a)/(b-a))),{z0,z1,top}=EM_TW;
+  const P={cb:.5*(seg(0,.6)-seg(8.3,8.95)),rise:seg(.2,.85)-seg(7.75,8.4),x:0,y:0,z:0,ry:0,rz:0,rx:0,hx:0,hy:0,hz:0,
+    lh0:0,lh1:0,lk0:0,lk1:0,lz0:0,lz1:0,la:0,ls:0,lal:0,lpx:-.3,lpy:-.95,lpz:-.05,ral:0,rpx:.3,rpy:-.95,rpz:-.05};
+  /* walk up to the table and, at the end, back to the chair */
+  P.z=z0*(seg(.85,1.25)-seg(7.3,7.7));
+  for(const[a,b]of[[.85,1.25],[7.3,7.7]])if(k>a&&k<b){const q=(k-a)/(b-a),w=Math.sin(q*Math.PI*2),amt=Math.abs(w);if(w>0){P.lh1+=.5*amt;P.lk1+=.8*amt}else{P.lh0+=.5*amt;P.lk0+=.8*amt}P.y+=.025*amt}
+  /* the jumps: up 1.55–2.05, down 6.75–7.2 (jq = 0 on the floor by the chair, 1 on the table) */
+  const upq=lin(1.55,2.05),dnq=lin(6.75,7.2),air=(k>1.55&&k<2.05)||(k>6.75&&k<7.2);
+  const jq=k<1.55?0:k<2.05?emSS(upq):k<6.75?1:k<7.2?1-emSS(dnq):0;
+  if(k>=1.55&&k<7.2){P.z=z0+(z1-z0)*jq;const ph=k<2.05?upq:dnq;P.y+=top*jq+(air?.34*4*ph*(1-ph):0)}
+  const crouch=Math.max(seg(1.3,1.55)-seg(1.55,1.7),seg(2.0,2.12)-seg(2.12,2.35),seg(6.5,6.75)-seg(6.75,6.9),seg(7.15,7.25)-seg(7.25,7.45));
+  if(crouch>0){P.lh0+=.6*crouch;P.lh1+=.6*crouch;P.lk0+=.9*crouch;P.lk1+=.9*crouch;P.y-=.1*crouch;P.rx-=.22*crouch;P.lal=Math.max(P.lal,crouch);P.ral=Math.max(P.ral,crouch);P.lpx=-.25;P.lpy=-.7;P.lpz=.55;P.rpx=.25;P.rpy=-.7;P.rpz=.55}
+  if(air){const t=k<2.05?upq:dnq,tu=Math.sin(t*Math.PI);P.lh0+=.55*tu;P.lh1+=.55*tu;P.lk0+=.95*tu;P.lk1+=.95*tu;P.lal=P.ral=1;P.lpx=-.35;P.lpy=.75;P.lpz=-.35;P.rpx=.35;P.rpy=.75;P.rpz=-.35}
+  /* turn to face your own seat (backside to the room) and back */
+  P.ry=Math.PI*(seg(2.3,2.8)-seg(6.2,6.6));
+  /* the cheeks grow in while turning around and shrink away before hopping down */
+  P.bt=seg(2.35,2.85)-seg(6.15,6.6);
+  /* the twerk */
+  const tw=seg(2.75,3.05)-seg(5.95,6.25);
+  if(tw>0){const t=k-2.8,b=Math.sin(t*Math.PI*2*3.2),wg=Math.sin(t*Math.PI*3.2);
+    P.lh0+=.95*tw;P.lh1+=.95*tw;P.lk0+=1.2*tw;P.lk1+=1.2*tw;P.lz0+=.2*tw;P.lz1+=.2*tw;P.y-=.15*tw;
+    P.rx+=.62*tw+.15*b*tw;P.y+=.03*b*tw;P.rz+=.06*wg*tw;P.ry+=.32*Math.sin(t*.95)*tw;
+    P.lal=P.ral=tw;P.lpx=-.22;P.lpy=-.8;P.lpz=-.5;P.rpx=.22;P.rpy=-.8;P.rpz=-.5;
+    P.bj=b*tw;const lb=seg(4.15,4.45)-seg(5.0,5.3);P.hy=1.0*lb*tw;P.hx=-.25*tw+.12*lb;P.hz=.04*b*tw}
+  return P}
 function emLerp(P,f){const o={};for(const k in P)o[k]=(P[k]||0)*f;return o}
 /* the right paw's L: index finger up, thumb across, on the forehead (lives on the head so it reads from every seat) */
 function emLSign(T,u){if(u.lsign)return u.lsign;const g=new T.Group(),m=u.pawMat||new T.MeshStandardMaterial({color:0xc9bfb4});g.position.set(.09,.03,-.25);u.head.add(g);
@@ -2502,13 +2532,18 @@ function emLSign(T,u){if(u.lsign)return u.lsign;const g=new T.Group(),m=u.pawMat
 /* put body, legs, arms, head and chair in pose P, relative to how they sat when the emote started (u.em) */
 function emApply(T,sp,P){const b=sp.body,u=b.userData,E=u.em,ch=sp.chair,a=sp.a||0;
   ch.position.set(E.cp.x+Math.sin(a)*P.cb,E.cp.y,E.cp.z+Math.cos(a)*P.cb);
-  b.position.set(E.bp.x+P.x,E.bp.y+P.rise*EM_RISE+P.y,E.bp.z+P.z-P.cb);b.rotation.set(E.br.x,E.br.y+P.ry,E.br.z+P.rz);
+  b.position.set(E.bp.x+P.x,E.bp.y+P.rise*EM_RISE+P.y,E.bp.z+P.z-P.cb);b.rotation.set(E.br.x+(P.rx||0),E.br.y+P.ry,E.br.z+P.rz);
   (u.legs||[]).forEach((L,j)=>{L.hip.rotation.set(-P.rise*Math.PI/2+(j?P.lh1:P.lh0),0,L.s*(j?P.lz1:P.lz0));L.kn.rotation.set(P.rise*Math.PI/2-(j?P.lk1:P.lk0),0,0)});
   u.leanT=0;u.up.rotation.x=0;u.head.rotation.set(E.hr.x*(1-P.rise)+P.hx,E.hr.y*(1-P.rise)+P.hy,E.hr.z*(1-P.rise)+P.hz);
   const mix=(p,q,t)=>p.map((v,i)=>v+(q[i]-v)*t),reach=(A,d)=>{const v=new T.Vector3(...d);if(v.lengthSq()<1e-6)v.set(0,-1,0);return A.sh.position.clone().addScaledVector(v.normalize(),(A.L1+A.L2)*.8)};
-  const pr=reach(u.armR,mix(u.restR,[.3,-.95,-.05],P.rise));if(P.la>0){const fh=new T.Vector3(.09,.03,-.25).applyEuler(u.head.rotation).add(u.head.position);pr.lerp(fh,P.la)}u.armR.em={loc:pr};
+  const pr=reach(u.armR,mix(u.restR,[.3,-.95,-.05],P.rise));if(P.la>0){const fh=new T.Vector3(.09,.03,-.25).applyEuler(u.head.rotation).add(u.head.position);pr.lerp(fh,P.la)}if(P.ral>0)pr.lerp(reach(u.armR,[P.rpx,P.rpy,P.rpz]),P.ral);u.armR.em={loc:pr};
   const pl=reach(u.armL,mix(u.restL,[-.3,-.95,-.05],P.rise));if(P.lal>0)pl.lerp(reach(u.armL,[P.lpx,P.lpy,P.lpz]),P.lal);u.armL.em={loc:pl};
-  const ls=emLSign(T,u);ls.visible=P.ls>.02;if(ls.visible)ls.scale.setScalar(Math.max(.02,P.ls))}
+  const ls=emLSign(T,u);ls.visible=P.ls>.02;if(ls.visible)ls.scale.setScalar(Math.max(.02,P.ls));
+  /* Table Twerk: a cartoon pair of cheeks grows in (P.bt = size 0..1) and jiggles (P.bj, opposite phase per side) */
+  if(P.bt>.01||u.butt){const bu=emButt(T,u,b);bu.visible=P.bt>.01;if(bu.visible){const sz=Math.max(.01,P.bt),j=P.bj||0;bu.children.forEach((m,i)=>{const q=i?-j:j;m.scale.set(sz*(1.04-.1*q),sz*(1+.28*q),sz*(1.08-.06*q));m.position.y=.035*q})}}}
+function emButt(T,u,b){if(u.butt)return u.butt;const g=new T.Group();g.position.set(0,.08,.22);b.add(g);
+  const leg=(u.legs||[])[0],fm=(leg&&leg.hip.children.find(o=>o.isMesh)||{}).material||new T.MeshStandardMaterial({color:0x9a6b3f,roughness:.85});
+  [-1,1].forEach(s=>{const m=new T.Mesh(new T.SphereGeometry(.2,24,20),fm);m.position.set(s*.14,0,0);m.castShadow=true;g.add(m)});g.visible=false;u.butt=g;return g}
 function emStart(c,l,id){const sp=c&&c.seats&&c.seats[l];if(!sp||!sp.body||!sp.chair||!EM_BY[id])return false;const b=sp.body,u=b.userData;if(u.dead||!b.visible)return false;if(u.em)emEnd(sp);
   if(u.idle==="drink"&&u.mug){u.mug.position.copy(u.mugHome);u.mug.rotation.set(0,0,0)}u.idle=null;
   u.em={id,t0:performance.now(),cp:sp.chair.position.clone(),bp0:b.position.clone(),br:b.rotation.clone(),hr:u.head.rotation.clone(),cut:null,P:null};
@@ -2517,7 +2552,7 @@ function emStart(c,l,id){const sp=c&&c.seats&&c.seats[l];if(!sp||!sp.body||!sp.c
 /* back to exactly how they sat */
 function emEnd(sp){const b=sp.body,u=b&&b.userData,E=u&&u.em;if(!E)return;sp.chair.position.copy(E.cp);b.position.copy(E.bp0||E.bp);b.rotation.copy(E.br);
   (u.legs||[]).forEach(L=>{L.hip.rotation.set(0,0,0);L.kn.rotation.set(0,0,0)});u.head.rotation.copy(E.hr);u.armL.em=null;u.armR.em=null;u.up.rotation.x=0;
-  if(u.lsign)u.lsign.visible=false;if(u.self)u.head.visible=false;u.em=null}
+  if(u.lsign)u.lsign.visible=false;if(u.butt)u.butt.visible=false;if(u.self)u.head.visible=false;u.em=null}
 /* seat l has to stop: it's their Russian Roulette turn / they have the gun / they blacked out (soft: they sit back down) */
 function emStop(c,l){if(S.tab!=="rr")return false;if(c.hold&&c.hold.i===l)return true;
   if(l===0)return !!(emMyTurn(c)||S.rrBOnow);
@@ -2540,7 +2575,7 @@ function emTick(c,now){if(!c||!c.seats)return;const T=c.T;
 function emCam(c){const sp=c.seats[0],u=sp&&sp.body&&sp.body.userData;if(!u)return;const on=!!(u.em&&!u.em.cut);c.emK=(c.emK||0)+((on?1:0)-(c.emK||0))*(on?.05:.09);
   if(u.em)u.head.visible=c.emK>.3;
   if(c.emK<.003){c.emK=0;if(c.emCamOn){c.emCamOn=false;c.yaw=c.yaw}return}c.emCamOn=true;const T=c.T,cam=c.cam,e=emSS(c.emK);
-  const hp=new T.Vector3();u.head.getWorldPosition(hp);hp.y-=.32;cam.position.lerp(new T.Vector3(-.25,1.8,.25),e);
+  const hp=new T.Vector3();u.head.getWorldPosition(hp);hp.y-=.32;const ec=(u.em&&EM_BY[u.em.id]&&EM_BY[u.em.id].cam)||c.emCP||[-.25,1.8,.25];c.emCP=ec;cam.position.lerp(new T.Vector3(...ec),e);
   const q0=new T.Quaternion().setFromEuler(new T.Euler(c.pitch,c.yaw,0,"YXZ")),q1=new T.Quaternion().setFromRotationMatrix(new T.Matrix4().lookAt(cam.position,hp,new T.Vector3(0,1,0)));cam.quaternion.copy(q0).slerp(q1,e)}
 
 /* ----- shop preview: the bear on its chair doing the emote on a loop (only while the shop is open and the card is on screen) ----- */
@@ -2564,7 +2599,9 @@ function emPrevBuild(cv,id){const T=THREE,E=EM_BY[id];const R=new T.WebGLRendere
   const body=rrAnimal(T,{k:"bear",c:RL_ANIMALS.bear.c},add,M,chair);const u=body.userData,sp={chair,body,a:0};
   u.em={id,t0:0,cp:chair.position.clone(),bp:body.position.clone(),br:body.rotation.clone(),hr:u.head.rotation.clone()};
   sc.add(new T.HemisphereLight(0xffe2c4,0x2a1a10,.5));const key=new T.DirectionalLight(0xffd8a8,.85);key.position.set(1.4,3.2,-2.6);sc.add(key);const rim=new T.PointLight(0xff9a60,.7,7);rim.position.set(-1.6,2.2,1.4);sc.add(rim);
-  const tgt=new T.Vector3(.3,1.12,-.12);cam.position.set(1.2,1.7,-3.9);cam.lookAt(tgt);
+  if(E.prev&&E.prev.table){const felt=add(new T.CylinderGeometry(1.25,1.25,.06,48),M(0x0d6b33,{roughness:1}),0,.87,-1.78);const rl=add(new T.TorusGeometry(1.27,.07,12,48),M(0xffffff,{map:rrWood("#5a3018","rgba(0,0,0,.3)",[8,1]),roughness:.35}),0,.9,-1.78);rl.rotation.x=Math.PI/2;
+    add(new T.CylinderGeometry(1.2,1.2,.1,40),M(0x3a2010),0,.8,-1.78);add(new T.CylinderGeometry(.1,.12,.7,12),M(0x3a2010),0,.43,-1.78);fl.scale.setScalar(1.6);fl.position.z=-1}
+  const tgt=new T.Vector3(...((E.prev&&E.prev.tgt)||[.3,1.12,-.12]));cam.position.set(...((E.prev&&E.prev.cam)||[1.2,1.7,-3.9]));cam.lookAt(tgt);
   const g={R,sc,cam,raf:0,t0:performance.now(),lt:0};
   const frame=now=>{if(!cv.isConnected){const p=EMP[id];if(p&&p.g===g)emPrevStop(id);return}g.raf=requestAnimationFrame(frame);if(document.hidden)return;
     const dt=Math.min(.1,(now-(g.lt||now))/1000);g.lt=now;const sm=r=>1-Math.exp(-dt*r);const w=cv.clientWidth,h=cv.clientHeight;if(!w||!h)return;
@@ -5487,6 +5524,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:39,d:"Oct 22",t:[["🍑","New emote in the Aura Shop: Table Twerk. Hop up on the table and shake it at the live Russian Roulette and Hold'em tables"]]},
  {v:38,d:"Oct 22",t:[["🃏","Blackjack: your smallest bet is now your smallest chip on the table"]]},
  {v:37,d:"Oct 22",t:[["🃏","Blackjack streaks changed: every 5 wins in a row pays an extra 1,000 BB"]]},
  {v:36,d:"Oct 22",t:[["🃏","Blackjack streak bonus: 4–5 in a row = 1× your bet, then +0.5× every 2 wins (6–7 = 1.5×, 8–9 = 2×…)"]]},

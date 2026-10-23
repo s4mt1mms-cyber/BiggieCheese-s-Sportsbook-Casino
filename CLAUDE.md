@@ -214,7 +214,7 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
 - **Emotes** (`em*`, Aura Shop → "Emotes" section, played at the live RR + Hold'em tables). **Released (EMOTES_PUBLIC=true, Oct 22).** Gate:
   `const EMOTES_PUBLIC` — while false only `S.canEdit` (the admin) sees the shop section and the 🕺 table button
   (`#emBtn`, `emUI`) and can play one; every client still RENDERS an emote it receives. Flip it to `true` (and add a NEWS
-  entry) to release. Catalog `EMOTES` (`ldance` L Dance 500,000). Data on the player's prefs: `emotes` {id:true} (owned
+  entry) to release. Catalog `EMOTES` (`ldance` L Dance 500,000; `twerk` Table Twerk 500,000: jumps onto the table (`EM_TW`), cartoon cheeks `emButt` grow in (P.bt) and jiggle (P.bj); per-emote `cam` for your own view and `prev` {table, cam, tgt} for the shop preview; pose extras P.rx body pitch, P.ral/rpx/rpy/rpz right paw). Data on the player's prefs: `emotes` {id:true} (owned
   forever, no equip step), `emoteSpent` (subtracted in `ledger().balOf`); `emBuy` writes both in ONE update (+ `shopFee("emote",…)`).
   Sync: playing writes `rrlook/{me}.emote = {id, at}` (the look doc both tables already listen to, works in server and phone-host
   mode); `emTick` (called every frame in `rrBuild`'s loop) starts it on seat l when it sees a new `at` < 6 s old. 8 s cooldown
