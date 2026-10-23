@@ -315,6 +315,10 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   collections; still 3 copies total); his tithes burn (`TI_BURN`: pull docs have `tos:[]`, `tiSettle` does nothing — balOf already takes floor(tiWin/10)).
   Dev fees removed (`PACK_FEES=[]`, `SHOP_FEE=0`). 5% of every player-to-player card sale burned from the seller (`mkFee`, sales with soldAt ≥ `MK_FEE_AT`, in `cardMoney`).
 
+- **Stats reset (Oct 23, 3:45 PM ET):** leaderboards/standings/"overall" lines start over without touching balances. Casino: `prefs.sb0` = stat values at the reset
+  (admin fix job `statreset`), shown through `stq(q)` (value − sb0; Flappy best = `prefs.flapBestS`, best since the reset). Betting: `ledger().rec/net/wagered`
+  only count bets accepted/created from `STAT_RESET_AT`; balances, weekly nets and recaps still use every bet. Auras ½ price, skins −25%, emotes ½ (same day).
+
 ## Live multiplayer (server host)
 `config/mp.serverHost = true` → Cloud Functions host Russian Roulette + Hold'em: clients write inputs
 (`rrin/{id}`, `thin/{id}`, `mpreq/{id}`, `mptick/{id}`), the server runs the game in Firestore transactions and

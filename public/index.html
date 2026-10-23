@@ -1916,12 +1916,15 @@ function gradeParlay(b){let pending=false,mult=1;for(const L of b.legs||[]){cons
   if(pending)return null;if(mult===1)return "push";b._mult=mult;return "poster"}
 function parlayWin(b){const m=b._mult||((b.legs||[]).reduce((a,L)=>a*decOdds(L.odds),1));return Math.round(Number(b.stake)*(m-1))}
 /* ledger is reused within one synchronous pass (a render calls it dozens of times), then recomputed fresh */
+const STAT_RESET_AT=Date.parse("2026-10-23T19:45:00Z");/* owner: leaderboards/stats start over (3:45 PM ET Oct 23) */
 let _LG=null;function ledger(){if(_LG)return _LG;_LG=ledger0();queueMicrotask(()=>{_LG=null});return _LG}
 function ledger0(){
-  const rec={},net={},byWeek={},wagered={},events=[],wins={};
-  const R=id=>rec[id]||(rec[id]={w:0,l:0,p:0});
+  const rec={},net0={},byWeek={},wagered0={},events=[],wins={};
+  const R0=id=>rec[id]||(rec[id]={w:0,l:0,p:0});
   for(const b of S.bets){
     if(b.status!=="live")continue;
+    /* stats reset (owner, Oct 23): records, profit and wagered count bets from STAT_RESET_AT on; balances/weeks/wins use every bet */
+    const cnt=(Number(b.acceptedAt||b.createdAt)||0)>=STAT_RESET_AT,R=cnt?R0:()=>({w:0,l:0,p:0}),net=cnt?net0:{},wagered=cnt?wagered0:{};
     const tS=b.takerStake!=null?Number(b.takerStake):Number(b.stake);
     wagered[b.posterId]=(wagered[b.posterId]||0)+(Number(b.stake)||0);
     if(b.takerId&&b.takerId!=="house")wagered[b.takerId]=(wagered[b.takerId]||0)+(tS||0);
@@ -1964,7 +1967,7 @@ function ledger0(){
     const a=Math.floor(Number(t.amt));if(!(a>0)||!t.from||!t.to||t.from===t.to)continue;bkA(t.from,-a);bkA(t.to,a)}
   for(const l of S.loans||[]){if(!l.borrower||!l.takenAt||!["active","late","repaid","defaulted"].includes(l.status))continue;const P=Math.floor(Number(l.P))||0;bkA(l.lender,-P);bkA(l.borrower,P);
     const seen=new Set();for(const p of l.payments||[]){if(seen.has(p.k))continue;seen.add(p.k);const a=Math.floor(Number(p.amt))||0;bkA(l.borrower,-a);bkA(l.lender,a)}}
-  return{rec,net,byWeek,wagered,bal,refills,pending,bkNet,wins,tiPaid,tiLast,balOf:id=>(bkNet[id]||0)+B(id)+(Number(S.prefs[id]&&S.prefs[id].rb15)||0)+(Number(S.prefs[id]&&S.prefs[id].topUp)||0)-(Number(S.prefs[id]&&S.prefs[id].curseFee)||0)-(Number(S.prefs[id]&&S.prefs[id].auraSpent)||0)-(Number(S.prefs[id]&&S.prefs[id].emoteSpent)||0)-(Number(S.prefs[id]&&S.prefs[id].skinSpent)||0)-(Number(S.prefs[id]&&S.prefs[id].farmSpent)||0)-Math.floor((Number(S.prefs[id]&&S.prefs[id].tiWin)||0)/10)+cardMoney(id)-(pending[id]||0)+(Number(S.prefs[id]&&S.prefs[id].bjNet)||0)+(Number(S.prefs[id]&&S.prefs[id].gift)||0)+(Number(S.prefs[id]&&S.prefs[id].flapEarn)||0)+(Number(S.prefs[id]&&S.prefs[id].mineEarn)||0)+(Number(S.prefs[id]&&S.prefs[id].rlNet)||0)+(Number(S.prefs[id]&&S.prefs[id].revengeEarn)||0)+((S.adjust&&S.adjust[id])||0)+(Number(S.prefs[id]&&S.prefs[id].bjBonus)||0)+(Number(S.prefs[id]&&S.prefs[id].crNet)||0)+(Number(S.prefs[id]&&S.prefs[id].hlNet)||0)+(Number(S.prefs[id]&&S.prefs[id].rrNet)||0)+(Number(S.prefs[id]&&S.prefs[id].thNet)||0)+(Number(S.prefs[id]&&S.prefs[id].divEarn)||0),inPlay:id=>pending[id]||0};
+  return{rec,net:net0,byWeek,wagered:wagered0,bal,refills,pending,bkNet,wins,tiPaid,tiLast,balOf:id=>(bkNet[id]||0)+B(id)+(Number(S.prefs[id]&&S.prefs[id].rb15)||0)+(Number(S.prefs[id]&&S.prefs[id].topUp)||0)-(Number(S.prefs[id]&&S.prefs[id].curseFee)||0)-(Number(S.prefs[id]&&S.prefs[id].auraSpent)||0)-(Number(S.prefs[id]&&S.prefs[id].emoteSpent)||0)-(Number(S.prefs[id]&&S.prefs[id].skinSpent)||0)-(Number(S.prefs[id]&&S.prefs[id].farmSpent)||0)-Math.floor((Number(S.prefs[id]&&S.prefs[id].tiWin)||0)/10)+cardMoney(id)-(pending[id]||0)+(Number(S.prefs[id]&&S.prefs[id].bjNet)||0)+(Number(S.prefs[id]&&S.prefs[id].gift)||0)+(Number(S.prefs[id]&&S.prefs[id].flapEarn)||0)+(Number(S.prefs[id]&&S.prefs[id].mineEarn)||0)+(Number(S.prefs[id]&&S.prefs[id].rlNet)||0)+(Number(S.prefs[id]&&S.prefs[id].revengeEarn)||0)+((S.adjust&&S.adjust[id])||0)+(Number(S.prefs[id]&&S.prefs[id].bjBonus)||0)+(Number(S.prefs[id]&&S.prefs[id].crNet)||0)+(Number(S.prefs[id]&&S.prefs[id].hlNet)||0)+(Number(S.prefs[id]&&S.prefs[id].rrNet)||0)+(Number(S.prefs[id]&&S.prefs[id].thNet)||0)+(Number(S.prefs[id]&&S.prefs[id].divEarn)||0),inPlay:id=>pending[id]||0};
 }
 const START_BAL=25000,WEEKLY=2500,REFILL_CAP=10000;
 /* Tuesday 2:30 AM ET after week wk ends (weeks run Tuesday to Monday) */
@@ -2439,10 +2442,10 @@ async function auEquip(id){if(!S.me)return;if(S.readOnly)return toast("View only
    Roulette turn, blacked out or with your chair on the floor; a fire-back or your turn cuts a dance short and sits you back down.
    Add an emote: one EMOTES row + its pose function f(seconds) → pose numbers (all 0 = seated normally; see emLDance). */
 const EMOTES_PUBLIC=true;
-const EMOTES=[{id:"ldance",n:"L Dance",p:170000,d:"Stand up from your chair and hit the L dance",ic:"🕺",len:7,f:k=>emLDance(k)},
-  {id:"twerk",n:"Table Twerk",p:170000,d:"Hop up on the table and twerk",ic:"🍑",len:9,f:k=>emTwerk(k),cam:[1.05,2.55,-2.55],prev:{table:1,cam:[2.9,2.75,-5.1],tgt:[0,1.62,-.9]}},
-  {id:"tbag",n:"Table T-Bag",p:85000,d:"Hop up on the table and squat up and down like it's a video game",ic:"🫖",len:9,f:k=>emTwerk(k,"tbag"),cam:[1.05,2.55,-2.55],prev:{table:1,cam:[2.9,2.75,-5.1],tgt:[0,1.62,-.9]}},
-  {id:"tongue",n:"Tongue Shake",p:85000,d:"Mouth wide open, tongue out, shake your head like crazy",ic:"😜",len:3.6,f:k=>emTongue(k),prev:{cam:[.95,1.85,-2.3],tgt:[0,1.5,-.1]}}];
+const EMOTES=[{id:"ldance",n:"L Dance",p:85000,d:"Stand up from your chair and hit the L dance",ic:"🕺",len:7,f:k=>emLDance(k)},
+  {id:"twerk",n:"Table Twerk",p:85000,d:"Hop up on the table and twerk",ic:"🍑",len:9,f:k=>emTwerk(k),cam:[1.05,2.55,-2.55],prev:{table:1,cam:[2.9,2.75,-5.1],tgt:[0,1.62,-.9]}},
+  {id:"tbag",n:"Table T-Bag",p:42500,d:"Hop up on the table and squat up and down like it's a video game",ic:"🫖",len:9,f:k=>emTwerk(k,"tbag"),cam:[1.05,2.55,-2.55],prev:{table:1,cam:[2.9,2.75,-5.1],tgt:[0,1.62,-.9]}},
+  {id:"tongue",n:"Tongue Shake",p:42500,d:"Mouth wide open, tongue out, shake your head like crazy",ic:"😜",len:3.6,f:k=>emTongue(k),prev:{cam:[.95,1.85,-2.3],tgt:[0,1.5,-.1]}}];
 const EM_BY=Object.fromEntries(EMOTES.map(e=>[e.id,e]));
 const EM_CD=8000;const EM={seen:{}};
 const emOn=()=>EMOTES_PUBLIC||!!S.canEdit;
@@ -2457,18 +2460,18 @@ function emShopHtml(){const me=S.me,bal=Math.floor(ledger().balOf(me)),ask=S.emA
 /* ---------- Skins (Aura Shop → Skins): look like a different animal at the live Russian Roulette + Hold'em tables ----------
    prefs.skins {id:true} owned forever, prefs.skin = the one you wear (null = your seat's normal animal), prefs.skinSpent (in the ledger).
    The table builds your animal with skSeat(); an emote, a head tag etc. work the same on any animal. */
-const SKINS=[{id:"lemur",n:"Ring-tailed Lemur",p:35000,c:0x4d4950,ic:"🐒",d:"Grey fur, a black-and-white ringed tail and big orange eyes"},
-  {id:"diamond",kind:"human",hv:"diamond",n:"Diamond",p:85000,c:0xd9a88a,ic:"💎",d:"Sit at the table as a human player instead of an animal"},
-  {id:"ag",hid:1,kind:"human",hv:"ag",n:"Anime Girl",p:85000,c:0xe9b8a2,ic:"🌸",d:"An anime-style human player. Model: “Anime girl” by Imran Aziz (CC BY 4.0)"},
-  {id:"uni",kind:"human",hv:"uni",n:"Unicorn",p:85000,c:0xf2f0f4,ic:"🦄",d:"A plushy unicorn with a pastel mane, a big horn and stubby legs"},
-  {id:"pir",kind:"human",hv:"pir",n:"Skeleton Pirate",p:85000,c:0xe6dcc4,ic:"🏴‍☠️",d:"A salty skeleton pirate with his hat and gear. Model: “Skeleton Pirate The Drunk” by FireGoat (CC BY 4.0)"},
-  {id:"fox",hid:1,kind:"human",hv:"fox",n:"Fox Girl",p:85000,c:0xcd4e22,ic:"🦊",d:"A red fox in an orange bikini, with a big white-tipped tail"},
-  {id:"monk",kind:"human",hv:"monk",n:"Shadow Monk",p:150000,c:0x2a2626,ic:"🥷",d:"A hooded dark fantasy assassin with his staff strapped across his back. Model: “Shadow Monk Assassin - Dark Fantasy” by Pigcraft (CC BY 4.0)"},
-{id:"paladin",kind:"human",hv:"paladin",n:"The Crusader",p:150000,c:0x8a1010,ic:"⚔️",d:"A blood-soaked dark fantasy paladin in full plate. Model: “THE SAVIOR — Dark Fantasy Paladin” by Atahan (CC BY 4.0)"},
-{id:"bigfoot",kind:"human",hv:"bigfoot",n:"Bigfoot",p:85000,c:0x3a2a1e,ic:"🦶",d:"The legend himself, fresh out of the woods and ready to gamble. Model: “primitive man ( aadimanav )” by iRahulRajput (CC BY 4.0)"},
-{id:"santa",kind:"human",hv:"santa",n:"Santa",p:85000,c:0xb3121a,ic:"🎅",d:"Ho ho ho. The big man himself in his red suit. Model: “Santa Clause 3D Scan” by Christian Day (CC BY 4.0)"},
-  {id:"cerb",kind:"human",hv:"cerb",n:"Cerberus",p:85000,c:0x2a2f36,ic:"🐺",d:"A tall jackal in black armor with glowing cyan fur and a long tail"},
-  {id:"nfox",n:"Neon Fox",p:20000,c:0x0e1634,ic:"🦊",d:"Midnight-blue fur, a white chest and tail tip, glowing cyan stripes and eyes"}];
+const SKINS=[{id:"lemur",n:"Ring-tailed Lemur",p:26250,c:0x4d4950,ic:"🐒",d:"Grey fur, a black-and-white ringed tail and big orange eyes"},
+  {id:"diamond",kind:"human",hv:"diamond",n:"Diamond",p:63750,c:0xd9a88a,ic:"💎",d:"Sit at the table as a human player instead of an animal"},
+  {id:"ag",hid:1,kind:"human",hv:"ag",n:"Anime Girl",p:63750,c:0xe9b8a2,ic:"🌸",d:"An anime-style human player. Model: “Anime girl” by Imran Aziz (CC BY 4.0)"},
+  {id:"uni",kind:"human",hv:"uni",n:"Unicorn",p:63750,c:0xf2f0f4,ic:"🦄",d:"A plushy unicorn with a pastel mane, a big horn and stubby legs"},
+  {id:"pir",kind:"human",hv:"pir",n:"Skeleton Pirate",p:63750,c:0xe6dcc4,ic:"🏴‍☠️",d:"A salty skeleton pirate with his hat and gear. Model: “Skeleton Pirate The Drunk” by FireGoat (CC BY 4.0)"},
+  {id:"fox",hid:1,kind:"human",hv:"fox",n:"Fox Girl",p:63750,c:0xcd4e22,ic:"🦊",d:"A red fox in an orange bikini, with a big white-tipped tail"},
+  {id:"monk",kind:"human",hv:"monk",n:"Shadow Monk",p:112500,c:0x2a2626,ic:"🥷",d:"A hooded dark fantasy assassin with his staff strapped across his back. Model: “Shadow Monk Assassin - Dark Fantasy” by Pigcraft (CC BY 4.0)"},
+{id:"paladin",kind:"human",hv:"paladin",n:"The Crusader",p:112500,c:0x8a1010,ic:"⚔️",d:"A blood-soaked dark fantasy paladin in full plate. Model: “THE SAVIOR — Dark Fantasy Paladin” by Atahan (CC BY 4.0)"},
+{id:"bigfoot",kind:"human",hv:"bigfoot",n:"Bigfoot",p:63750,c:0x3a2a1e,ic:"🦶",d:"The legend himself, fresh out of the woods and ready to gamble. Model: “primitive man ( aadimanav )” by iRahulRajput (CC BY 4.0)"},
+{id:"santa",kind:"human",hv:"santa",n:"Santa",p:63750,c:0xb3121a,ic:"🎅",d:"Ho ho ho. The big man himself in his red suit. Model: “Santa Clause 3D Scan” by Christian Day (CC BY 4.0)"},
+  {id:"cerb",kind:"human",hv:"cerb",n:"Cerberus",p:63750,c:0x2a2f36,ic:"🐺",d:"A tall jackal in black armor with glowing cyan fur and a long tail"},
+  {id:"nfox",n:"Neon Fox",p:15000,c:0x0e1634,ic:"🦊",d:"Midnight-blue fur, a white chest and tail tip, glowing cyan stripes and eyes"}];
 const SKIN_BY=Object.fromEntries(SKINS.map(x=>[x.id,x]));
 const skOwns=(id,k)=>!!((((S.prefs||{})[id]||{}).skins||{})[k]);
 const skinOf=id=>{const q=((S.prefs||{})[id])||{};return q.skin&&SKIN_BY[q.skin]&&skOwns(id,q.skin)?q.skin:null};
@@ -3391,11 +3394,11 @@ function rlRefresh(){const st=rlState(),who=rlWho(),watching=who!==S.me,q=S.pref
     if(box&&rlCanRespin()){const lf=slopLeft();box.insertAdjacentHTML("afterbegin",`<button type="button" class="btn rlrespin" data-rlrespin ${lf?"":"disabled"}>👑 Respin <small>(${lf} left)</small></button>`)}
     const vw=$("#rlViewers");if(vw){const x=bjViewersHtml("roulette");if(vw.innerHTML!==x)vw.innerHTML=x}}
   const hist=watching?(S._rlWHist||[]):st.hist;const hh=$("#rlHist");if(hh)hh.innerHTML=hist.slice(0,8).map((n,i)=>`<span class="hn ${rlColor(n)}${i===0?" new":""}">${n}</span>`).join("");
-  const lb=$("#rlLB");if(lb){const rows=Object.keys(S.prefs).filter(id=>Number(S.prefs[id].rlSpins)>0).map(id=>({id,net:Number(S.prefs[id].rlNet)||0,n:Number(S.prefs[id].rlSpins)||0})).sort((a,b)=>b.net-a.net||b.n-a.n);
+  const lb=$("#rlLB");if(lb){const rows=Object.keys(S.prefs).map(id=>[id,stq(S.prefs[id])]).filter(([id,q])=>Number(q.rlSpins)>0).map(([id,q])=>({id,net:Number(q.rlNet)||0,n:Number(q.rlSpins)||0})).sort((a,b)=>b.net-a.net||b.n-a.n);
     const x=`<section class="card bjlb"><h3>Roulette leaderboard</h3>${rows.length?rows.map((r,i)=>`<button type="button" class="strow" data-member="${esc(r.id)}"><span class="strank num">${i+1}</span>${pic(r.id)}<span class="stmain"><span class="mrname">${esc(nm(r.id))}${r.id===S.me?' <span class="muted small">(you)</span>':""}</span><span class="stline"><span><span class="stlbl">Up/down</span> <span class="num ${r.net>0?"pos":r.net<0?"neg":""}">${r.net>0?"+":r.net<0?"−":""}${Math.abs(r.net).toLocaleString()} BB</span></span><span><span class="stlbl">Spins</span> <span class="num">${r.n}</span></span></span></span></button>`).join(""):`<p class="small muted">No spins yet. Be the first.</p>`}</section>`;
     if(x!==S._rlLB){S._rlLB=x;lb.innerHTML=x}}
   const lv=$("#rlLive");if(lv){const x=rlLiveHtml();if(x!==S._rlLiveH){S._rlLiveH=x;lv.innerHTML=x}}
-  const nh=!watching&&S.rlNetHold&&Date.now()<S.rlNetHold.until?S.rlNetHold:null,net=nh?nh.v:Number(q.rlNet)||0;const ft=$("#rlFoot");if(ft)ft.innerHTML=`${watching?esc(nm(who))+" · ":""}Roulette ${net>=0?"up":"down"} <strong class="num ${net>0?"pos":net<0?"neg":""}">${net>0?"+":net<0?"−":""}${Math.abs(net).toLocaleString()} BB</strong> all-time · ${Number(q.rlSpins)||0} spins · single zero. Number 35:1 · dozens/columns 2:1 · red/black, odd/even, 1–18/19–36 1:1. Doesn't count toward the betting leaderboard.${watching?"":sessLn("rl",net)}`}
+  const nh=!watching&&S.rlNetHold&&Date.now()<S.rlNetHold.until?S.rlNetHold:null,net=(nh?nh.v:Number(q.rlNet)||0)-sbB(q,"rlNet");const ft=$("#rlFoot");if(ft)ft.innerHTML=`${watching?esc(nm(who))+" · ":""}Roulette ${net>=0?"up":"down"} <strong class="num ${net>0?"pos":net<0?"neg":""}">${net>0?"+":net<0?"−":""}${Math.abs(net).toLocaleString()} BB</strong> overall · ${Number(stq(q).rlSpins)||0} spins · single zero. Number 35:1 · dozens/columns 2:1 · red/black, odd/even, 1–18/19–36 1:1. Doesn't count toward the betting leaderboard.${watching?"":sessLn("rl",net+sbB(q,"rlNet"))}`}
 function rlMount(){const st=rlState();S._rlLB=null;S._rlLiveH=null;const w=$("#rlWheel"),b=$("#rlBall");if(w)w.style.transform=`rotate(${st.wheel}deg)`;if(b)b.style.transform=`rotate(${st.ball}deg)`;
   if(rlWho()!==S.me){S._rlSeenAt=null;S._rlWHist=[];const L=(S.prefs[rlWho()]||{}).rlLast;if(L){S._rlWHist=[L.n]}}rlRefresh()}
 /* Spin the wheel and ball to land on n; shows the result and the rat's reaction when it stops */
@@ -3566,6 +3569,13 @@ const SESS={};let sessHid=0;document.addEventListener("visibilitychange",()=>{if
    is added back until that round ends, so a win shows the profit (bet 1,000, get 2,000 back = +1,000), never the payout */
 function rrInPlay(){let n=0;try{const r=rrSt();if(r&&r.phase==="play"&&!S.rrSpec)n+=Number(r.paid)||0}catch(_){}if(typeof RL!=="undefined"&&RL&&RL.on&&!RL.ended&&RL.paid!=null&&RL.paid===RL.gid)n+=Number(RL.stake)||0;return n}
 /* shown as a pill next to each game's balance (on the 3D tables: top of the screen), filled in by the footer update; returns "" for the footer */
+/* Stats reset (owner, Oct 23): prefs.sb0 = each player's stat values at the reset (written once by the admin fix job "statreset").
+   Leaderboards, standings and the overall lines show value − sb0; balances and the session counter keep using the raw fields. */
+const sbB=(q,k)=>q&&q.sb0?Number(q.sb0[k])||0:0;
+const stq=q=>{q=q||{};if(!q.sb0)return q;const b=k=>Number(q.sb0[k])||0;return{...q,bjNet:(Number(q.bjNet)||0)-b("bjPL"),/* bjPL = bjNet+bjBonus+revengeEarn, so the whole base comes off bjNet */bjHands:(Number(q.bjHands)||0)-b("bjHands"),
+  rlNet:(Number(q.rlNet)||0)-b("rlNet"),rlSpins:(Number(q.rlSpins)||0)-b("rlSpins"),crNet:(Number(q.crNet)||0)-b("crPL"),crRolls:(Number(q.crRolls)||0)-b("crRolls"),
+  hlNet:(Number(q.hlNet)||0)-b("hlNet"),hlRounds:(Number(q.hlRounds)||0)-b("hlRounds"),rrNet:(Number(q.rrNet)||0)-b("rrNet"),rrWins:(Number(q.rrWins)||0)-b("rrWins"),rrGames:(Number(q.rrGames)||0)-b("rrGames"),
+  thNet:(Number(q.thNet)||0)-b("thNet"),thWins:(Number(q.thWins)||0)-b("thWins"),thGames:(Number(q.thGames)||0)-b("thGames"),flapEarn:(Number(q.flapEarn)||0)-b("flapEarn"),flapPlays:(Number(q.flapPlays)||0)-b("flapPlays"),flapBest:Number(q.flapBestS)||0}};
 const sessChip=g=>`<span class="sesschip" data-sess="${g}" hidden></span>`;
 function sessLn(g,v,inPlay){v=Math.round((Number(v)||0)+(Number(inPlay)||0));if(!(g in SESS))SESS[g]=v;const d=v-SESS[g];
   const h=`<span class="sessk">Session</span> <b class="num ${d>0?"pos":d<0?"neg":""}">${d>0?"+":d<0?"−":""}${Math.abs(d).toLocaleString()} BB</b>`;
@@ -3613,8 +3623,8 @@ function crRefresh(){const st=crState(),p=S.prefs[S.me]||{},pending=crSum(st.bet
     <div class="rlctl small"><div class="seg bjmode" role="group" aria-label="Chip mode"><button type="button" data-bjmode="add" aria-pressed="${S.bjMode!=="sub"}">+</button><button type="button" data-bjmode="sub" aria-pressed="${S.bjMode==="sub"}">−</button></div><span class="rltot num">On table ${crSum(st.bets).toLocaleString()}</span><button class="btn ghost" data-crclear ${st.rolling?"disabled":""}>Take down</button></div>`;
   const rb=$("#crRoll");if(rb)rb.disabled=st.rolling||crSum(st.bets)<=0;
   const hh=$("#crHist");if(hh)hh.innerHTML=st.hist.slice(0,6).map((n,i)=>`<span class="hn ${n===7?"r":"b"}${i===0?" new":""}">${n}</span>`).join("");
-  const net=crPL(p);const ft=$("#crFoot");if(ft)ft.innerHTML=`Craps ${net>=0?"up":"down"} <strong class="num ${net>0?"pos":net<0?"neg":""}">${net>0?"+":net<0?"−":""}${Math.abs(net).toLocaleString()} BB</strong> all-time${S.crDelta!=null?` · last roll <strong class="num ${S.crDelta>0?"pos":S.crDelta<0?"neg":""}">${S.crDelta>0?"+":S.crDelta<0?"−":""}${Math.abs(S.crDelta).toLocaleString()}</strong>`:""} · ${Number(p.crRolls)||0} rolls. Pass/Don't Pass 1:1 · Odds pay true odds · Place bets are off on the come-out. Doesn't count toward the betting leaderboard.${sessLn("cr",net)}`;
-  const lb=$("#crLB");if(lb){const rows=Object.keys(S.prefs).filter(id=>Number(S.prefs[id].crRolls)>0).map(id=>({id,net:crPL(S.prefs[id]),n:Number(S.prefs[id].crRolls)||0})).sort((a,b)=>b.net-a.net);
+  const net=crPL(stq(p));const ft=$("#crFoot");if(ft)ft.innerHTML=`Craps ${net>=0?"up":"down"} <strong class="num ${net>0?"pos":net<0?"neg":""}">${net>0?"+":net<0?"−":""}${Math.abs(net).toLocaleString()} BB</strong> overall${S.crDelta!=null?` · last roll <strong class="num ${S.crDelta>0?"pos":S.crDelta<0?"neg":""}">${S.crDelta>0?"+":S.crDelta<0?"−":""}${Math.abs(S.crDelta).toLocaleString()}</strong>`:""} · ${Number(stq(p).crRolls)||0} rolls. Pass/Don't Pass 1:1 · Odds pay true odds · Place bets are off on the come-out. Doesn't count toward the betting leaderboard.${sessLn("cr",crPL(p))}`;
+  const lb=$("#crLB");if(lb){const rows=Object.keys(S.prefs).map(id=>[id,stq(S.prefs[id])]).filter(([id,q])=>Number(q.crRolls)>0).map(([id,q])=>({id,net:crPL(q),n:Number(q.crRolls)||0})).sort((a,b)=>b.net-a.net);
     const x=`<section class="card bjlb"><h3>Craps leaderboard</h3>${rows.length?rows.map((r,i)=>`<button type="button" class="strow" data-member="${esc(r.id)}"><span class="strank num">${i+1}</span>${pic(r.id)}<span class="stmain"><span class="mrname">${esc(nm(r.id))}${r.id===S.me?' <span class="muted small">(you)</span>':""}</span><span class="stline"><span><span class="stlbl">Up/down</span> <span class="num ${r.net>0?"pos":r.net<0?"neg":""}">${r.net>0?"+":r.net<0?"−":""}${Math.abs(r.net).toLocaleString()} BB</span></span><span><span class="stlbl">Rolls</span> <span class="num">${r.n}</span></span></span></span></button>`).join(""):`<p class="small muted">No rolls yet. Be the first.</p>`}</section>`;if(x!==S._crLB){S._crLB=x;lb.innerHTML=x}}}
 function crMount(){S._crLB=null;const st=crState();const d=$("#crDice");if(d&&!st.rolling){d.innerHTML=dieHtml(st.dice[0],"d1")+dieHtml(st.dice[1],"d2");d.dataset.k=st.dice.join("-")}crRefresh()}
 function crMsg(t,cls){const m=$("#crMsg");if(m){m.innerHTML=t;m.className="crmsg "+(cls||"")}}
@@ -3696,8 +3706,8 @@ function hlRefresh(){const st=hlSt(),p=S.prefs[S.me]||{},bal=Math.floor(ledger()
   document.querySelectorAll('[data-hlact="clear"],[data-hlact="skip"]').forEach(b=>b.disabled=st.run||st.busy);
   const ch=$("#hlChips");if(ch){const k=[25,100,500,1000,5000,25000].filter(v=>v<=Math.max(25,bal)).join();if(ch.dataset.k!==k){ch.dataset.k=k;ch.innerHTML=k.split(",").map(Number).map(v=>`<button type="button" class="chip" data-hlchip="${v}">+${v>=1000?v/1000+"k":v}</button>`).join("")+`<button type="button" class="chip" data-hlchip="all">ALL IN</button>`}}
   set("#hlHist",st.hist.slice(0,12).map(x=>`<span class="${x.w?"pos":"neg"}">${HL_R[x.r-1]}</span>`).join(""));
-  const net=Number(p.hlNet)||0;set("#hlFoot",`High-Low ${net>=0?"up":"down"} <strong class="num ${net>0?"pos":net<0?"neg":""}">${net>0?"+":net<0?"−":""}${Math.abs(net).toLocaleString()} BB</strong> all-time · ${Number(p.hlRounds)||0} rounds.${sessLn("hl",net,S.hl&&S.hl.run?Number(S.hl.stake)||0:0)}`);
-  const lb=$("#hlLB");if(lb){const rows=Object.keys(S.prefs).filter(id=>Number(S.prefs[id].hlRounds)>0).map(id=>({id,net:Number(S.prefs[id].hlNet)||0,n:Number(S.prefs[id].hlRounds)})).sort((a,b)=>b.net-a.net);
+  const net=(Number(p.hlNet)||0)-sbB(p,"hlNet");set("#hlFoot",`High-Low ${net>=0?"up":"down"} <strong class="num ${net>0?"pos":net<0?"neg":""}">${net>0?"+":net<0?"−":""}${Math.abs(net).toLocaleString()} BB</strong> overall · ${Number(stq(p).hlRounds)||0} rounds.${sessLn("hl",net+sbB(p,"hlNet"),S.hl&&S.hl.run?Number(S.hl.stake)||0:0)}`);
+  const lb=$("#hlLB");if(lb){const rows=Object.keys(S.prefs).map(id=>[id,stq(S.prefs[id])]).filter(([id,q])=>Number(q.hlRounds)>0).map(([id,q])=>({id,net:Number(q.hlNet)||0,n:Number(q.hlRounds)})).sort((a,b)=>b.net-a.net);
     const x=`<section class="card bjlb"><h3>High-Low leaderboard</h3>${rows.length?rows.map((r,i)=>`<button type="button" class="strow" data-member="${esc(r.id)}"><span class="strank num">${i+1}</span>${pic(r.id)}<span class="stmain"><span class="mrname">${esc(nm(r.id))}${r.id===S.me?' <span class="muted small">(you)</span>':""}</span><span class="stline"><span><span class="stlbl">Up/down</span> <span class="num ${r.net>0?"pos":r.net<0?"neg":""}">${r.net>0?"+":r.net<0?"−":""}${Math.abs(r.net).toLocaleString()} BB</span></span><span><span class="stlbl">Rounds</span> <span class="num">${r.n}</span></span></span></span></button>`).join(""):`<p class="small muted">No rounds yet.</p>`}</section>`;
     if(S._hlLB!==x){S._hlLB=x;lb.innerHTML=x}}}
 function hlMsg(t,cls){const m=$("#hlMsg");if(m){m.innerHTML=t;m.className="crmsg "+(cls||"")}}
@@ -3744,7 +3754,7 @@ function rrHud(){setTimeout(rrPub,0);const st=rrSt(),p=S.prefs[S.me]||{},bal=Mat
   {const sh=$("#rrShoot");if(sh){const on=st.phase==="play"&&st.turn===0&&!st.busy&&st.step==="fire";sh.hidden=!on;if(on){const x=`<button type="button" class="btn ghost" data-rrshoot="aim">🎯 Shoot someone instead</button><div class="small muted">Aim and fire. Still one bullet: a hit kills them, but a miss or misfire and everyone draws on you.</div>`;if(sh._x!==x){sh._x=x;sh.innerHTML=x}}}}
   const dd=$("#rrDD");if(dd){dd.hidden=st.step!=="dd";const db_=$("#rrDbl");if(db_)db_.textContent=`Double down · +${(st.paid||0).toLocaleString()} BB`}
   const pk=$("#rrPick");if(pk)pk.hidden=st.phase==="play"||!!st.won;const ws=$("#rrWinS");if(ws){ws.hidden=!st.won;if(st.won){$("#rrWinAmt").textContent="+"+st.won.profit.toLocaleString()+" BB";$("#rrWinSub").innerHTML=`You put in <b class="num">${st.won.paid.toLocaleString()} BB</b> and took the pot of <b class="num">${st.won.pay.toLocaleString()} BB</b>.`}}const go=$("#rrGo");if(go){go.disabled=st.busy||!st.stake;go.textContent=st.stake?`Play · ${st.stake.toLocaleString()} BB`:"Pick a buy-in"}
-  const net=Number(p.rrNet)||0;if(!S.rrSpec)rlHud();set("#rrFoot",`Russian Roulette ${net>=0?"up":"down"} <strong class="num ${net>0?"pos":net<0?"neg":""}">${net>0?"+":net<0?"−":""}${Math.abs(net).toLocaleString()} BB</strong> all-time · ${Number(p.rrWins)||0} wins in ${Number(p.rrGames)||0} games.${S.rrSpec?"":sessLn("rr",net,rrInPlay())}`)}
+  const net=(Number(p.rrNet)||0)-sbB(p,"rrNet");if(!S.rrSpec)rlHud();set("#rrFoot",`Russian Roulette ${net>=0?"up":"down"} <strong class="num ${net>0?"pos":net<0?"neg":""}">${net>0?"+":net<0?"−":""}${Math.abs(net).toLocaleString()} BB</strong> overall · ${Number(stq(p).rrWins)||0} wins in ${Number(stq(p).rrGames)||0} games.${S.rrSpec?"":sessLn("rr",net+sbB(p,"rrNet"),rrInPlay())}`)}
 async function rrSave(patch){if(S.rrSpec)return;Object.assign(S.prefs[S.me]=S.prefs[S.me]||{},patch);try{await db.doc("prefs/"+S.me).update(patch)}catch(_){toast("That game didn't save. Check your connection.")}}
 const RR_PACE=.7;const RR_MOB=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Mac/.test(navigator.platform||""));const rrPace=()=>RR_PACE*(rrSt().drawing?.5:1);const rrWait=ms=>new Promise(r=>setTimeout(r,ms*rrPace()));
 const rrRandN=n=>{const u=new Uint32Array(1);crypto.getRandomValues(u);return u[0]%n};
@@ -4446,7 +4456,7 @@ function gwView(g,q,who){
   if(g==="craps"){const d=(q.crLast&&q.crLast.d)||[1,1],bets=q.crBets||{},net=Number(q.crNet)||0;const ks=Object.keys(bets).filter(k=>bets[k]>0);
     return `<div class="gwdice">${dieHtml(d[0],"d1")}${dieHtml(d[1],"d2")}</div><div class="gwrow"><span class="stlbl">Rolled</span><b class="num">${d[0]+d[1]}</b><span class="stlbl">Point</span><b class="num">${q.crPoint||"OFF"}</b></div>
       <div class="gwchips">${ks.length?ks.map(k=>`<span>${esc(CR_SPOTS[k]||k)} <b class="num">${Number(bets[k]).toLocaleString()}</b></span>`).join(""):'<span class="muted">No chips on the table</span>'}</div>
-      <div class="gwrow"><span class="stlbl">Craps all-time</span><b class="num ${crPL(q)>0?"pos":crPL(q)<0?"neg":""}">${crPL(q)>0?"+":crPL(q)<0?"−":""}${Math.abs(crPL(q)).toLocaleString()} BB</b></div>`}
+      <div class="gwrow"><span class="stlbl">Craps overall</span><b class="num ${crPL(stq(q))>0?"pos":crPL(stq(q))<0?"neg":""}">${crPL(stq(q))>0?"+":crPL(stq(q))<0?"−":""}${Math.abs(crPL(stq(q))).toLocaleString()} BB</b></div>`}
   if(g==="hilo"){const L=q.hlLive||{},c=L.card||q.hlCard||{r:1,s:0};
     return `<div class="gwcard"><div style="position:relative;width:96px;height:134px">${hlCard(c)}</div><div class="hlside"><div class="stlbl">${L.run?"Riding":"Bet"}</div><b class="num">${Math.floor((L.stake||0)*(L.run?L.mult||1:1)).toLocaleString()} BB</b><div class="stlbl">Multiplier</div><b class="num">${(L.mult||1).toFixed(2)}×</b></div></div>
       <div class="gwmsg">${esc(L.msg||"")}</div><div class="hlhist">${(L.hist||[]).map(x=>`<span class="${x.w?"pos":"neg"}">${HL_R[x.r-1]}</span>`).join("")}</div>`}
@@ -5213,7 +5223,7 @@ function thMount(){const cv=$("#thCv");if(!cv)return;thSub();thApplySeats();thHu
   rrLoad().then(()=>{if(S.tab!=="th"||!$("#thCv"))return;rrBuild($("#thCv"));const c=S.rr3;if(!c)return;c.gun.visible=false;c.pitch=-.5;TH.m=null;thSync3D()}).catch(()=>{toast("Couldn't load the 3D table. Check your connection and reopen this tab.")})}
 const thCardHtml=v=>v==null?`<span class="thc bk"></span>`:`<span class="thc${(v/13|0)===1||(v/13|0)===2?" red":""}"><b>${RR_RK[v%13]}</b><i>${RR_SU[(v/13)|0]}</i></span>`;
 function thHud(){if(S.tab!=="th")return;const set=(id,x)=>{const e=$(id);if(e&&e._x!==x){e._x=x;e.innerHTML=x}};const p=S.prefs[S.me]||{},bal=Math.floor(ledger().balOf(S.me));
-  set("#thBal",bal.toLocaleString()+" BB");{const net=Number(p.thNet)||0;set("#thFoot",`Hold'em ${net>=0?"up":"down"} <strong class="num ${net>0?"pos":net<0?"neg":""}">${net>0?"+":net<0?"−":""}${Math.abs(net).toLocaleString()} BB</strong> all-time · ${Number(p.thWins)||0} wins in ${Number(p.thGames)||0} games.${sessLn("th",net,p.thOpen?Number(p.thOpen.buy)||0:0)}`)}
+  set("#thBal",bal.toLocaleString()+" BB");{const net=(Number(p.thNet)||0)-sbB(p,"thNet");set("#thFoot",`Hold'em ${net>=0?"up":"down"} <strong class="num ${net>0?"pos":net<0?"neg":""}">${net>0?"+":net<0?"−":""}${Math.abs(net).toLocaleString()} BB</strong> overall · ${Number(stq(p).thWins)||0} wins in ${Number(stq(p).thGames)||0} games.${sessLn("th",net+sbB(p,"thNet"),p.thOpen?Number(p.thOpen.buy)||0:0)}`)}
   const pick=$("#thPick");if(pick)pick.hidden=TH.on;{const d=$("#thDrinks");if(d)d.hidden=!TH.on||TH.spec}if(!TH.on){set("#thLobby",thLobbyHtml());set("#thTop","");set("#thHud","");set("#thLog","");const rs=$("#thRes");if(rs)rs.hidden=true;return}
   const ps=TH.ps;if(!ps)return;const me=TH.my,pot=ps.tot.reduce((a,b)=>a+b,0),r=TH.room||{},cash=thMyCash(),out=!!cash;
   set("#thTop",`<div class="thpot"><span>Pot</span><b class="num">${(ps.street==="show"?(ps.pots||[]).reduce((a,b)=>a+b,0):pot).toLocaleString()}</b></div><div class="thmeta">${TH.spec?"👁 Watching · ":""}Hand ${ps.hand||"–"} · Blinds ${ps.sb}/${ps.bb}${ps.street==="show"&&ps.rk>0?` · House rake ${Number(ps.rk).toLocaleString()}`:""}</div><button type="button" class="thleave" data-th="leavetable">${TH.spec||out||TH.ended?"Back to lobby":ps.lv[me]?"Stay ✓":["pre","flop","turn","river"].includes(ps.street)&&ps.inh[me]?"Leave after hand":"Leave table"}</button>`);
@@ -6016,6 +6026,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:86,d:"Oct 23",t:[["🕺","Skins are 25% off and emotes are half price"],["📊","All casino and betting leaderboards and stats have been reset. Everything counts from today on (your balance didn't change)"]]},
  {v:85,d:"Oct 23",t:[["✨","Auras are half price"]]},
  {v:84,d:"Oct 23",t:[["🏷️","A card's estimated value is now 2× its quick-sell value"]]},
  {v:83,d:"Oct 23",t:[["♠️","Hold'em now has a 5% house rake on every pot that sees a flop (no flop, no rake)"],["🏈","League odds now project every team's best possible lineup, so benching your players doesn't change your odds"]]},
@@ -6566,8 +6577,8 @@ function fpFarmHtml(){const pl=fpLv("fpPress"),sl=fpLv("fpSilo"),bal=Math.floor(
 const fpDay=()=>divDay();
 function fpToday(id){const q=S.prefs[id]||{};return q.flapDay===fpDay()?Number(q.flapToday)||0:0}
 function fpStatsHtml(){const q=S.prefs[S.me]||{},today=fpToday(S.me),FP_CAP=fpCap(),left=Math.max(0,FP_CAP-today);
-  const bh=fpBoostHtml();const rows=Object.keys(S.prefs).filter(id=>Number(S.prefs[id].flapBest)>0).map(id=>({id,b:Number(S.prefs[id].flapBest)||0,e:Number(S.prefs[id].flapEarn)||0})).sort((a,b)=>b.b-a.b).slice(0,12);
-  return `${bh}${fpFarmHtml()}<div class="fpinfo"><span><span class="stlbl">Earned today</span> <b class="num pos">${today.toLocaleString()} / ${FP_CAP.toLocaleString()} BB</b></span><span><span class="stlbl">Best</span> <b class="num">${Number(q.flapBest)||0}</b></span><span><span class="stlbl">All-time</span> <b class="num pos">${(Number(q.flapEarn)||0).toLocaleString()} BB</b></span></div>
+  const bh=fpBoostHtml();const rows=Object.keys(S.prefs).map(id=>[id,stq(S.prefs[id])]).filter(([id,q])=>Number(q.flapBest)>0).map(([id,q])=>({id,b:Number(q.flapBest)||0,e:Number(q.flapEarn)||0})).sort((a,b)=>b.b-a.b).slice(0,12);
+  return `${bh}${fpFarmHtml()}<div class="fpinfo"><span><span class="stlbl">Earned today</span> <b class="num pos">${today.toLocaleString()} / ${FP_CAP.toLocaleString()} BB</b></span><span><span class="stlbl">Best</span> <b class="num">${Number(stq(q).flapBest)||0}</b></span><span><span class="stlbl">Overall</span> <b class="num pos">${(Number(stq(q).flapEarn)||0).toLocaleString()} BB</b></span></div>
   ${left<=0?`<p class="small muted fpcapnote">You hit today's ${FP_CAP.toLocaleString()} BB cap. You can still play for a high score; earning resets at midnight ET.</p>`:""}
   <section class="card bjlb"><h3>Flappy leaderboard</h3>${rows.length?rows.map((r,i)=>`<button type="button" class="strow" data-member="${esc(r.id)}"><span class="strank num">${i+1}</span>${pic(r.id)}<span class="stmain"><span class="mrname">${esc(nm(r.id))}${r.id===S.me?' <span class="muted small">(you)</span>':""}</span><span class="stline"><span><span class="stlbl">Best</span> <span class="num">${r.b}</span></span><span><span class="stlbl">Earned</span> <span class="num pos">${r.e.toLocaleString()} BB</span></span><span><span class="stlbl">Farm</span> <span class="num">${fpPer(r.id)}/pipe</span></span></span></span></button>`).join(""):`<p class="small muted">No scores yet. Be the first.</p>`}</section>`}
 /* Vector (Grail) perk: one 10x Flappy run a day (resets at 1 AM ET with the dividends), no cap on that run */
@@ -6602,7 +6613,7 @@ function fpMount(){const c=$("#fpCanvas");if(!c)return;S._fpStats=null;const ctx
   const cheese=(x,y,rot)=>{ctx.save();ctx.translate(x,y);ctx.rotate(rot);ctx.fillStyle="#f5cf5d";ctx.strokeStyle="#b8860b";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-18,12);ctx.lineTo(18,12);ctx.lineTo(18,-12);ctx.closePath();ctx.fill();ctx.stroke();
     ctx.fillStyle="#d9a92f";[[8,4,3],[13,-4,2.2],[2,8,2]].forEach(([a,b,r])=>{ctx.beginPath();ctx.arc(a,b,r,0,7);ctx.fill()});ctx.fillStyle="#111";ctx.beginPath();ctx.arc(12,1,2,0,7);ctx.fill();ctx.restore()};
   const end=async()=>{FP.st="over";FP.overAt=Date.now();FP.earn=0;if(FP.score>0)try{const fs=await db.doc("prefs/"+S.me).get();if(fs.exists){const d=fs.data();Object.assign(S.prefs[S.me]=S.prefs[S.me]||{},{flapDay:d.flapDay,flapToday:d.flapToday,flapEarn:d.flapEarn})}}catch(_){}const q=S.prefs[S.me]||{},today=fpToday(S.me);let boosted=!!FP.boostRun;FP.boostRun=false;const per=fpPer(),earn=boosted?FP.score*per*FP_BOOST_MULT:Math.max(0,Math.min(FP.score*per,fpCap()-today));FP.earn=earn;
-    const best=Math.max(Number(q.flapBest)||0,FP.score);const patch={flapBest:best,flapDay:fpDay(),flapToday:boosted?today:today+earn,flapEarn:(Number(q.flapEarn)||0)+earn,flapPlays:(Number(q.flapPlays)||0)+1};tiAdd(patch,earn);
+    const best=Math.max(Number(q.flapBest)||0,FP.score);const patch={flapBest:best,...(q.sb0&&FP.score>(Number(q.flapBestS)||0)?{flapBestS:FP.score}:{}),flapDay:fpDay(),flapToday:boosted?today:today+earn,flapEarn:(Number(q.flapEarn)||0)+earn,flapPlays:(Number(q.flapPlays)||0)+1};tiAdd(patch,earn);
     if(FP.score>0||best!==(Number(q.flapBest)||0)){Object.assign(S.prefs[S.me]=S.prefs[S.me]||{},patch);fpStats();setMe&&setMe();try{await db.doc("prefs/"+S.me).update(patch)}catch(_){toast("That score didn't save. Check your connection.")}}
     if(earn>0)haptic&&haptic()};
   let last=performance.now(),acc=0;
@@ -6665,7 +6676,7 @@ function bjSig(){const w=bjWho(),p=S.prefs[w]||{};return stableStr([w,p.bjShuffl
 /* Blackjack profit/loss includes win-streak bonuses and Revenge (rat) bonuses */
 const bjPL=q=>(Number(q&&q.bjNet)||0)+(Number(q&&q.bjBonus)||0)+(Number(q&&q.revengeEarn)||0);
 function bjBoard(){
-  const rows=Object.keys(S.prefs).filter(id=>Number(S.prefs[id].bjHands)>0).map(id=>({id,net:bjPL(S.prefs[id]),n:Number(S.prefs[id].bjHands)||0})).sort((a,b)=>b.net-a.net||b.n-a.n);
+  const rows=Object.keys(S.prefs).map(id=>[id,stq(S.prefs[id])]).filter(([id,q])=>Number(q.bjHands)>0).map(([id,q])=>({id,net:bjPL(q),n:Number(q.bjHands)||0})).sort((a,b)=>b.net-a.net||b.n-a.n);
   return `<section class="card bjlb"><h3>Blackjack leaderboard</h3>${rows.length?rows.map((r,i)=>`<button type="button" class="strow" data-member="${esc(r.id)}"><span class="strank num">${i+1}</span>${pic(r.id)}<span class="stmain"><span class="mrname">${esc(nm(r.id))}${r.id===S.me?' <span class="muted small">(you)</span>':""}</span><span class="stline"><span><span class="stlbl">Up/down</span> <span class="num ${r.net>0?"pos":r.net<0?"neg":""}">${r.net>0?"+":r.net<0?"−":""}${Math.abs(r.net).toLocaleString()} BB</span></span><span><span class="stlbl">Hands</span> <span class="num">${r.n.toLocaleString()}</span></span></span></span></button>`).join(""):`<p class="small muted">Nobody's played yet. Be the first at the table.</p>`}</section>`;
 }
 /* A round can hold up to 4 player hands after splits. Older saved rounds used a single "player" array. */
@@ -6747,7 +6758,7 @@ function viewBJ(){
   {const d21=Math.max(0,(Number(p.bjDealer21)||0)-(Number(p.revMark)||0)),earned=revEarned(p),used=Number(p.revengeUsed)||0;
     if(!watching&&earned<=used){const left=REV_N-(d21%REV_N);html=html.replace('<section class="felt">',`<section class="felt"><div class="revcount" title="Dealer 21s until Revenge">🎯 <b>${left}</b> <span class="small">dealer 21${left===1?"":"s"}</span><span class="revbar"><i style="width:${(d21%REV_N)/REV_N*100}%"></i></span></div>`)}
     if(!watching&&!live&&earned>used)html=html.replace('<section class="felt">','<section class="felt"><button type="button" class="revbtn" data-revenge>🎯 REVENGE<small>500 hit · 1K headshot</small></button>')}
-  html+=`<p class="small muted bjfoot">${watching?esc(nm(me))+" · ":""}Blackjack ${net>=0?"up":"down"} <strong class="num ${net>0?"pos":net<0?"neg":""}">${net>0?"+":net<0?"−":""}${Math.abs(net).toLocaleString()} BB</strong> all-time · ${Number(p.bjHands)||0} hands · 2-deck shoe, dealer stands on 17, blackjack pays 3:2, split up to 4 hands, double after split, no max bet. Doesn't count toward the betting leaderboard.${watching?"":sessLn("bj",net,live?round.hands.reduce((a,h)=>a+(Number(h.bet)||0),0):0)}</p><div id="bjLB">${bjLiveStrip()}${bjBoard()}</div></div>`;
+  html+=`<p class="small muted bjfoot">${watching?esc(nm(me))+" · ":""}Blackjack ${(ns=>`${ns>=0?"up":"down"} <strong class="num ${ns>0?"pos":ns<0?"neg":""}">${ns>0?"+":ns<0?"−":""}${Math.abs(ns).toLocaleString()} BB</strong>`)(bjPL(stq(p)))} overall · ${Number(stq(p).bjHands)||0} hands · 2-deck shoe, dealer stands on 17, blackjack pays 3:2, split up to 4 hands, double after split, no max bet. Doesn't count toward the betting leaderboard.${watching?"":sessLn("bj",net,live?round.hands.reduce((a,h)=>a+(Number(h.bet)||0),0):0)}</p><div id="bjLB">${bjLiveStrip()}${bjBoard()}</div></div>`;
   html=html.replace("%RATD%",String(Math.max(0,endDelay)));
   if(S._gruntPending){S._gruntPending=false;setTimeout(ratGruntSound,Math.max(0,endDelay)*1000)}
   return html;
@@ -6827,9 +6838,9 @@ function viewMine(){
 function viewStandings(){
   const L=ledger();const ids=new Set([...members(),...Object.keys(L.rec)]);
   if(!ids.size)return `<h2>Standings</h2><div class="empty">Standings fill in once bets are graded.</div>`;
-  const inc=!!S.stBJ;if(inc)Object.keys(S.prefs).forEach(id=>{const q=S.prefs[id];if(Number(q.bjHands)>0||Number(q.rlSpins)>0||Number(q.crRolls)>0||Number(q.hlRounds)>0||Number(q.rrGames)>0||Number(q.thGames)>0)ids.add(id)});
+  const inc=!!S.stBJ;if(inc)Object.keys(S.prefs).forEach(id=>{const q=stq(S.prefs[id]);if(Number(q.bjHands)>0||Number(q.rlSpins)>0||Number(q.crRolls)>0||Number(q.hlRounds)>0||Number(q.rrGames)>0||Number(q.thGames)>0)ids.add(id)});
   /* Casino = blackjack + roulette results */
-  const bjOf=id=>{const q=S.prefs[id]||{};return bjPL(q)+(Number(q.rlNet)||0)+crPL(q)+(Number(q.hlNet)||0)+(Number(q.rrNet)||0)+(Number(q.thNet)||0)};
+  const bjOf=id=>{const q=stq(S.prefs[id]||{});return bjPL(q)+(Number(q.rlNet)||0)+crPL(q)+(Number(q.hlNet)||0)+(Number(q.rrNet)||0)+(Number(q.thNet)||0)};
   const rows=[...ids].map(id=>({id,r:L.rec[id]||{w:0,l:0,p:0},net:(L.net[id]||0)+(inc?bjOf(id):0),bj:bjOf(id)})).sort((a,b)=>b.net-a.net||b.r.w-a.r.w);
   const cl=v=>v>0?"pos":v<0?"neg":"";
   let h=`<div class="sthead"><h2>Season standings</h2><button type="button" class="tgl" role="switch" aria-checked="${inc}" data-stbj="${inc?0:1}"><span class="tgllbl">Include casino</span><span class="track"><span class="knob"></span></span></button></div>${inc?`<p class="note">Showing betting profit <strong>plus</strong> casino winnings and losses (blackjack, roulette and craps).</p>`:""}<p class="small muted">Ranked by profit: BiggieBucks won minus BiggieBucks lost on graded bets. Everyone starts with 25,000 BB, and anyone under 10,000 gets +1,000 a day at 1 AM (up to 10,000). Top-ups don't count as profit.</p>

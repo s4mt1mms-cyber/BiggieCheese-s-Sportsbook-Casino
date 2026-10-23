@@ -16,6 +16,22 @@ if fix == "kjflap":
         tx.update(ref, {"flapToday": new, "liveT": int(time.time() * 1000), "wv": "fix." + str(int(time.time()))})
         return old, new, x.get("flapDay")
     print("flapToday", run(fs.transaction()))
+elif fix == "statreset":
+    # Oct 23 (owner): leaderboards/stats start over. Snapshot every player's stat fields into prefs.sb0; the app shows value - sb0.
+    # Balances are untouched (they keep reading the raw fields).
+    def n(x, k): v = x.get(k); return v if isinstance(v, (int, float)) else 0
+    def crsum(b):
+        if isinstance(b, dict): return sum(v for v in b.values() if isinstance(v, (int, float)))
+        return 0
+    cnt = 0
+    for d in fs.collection("prefs").stream():
+        x = d.to_dict() or {}
+        if x.get("sb0"): continue
+        sb0 = {"bjPL": n(x, "bjNet") + n(x, "bjBonus") + n(x, "revengeEarn"), "crPL": n(x, "crNet") + crsum(x.get("crBets")), "at": int(time.time() * 1000)}
+        for k in ["bjHands", "rlNet", "rlSpins", "crRolls", "hlNet", "hlRounds", "rrNet", "rrWins", "rrGames", "thNet", "thWins", "thGames", "flapEarn", "flapPlays"]:
+            sb0[k] = n(x, k)
+        d.reference.update({"sb0": sb0, "wv": "fix." + str(int(time.time()))}); cnt += 1
+    print("stat baselines written:", cnt)
 else:
     print("unknown fix", fix); sys.exit(1)
 done.set({fix: int(time.time() * 1000)}, merge=True)
