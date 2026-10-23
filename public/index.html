@@ -5246,7 +5246,7 @@ const CR_LIM=[Infinity,1000,100,10,5,3,1,15,1]; /* print run per card by rarity 
 const limTxt=l=>isFinite(l)?Number(l).toLocaleString():"∞";
 /* a set opens once it has cards; until it is marked live, only the admin can see it (for testing) */
 /* Fantasyland is locked (owner, Oct 23) until he says to unlock: flip FL_OPEN to true. Until then only the admin sees/opens it */
-const FL_OPEN=false;
+const FL_OPEN=true;
 const setOpen=k=>{if(k==="lm")return true;if(k==="fl")return FL_OPEN||!!S.canEdit;if(k==="pm")return pmLaunched();const m=(S.cardMeta||{})[k];return !!(m&&(m.cards||[]).length&&(m.live||S.canEdit))};
 const cardSet=cid=>String(cid).split("-")[0];
 /* per-slot odds (%) by pack before floors; floors = minimum rarity for each slot */
@@ -5990,6 +5990,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:80,d:"Oct 23",t:[["🌈","New collection: Fantasyland is open! Find it in Cards → Shop"]]},
  {v:79,d:"Oct 23",t:[["📊","Every casino game now shows how much you're up or down this session, under your all-time total"]]},
  {v:78,d:"Oct 23",t:[["🔥","Burning Claire now pays 35,000 BB"]]},
  {v:77,d:"Oct 23",t:[["🛠️","Fixed: an out-of-date app left open from before the deflation could still spend old balances and push people negative. Those old tabs can't make changes anymore; just refresh"]]},
