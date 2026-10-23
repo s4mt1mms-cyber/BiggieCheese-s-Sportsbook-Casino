@@ -5305,13 +5305,13 @@ const CARD_VAL=[500,1500,5000,20000,60000,150000,1500000,25000,1000000];
 const PK_EM=["","◆","★","✦","🔥","🏆","🐉","💗","👑"];
 const QS_VAL=[20,60,200,800,2400,6000,66667,333,0];/* Oct 23 deflation: ÷15 */
 const PACKS=[
-  {id:"grey",r:0,name:"Common Pack",price:3000,n:5,odds:[84.698,13,1.8,.2,.302,0,0],floors:[0,0,0,0,0]},
-  {id:"green",r:1,name:"Uncommon Pack",price:7500,n:5,odds:[69.394,24,5,.9,.505,.201,0],floors:[1,0,0,0,0]},
-  {id:"blue",r:2,name:"Rare Pack",price:15000,n:5,odds:[54.597,30,12,2.5,.5,.403,0],floors:[2,0,0,0,0]},
-  {id:"purple",r:3,name:"Super Rare Pack",price:30000,n:5,odds:[36.627,33,19,8.94,1.6,.813,.02],floors:[2,2,0,0,0]},
-  {id:"red",r:4,name:"Elite Pack",price:75000,n:5,coin:{0:3},tune:[[3,.55]],odds:[27.979,32,25,10,4,.971,.05],floors:[3,2,0,0,0]},
-  {id:"gold",r:5,name:"Grail Pack",price:100000,n:5,tune:[[4,.205],[5,.125,6]],odds:[21,20,22,16,16.1,5,.1],floors:[3,3,3,0,0]},
-  {id:"plat",r:6,name:"Dragon Pack",price:250000,n:5,tune:[[5,.20,6]],odds:[21,20,22,16,16,5,.2],fixed:[3,4],custom:{2:[0,0,65,30,5,0,0],3:[0,0,0,0,1,0,0]},floors:[0,0,2,4,4],last:"renorm",lastOdds:[0,0,0,0,50,45,5]}];
+  {id:"grey",r:0,name:"Common Pack",price:1000,n:5,odds:[84.698,13,1.8,.2,.302,0,0],floors:[0,0,0,0,0]},
+  {id:"green",r:1,name:"Uncommon Pack",price:2500,n:5,odds:[69.394,24,5,.9,.505,.201,0],floors:[1,0,0,0,0]},
+  {id:"blue",r:2,name:"Rare Pack",price:5000,n:5,odds:[54.597,30,12,2.5,.5,.403,0],floors:[2,0,0,0,0]},
+  {id:"purple",r:3,name:"Super Rare Pack",price:10000,n:5,odds:[36.627,33,19,8.94,1.6,.813,.02],floors:[2,2,0,0,0]},
+  {id:"red",r:4,name:"Elite Pack",price:25000,n:5,coin:{0:3},tune:[[3,.55]],odds:[27.979,32,25,10,4,.971,.05],floors:[3,2,0,0,0]},
+  {id:"gold",r:5,name:"Grail Pack",price:35000,n:5,tune:[[4,.205],[5,.125,6]],odds:[21,20,22,16,16.1,5,.1],floors:[3,3,3,0,0]},
+  {id:"plat",r:6,name:"Dragon Pack",price:85000,n:5,tune:[[5,.20,6]],odds:[21,20,22,16,16,5,.2],fixed:[3,4],custom:{2:[0,0,65,30,5,0,0],3:[0,0,0,0,1,0,0]},floors:[0,0,2,4,4],last:"renorm",lastOdds:[0,0,0,0,50,45,5]}];
 function pkOdds(p){return p.odds}
 /* chance of each rarity for one slot: fixed slots are exact; floors lift anything below up to the floor (so floors don't inflate the rare odds),
    except a "renorm" slot, which keeps the table's relative odds above the floor (the Dragon pack's last card) */
@@ -6219,6 +6219,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:92,d:"Oct 23",t:[["🃏","Card packs are about a third of the price: Common 1,000 · Uncommon 2,500 · Rare 5,000 · Super Rare 10,000 · Elite 25,000 · Grail 35,000 · Dragon 85,000"]]},
  {v:91,d:"Oct 23",t:[["⚡","Vector now gives 2 boosted Cheese Farm runs a day"],["🦅","Debbie · Dynasty Grail pays 750 BB a day (1.5× a Grail)"]]},
  {v:90,d:"Oct 23",t:[["📖","Card Crafting has a Guide: every level, dividend and card ability in one place"]]},
  {v:89,d:"Oct 23",t:[["🔨","Crafting now always needs copies of the same card, at every rarity"]]},
