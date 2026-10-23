@@ -23,8 +23,11 @@ for l in fs.collection("loans").stream():
 for b in fs.collection("bets").stream():
     x = b.to_dict() or {}
     if pid in (x.get("posterId"), x.get("takerId")) and x.get("status") in ("open", "live"):
-        print("bet", b.id, {k: x.get(k) for k in ("status", "type", "gameId", "stake", "takerStake", "cut10", "stake0", "posterId", "takerId")})
+        print("bet", b.id, {k: x.get(k) for k in ("status", "type", "gameId", "stake", "takerStake", "cut10", "stake0", "posterId", "takerId", "createdAt")})
 for m in fs.collection("market").stream():
     x = m.to_dict() or {}
     if pid in (x.get("seller"), x.get("buyer")) and x.get("status") == "sold":
         print("market", m.id, x.get("price"), "seller" if x.get("seller") == pid else "buyer", round((now - (x.get("at") or 0)) / 36e5, 1))
+for bid in (sys.argv[2:] if len(sys.argv) > 2 else []):
+    x = fs.collection("bets").document(bid).get().to_dict() or {}
+    print("betdetail", bid, {k: x.get(k) for k in ("createdAt", "acceptedAt", "stake", "takerStake", "odds", "legs", "status")})
