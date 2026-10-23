@@ -118,7 +118,7 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   `gameById()` synthesizes a game from the results doc (`nflGame`), `grade()` → `nflGrade` (OT counts; tie/exact line/void =
   push), so the ledger, My bets, recaps and standings need nothing special. Price is re-checked against `meta/nfl` on submit.
   Rules: NFL bets can only be created before `nfl/{wk}.g[id].kick`, and only admins can change them afterwards.
-- **Casino**: Blackjack (`bj*`; 2-deck shoes, streak bonus = `bjStreakBB(n)`: a flat 1,000 BB every 5 wins in a row (5, 10, 15 …; Shrex ×1.5), no deal cooldown), Roulette (`rl*` — note `rl` prefix is ALSO used for live Russian Roulette lobby code),
+- **Casino**: Blackjack (`bj*`; 2-deck shoes, streak bonus = `bjStreakBB(n)`: a flat 1,000 BB every 5 wins in a row (5, 10, 15 …), no deal cooldown), Roulette (`rl*` — note `rl` prefix is ALSO used for live Russian Roulette lobby code),
   Craps (`cr*`), High-Low (`hl*`), Flappy Cheese = Cheese Farm (`fp*`: Press `FP_PRESS` 1/10/30/100/250/500 BB per pipe, Silo `FP_SILO` 5k…500k daily cap; levels
   `prefs.fpPress/fpSilo`, upgrade spend `prefs.farmSpent` in the ledger; Vector card gives one 10× uncapped run/day),
   Revenge rat hunt (`revengeStart`), mining (25 BB/min while the app is on screen).
@@ -174,7 +174,7 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   - `slop` **King Slop** (Grail): 3 roulette respins a day (`SLOP_DAY`) (`prefs.slopDay`/`slopUsed`, `divDay` boundary). After a losing spin,
     "Respin (n left)" voids it: the same write takes the voided net back out of rlNet and adds the new spin's (`rlRespinNet`), no
     extra rlSpins; the new result is final (respin again only while respins remain).
-  - `shrex` **Shrex** (Grail, art pending): blackjack streak bonuses ×1.5 and a green "swamp" glow on avatars/profile pictures (`.swamp`, replaces the Dragon glow).
+  - `shrex` **Shrex** (Grail): a natural blackjack pays 3× the bet (return 4×, in `bjSettle`; was streak ×1.5 until Oct 22) and a green "swamp" glow on avatars/profile pictures (`.swamp`, replaces the Dragon glow).
   - `social` **Diverse Family** (Rare, art pending): pulling it posts "<name> +10 million social credit score!" in league chat. No money.
   - `hilo` **The Grail · Daddy Christian** (Grail, `mv-art-63` in meta/cards_mv; the ability is attached in code by `MV_ABIL` in `mvMerge`):
     High-Low guesses after 4 right in a row (`st.n`, run counter, in `hlSnap`) are priced at `HL_CHR_EDGE` 1.02/p instead of 0.97/p (`hlMultX`).
