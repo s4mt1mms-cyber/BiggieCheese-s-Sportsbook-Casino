@@ -5396,7 +5396,8 @@ const CARD_ABIL={
 const mvAddCards=()=>MV_ADD.map(([k,r,name,o])=>{o=o||{};return{id:"mv-"+k,r,name,sub:"Multiverse",desc:o.desc||(o.img===false?"Art coming soon. Part of the Multiverse collection.":"Part of the Multiverse collection."),full:true,code:true,img:o.img===false?null:`/cards/mv/${k}.webp?v=${MV_IMGV}`,...(o.abil?{abil:o.abil}:{}),...(o.lim?{lim:o.lim}:{}),...(o.pw!=null?{pw:o.pw}:{}),...(o.div!=null?{div:o.div}:{})}});
 /* abilities for cards that live in meta/cards_mv (made with the Admin tools, so they carry no abil field) */
 const MV_ABIL={"mv-art-63":"hilo"};
-function mvMerge(list){const ids=new Set(list.map(c=>c.id));list=list.map(c=>MV_ABIL[c.id]&&!c.abil?{...c,abil:MV_ABIL[c.id]}:c);return[...list,...mvAddCards().filter(c=>!ids.has(c.id))]}
+const MV_DIV={"mv-art-65":750};/* owner, Oct 23: Debbie · Dynasty Grail pays 1.5× the Grail dividend */
+function mvMerge(list){const ids=new Set(list.map(c=>c.id));list=list.map(c=>MV_ABIL[c.id]&&!c.abil?{...c,abil:MV_ABIL[c.id]}:c).map(c=>MV_DIV[c.id]!=null&&c.div==null?{...c,div:MV_DIV[c.id]}:c).map(c=>c.id==="mv-art-72"?{...c,desc:"⚡ FLAPPY BOOST: own this card and you get a Use Boost button on Cheese Farm. Twice a day, a run pays 10× per pipe with no daily cap. Resets at 1 AM ET."}:c);return[...list,...mvAddCards().filter(c=>!ids.has(c.id))]}
 /* daily dividend for one copy: a card's own div overrides the rarity table; the curse card pays nothing */
 const cardDiv=c=>!c||c.abil==="curse"?0:(c.lv||1)>1&&craftable(c)?(c.div!=null?DIV_LV_JOE[1]:DIV_LV[c.r][(c.lv||1)-1]||0):c.div!=null?Number(c.div)||0:CARD_DIV[c.r];
 /* short "per day" label for card faces: 25 → 25, 5000 → 5k, 100000 → 100k */
@@ -5420,7 +5421,7 @@ function activeCards(id){id=id||S.me;const cs=myCards(id),out=[],seen=new Set(),
     if(k==="pm-peter")add(k,"⚡",`Card dividend ×${Math.min(3,Math.pow(1.5,Math.min(3,Number(cs[k])||0)))}`,["div"]);
     if(k==="pm-debby")add(k,"🧙‍♀️","Steals 5,000 BB a day from someone",["div"]);
     if(k==="pm-claire")add(k,"🔥","Can be burned for 35,000 BB",[]);
-    if(k===FP_BOOST_CARD)add(k,"⚡",me?(fpBoostLeft()>0?"10× Flappy run recharging":"10× Flappy run ready"):"One 10× Flappy run a day",["fp"]);
+    if(k===FP_BOOST_CARD)add(k,"⚡",me?(fpBoostLeft()>0?"10× Flappy runs recharging":`${FP_BOOST_DAY-fpBoostUsed()} of ${FP_BOOST_DAY} 10× Flappy runs left today`):`${FP_BOOST_DAY} 10× Flappy runs a day`,["fp"]);
     if(c.r===6)add(k,"🐉",`Dragon: ${CARD_DIV[6].toLocaleString()} BB a day + Dragon Glow`,["div"]);
     /* level abilities from the card database (Oct 23); a player's top level is what counts (ab2), so show it once per card */
     {const A=ab2Of(c);if(A){const v=ab2(A.k,id);if(v>0&&!seen.has("ab2:"+A.k)){seen.add("ab2:"+A.k);add(k,"⚡",A.t(v),AB2_G[A.k]||[])}}}}
@@ -6218,6 +6219,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:91,d:"Oct 23",t:[["⚡","Vector now gives 2 boosted Cheese Farm runs a day"],["🦅","Debbie · Dynasty Grail pays 750 BB a day (1.5× a Grail)"]]},
  {v:90,d:"Oct 23",t:[["📖","Card Crafting has a Guide: every level, dividend and card ability in one place"]]},
  {v:89,d:"Oct 23",t:[["🔨","Crafting now always needs copies of the same card, at every rarity"]]},
  {v:88,d:"Oct 23",t:[["🔨","Card Crafting is here (side menu): combine copies to level cards up. Higher levels pay bigger dividends and unlock stronger abilities"],["🏷️","Every card shows its level. Only your highest-level copy of a card pays its level's dividend"],["⚡","Lots of Multiverse and Fantasyland cards have new abilities. Common to Super Rare abilities switch on at LV 2; Elite and Grail work right away"],["🔁","Trades and loan collateral can ask for a card at a specific level"],["📉","The extra bonus for owning every copy of a card is gone. Full rarity sets still pay 1.25×"]]},
@@ -6802,7 +6804,9 @@ function fpStatsHtml(){const q=S.prefs[S.me]||{},today=fpToday(S.me),FP_CAP=fpCa
 /* Vector (Grail) perk: one 10x Flappy run a day (resets at 1 AM ET with the dividends), no cap on that run */
 const FP_BOOST_CARD="mv-art-72",FP_BOOST_MULT=10,FP_BOOST_CD=864e5;
 const fpHasBoost=()=>Number((((S.prefs[S.me]||{}).cards)||{})[FP_BOOST_CARD])>0;
-const fpBoostLeft=()=>{const at=Number((S.prefs[S.me]||{}).flapBoostAt)||0;return at&&divDay(at)===divDay()?divLeft():0};
+/* owner, Oct 23: Vector gives 2 boosted runs a day (prefs.flapBoostDay/flapBoostN; flapBoostAt kept for the old 1-a-day stamp) */
+const FP_BOOST_DAY=2,fpBoostUsed=()=>{const q=S.prefs[S.me]||{};return q.flapBoostDay===divDay()?Number(q.flapBoostN)||0:(Number(q.flapBoostAt)&&divDay(Number(q.flapBoostAt))===divDay()?1:0)};
+const fpBoostLeft=()=>fpBoostUsed()>=FP_BOOST_DAY?divLeft():0;
 function fpBoostHtml(){if(!fpHasBoost())return "";const left=fpBoostLeft(),armed=FP&&FP.boost;
   if(FP&&FP.boostRun)return `<div class="fpboost on">⚡ BOOST LIVE · every pipe is ${(fpPer()*FP_BOOST_MULT).toLocaleString()} BB · no limit this run</div>`;
   if(left>0){const mm=Math.ceil(left/6e4),h=Math.floor(mm/60),m=mm%60;return `<div class="fpboost cd">⚡ Vector boost recharging · ${h}h ${m}m</div>`}
@@ -6816,7 +6820,7 @@ function fpMount(){const c=$("#fpCanvas");if(!c)return;S._fpStats=null;const ctx
   if(FP&&FP.raf)cancelAnimationFrame(FP.raf);
   FP={st:"ready",y:H/2,vy:0,pipes:[],t:0,score:0,raf:0,msg:""};
   const reset=()=>{FP.st="ready";FP.y=H/2;FP.vy=0;FP.pipes=[];FP.t=0;FP.score=0};
-  const flap=()=>{if(FP.st==="ready"){FP.st="play";FP.vy=FLAP;if(FP.boost&&fpHasBoost()&&fpBoostLeft()<=0){FP.boost=false;FP.boostRun=true;const at=Date.now();S.prefs[S.me].flapBoostAt=at;db.doc("prefs/"+S.me).update({flapBoostAt:at}).catch(()=>{});fpStats()}else FP.boost=false}else if(FP.st==="play")FP.vy=FLAP;else if(FP.st==="over"&&Date.now()-FP.overAt>600)reset()};
+  const flap=()=>{if(FP.st==="ready"){FP.st="play";FP.vy=FLAP;if(FP.boost&&fpHasBoost()&&fpBoostLeft()<=0){FP.boost=false;FP.boostRun=true;const at=Date.now(),n=fpBoostUsed()+1,q=S.prefs[S.me];q.flapBoostAt=at;q.flapBoostDay=divDay();q.flapBoostN=n;db.doc("prefs/"+S.me).update({flapBoostAt:at,flapBoostDay:q.flapBoostDay,flapBoostN:n}).catch(()=>{});fpStats()}else FP.boost=false}else if(FP.st==="play")FP.vy=FLAP;else if(FP.st==="over"&&Date.now()-FP.overAt>600)reset()};
   c.onpointerdown=e=>{e.preventDefault();flap()};
   if(!window._fpKey){window._fpKey=true;document.addEventListener("keydown",e=>{if(S.tab==="flappy"&&(e.code==="Space"||e.code==="ArrowUp")&&$("#fpCanvas")&&!keyInField(e)){e.preventDefault();$("#fpCanvas").onpointerdown(e)}})}
   /* The dealer rat peeks out of a pipe end, bobbing in and out (at most 26px into the gap) */

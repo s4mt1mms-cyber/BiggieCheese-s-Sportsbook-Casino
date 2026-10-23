@@ -338,6 +338,8 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   `rookie` (rat ×2), `gooner` (roulette wins +%), `vail` (`pkPrice`). Bets snapshot bonuses in `bx:{playerId:%}` at create/accept (`bxOf`); the ledger adds
   floor(win·%) to the winner. Daddy Christian: after 6 right in a row the High-Low multiplier doubles. Die for the Whale / Cryptid – Bigfoot: no ability (owner).
 
+- **Oct 23 evening:** Vector = 2 boosted runs a day (`FP_BOOST_DAY`, `prefs.flapBoostDay/flapBoostN`); Debbie · Dynasty Grail (`mv-art-65`) dividend 750 (`MV_DIV` in `mvMerge`). Crafting Guide (`cfGuide`), picker Close bar (`.cfpkfoot`), ability cards first (`cfHasAb`).
+
 ## Live multiplayer (server host)
 `config/mp.serverHost = true` → Cloud Functions host Russian Roulette + Hold'em: clients write inputs
 (`rrin/{id}`, `thin/{id}`, `mpreq/{id}`, `mptick/{id}`), the server runs the game in Firestore transactions and
