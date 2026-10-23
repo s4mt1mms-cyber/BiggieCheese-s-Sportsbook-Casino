@@ -2496,7 +2496,7 @@ async function emBuy(id){const E=EM_BY[id];if(!E||!S.me||!emOn())return;if(S.rea
 function emMyTurn(c){const st=rrSt();return !!(c.act===0||(c.hold&&c.hold.i===0)||c.lFist.visible||(st.phase==="play"&&st.turn===0&&!st.busy&&st.step))}
 /* a shoot-someone / return-fire sequence is on (set by rrShotA, cleared when the guns go down) */
 function emFB(){if(S.tab!=="rr")return false;const c=S.rr3;return !!((S.emFBt&&Date.now()-S.emFBt<60000)||(c&&c.xg&&c.xg.length)||document.querySelector(".rraim"))}
-function emAtTable(){if(S.tab==="rr")return !!(RL.on&&!RL.dead&&S.rr3&&rrSt().alive[0]);if(S.tab==="th")return !!(TH.on&&!TH.spec&&TH.ps&&!(TH.ps.out||[])[TH.my]&&S.rr3);return false}
+function emAtTable(){if(S.tab==="rr")return !!(S.rr3&&!S.rrSpec&&(RL.on?!RL.dead:true)&&rrSt().alive[0]);if(S.tab==="th")return !!(TH.on&&!TH.spec&&TH.ps&&!(TH.ps.out||[])[TH.my]&&S.rr3);return false}
 function emWhy(){const c=S.rr3;if(!c)return "The table is still loading.";if(emFB())return "Not during a shootout.";
   if(S.rrBOnow)return "You're blacked out.";
   if(S.tab==="rr"){if(emMyTurn(c))return "Not while it's your turn.";if(!rrSt().alive[0])return "You're out."}
@@ -2509,6 +2509,7 @@ setInterval(emUI,250);
 function emPlay(id){const E=EM_BY[id];if(!E||!emOn()||!emOwns(S.me,id)||!emAtTable())return;const why=emWhy();if(why)return toast(why);
   const cd=(S.emLast||0)+EM_CD-Date.now();if(cd>0)return toast(`Catch your breath: ${Math.ceil(cd/1000)}s.`);
   const c=S.rr3;if(S.tab==="th"&&TH.up)thHold(false);if(!emStart(c,0,id))return;S.emLast=Date.now();emUI();
+  if(S.tab==="rr"&&!RL.on)return;/* solo vs the bots: nobody else to tell */
   const at=Date.now(),em={id,at};db.doc("rrlook/"+S.me).update({emote:em}).catch(()=>db.doc("rrlook/"+S.me).set({emote:em,at}).catch(()=>{}))}
 
 /* ----- the animation (shared by the table scene and the shop preview) -----
@@ -5624,6 +5625,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:45,d:"Oct 22",t:[["🕺","Your emotes now work in solo Russian Roulette against the bots too"]]},
  {v:44,d:"Oct 22",t:[["🐺","New skin: Cerberus (250,000 BB), an armored jackal with a glowing cyan mane. Aura Shop → Skins"],["🍑","Table Twerk: your camera now watches from across the table"]]},
  {v:43,d:"Oct 22",t:[["💎","New skin: Diamond (250,000 BB). Sit at the live tables as a human player. Aura Shop → Skins"]]},
  {v:42,d:"Oct 22",t:[["🟢","Shrex has a new ability: every blackjack you're dealt pays 3× your bet"]]},
