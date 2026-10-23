@@ -3387,7 +3387,7 @@ function rlRefresh(){const st=rlState(),who=rlWho(),watching=who!==S.me,q=S.pref
   const cnts=watching?{}:(st.cnt||{});
   document.querySelectorAll("[data-rl]").forEach(el=>{const k=el.dataset.rl,v=shown[k]||0;const i=el.querySelector("i");if(i){i.textContent=v?(v>=1000?(Math.round(v/100)/10)+"K":v):"";i.className=v?"on":"";
     const n=Math.min(5,Math.max(v?1:0,cnts[k]||(v?Math.min(5,Math.ceil(Math.log2(v/10+1))):0)));i.style.boxShadow=Array.from({length:Math.max(0,n-1)},(_,j)=>`0 ${(j+1)*3}px 0 -1px #b8860b,0 ${(j+1)*3+1}px 0 -1px #000`).join(",")||"none"}});
-  if(!watching){const bal=Math.max(0,Math.floor(ledger().balOf(S.me))),tot=rlTotal(),chips=bjChips(bal);if(!chips.includes(st.chip))st.chip=chips[0];
+  if(!watching){const bal=Math.max(0,Math.floor(ledger().balOf(S.me))),tot=rlTotal(),chips=[...new Set([100,...bjChips(bal)])].sort((x,y)=>x-y);/* owner: roulette always has a 100 chip */if(!chips.includes(st.chip))st.chip=chips[0];
     const box=$("#rlBetbox");if(box)box.innerHTML=`<div class="chips">${chips.map(v=>`<button type="button" class="chipbtn c${v}${st.chip===v?" sel":""}" data-rlchip="${v}" ${st.spinning?"disabled":""}>${v>=1000?(v/1000)+"K":v}</button>`).join("")}</div>
       <div class="rlctl small"><div class="seg bjmode" role="group" aria-label="Chip mode"><button type="button" data-bjmode="add" aria-pressed="${S.bjMode!=="sub"}">+</button><button type="button" data-bjmode="sub" aria-pressed="${S.bjMode==="sub"}">−</button></div><span class="rltot num">Bet ${tot.toLocaleString()}</span><button class="btn ghost" data-rlclear ${st.spinning?"disabled":""}>Clear</button><button class="btn rlrepeat" data-rlre ${st.spinning||!st.lastBets?"disabled":""}>↻ Repeat last bet</button></div>`;
     const sb=$("#rlSpinBtn");if(sb){sb.disabled=st.spinning||tot<10;sb.innerHTML=st.spinning?"…":`SPIN<small>${tot?tot.toLocaleString():""}</small>`}
@@ -6026,6 +6026,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:87,d:"Oct 23",t:[["🎡","Roulette always has a 100 BB chip now"]]},
  {v:86,d:"Oct 23",t:[["🕺","Skins are 25% off and emotes are half price"],["📊","All casino and betting leaderboards and stats have been reset. Everything counts from today on (your balance didn't change)"]]},
  {v:85,d:"Oct 23",t:[["✨","Auras are half price"]]},
  {v:84,d:"Oct 23",t:[["🏷️","A card's estimated value is now 2× its quick-sell value"]]},
