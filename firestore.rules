@@ -60,6 +60,14 @@ service cloud.firestore {
       return signedIn() && exists(myLinkPath());
     }
 
+    // Oct 23: current app copies stamp every write with a new random "wv". Tabs still running an older copy
+    // (from before the deflation) don't, so their writes are refused instead of spending pre-deflation balances.
+    function freshWrite() {
+      return resource == null
+        ? request.resource.data.keys().hasAll(['wv'])
+        : request.resource.data.diff(resource.data).affectedKeys().hasAll(['wv']);
+    }
+
     function isAdmin() {
       return signedIn() && (
         myEmail() == bootstrapEmail()
@@ -228,7 +236,7 @@ service cloud.firestore {
     match /{coll}/{docId} {
       allow read: if (member() || isAdmin()) && !special(coll);
 
-      allow create, update: if (member() || isAdmin()) && !special(coll) && (
+      allow create, update: if (member() || isAdmin()) && !special(coll) && (isAdmin() || freshWrite()) && (
         isAdmin()
         || (!adminOnly(coll) && !playerOwned(coll))
         || (playerOwned(coll) && isSelf(docId))

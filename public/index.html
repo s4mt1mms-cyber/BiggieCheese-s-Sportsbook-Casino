@@ -2463,7 +2463,8 @@ const SKINS=[{id:"lemur",n:"Ring-tailed Lemur",p:35000,c:0x4d4950,ic:"🐒",d:"G
   {id:"uni",kind:"human",hv:"uni",n:"Unicorn",p:85000,c:0xf2f0f4,ic:"🦄",d:"A plushy unicorn with a pastel mane, a big horn and stubby legs"},
   {id:"pir",kind:"human",hv:"pir",n:"Skeleton Pirate",p:85000,c:0xe6dcc4,ic:"🏴‍☠️",d:"A salty skeleton pirate with his hat and gear. Model: “Skeleton Pirate The Drunk” by FireGoat (CC BY 4.0)"},
   {id:"fox",hid:1,kind:"human",hv:"fox",n:"Fox Girl",p:85000,c:0xcd4e22,ic:"🦊",d:"A red fox in an orange bikini, with a big white-tipped tail"},
-  {id:"paladin",kind:"human",hv:"paladin",n:"The Crusader",p:150000,c:0x8a1010,ic:"⚔️",d:"A blood-soaked dark fantasy paladin in full plate. Model: “THE SAVIOR — Dark Fantasy Paladin” by Atahan (CC BY 4.0)"},
+  {id:"monk",kind:"human",hv:"monk",n:"Shadow Monk",p:150000,c:0x2a2626,ic:"🥷",d:"A hooded dark fantasy assassin with his staff strapped across his back. Model: “Shadow Monk Assassin - Dark Fantasy” by Pigcraft (CC BY 4.0)"},
+{id:"paladin",kind:"human",hv:"paladin",n:"The Crusader",p:150000,c:0x8a1010,ic:"⚔️",d:"A blood-soaked dark fantasy paladin in full plate. Model: “THE SAVIOR — Dark Fantasy Paladin” by Atahan (CC BY 4.0)"},
 {id:"bigfoot",kind:"human",hv:"bigfoot",n:"Bigfoot",p:85000,c:0x3a2a1e,ic:"🦶",d:"The legend himself, fresh out of the woods and ready to gamble. Model: “primitive man ( aadimanav )” by iRahulRajput (CC BY 4.0)"},
 {id:"santa",kind:"human",hv:"santa",n:"Santa",p:85000,c:0xb3121a,ic:"🎅",d:"Ho ho ho. The big man himself in his red suit. Model: “Santa Clause 3D Scan” by Christian Day (CC BY 4.0)"},
   {id:"cerb",kind:"human",hv:"cerb",n:"Cerberus",p:85000,c:0x2a2f36,ic:"🐺",d:"A tall jackal in black armor with glowing cyan fur and a long tail"},
@@ -4050,7 +4051,8 @@ const HUMAN_V={diamond:{f:"diamond",hip:.11,thigh:.396,sh:[.173,.56,.024],L1:.28
   uni:{f:"uni",v:2,nc:0xf1eef0,hip:.1287,thigh:.2241,sh:[.2681,.4449,.0357],L1:.1736,L2:.235,head:[0,.6075,.0179],rise:.1531,lsOff:[.08,.3,-.3],eyes:[.136,.2753,-.2733,.068],eyeYaw:.18,iris:0x0a0a0a,mouth:[0,.115,-.31],tgS:1.5,nr:.1},
   pir:{f:"pirate",v:1,nc:0xe6dcc4,hip:.1336,thigh:.4641,sh:[.1906,.6677,.003],L1:.3909,L2:.287,head:[.0014,.8186,-.0133],rise:.4573,lsOff:[.07,.2,-.15],mouth:[0,.012,-.1],nr:.04},
   fox:{f:"fox",v:1,nc:0xcd4e22,hip:.11,thigh:.396,sh:[.173,.56,.024],L1:.281,L2:.243,head:[0,.704,.01],chest:[0,.214,-.055],rise:.396*1.12,lsOff:[.07,.24,-.2],eyes:[.056,.128,-.112,.036],eyeYaw:.32,iris:0x5aa03c,lid:0xcd4e22,mouth:[0,.03,-.2],tgS:1.1,nr:.058},
-  paladin:{f:"paladin",v:1,ds:1,nc:0x3a3a42,hip:.1233,thigh:.4429,sh:[.2569,.5331,0],L1:.2869,L2:.2452,head:[0,.6769,.0206],rise:.4536,lsOff:[.07,.22,-.2],mouth:[0,.06,-.15],tgS:1.1,nr:.07},
+  monk:{f:"monk",v:1,ds:1,nc:0x1c1a1a,hip:.165,thigh:.2807,sh:[.2,.83,.02],L1:.3197,L2:.2588,head:[0,.96,-.03],rise:.0768,lsOff:[.07,.22,-.2],mouth:[0,.06,-.13],tgS:1,nr:.06},
+paladin:{f:"paladin",v:1,ds:1,nc:0x3a3a42,hip:.1233,thigh:.4429,sh:[.2569,.5331,0],L1:.2869,L2:.2452,head:[0,.6769,.0206],rise:.4536,lsOff:[.07,.22,-.2],mouth:[0,.06,-.15],tgS:1.1,nr:.07},
 bigfoot:{f:"bigfoot",v:2,ds:1,gy:.1,gz:-.1,nc:0x2b2019,hip:.145,thigh:.35,sh:[.32,.71,.03],L1:.3344,L2:.2835,head:[-.01,.87,-.13],rise:.1888,lsOff:[.08,.3,-.3],mouth:[0,.08,-.24],tgS:1.4,nr:.11},
 santa:{f:"santa",v:5,nc:0xb3121a,hip:.1216,thigh:.2947,sh:[.2816,.7156,0],L1:.2319,L2:.2077,head:[0,.8436,-.0256],rise:.0768,lsOff:[.07,.22,-.2],mouth:[0,.09,-.17],nr:.07},
   cerb:{f:"cerb",nc:0x24282e,emis:1,hip:.1038,thigh:.5398,sh:[.1868,.6,.0311],L1:.284,L2:.2475,head:[0,.7038,.0415],rise:.6046,lsOff:[.06,.2,-.12],mouth:[0,.1,-.2],tgS:1.2,nr:.06}};
@@ -5877,11 +5879,25 @@ function dflPatch(id){const q=S.prefs[id]||{},bal=Math.floor(ledger().balOf(id))
   return {dfl:DFL_V,dflAt:Date.now(),rb15:to-bal,rbFrom:bal,rbTo:to,fpPress:0,fpSilo:0,revMark:d21-left*REV_N,revengeUsed:0}}
 const dflLoaded=()=>S.ready&&S.ld.bank&&S.ld.market&&S.ld.loans&&S.ld.adjust&&Date.now()-S.ld.at>4000;
 async function dflOne(id){const ref=db.doc("prefs/"+id),f=await ref.get();if(!f.exists||(f.data()||{}).dfl)return false;const patch=dflPatch(id);await ref.update(patch);Object.assign(S.prefs[id]||{},patch);return true}
+/* One-time balance repairs run by the admin's page (flags in config/fixes). Oct 23: tabs still running the pre-deflation app kept
+   spending pre-deflation balances (King Julian bet 100,000 + 23,000 at 17:32/17:54 UTC after his balance became 31,740), which
+   left balances negative. Writes from those tabs are now refused (wv in firestore.rules + the shim). Repairs:
+   kj40k: void those two bets (refund) and set King Julian's balance to exactly 40,000 (owner).
+   neg0: anyone still below 0 is brought back up to 10,000 (the deflation minimum) with an adjustment. */
+const FIX_KJ="u_8M5oXNoWRCzPXZOwJ2g3nA",FIX_KJ_BETS=["chgaUwQQQBPgnWTNOfHB","1q7n26bnyjnkkbp3dtdh"];
+async function fixSetBal(id,to){const bal=Math.floor(ledger().balOf(id));if(bal===to)return;const cur=(S.adjust&&S.adjust[id])||0,next=cur+(to-bal);
+  await db.doc("adjust/"+id).set({amount:next,at:Date.now(),last:to-bal,note:"repair"});S.adjust=S.adjust||{};S.adjust[id]=next}
+async function fixOnce(){const ref=db.doc("config/fixes"),f=await ref.get(),F=(f.exists&&f.data())||{};
+  if(!F.kj40k){for(const bid of FIX_KJ_BETS){const b=(S.bets||[]).find(x=>x.id===bid);if(b&&b.status==="live"){await db.doc("bets/"+bid).update({status:"void",voidNote:"Placed from an out-of-date app after the deflation (refunded)"});b.status="void"}}
+    _LG=null;await fixSetBal(FIX_KJ,40000);await ref.set({...F,kj40k:Date.now()});F.kj40k=1;console.log("fix kj40k done",Math.floor(ledger().balOf(FIX_KJ)))}
+  if(!F.neg0){_LG=null;const L=ledger(),fixed=[];for(const id of members()){if(!(S.prefs[id]||{}).dfl)continue;const b=Math.floor(L.balOf(id));if(b<0){await fixSetBal(id,DFL_MIN);fixed.push(nm(id)+" "+b)}}
+    await ref.set({...F,neg0:Date.now(),negFixed:fixed});if(fixed.length)toast("Repaired negative balances: "+fixed.join(", "))}renderSoon()}
 async function dflRun(){if(S._dflBusy||!db||!S.me||!dflLoaded())return;S._dflBusy=true;
   try{const q=S.prefs[S.me];if(q&&!q.dfl){if(await dflOne(S.me)){renderSoon();setTimeout(()=>{const x=S.prefs[S.me]||{};toast(`📉 Deflation: your balance is now ${(Number(x.rbTo)||0).toLocaleString()} BB`)},300)}}
     if(S.canEdit&&!S._betCut){S._betCut=1;let k=0;for(const b of S.bets||[]){if(b.cut10||!["open","live"].includes(b.status)||!((b.createdAt||0)<BET_CUT_AT))continue;if(b.type!=="parlay"){const g=gameById(b.gameId);if(g&&grade(b,g))continue}else if(gradeParlay(b))continue;
       const pt={cut10:true,stake0:Number(b.stake)||0,stake:Math.floor((Number(b.stake)||0)/10)};if(b.takerStake!=null){pt.takerStake0=Number(b.takerStake)||0;pt.takerStake=Math.floor((Number(b.takerStake)||0)/10)}
       try{await db.doc("bets/"+b.id).update(pt);Object.assign(b,pt);k++}catch(e){console.warn("bet cut",b.id,e)}}if(k)toast(`Cut ${k} outstanding bet${k>1?"s":""} to 1/10`)}
+    if(S.canEdit&&!S._fixRun){S._fixRun=1;await fixOnce().catch(e=>console.warn("fix",e))}
     if(S.canEdit)for(const id of members()){const p=S.prefs[id];if(!p||p.dfl||id===S.me||isOnline(id))continue;try{await dflOne(id)}catch(_){}}
   }catch(e){console.warn("deflation",e)}finally{S._dflBusy=false;dflGate()}}
 function dflGate(){const q=S.me&&S.prefs[S.me];const need=!!(db&&S.me&&S.ready&&q&&!q.dfl);let o=document.getElementById("dflOv");
@@ -5968,6 +5984,8 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:77,d:"Oct 23",t:[["🛠️","Fixed: an out-of-date app left open from before the deflation could still spend old balances and push people negative. Those old tabs can't make changes anymore; just refresh"]]},
+ {v:76,d:"Oct 23",t:[["🥷","New skin: Shadow Monk (150,000 BB). Aura Shop → Skins"]]},
  {v:75,d:"Oct 23",t:[["🏀","NBA bets: bet real NBA games (moneyline, spread, total) and build NBA parlays. Sports betting → NBA bets in the menu"]]},
  {v:74,d:"Oct 23",t:[["🃏","New pack prices: Common 3,000 · Uncommon 7,500 · Rare 15,000 · Super Rare 30,000 · Elite 75,000 · Grail 100,000 · Dragon 250,000"]]},
  {v:73,d:"Oct 23",t:[["🎯","Pack odds: Elite pack 55% for a Super Rare or better · Grail pack 20.5% Elite or better, 12.5% Grail · Dragon pack 20% Grail or better"],["🧾","Bets that were still open from before the deflation were cut to 1/10 of their size"],["🧙‍♀️","Debby now steals 5,000 a day"],["💵","Top-up is now daily: under 10,000 at 1 AM gets +1,000 (up to 10,000). The Tuesday top-up is gone"],["⚔️","New skin: The Crusader, a dark fantasy paladin (150,000 BB). Aura Shop → Skins"]]},

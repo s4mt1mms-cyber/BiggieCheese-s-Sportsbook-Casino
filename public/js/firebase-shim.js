@@ -589,7 +589,7 @@ async function boot() {
     try {
       const pref = fsMod.doc(fs, "profiles/" + me);
       const cur = await fsMod.getDoc(pref);
-      if (!cur.exists() || cur.data().name !== name) await fsMod.setDoc(pref, { name, at: Date.now() }, { merge: true });
+      if (!cur.exists() || cur.data().name !== name) await fsMod.setDoc(pref, { name, at: Date.now(), wv: "v2." + Math.random().toString(36).slice(2, 10) }, { merge: true });
     } catch (e) { console.warn("profile name not saved", e); }
 
     if (isAdmin) {
@@ -745,12 +745,15 @@ function makeDb(F, fs) {
     return pairs;
   };
 
+  // Oct 23: every write carries a fresh random "wv" (write version). The Firestore rules refuse writes without a new wv,
+  // so a tab still running an older copy of the app (which doesn't know about the deflation) can't change money.
+  const WV = () => "v2." + Math.random().toString(36).slice(2, 10);
   function docRef(ref) {
     return {
       id: ref.id,
       path: ref.path,
       get: () => { meter(collOf(ref.path), 1, 0); return F.getDoc(ref).then(wrapDocSnap, rethrow); },
-      set: (data) => { meter(collOf(ref.path), 0, 1); echo(ref.path); return F.setDoc(ref, encode(data || {})).catch(rethrow); },
+      set: (data) => { meter(collOf(ref.path), 0, 1); echo(ref.path); return F.setDoc(ref, { ...encode(data || {}), wv: WV() }).catch(rethrow); },
       update: async (data) => {
         const pairs = updatePairs(data);
         if (!pairs.length) {
@@ -761,6 +764,7 @@ function makeDb(F, fs) {
           return;
         }
         meter(collOf(ref.path), 0, 1); echo(ref.path);
+        pairs.push(new F.FieldPath("wv"), WV());
         return F.updateDoc(ref, ...pairs).catch(rethrow);
       },
       delete: () => { meter(collOf(ref.path), 0, 1); echo(ref.path); return F.deleteDoc(ref).catch(rethrow); },
@@ -804,7 +808,7 @@ function makeDb(F, fs) {
     return Object.assign(queryRef(c, collOf(c.path)), {
       path: c.path,
       doc: (id) => docRef(id ? F.doc(c, id) : F.doc(c)),
-      add: (data) => { const r = id0(c); meter(collOf(c.path), 0, 1); echo(r.path); return F.setDoc(r, encode(data || {})).then(() => docRef(r), rethrow); },
+      add: (data) => { const r = id0(c); meter(collOf(c.path), 0, 1); echo(r.path); return F.setDoc(r, { ...encode(data || {}), wv: WV() }).then(() => docRef(r), rethrow); },
     });
   }
   const id0 = (c) => F.doc(c);

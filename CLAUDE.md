@@ -304,6 +304,13 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
 - House sports lines: `hv(ml)` prices each side at (2.1/2.2)/p (−110 on a coin flip) from the fair feed lines (scoreboard/futures stay fair; game docs keep
   fair odds); NFL: `tools/jobs/nfl.py` EDGE = 2.1/2.2, spreads/totals −110.
 
+- **Stale-tab guard (Oct 23):** tabs still running a pre-deflation copy kept spending old balances (King Julian went negative). The shim now stamps
+  every set/update/add with a new random `wv`, and `firestore.rules` (`freshWrite()`) refuses non-admin writes whose `wv` didn't change. If you ever
+  write Firestore outside the shim from the app, include a fresh `wv`. Bump the `v2.` prefix in `WV()` + rules if you need to lock out older copies again
+  (rules would then have to check the prefix). One-time repairs run by the admin's page: `fixOnce` (config/fixes: kj40k, neg0).
+- **Skin `monk` "Shadow Monk" (150,000):** CC-BY-4.0 “Shadow Monk Assassin - Dark Fantasy” by Pigcraft. Scratch `monk/bake11.py`: staff below the left hand cut,
+  left arm + staff static on the chest, right arm rigged.
+
 ## Live multiplayer (server host)
 `config/mp.serverHost = true` → Cloud Functions host Russian Roulette + Hold'em: clients write inputs
 (`rrin/{id}`, `thin/{id}`, `mpreq/{id}`, `mptick/{id}`), the server runs the game in Firestore transactions and
