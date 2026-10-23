@@ -5572,7 +5572,10 @@ document.addEventListener("click",e=>{const v=e.target.closest("[data-profcoll]"
 
 /* daily card dividend: first visit after 1 AM Eastern pays per copy owned, by rarity */
 const CARD_DIV=[1,5,25,200,1000,5000,100000,250,0];
-function divDay(){const d=new Date(Date.now()-36e5);return d.toLocaleDateString("en-CA",{timeZone:"America/New_York"})}
+function divDay(t){const d=new Date((t==null?Date.now():t)-36e5);return d.toLocaleDateString("en-CA",{timeZone:"America/New_York"})}
+/* every daily thing (dividends, Debby, King Slop respins, Cheese Farm cap, Vector boost) resets at 1 AM Eastern; ms until the next reset */
+function divLeft(){const p=Object.fromEntries(new Intl.DateTimeFormat("en-US",{timeZone:"America/New_York",hour12:false,hour:"2-digit",minute:"2-digit",second:"2-digit"}).formatToParts(new Date()).map(x=>[x.type,x.value]));
+  const h=Number(p.hour)%24,m=Number(p.minute),sec=Number(p.second),since=(((h-1)+24)%24)*3600+m*60+sec;return Math.max(6e4,(86400-since)*1000)}
 /* one player's daily card dividend right now (the same math the 1 AM payout uses) */
 function divCalc(id){const q=S.prefs[id]||{},cards=q.cards||{};
   /* own every card of a rarity in a collection: 2x. own every copy in existence of a card: 5x (not the Dragon) */
@@ -5658,6 +5661,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:52,d:"Oct 22",t:[["🕐","Everything daily now resets at 1 AM Eastern with the dividends: Cheese Farm daily cap, the Vector 10× run, King Slop respins and Debby"]]},
  {v:51,d:"Oct 22",t:[["🌸","Anime Girl got brand-new legs: smooth, round and no gaps when she sits or dances"]]},
  {v:50,d:"Oct 22",t:[["🌸","Anime Girl is back in the shop with fixed legs and hips (no more holes when she sits)"]]},
  {v:49,d:"Oct 22",t:[["🌸","New skin: Anime Girl (250,000 BB). Aura Shop → Skins"],["🃏","Hold'em: players who sit down late no longer show up invisible"]]},
@@ -6162,17 +6166,17 @@ function fpFarmHtml(){const pl=fpLv("fpPress"),sl=fpLv("fpSilo"),bal=Math.floor(
   return `<section class="card fpfarm"><h3>🧀 Cheese Farm</h3><p class="small muted">Upgrade your farm to earn more from every run. Upgrades are yours for good.</p><div class="fpups">
   ${card("press","🧀","Cheese Press",pl,FP_PRESS,FP_PRESS_COST,v=>v.toLocaleString(),"BB per pipe")}
   ${card("silo","🏚️","Silo",sl,FP_SILO,FP_SILO_COST,v=>v>=1000?(v/1000)+"k":String(v),"BB daily cap")}</div></section>`}
-const fpDay=()=>new Date().toLocaleDateString("en-CA",{timeZone:"America/New_York"});
+const fpDay=()=>divDay();
 function fpToday(id){const q=S.prefs[id]||{};return q.flapDay===fpDay()?Number(q.flapToday)||0:0}
 function fpStatsHtml(){const q=S.prefs[S.me]||{},today=fpToday(S.me),FP_CAP=fpCap(),left=Math.max(0,FP_CAP-today);
   const bh=fpBoostHtml();const rows=Object.keys(S.prefs).filter(id=>Number(S.prefs[id].flapBest)>0).map(id=>({id,b:Number(S.prefs[id].flapBest)||0,e:Number(S.prefs[id].flapEarn)||0})).sort((a,b)=>b.b-a.b).slice(0,12);
   return `${bh}${fpFarmHtml()}<div class="fpinfo"><span><span class="stlbl">Earned today</span> <b class="num pos">${today.toLocaleString()} / ${FP_CAP.toLocaleString()} BB</b></span><span><span class="stlbl">Best</span> <b class="num">${Number(q.flapBest)||0}</b></span><span><span class="stlbl">All-time</span> <b class="num pos">${(Number(q.flapEarn)||0).toLocaleString()} BB</b></span></div>
   ${left<=0?`<p class="small muted fpcapnote">You hit today's ${FP_CAP.toLocaleString()} BB cap. You can still play for a high score; earning resets at midnight ET.</p>`:""}
   <section class="card bjlb"><h3>Flappy leaderboard</h3>${rows.length?rows.map((r,i)=>`<button type="button" class="strow" data-member="${esc(r.id)}"><span class="strank num">${i+1}</span>${pic(r.id)}<span class="stmain"><span class="mrname">${esc(nm(r.id))}${r.id===S.me?' <span class="muted small">(you)</span>':""}</span><span class="stline"><span><span class="stlbl">Best</span> <span class="num">${r.b}</span></span><span><span class="stlbl">Earned</span> <span class="num pos">${r.e.toLocaleString()} BB</span></span><span><span class="stlbl">Farm</span> <span class="num">${fpPer(r.id)}/pipe</span></span></span></span></button>`).join(""):`<p class="small muted">No scores yet. Be the first.</p>`}</section>`}
-/* Vector (Grail) perk: one 10x Flappy run a day, no cap on that run, 24h recharge from when the run starts */
+/* Vector (Grail) perk: one 10x Flappy run a day (resets at 1 AM ET with the dividends), no cap on that run */
 const FP_BOOST_CARD="mv-art-72",FP_BOOST_MULT=10,FP_BOOST_CD=864e5;
 const fpHasBoost=()=>Number((((S.prefs[S.me]||{}).cards)||{})[FP_BOOST_CARD])>0;
-const fpBoostLeft=()=>Math.max(0,(Number((S.prefs[S.me]||{}).flapBoostAt)||0)+FP_BOOST_CD-Date.now());
+const fpBoostLeft=()=>{const at=Number((S.prefs[S.me]||{}).flapBoostAt)||0;return at&&divDay(at)===divDay()?divLeft():0};
 function fpBoostHtml(){if(!fpHasBoost())return "";const left=fpBoostLeft(),armed=FP&&FP.boost;
   if(FP&&FP.boostRun)return `<div class="fpboost on">⚡ BOOST LIVE · every pipe is ${(fpPer()*FP_BOOST_MULT).toLocaleString()} BB · no limit this run</div>`;
   if(left>0){const mm=Math.ceil(left/6e4),h=Math.floor(mm/60),m=mm%60;return `<div class="fpboost cd">⚡ Vector boost recharging · ${h}h ${m}m</div>`}
