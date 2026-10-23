@@ -4960,9 +4960,11 @@ function pkOpen(p,set){const cat=cardsCat(set),used={};const left=c=>c.lim-minte
   /* owner's rule: odds never change with supply. If the rolled rarity has no copies left, you still pull a card of that
      rarity, but it's over the max supply: it isn't added to your collection and is auto-sold at its quick-sell value
      (the returned array carries .over[i] = true for those). Only if the collection has no card of that rarity at all
-     does the slot drop to the next rarity down. */
+     does the slot drop to the next rarity down.
+     Exception (owner, Oct 22): a Dragon that's already in someone's collection can't be pulled again: a Dragon roll with no
+     Dragon copies left drops to the best rarity below that still has copies. */
   const out=Array.from({length:p.n},(_,i)=>{let r=pkPullTier(p,i,set);let pool=cat.filter(c=>c.r===r&&left(c)>0);
-    if(!pool.length){const all=cat.filter(c=>c.r===r);if(all.length)return{cid:all[Math.floor(pkRand()*all.length)].id,over:true}}
+    if(!pool.length&&r!==6){const all=cat.filter(c=>c.r===r);if(all.length)return{cid:all[Math.floor(pkRand()*all.length)].id,over:true}}
     let k=r;while(!pool.length&&k>0){k--;pool=cat.filter(c=>c.r===k&&left(c)>0)}
     if(!pool.length)return null;const c=pool[Math.floor(pkRand()*pool.length)];used[c.id]=(used[c.id]||0)+1;return{cid:c.id,over:false}}).filter(Boolean).sort((a,b)=>cardById(a.cid).r-cardById(b.cid).r);
   const ids=out.map(x=>x.cid);ids.over=out.map(x=>x.over);return ids}

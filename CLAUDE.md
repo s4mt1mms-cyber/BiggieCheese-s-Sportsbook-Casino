@@ -141,7 +141,7 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   Dragon owners get an iridescent profile glow. Platinum pack fees (1.5k dev → owner, 1.5k creator → Zartog) are paid by "the house".
   Supply: `pkLeft(set)` = copies left per rarity (shop shows "Copies left"); `pkBlocked(p,set)` disables a pack once a guaranteed
   slot has nothing left at/above its floor (odds never change: a slot that rolls a sold-out rarity still pulls a card of it, flagged `pulls.over[i]`; it's not added to
-  the collection and auto-sells at `qsVal` into `prefs.quickSold` in the same pack write, shown as "MAX SUPPLY · Auto-sold").
+  the collection and auto-sells at `qsVal` into `prefs.quickSold` in the same pack write, shown as "MAX SUPPLY · Auto-sold"). Exception: Dragons never over-pull; a Dragon roll with every Dragon already owned drops to the best lower rarity with copies left.
   Pack commissions (`PACK_FEES`/`pkFees`, paid by the house, never to yourself): owner 7.5% of every pack price (Zartog's 5%
   Multiverse fee ended Oct 22; he got a one-time 50,000 instead, `ZB_ONCE`/`zbOnce`, bank doc `devfee_zartog_once`) — one `bank/packfee_<buyer>_<to>_<day>_<k>` doc per buyer/recipient/day holding the running total.
   `divCalc(id)` = the dividend math (used by `divCheck` and the collection header `colSumHtml`, which also shows total quick-sell value).
