@@ -233,7 +233,8 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   `cerb` (Cerberus, `HUMAN_V.cerb`): multi-material A-pose model → v2 file: header `bones` list (parent rig object, local pos, rest quaternion,
   bind joint) incl. a rigid tail bone swung back behind the chair; textures atlased 2×2 into `cerb.jpg` + emissive `cerb_e.jpg`; joins between
   the hanging arms and the body were cut in the bake. Bake scripts: scratch `hbake/bake.mjs` (T-pose) / `bake2.mjs` (hand-measured joints).
-  `ag` (Anime Girl): CC-BY-4.0 model “Anime girl” by Imran Aziz (sketchfab.com/bayharborbutcher) — the credit is in the skin's shop
+  `ag` (Anime Girl, since Oct 23): Diamond's body (fuller chest/seat, gloves painted off) + the anime model's head and hair, merged by scratch
+  `hbake/combine.mjs` from diamond.bin + the older ag bake; texture = 2048×1024 atlas (left: Diamond's, skin tinted to the face; right: the anime texture); HUMAN_V.ag = Diamond's rig. Head source: CC-BY-4.0 model “Anime girl” by Imran Aziz (sketchfab.com/bayharborbutcher) — the credit is in the skin's shop
   description and must stay. Half-body model (cut at mid-thigh): `bake5.mjs` generates lower legs + feet (skin-coloured tubes),
   hard texture seam where they join (no UV blend across the atlas); the right arm is found by growing over the welded mesh from the
   elbow (stops at the shoulder plane, dark hair texels, 3.6 from the arm chain) and every arm/body triangle away from the shoulder is cut;
