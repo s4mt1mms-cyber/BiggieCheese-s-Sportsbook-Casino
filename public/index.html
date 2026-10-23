@@ -5422,7 +5422,9 @@ function pkPick(pool,all){const w=c=>c.pw!=null?Number(c.pw):1,uni=a=>a[Math.flo
   const avail=pool.filter(c=>c.pw==null);if(avail.length)return{c:uni(avail)};
   const norm=all.filter(c=>c.pw==null);if(norm.length)return{c:uni(norm),over:true};
   return pool.length?{c:uni(pool)}:{c:uni(all),over:true}}
-function pkOpen(p,set){const cat=cardsCat(set),used={};const left=c=>c.lim-minted(c.id)-(used[c.id]||0);
+/* a pack only ever pulls cards of its own collection (id prefix = the set), even if a catalog doc ever lists another set's card */
+const packCat=set=>cardsCat(set).filter(c=>cardSet(c.id)===set);
+function pkOpen(p,set){const cat=packCat(set),used={};const left=c=>c.lim-minted(c.id)-(used[c.id]||0);
   /* owner's rule: odds never change with supply. If the rolled rarity has no copies left, you still pull a card of that
      rarity, but it's over the max supply: it isn't added to your collection and is auto-sold at its quick-sell value
      (the returned array carries .over[i] = true for those). Only if the collection has no card of that rarity at all
@@ -5435,9 +5437,9 @@ function pkOpen(p,set){const cat=cardsCat(set),used={};const left=c=>c.lim-minte
     if(!pool.length)return null;const c=pool[Math.floor(pkRand()*pool.length)];used[c.id]=(used[c.id]||0)+1;return{cid:c.id,over:false}}).filter(Boolean).sort((a,b)=>cardById(a.cid).r-cardById(b.cid).r);
   const ids=out.map(x=>x.cid);ids.over=out.map(x=>x.over);return ids}
 /* copies left to mint per rarity in a collection (Infinity = unlimited) */
-function pkLeft(set){const out=[0,0,0,0,0,0,0];for(const c of cardsCat(set)){if(c.r>6||c.abil==="curse")continue;out[c.r]+=isFinite(c.lim)?Math.max(0,c.lim-minted(c.id)):Infinity}return out}
+function pkLeft(set){const out=[0,0,0,0,0,0,0];for(const c of packCat(set)){if(c.r>6||c.abil==="curse")continue;out[c.r]+=isFinite(c.lim)?Math.max(0,c.lim-minted(c.id)):Infinity}return out}
 /* a pack can't be sold once one of its guaranteed slots has nothing left at (or above) its floor */
-function pkBlocked(p,set){if(p.r===6&&!cardsCat(set).some(c=>c.r===6))return true;/* no Dragons in this collection (Fantasyland): no Dragon packs */const L=pkLeft(set),above=f=>L.slice(f).reduce((a,b)=>a+b,0);for(let i=0;i<p.n;i++){if(p.fixed&&i<p.fixed.length){if(!(above(p.fixed[i])>0))return true;continue}if(p.custom&&p.custom[i])continue;const f=p.floors[i]||0;if(f>0&&!(above(f)>0))return true}return false}
+function pkBlocked(p,set){if(p.r===6&&!packCat(set).some(c=>c.r===6))return true;/* no Dragons in this collection (Fantasyland): no Dragon packs */const L=pkLeft(set),above=f=>L.slice(f).reduce((a,b)=>a+b,0);for(let i=0;i<p.n;i++){if(p.fixed&&i<p.fixed.length){if(!(above(p.fixed[i])>0))return true;continue}if(p.custom&&p.custom[i])continue;const f=p.floors[i]||0;if(f>0&&!(above(f)>0))return true}return false}
 /* exact per-pack chance of at least one card of rarity >= r (shown in the shop) */
 function pkChance(p,r,set){let miss=1;for(let i=0;i<p.n;i++){const w=pkSlot(p,i,set);miss*=1-w.reduce((a,x,k)=>a+(k>=r?x:0),0)}return 1-miss}
 const fmtPct=x=>x>=.995?"100%":x>=.1?Math.round(x*100)+"%":x>=.01?(x*100).toFixed(1)+"%":(x*100).toFixed(2)+"%";
@@ -5745,7 +5747,7 @@ function viewPacks(){if(!S.me)return `<div class="empty">Sign in to collect card
   return shell(st.tab==="shop"?esc(SET.name):st.tab==="coll"?(st.who&&st.who!==S.me&&S.prefs[st.who]?esc(nm(st.who))+"'s Collection":"My Collection"):"Marketplace",body,st.tab==="shop")}
 function pkTest(){if(!S.canEdit)return;const cat=cardsCat(pkSt().set);const dr=cat.find(c=>c.r===6);if(!dr)return toast("No Dragon card in this set.");const pick=r=>{const l=cat.filter(c=>c.r===r);return l[Math.floor(Math.random()*l.length)].id};
   pkShowOpen(PACKS.find(x=>x.id==="plat"),[pick(1),pick(2),pick(3),pick(4),dr.id])}
-async function pkBuy(id){const set=pkSt().set;const p=PACKS.find(x=>x.id===id);if(!p||S._pkBusy)return;if(pkBlocked(p,set))return toast("This pack is sold out: its guaranteed cards can't be filled anymore.");const bal=Math.floor(ledger().balOf(S.me));if(bal<p.price)return toast("Not enough BiggieBucks for that pack.");
+async function pkBuy(id){const set=pkSt().set||"lm";const p=PACKS.find(x=>x.id===id);if(!p||S._pkBusy||!setOpen(set))return;if(pkBlocked(p,set))return toast("This pack is sold out: its guaranteed cards can't be filled anymore.");const bal=Math.floor(ledger().balOf(S.me));if(bal<p.price)return toast("Not enough BiggieBucks for that pack.");
   S._pkBusy=true;try{const pulls=pkOpen(p,set);if(!pulls.length){S._pkBusy=false;return toast("Every card in this collection is sold out.")}cimgPrefetch(pulls);const q=S.prefs[S.me]=S.prefs[S.me]||{};const cards={...(q.cards||{})},add={};const ov=pulls.over||[];let autoQS=0;
     pulls.forEach((cid,i)=>{if(ov[i]){autoQS+=qsVal(cardById(cid));return}cards[cid]=(Number(cards[cid])||0)+1;add[cid]=cards[cid]});
     const patch={packSpent:(Number(q.packSpent)||0)+p.price,cards:add,packsOpened:(Number(q.packsOpened)||0)+1};if(autoQS>0)patch.quickSold=(Number(q.quickSold)||0)+autoQS;
