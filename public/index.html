@@ -2748,7 +2748,8 @@ function mySummary(){
 }
 function liveSummary(){
   const me=S.me;let win=0,loss=0,n=0;
-  for(const b of S.bets){const g=gameById(b.gameId);if(!g||b.status!=="live"||grade(b,g))continue;
+  for(const b of S.bets){if(b.type==="parlay"){if(b.posterId===me&&b.status==="live"&&gradeParlay(b)==null){win+=parlayWin(b);loss+=Number(b.stake)||0;n++}continue}
+    const g=gameById(b.gameId);if(!g||b.status!=="live"||grade(b,g))continue;
     if(b.posterId!==me&&b.takerId!==me)continue;
     const tS=b.takerStake!=null?Number(b.takerStake):Number(b.stake),poster=b.posterId===me;
     win+=poster?tS:Number(b.stake);loss+=poster?Number(b.stake):tS;n++}
@@ -2831,6 +2832,10 @@ async function placeHouseBet(){const p=S.housePick;if(!p)return;const stake=Math
 
 
 /* Everyone's live parlays, shown on the Board */
+function myParlayRow(b){const r=gradeParlay(b),win=parlayWin(b),odds=toAmerican((b.legs||[]).reduce((a,L)=>a*decOdds(L.odds),1));
+  return `<div class="pmine"><div class="pbhead"><span><b>${(b.legs||[]).length}-leg parlay</b> <span class="num">${odds>0?"+":""}${odds}</span></span>${b.status==="void"?'<span class="pill push">Void</span>':r==="poster"?'<span class="pill win">Won</span>':r==="taker"?'<span class="pill loss">Lost</span>':r==="push"?'<span class="pill push">Push</span>':'<span class="pill live">Live</span>'}</div>
+    <div>${(b.legs||[]).map(L=>{const g=gameById(L.gameId),x=g?grade({side:L.side,line:L.line},g):null;return `<span class="pl ${x==="poster"?"w":x==="taker"?"l":""}">${x==="poster"?"✅":x==="taker"?"❌":x==="push"?"➖":"⏳"} ${esc(L.label)} <span class="num">${L.odds>0?"+":""}${L.odds}</span></span>`}).join("")}</div>
+    <div class="small"><b>${Number(b.stake).toLocaleString()} BB</b> ${r==="poster"?`won <b class="pos">+${win.toLocaleString()} BB</b>`:r==="taker"?`<b class="neg">lost</b>`:`to win <b class="pos">${win.toLocaleString()} BB</b>`} · ${esc(when(b.createdAt))}</div></div>`}
 function boardParlaysHtml(){const ps=S.bets.filter(b=>b.type==="parlay"&&b.status==="live").sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));if(!ps.length)return "";
   return `<h3>Parlays vs the House</h3><div class="card parlay">${ps.map(b=>{const r=gradeParlay(b),win=parlayWin(b);const odds=toAmerican((b.legs||[]).reduce((a,L)=>a*decOdds(L.odds),1));
     return `<div class="pmine"><div class="pbhead"><button type="button" class="mrow" data-member="${esc(b.posterId)}">${pic(b.posterId)}<span class="mrname">${esc(nm(b.posterId))}</span></button><span class="num">${(b.legs||[]).length}-leg ${odds>0?"+":""}${odds}</span>${r==="poster"?'<span class="pill win">Won</span>':r==="taker"?'<span class="pill loss">Lost</span>':r==="push"?'<span class="pill push">Push</span>':'<span class="pill live">Live</span>'}</div>
@@ -5993,6 +5998,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:81,d:"Oct 23",t:[["🎟️","My bets now shows all your live and pending bets and parlays at the top, plus your settled parlays"]]},
  {v:80,d:"Oct 23",t:[["🌈","New collection: Fantasyland is open! Find it in Cards → Shop"]]},
  {v:79,d:"Oct 23",t:[["📊","Every casino game now shows how much you're up or down this session, under your all-time total"]]},
  {v:78,d:"Oct 23",t:[["🔥","Burning Claire now pays 35,000 BB"]]},
@@ -6779,9 +6785,16 @@ function viewMine(){
   const me=S.me;if(!me)return `<div class="empty">Sign in to see your bets.</div>`;
   const mine=S.bets.filter(b=>(b.posterId===me||b.takerId===me||b.target===me)&&b.status!=="cancelled"&&gameById(b.gameId));
   const recaps=weekRecaps(me),recapHtml=recaps.length?`<section class="card"><h3>Payout summary</h3>${recaps.map(W=>recapCard(W)).join("")}</section>`:"";
-  const nflPs=S.bets.filter(b=>b.posterId===me&&b.type==="parlay"&&(nflIsBet(b)||nbaIsBet(b))&&b.status!=="cancelled").sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)),nflPH=nflPs.length?`<h3>NFL & NBA parlays</h3><div class="card parlay">${nflPs.slice(0,30).map(b=>nbaIsBet(b)?nbaBetRow(b):nflBetRow(b)).join("")}</div>`:"";
-  if(!mine.length)return `<h2>My bets</h2>${liveSummary()}${recapHtml}${nflPH}<div class="empty"><strong>You haven't bet yet.</strong><span class="small">Post an offer on any matchup from the Board, or accept one someone else posted.</span></div>`;
-  const byWk={};for(const b of mine){const w=Number(gameById(b.gameId).week);(byWk[w]=byWk[w]||[]).push(b)}
+  /* every parlay of mine (league House parlays + NFL + NBA), and everything still in play at the top */
+  const allPs=S.bets.filter(b=>b.posterId===me&&b.type==="parlay"&&b.status!=="cancelled").sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  const pOpen=b=>b.status==="live"&&gradeParlay(b)==null&&!(b.status==="void");
+  const sOpen=b=>{if(b.status!=="live"&&b.status!=="open")return false;const g=gameById(b.gameId);return !!g&&grade(b,g)==null};
+  const rowOf=b=>nbaIsBet(b)?nbaBetRow(b):nflIsBet(b)?nflBetRow(b):b.type==="parlay"?myParlayRow(b):betRow(b,gameById(b.gameId),true);
+  const openB=[...allPs.filter(pOpen),...mine.filter(sOpen)].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));const openIds=new Set(openB.map(b=>b.id));
+  const liveH=openB.length?`<h3>Live & pending <span class="muted small">(${openB.length})</span></h3><div class="card parlay">${openB.map(rowOf).join("")}</div>`:"";
+  const doneP=allPs.filter(b=>!openIds.has(b.id)),nflPH=liveH+(doneP.length?`<h3>Settled parlays</h3><div class="card parlay">${doneP.slice(0,30).map(rowOf).join("")}</div>`:"");
+  if(!mine.length)return `<h2>My bets</h2>${liveSummary()}${recapHtml}${nflPH}${allPs.length?"":`<div class="empty"><strong>You haven't bet yet.</strong><span class="small">Post an offer on any matchup from the Board, or accept one someone else posted.</span></div>`}`;
+  const byWk={};for(const b of mine){if(openIds.has(b.id))continue;const w=Number(gameById(b.gameId).week);(byWk[w]=byWk[w]||[]).push(b)}
   const L=ledger();
   return `<h2>My bets</h2>`+liveSummary()+recapHtml+nflPH+Object.keys(byWk).map(Number).sort((a,b)=>b-a).map(w=>{
     const net=(L.byWeek[w]&&L.byWeek[w].net[me])||0;
