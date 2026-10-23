@@ -1741,6 +1741,11 @@ html.lite .aw.fx.au-zap::before{filter:url(#auZap) drop-shadow(0 0 calc(var(--s)
 .auhero .t{display:flex;flex-direction:column;gap:4px;min-width:0}.auhero .t span{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 .auhero .t b{font-size:20px}.auhero .t i{font-style:normal;color:var(--muted);font-size:13px}
 .auhero .t button{align-self:flex-start;margin-top:4px}
+.skbig{flex:none;width:84px;height:84px;border-radius:50%;display:grid;place-items:center;font-size:46px;background:rgba(255,255,255,.06);border:1px solid var(--line,#2e2816)}
+.skcol{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;margin:0 0 6px}
+.skchip{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:104px;padding:12px 6px;border-radius:14px;background:var(--paper,#131313);border:1px solid var(--line,#2e2816);color:inherit;font:inherit;cursor:pointer;text-align:center}
+.skchip .ic{font-size:32px;line-height:1}.skchip b{font-size:13px;line-height:1.2}.skchip i{font-style:normal;font-size:12px;color:var(--muted)}
+.skchip.on{border-color:#5cff72;box-shadow:inset 0 0 0 1px #5cff72;cursor:default}.skchip.on i{color:#5cff72;font-weight:700}
 .aush{font:700 12px/1 var(--display);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:24px 0 10px;display:flex;justify-content:space-between}
 .augrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .auit{position:relative;background:var(--paper,#131313);border:1px solid var(--line,#2e2816);border-radius:14px;padding:22px 10px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;overflow:hidden;text-align:center}
@@ -2454,7 +2459,11 @@ function skShopHtml(){const me=S.me,bal=Math.floor(ledger().balOf(me)),ask=S.skA
     if(skOwns(me,x.id))return `<button type="button" class="aubtn ghost" data-sk="eq" data-id="${x.id}">Wear it</button>`;
     if(ask===x.id)return `<div class="auask"><button type="button" class="aubtn" data-sk="ok" data-id="${x.id}">Buy for ${x.p.toLocaleString()} BB</button><button type="button" class="aubtn ghost" data-sk="no">Cancel</button></div>`;
     return `<button type="button" class="aubtn${bal<x.p?" short":""}" data-sk="buy" data-id="${x.id}">Buy</button>`};
-  return `<div class="aush"><span>Skins</span><span>from ${Math.min(...SKINS.map(x=>x.p)).toLocaleString()} BB</span></div><div class="small muted" style="margin:-4px 2px 10px">Show up as a different animal at the live Russian Roulette and Hold'em tables. Everyone at the table sees it. Takes effect the next time you sit down.</div>
+  /* my collection: what I'm wearing + every skin I own, tap to wear (like the aura picker) */
+  const mine=SKINS.filter(x=>skOwns(me,x.id)),W=cur?SKIN_BY[cur]:null,opts=[{id:"none",ic:"🐾",n:"My animal"},...mine];
+  const col=`<div class="auhero"><div class="skbig">${W?W.ic:"🐾"}</div><div class="t"><span>Wearing now</span><b>${W?esc(W.n):"Your normal animal"}</b><i>${W?"Everyone at the live tables sees it. Changes show the next time you sit down.":mine.length?"Pick one of your skins below.":"Buy a skin below and it shows up here."}</i>${W?`<button type="button" class="aubtn ghost" style="width:auto;min-height:34px;padding:0 16px;font-size:13px" data-sk="eq" data-id="none">Take it off</button>`:""}</div></div>
+  <div class="aush"><span>My skins</span><span>${mine.length} owned</span></div>${mine.length?`<div class="skcol">${opts.map(x=>{const on=(cur||"none")===x.id;return `<button type="button" class="skchip${on?" on":""}"${on?' aria-pressed="true"':` data-sk="eq" data-id="${x.id}"`}><span class="ic" aria-hidden="true">${x.ic}</span><b>${esc(x.n)}</b><i>${on?"✓ Wearing":"Wear"}</i></button>`}).join("")}</div>`:`<p class="small muted">No skins yet.</p>`}`;
+  return col+`<div class="aush"><span>Shop</span><span>from ${Math.min(...SKINS.map(x=>x.p)).toLocaleString()} BB</span></div><div class="small muted" style="margin:-4px 2px 10px">Show up as a different animal at the live Russian Roulette and Hold'em tables. Everyone at the table sees it. Takes effect the next time you sit down.</div>
   <div class="augrid">${SKINS.filter(x=>!x.hid||S.canEdit||skOwns(me,x.id)).map(x=>{const o=skOwns(me,x.id);return `<div class="auit emit${cur===x.id?" on":""}" data-skitem="${x.id}">${o?`<span class="auown">Owned</span>`:""}<div class="emprev" data-emprev="skin:${x.id}"></div><b>${esc(x.ic+" "+x.n)}</b><span class="small muted">${esc(x.d)}</span><span class="aupr${o?" own":""}">${o?"Yours to keep":x.p.toLocaleString()+" BB"}</span>${btn(x)}</div>`}).join("")}</div>`}
 function skClick(t){const k=t.dataset.sk,id=t.dataset.id;if(!S.me)return toast("Sign in first.");if(S.readOnly)return toast("View only. Ask the commish for access.");
   if(k==="no"){S.skAsk=null;render();return}
@@ -5661,6 +5670,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:54,d:"Oct 23",t:[["🐒","Skins now have a collection like auras: see what you're wearing and switch between your skins in one tap (Aura Shop → Skins)"],["🌸","Anime Girl got a pink bikini"]]},
  {v:53,d:"Oct 23",t:[["🌸","Anime Girl rebuilt from scratch on a full body: no more holes anywhere"]]},
  {v:52,d:"Oct 22",t:[["🕐","Everything daily now resets at 1 AM Eastern with the dividends: Cheese Farm daily cap, the Vector 10× run, King Slop respins and Debby"]]},
  {v:51,d:"Oct 22",t:[["🌸","Anime Girl got brand-new legs: smooth, round and no gaps when she sits or dances"]]},
