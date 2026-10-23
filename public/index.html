@@ -5756,6 +5756,13 @@ async function zbOnce(){if(!db||S.me!=="u_IfmXeDmDg1B3W4naCzVbSA"||!S.ready||!Ar
 async function slopFixOnce(){if(!db||S.me!=="u_IfmXeDmDg1B3W4naCzVbSA"||!S.ready)return;const q=S.prefs[S.me];if(!q||q.slopFix==="1022")return;
   const d={slopUsed:0,slopDay:divDay(),slopFix:"1022"};Object.assign(q,d);try{await db.doc("prefs/"+S.me).update(d);renderSoon()}catch(_){delete q.slopFix}}
 setTimeout(slopFixOnce,6000);setInterval(slopFixOnce,120000);
+/* owner test (Oct 23): Anime Girl instead of Diamond on the owner's account until 2 AM ET, then Diamond back (skSwap 1 = swapped, 2 = restored) */
+const SK_SWAP_END=Date.parse("2026-10-23T06:00:00Z");
+async function skSwapTest(){if(!db||S.me!=="u_IfmXeDmDg1B3W4naCzVbSA"||!S.ready)return;const q=S.prefs[S.me];if(!q)return;const st=Number(q.skSwap)||0;let d=null;
+  if(Date.now()<SK_SWAP_END&&!st)d={skins:{diamond:false,ag:true},skin:"ag",skSwap:1};else if(Date.now()>=SK_SWAP_END&&st===1)d={skins:{diamond:true,ag:false},skin:"diamond",skSwap:2};
+  if(!d)return;const prev={skins:{...(q.skins||{})},skin:q.skin,skSwap:q.skSwap};q.skins={...(q.skins||{}),...d.skins};q.skin=d.skin;q.skSwap=d.skSwap;
+  try{await db.doc("prefs/"+S.me).update(d);renderSoon()}catch(_){Object.assign(q,prev)}}
+setTimeout(skSwapTest,5000);setInterval(skSwapTest,30000);
 setTimeout(zbOnce,9000);setInterval(zbOnce,120000);setInterval(chatPrune,30*60000);
 async function quickSell(cid){if(S._qsBusy)return;S._qsBusy=true;try{await quickSell_(cid)}finally{S._qsBusy=false}}
 async function quickSell_(cid){const c=cardById(cid);if(!c||cardCount(cid)<1)return toast("You don't have that card.");const v=qsVal(c);if(!(v>0))return toast("This card can't be quick-sold.");const q=S.prefs[S.me];const left=cardCount(cid)-1,qs=(Number(q.quickSold)||0)+v;
