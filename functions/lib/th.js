@@ -8,7 +8,7 @@
 // sec = mpsecret/th (clients can't read it): the deck and every seat's hole cards for the hand in play.
 // ctx = { now, looks: {uid: rrlook doc}, rnd(), randN(n), deck(), holes: [], chat: [] } — holes/chat are
 //       outputs the caller writes in the same transaction.
-import { thEval, thPots, thAward, thLive, thNext, thFirstNeed, thLegal, thPut, thDo, thStreet, thBotMove } from "./thpure.js";
+import { thEval, thPots, thAward, thRake, thLive, thNext, thFirstNeed, thLegal, thPut, thDo, thStreet, thBotMove } from "./thpure.js";
 import { SEATBOT, ANIMAL_G, liveSeats, leader, idle, cleanName, num } from "./lobby.js";
 
 export const TH_TURN = 30000;
@@ -308,7 +308,8 @@ function showdown(T, sec, ctx) {
   const live = thLive(H), nl = live.filter(Boolean).length, pots = thPots(H.tot, live);
   let score = live.map((x) => (x ? 1 : 0));
   if (nl > 1) score = live.map((x, g) => { if (!x) return -1; const e = thEval(hole[g].concat(H.board)); H.show[g] = hole[g]; H.hn[g] = e.n; return e.v; });
-  const win = thAward(pots, score, H.btn);
+  const rk = thRake(pots, H.tot, live, H.board); H.rk = rk.rake; H.rkT = (H.rkT || 0) + rk.rake;
+  const win = thAward(rk.pots, score, H.btn);
   H.street = "show"; H.win = win; H.pots = pots.map((p) => p.amt); win.forEach((w, g) => { H.st[g] += w; });
   H.tot = [0, 0, 0, 0]; H.bet = [0, 0, 0, 0]; H.cur = 0; H.toAct = -1; H.la = -1; H.log = "win";
   emit(T, ctx, "win");

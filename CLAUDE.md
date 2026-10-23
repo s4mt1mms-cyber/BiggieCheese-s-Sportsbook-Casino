@@ -129,7 +129,7 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   Revenge rat hunt (`revengeStart`), mining (25 BB/min — OFF since Oct 23: `MINE_ON=false` only stamps `mineAt` for presence).
 - **Russian Roulette**: solo vs bots and live 4-seat animal bar (three.js scene, `rr*`/`rl*`), drinking/blackout,
   shoot-someone + return fire, winner gets 4× final bet.
-- **Texas Hold'em** (`th*`): live open cash table, same bar scene, server-hosted.
+- **Texas Hold'em** (`th*`): live open cash table, same bar scene, server-hosted. House rake (Oct 23): `thRake` (TH_PURE) takes `TH_RAKE` 5% of every pot that saw a flop, uncalled bets excluded; `H.rk` this hand, `H.rkT` game total (both engines; tests count it in chip conservation).
 - **Cards**: collections League Moments (`lm`), Multiverse (`mv`), Platinum Mysterio (`pm`, limited, ended Oct 23 2026).
   Rarities `CR` 0 Common … 6 Dragon, 7 Platinum, 8 Platinum Mysterio Legendary.
   Mint limits `CR_LIM=[∞,1000,100,10,5,3,1,15,1]`. Packs: Common 5k, Uncommon 10k, Rare 25k, Super Rare 50k,

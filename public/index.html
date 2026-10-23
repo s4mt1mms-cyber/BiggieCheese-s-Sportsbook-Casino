@@ -4842,6 +4842,12 @@ function thPots(tot,live){const lv=[...new Set(tot.filter((x,g)=>live[g]&&x>0))]
   for(const L of lv){let amt=0;tot.forEach(x=>{amt+=Math.max(0,Math.min(x,L)-prev)});const el=[];tot.forEach((x,g)=>{if(live[g]&&x>=L)el.push(g)});if(amt>0)pots.push({amt,el});prev=L}
   let left=0;tot.forEach(x=>{left+=Math.max(0,x-prev)});if(left){if(pots.length)pots[pots.length-1].amt+=left;else{const g=live.findIndex(Boolean);if(g>=0)pots.push({amt:left,el:[g]})}}
   return pots}
+/* House rake (owner, Oct 23): 5% of every pot that saw a flop ("no flop, no drop"), rounded down per pot; an uncalled bet that just
+   goes back to its owner isn't raked. Returns {pots (after rake), rake}. The raked chips leave the table, so cash-outs are lower. */
+const TH_RAKE=.05;
+function thRake(pots,tot,live,board){if(!(board&&board.length>=3))return{pots,rake:0};const t=tot.slice().sort((a,b)=>b-a),mx=Math.max(...tot),top=tot.indexOf(mx);
+  const unc=live[top]?Math.max(0,t[0]-(t[1]||0)):0;let rake=0;const out=pots.map((p,i)=>{const base=i===pots.length-1?Math.max(0,p.amt-unc):p.amt,r=Math.floor(base*TH_RAKE);rake+=r;return{amt:p.amt-r,el:p.el}});
+  return{pots:out,rake}}
 /* split each pot among its best hands; odd chips go to the first winner left of the button */
 function thAward(pots,score,btn,n){n=n||4;const win=new Array(n).fill(0);
   for(const p of pots){let best=-Infinity,ws=[];for(const g of p.el){const s=score[g];if(s>best){best=s;ws=[g]}else if(s===best)ws.push(g)}
@@ -4904,7 +4910,7 @@ async function thPlayHand(H,io){const sit=g=>!!H.pl[g]&&H.st[g]>0&&!H.out[g]&&!(
     if(liveN()<=1)break}
   const live=thLive(H),nl=live.filter(Boolean).length,pots=thPots(H.tot,live);let score=live.map(x=>x?1:0);
   if(nl>1){score=live.map((x,g)=>{if(!x)return -1;const e=thEval(hole[g].concat(H.board));H.show[g]=hole[g];H.hn[g]=e.n;return e.v})}
-  const win=thAward(pots,score,H.btn);H.street="show";H.win=win;H.pots=pots.map(p=>p.amt);win.forEach((w,g)=>{H.st[g]+=w});H.tot=[0,0,0,0];H.bet=[0,0,0,0];H.cur=0;H.toAct=-1;
+  const rk=thRake(pots,H.tot,live,H.board);H.rk=rk.rake;H.rkT=(H.rkT||0)+rk.rake;const win=thAward(rk.pots,score,H.btn);H.street="show";H.win=win;H.pots=pots.map(p=>p.amt);win.forEach((w,g)=>{H.st[g]+=w});H.tot=[0,0,0,0];H.bet=[0,0,0,0];H.cur=0;H.toAct=-1;
   H.la=-1;H.log="win";io.emit("win");await io.wait(nl>1?5200:2400);return true}
 /*TH_PURE_END*/
 
@@ -5210,7 +5216,7 @@ function thHud(){if(S.tab!=="th")return;const set=(id,x)=>{const e=$(id);if(e&&e
   set("#thBal",bal.toLocaleString()+" BB");{const net=Number(p.thNet)||0;set("#thFoot",`Hold'em ${net>=0?"up":"down"} <strong class="num ${net>0?"pos":net<0?"neg":""}">${net>0?"+":net<0?"−":""}${Math.abs(net).toLocaleString()} BB</strong> all-time · ${Number(p.thWins)||0} wins in ${Number(p.thGames)||0} games.${sessLn("th",net,p.thOpen?Number(p.thOpen.buy)||0:0)}`)}
   const pick=$("#thPick");if(pick)pick.hidden=TH.on;{const d=$("#thDrinks");if(d)d.hidden=!TH.on||TH.spec}if(!TH.on){set("#thLobby",thLobbyHtml());set("#thTop","");set("#thHud","");set("#thLog","");const rs=$("#thRes");if(rs)rs.hidden=true;return}
   const ps=TH.ps;if(!ps)return;const me=TH.my,pot=ps.tot.reduce((a,b)=>a+b,0),r=TH.room||{},cash=thMyCash(),out=!!cash;
-  set("#thTop",`<div class="thpot"><span>Pot</span><b class="num">${(ps.street==="show"?(ps.pots||[]).reduce((a,b)=>a+b,0):pot).toLocaleString()}</b></div><div class="thmeta">${TH.spec?"👁 Watching · ":""}Hand ${ps.hand||"–"} · Blinds ${ps.sb}/${ps.bb}</div><button type="button" class="thleave" data-th="leavetable">${TH.spec||out||TH.ended?"Back to lobby":ps.lv[me]?"Stay ✓":["pre","flop","turn","river"].includes(ps.street)&&ps.inh[me]?"Leave after hand":"Leave table"}</button>`);
+  set("#thTop",`<div class="thpot"><span>Pot</span><b class="num">${(ps.street==="show"?(ps.pots||[]).reduce((a,b)=>a+b,0):pot).toLocaleString()}</b></div><div class="thmeta">${TH.spec?"👁 Watching · ":""}Hand ${ps.hand||"–"} · Blinds ${ps.sb}/${ps.bb}${ps.street==="show"&&ps.rk>0?` · House rake ${Number(ps.rk).toLocaleString()}`:""}</div><button type="button" class="thleave" data-th="leavetable">${TH.spec||out||TH.ended?"Back to lobby":ps.lv[me]?"Stay ✓":["pre","flop","turn","river"].includes(ps.street)&&ps.inh[me]?"Leave after hand":"Leave table"}</button>`);
   /* community cards strip (and everyone's hole cards at a showdown) */
   {const bd=$("#thBoard");if(bd){const live=["pre","flop","turn","river","show"].includes(ps.street)&&ps.hand>0;const n=live?ps.board.length:0;
     const sd=ps.street==="show"&&ps.show?ps.show.map((c,g)=>c?`<div class="thsd${ps.win&&ps.win[g]?" w":""}"><b>${esc(thPN(g))}</b><span>${c.map(thCardHtml).join("")}</span>${ps.hn[g]?`<small>${esc(ps.hn[g])}</small>`:""}</div>`:"").join(""):"";
@@ -6008,6 +6014,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:83,d:"Oct 23",t:[["♠️","Hold'em now has a 5% house rake on every pot that sees a flop (no flop, no rake)"],["🏈","League odds now project every team's best possible lineup, so benching your players doesn't change your odds"]]},
  {v:82,d:"Oct 23",t:[["⛪","Jimmy Scroggins is everywhere now: he can turn up in League Moments, Multiverse and Fantasyland packs, and he's more likely to show up"],["🔥","His tithes don't go to the other players anymore. They burn"],["🏷️","Card sales between players have a 5% fee, taken from the seller and burned"]]},
  {v:81,d:"Oct 23",t:[["🎟️","My bets now shows all your live and pending bets and parlays at the top, plus your settled parlays"]]},
  {v:80,d:"Oct 23",t:[["🌈","New collection: Fantasyland is open! Find it in Cards → Shop"]]},

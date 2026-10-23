@@ -27,6 +27,12 @@ function thPots(tot,live){const lv=[...new Set(tot.filter((x,g)=>live[g]&&x>0))]
   for(const L of lv){let amt=0;tot.forEach(x=>{amt+=Math.max(0,Math.min(x,L)-prev)});const el=[];tot.forEach((x,g)=>{if(live[g]&&x>=L)el.push(g)});if(amt>0)pots.push({amt,el});prev=L}
   let left=0;tot.forEach(x=>{left+=Math.max(0,x-prev)});if(left){if(pots.length)pots[pots.length-1].amt+=left;else{const g=live.findIndex(Boolean);if(g>=0)pots.push({amt:left,el:[g]})}}
   return pots}
+/* House rake (owner, Oct 23): 5% of every pot that saw a flop ("no flop, no drop"), rounded down per pot; an uncalled bet that just
+   goes back to its owner isn't raked. Returns {pots (after rake), rake}. The raked chips leave the table, so cash-outs are lower. */
+const TH_RAKE=.05;
+function thRake(pots,tot,live,board){if(!(board&&board.length>=3))return{pots,rake:0};const t=tot.slice().sort((a,b)=>b-a),mx=Math.max(...tot),top=tot.indexOf(mx);
+  const unc=live[top]?Math.max(0,t[0]-(t[1]||0)):0;let rake=0;const out=pots.map((p,i)=>{const base=i===pots.length-1?Math.max(0,p.amt-unc):p.amt,r=Math.floor(base*TH_RAKE);rake+=r;return{amt:p.amt-r,el:p.el}});
+  return{pots:out,rake}}
 /* split each pot among its best hands; odd chips go to the first winner left of the button */
 function thAward(pots,score,btn,n){n=n||4;const win=new Array(n).fill(0);
   for(const p of pots){let best=-Infinity,ws=[];for(const g of p.el){const s=score[g];if(s>best){best=s;ws=[g]}else if(s===best)ws.push(g)}
@@ -89,7 +95,7 @@ async function thPlayHand(H,io){const sit=g=>!!H.pl[g]&&H.st[g]>0&&!H.out[g]&&!(
     if(liveN()<=1)break}
   const live=thLive(H),nl=live.filter(Boolean).length,pots=thPots(H.tot,live);let score=live.map(x=>x?1:0);
   if(nl>1){score=live.map((x,g)=>{if(!x)return -1;const e=thEval(hole[g].concat(H.board));H.show[g]=hole[g];H.hn[g]=e.n;return e.v})}
-  const win=thAward(pots,score,H.btn);H.street="show";H.win=win;H.pots=pots.map(p=>p.amt);win.forEach((w,g)=>{H.st[g]+=w});H.tot=[0,0,0,0];H.bet=[0,0,0,0];H.cur=0;H.toAct=-1;
+  const rk=thRake(pots,H.tot,live,H.board);H.rk=rk.rake;H.rkT=(H.rkT||0)+rk.rake;const win=thAward(rk.pots,score,H.btn);H.street="show";H.win=win;H.pots=pots.map(p=>p.amt);win.forEach((w,g)=>{H.st[g]+=w});H.tot=[0,0,0,0];H.bet=[0,0,0,0];H.cur=0;H.toAct=-1;
   H.la=-1;H.log="win";io.emit("win");await io.wait(nl>1?5200:2400);return true}
 
-export { TH_RN, TH_RP, thStraightHi, thEval, thLabel, thPots, thAward, thLive, thNeed, thNext, thFirstNeed, thLegal, thPut, thDo, thStreet, thEquity, thBotMove, thPlayHand };
+export { TH_RN, TH_RP, thStraightHi, thEval, thLabel, thPots, TH_RAKE, thRake, thAward, thLive, thNeed, thNext, thFirstNeed, thLegal, thPut, thDo, thStreet, thEquity, thBotMove, thPlayHand };

@@ -76,13 +76,13 @@ let n = 0;
     thAdvance(T, sec, mk()); thSeal(T);
     const H = T.ps, sv = T.sv;
     const total = H.st.reduce((a, b) => a + b, 0) + H.tot.reduce((a, b) => a + b, 0) + Object.values(T.cash || {}).filter((c) => c.gid === T.gid).reduce((a, c) => a + c.amt, 0);
-    assert.equal(total, 1500, "chips conserved");
+    assert.equal(total + (H.rkT || 0), 1500, "chips conserved (plus the house rake)");
     if (H.hand > 30 || (H.street === "wait" && H.hand > 0)) ["A", "B", "C"].forEach((u) => thInput(T, sec, u, { gid: T.gid, a: "leave" }, mk()));
     if (sv.ph === "human") { const g = sv.g, L = thLegal(H, g); thInput(T, sec, H.pl[g].uid, { gid: T.gid, seq: H.seq, a: rng.rnd() < 0.3 && L.canRaise ? "allin" : L.canCheck ? "check" : "call" }, mk()); continue; }
     now = Math.max(now + 500, sv.dl); touch("A", "B", "C");
   }
   assert.equal(T.state, "lobby");
-  console.log("hold'em no-bots: chips conserved; winner/log:", T.ps.log);
+  assert.ok((T.ps.rkT || 0) > 0, "rake taken"); console.log("hold'em no-bots: chips conserved; rake", T.ps.rkT, "winner/log:", T.ps.log);
 }
 
 /* ---------------- Russian Roulette ---------------- */
@@ -172,3 +172,16 @@ assert.ok(retShots > 0, "return fire happened");
   console.log("rr: return fire resolves shot by shot");
 }
 console.log("engine tests passed");
+
+/* rake: 5% of pots that saw a flop; uncalled bets and preflop hands are not raked */
+{
+  const { thRake, thPots } = await import("../lib/thpure.js");
+  const live = [true, true, false, false];
+  let r = thRake(thPots([100, 100, 20, 0], live), [100, 100, 20, 0], live, [1, 2, 3]);
+  assert.equal(r.rake, 11); assert.equal(r.pots.reduce((a, p) => a + p.amt, 0), 209);
+  r = thRake(thPots([100, 100, 20, 0], live), [100, 100, 20, 0], live, []);
+  assert.equal(r.rake, 0, "no flop, no drop");
+  r = thRake(thPots([300, 100, 0, 0], live), [300, 100, 0, 0], live, [1, 2, 3, 4]);
+  assert.equal(r.rake, 10, "the uncalled 200 isn't raked");
+  console.log("rake ok");
+}
