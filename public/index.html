@@ -467,6 +467,7 @@ body.chatmode .mast .leaves,body.chatmode .pumpkins{display:none}
 #revOv{position:fixed;inset:0;z-index:90;background:#000;touch-action:none;-webkit-user-select:none;user-select:none}
 #revOv canvas{display:block}
 .revhud{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));left:0;right:0;text-align:center;color:#fff;font-weight:800;text-shadow:0 1px 3px #000;pointer-events:none}
+.revauto{position:absolute;left:18px;bottom:calc(34px + env(safe-area-inset-bottom,0px));padding:12px 16px;border-radius:16px;border:3px solid #fde68a;background:linear-gradient(#7c2d12,#450a0a);color:#fff;font:inherit;font-weight:900;font-size:16px;cursor:pointer;box-shadow:0 4px 0 #2a0505,0 0 18px #f97316aa;display:flex;flex-direction:column;align-items:center;line-height:1.1;z-index:2}.revauto small{font-size:10px;font-weight:700;opacity:.85}
 .revfire{position:absolute;right:22px;bottom:calc(28px + env(safe-area-inset-bottom,0px));width:84px;height:84px;border-radius:50%;border:3px solid #fecaca;background:radial-gradient(circle at 35% 30%,#f87171,#b91c1c);color:#fff;font:inherit;font-weight:900;font-size:18px;cursor:pointer;box-shadow:0 5px 0 #7f1d1d}
 .revfire:active{transform:translateY(4px);box-shadow:0 1px 0 #7f1d1d}.revfire:disabled{opacity:.4}
 .revmsg{position:absolute;left:50%;top:9%;transform:translate(-50%,-10px) scale(.8);opacity:0;display:flex;flex-direction:column;align-items:center;gap:6px;background:rgba(0,0,0,.75);padding:14px 22px;border-radius:16px;border:1px solid #f5cf5d;transition:all .3s cubic-bezier(.2,1.4,.4,1);text-align:center}
@@ -749,7 +750,17 @@ html,body,*{-webkit-tap-highlight-color:transparent}
 .mktbl{width:100%;border-collapse:collapse;font-size:12px}.mktbl th{text-align:left;font-size:10px;opacity:.7;padding:4px}.mktbl td{padding:5px 4px;border-top:1px solid #2a2415}
 .mk2{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}.mkfil{display:flex;gap:6px;flex-wrap:wrap}.mkfil select,.mkfil input{flex:1;min-width:120px;font:inherit;padding:8px;border-radius:10px;border:1px solid #3a3115;background:#120d08;color:#f3eedf}
 .tbval small{display:block;font-size:9px}.tbhist{display:flex;flex-direction:column;gap:2px;font-size:10px;margin-top:4px}.mkhist{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid #2a2415;color:inherit;font:inherit;padding:6px 0;cursor:pointer}
-.tcard.tfull{padding:3px}.tfimg{height:100%;border-radius:9px;background:#0d0a07 center/cover no-repeat;display:flex;align-items:center;justify-content:center}.tfimg.has .tcph{display:none}.tfcnt{position:absolute;top:6px;right:6px;background:#000c;color:#fff;font-size:11px;padding:2px 6px;border-radius:99px}
+.tcard.tfull{padding:3px}
+.tcard.tfull.flc:not(.pmx-zap){background:linear-gradient(135deg,#ff3b3b,#ff9a1f,#ffe83a,#3bd16f,#3aa8ff,#8a5bff,#ff4fd8,#ff3b3b);background-size:300% 300%;animation:flrb 6s linear infinite}
+@keyframes flrb{to{background-position:300% 0}}
+.setcard.rainbow{background:linear-gradient(120deg,#ff3b3b,#ff9a1f,#ffe83a,#3bd16f,#3aa8ff,#8a5bff,#ff4fd8);background-size:250% 250%;animation:flrb 8s linear infinite;text-shadow:0 1px 3px #000a}
+.pmfx.emo{inset:-14%;z-index:3}.pmfx.emo i{position:absolute;font-style:normal;font-size:24px;left:calc(4% + var(--i)*9.5%);top:calc(50% + (var(--i) - 4.5)*7%);animation:flemo 3.2s ease-in-out calc(var(--i)*-.37s) infinite;filter:drop-shadow(0 0 4px #fff8)}
+.pmfx.emo i:nth-child(odd){left:auto;right:calc(-2% + var(--i)*1%);top:calc(6% + var(--i)*8.5%)}
+.pmfx.emo i:nth-child(even){left:calc(-6% + var(--i)*.6%)}
+.pmfx.emo i:nth-child(3n){top:-4%;left:calc(10% + var(--i)*7%)}.pmfx.emo i:nth-child(4n){top:auto;bottom:-4%;left:calc(var(--i)*8%)}
+.tcard.small .pmfx.emo i{font-size:13px}
+@keyframes flemo{0%,100%{transform:translateY(0) rotate(-10deg) scale(.9);opacity:.75}50%{transform:translateY(-14px) rotate(12deg) scale(1.15);opacity:1}}
+@media (prefers-reduced-motion:reduce){.pmfx.emo i,.tcard.tfull.flc,.setcard.rainbow{animation:none}}.tfimg{height:100%;border-radius:9px;background:#0d0a07 center/cover no-repeat;display:flex;align-items:center;justify-content:center}.tfimg.has .tcph{display:none}.tfcnt{position:absolute;top:6px;right:6px;background:#000c;color:#fff;font-size:11px;padding:2px 6px;border-radius:99px}
 .flip.charge.crain .fback{animation:pkshine .6s linear infinite}
 .pkov.pkdim::before{content:"";position:fixed;inset:0;background:#000c;z-index:1;pointer-events:none;animation:pkdimin .4s ease-out}@keyframes pkdimin{from{opacity:0}}
 .pkov.pkdim .pkrow{position:relative;z-index:2}.pkov.pkdim .flip:not(.charge){opacity:.25;transition:opacity .3s}
@@ -3090,7 +3101,7 @@ function stableStr(v){if(Array.isArray(v))return "["+v.map(stableStr).join(",")+
 /* ---------- Revenge: every 20 blackjack hands, one shot at the dealer rat in a grassy field ---------- */
 function revengeStart(){const p=S.prefs[S.me]||{},earned=Math.floor((Number(p.bjDealer21)||0)/4);if(earned<=(Number(p.revengeUsed)||0))return;
   p.revengeUsed=earned;db.doc("prefs/"+S.me).update({revengeUsed:earned}).catch(()=>{});S._bjSig=null;render();
-  const ov=document.createElement("div");ov.id="revOv";ov.innerHTML=`<canvas id="revCv"></canvas><div class="revhud"><span>Drag to aim up, down, left, right · ONE shot</span></div><button type="button" class="revfire" id="revFire" aria-label="Shoot">FIRE</button><div class="revmsg" id="revMsg"></div>`;document.body.appendChild(ov);
+  const ov=document.createElement("div");ov.id="revOv";ov.innerHTML=`<canvas id="revCv"></canvas><div class="revhud"><span>Drag to aim up, down, left, right · ONE shot</span></div><button type="button" class="revfire" id="revFire" aria-label="Shoot">FIRE</button>${hasAb("bers")&&bersLeft()>0?`<button type="button" class="revauto" id="revAuto">🪓 AUTO KILL <small>${bersLeft()} left today</small></button>`:""}<div class="revmsg" id="revMsg"></div>`;document.body.appendChild(ov);
   const cv=ov.querySelector("canvas"),ctx=cv.getContext("2d");let W,H,DPR;const size=()=>{DPR=Math.min(1.5,devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;cv.style.width=W+"px";cv.style.height=H+"px";ctx.setTransform(DPR,0,0,DPR,0,0)};size();addEventListener("resize",size);
   const PX=()=>W/70;let lastRy=0,yaw=0,pitch=0,state="hunt",t=0,shotAt=0,flash=0,recoil=0,raf=0;
   const rat={a:(Math.random()<.5?-1:1)*25,d:12,va:.3,vd:.12,face:1,hitAt:0};
@@ -3157,14 +3168,15 @@ function revengeStart(){const p=S.prefs[S.me]||{},earned=Math.floor((Number(p.bj
   function tuft(u){const x=W/2+(u.a-yaw)*PX(),y=gy(u.d),s=u.s*4/u.d*3;if(x<-20||x>W+20)return;ctx.strokeStyle=u.d<10?"#65a30d":"#3f6212";ctx.lineWidth=Math.max(1,s*.6);ctx.beginPath();for(let i=-1;i<=1;i++){ctx.moveTo(x+i*s*2,y);ctx.lineTo(x+i*s*3.5,y-s*7)}ctx.stroke()}
   raf=requestAnimationFrame(frame);
   const msg=ov.querySelector("#revMsg"),fire=ov.querySelector("#revFire");
-  fire.addEventListener("pointerdown",async e=>{e.preventDefault();e.stopPropagation();if(state!=="hunt")return;fire.disabled=true;shotAt=t;flash=1;recoil=1;haptic&&haptic();
+  const autoB=ov.querySelector("#revAuto");if(autoB)autoB.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();if(state!=="hunt"||!hasAb("bers")||bersLeft()<=0)return;fire._auto=true;yaw=rat.a;autoB.remove();fire.dispatchEvent(new PointerEvent("pointerdown",{bubbles:true}))});
+  fire.addEventListener("pointerdown",async e=>{e.preventDefault();e.stopPropagation();if(state!=="hunt")return;fire.disabled=true;const auto=!!fire._auto;fire._auto=false;{const ab=ov.querySelector("#revAuto");if(ab)ab.remove()}shotAt=t;flash=1;recoil=1;haptic&&haptic();
     const rs=13/rat.d,rx=sx(rat.a),ry=lastRy;
     /* Hitbox matches his drawn body: head + ears = headshot, torso/arms/legs = body shot */
     const lx=(W/2-rx)/rs*rat.face,ly=(H*.5-ry)/rs,inE=(cx,cy,a,b)=>((lx-cx)/a)**2+((ly-cy)/b)**2<=1;
     const head=inE(0,-52,15,14)||inE(12,-48,9,6)||inE(-10,-64,8,8)||inE(10,-64,8,8);
     const body=!head&&(inE(0,-24,18,20)||(Math.abs(lx)<=11&&ly>=-12&&ly<=10)||(Math.abs(lx)<=20&&ly>=-38&&ly<=-14));
-    const hit=head||body,prize=head?2500:1000;
-    if(hit){state="dead";msg.classList.add("win");msg.innerHTML=`<b>${head?"🎯 HEADSHOT!":"You got him!"}</b><span class="big pos">+${prize.toLocaleString()} BB</span><span class="small">${head?"Headshot bonus · ":""}Added to your balance</span>`;const p=S.prefs[S.me]||{};const n=(Number(p.revengeEarn)||0)+prize;p.revengeEarn=n;db.doc("prefs/"+S.me).update(tiAdd({revengeEarn:n},prize)).catch(()=>{});setMe&&setMe()}
+    const hit=auto||head||body,prize=head&&!auto?2500:1000;
+    if(hit){state="dead";msg.classList.add("win");msg.innerHTML=`<b>${auto?"🪓 BERSERK!":head?"🎯 HEADSHOT!":"You got him!"}</b><span class="big pos">+${prize.toLocaleString()} BB</span><span class="small">${head?"Headshot bonus · ":""}Added to your balance</span>`;const p=S.prefs[S.me]||{};const n=(Number(p.revengeEarn)||0)+prize;p.revengeEarn=n;const bp={};if(auto){const dd=divDay(),u=(p.bersDay===dd?Number(p.bersUsed)||0:0)+1;p.bersDay=bp.bersDay=dd;p.bersUsed=bp.bersUsed=u}db.doc("prefs/"+S.me).update(tiAdd({revengeEarn:n,...bp},prize)).catch(()=>{});setMe&&setMe()}
     else{state="dance";msg.innerHTML=`<b>Missed.</b><span class="neg">One shot, and it's gone. Enjoy the dance.</span>`}
     msg.classList.add("show");const close=()=>{if(!ov.isConnected)return;cancelAnimationFrame(raf);removeEventListener("resize",size);ov.classList.add("out");setTimeout(()=>{ov.remove();S._bjSig=null;render()},300)};
     setTimeout(close,hit?3800:3600);setTimeout(()=>ov.addEventListener("click",close),900)});
@@ -3246,6 +3258,7 @@ function rlPlace(k){if(rlWho()!==S.me)return;const st=rlState();if(st.spinning)r
 /* rlLast.bj = the spin's bets as a JSON string. (rlLast.bets was a map, and the live-doc merge kept old spots from earlier
    spins in it, so a respin replayed a mix of old bets. A string always replaces; bets:null clears the old map.) */
 function rlLB(L){if(!L)return {};if(typeof L.bj==="string"){try{return JSON.parse(L.bj)||{}}catch(_){return {}}}return L.bets||{}}
+const BERS_DAY=3;function bersLeft(){const q=S.prefs[S.me]||{};return q.bersDay===divDay()?Math.max(0,BERS_DAY-(Number(q.bersUsed)||0)):BERS_DAY}
 function slopLeft(){const q=S.prefs[S.me]||{};return q.slopDay===divDay()?Math.max(0,SLOP_DAY-(Number(q.slopUsed)||0)):SLOP_DAY}
 function rlCanRespin(){const q=S.prefs[S.me]||{},L=q.rlLast,st=rlState();return !!(hasAb("slop")&&rlWho()===S.me&&!st.spinning&&L&&Number(L.delta)<0&&typeof L.bj==="string"&&Object.keys(rlLB(L)).length)}
 async function rlSpin(rs){const st=rlState();if(st.spinning||rlWho()!==S.me)return;const p0=S.prefs[S.me]||{};let back=0;
@@ -5063,11 +5076,11 @@ const CR=[{k:"grey",n:"Common",c:"#9aa0a6",g:"#5f6368"},{k:"green",n:"Uncommon",
 /* indices 7 and 8 are the Platinum Mysterio tiers: they live only in the "pm" set, never come out of normal packs and sit outside every "X or better" comparison */
 const CRN=CR.slice(0,7);const crPm=r=>r>6;
 const CR_COUNT=[26,18,10,5,5,4,1,0,0];
-const CSETS={lm:{name:"League Moments",doc:"cards_lm",tag:"Debbie's Dynasty Dozen history",c1:"#f5c542",c2:"#7a1f1f",ic:"🏈"},pba:{name:"Based PBA Moments",doc:"cards_pba",tag:"Coming soon",c1:"#3b8cff",c2:"#1a1450",ic:"🎳"},mv:{name:"Multiverse",doc:"cards_mv",tag:"Coming soon",c1:"#b06cff",c2:"#0b3a4a",ic:"🌌"},pm:{name:"Platinum Mysterio",doc:"cards_pm",tag:"Limited time · 150 cards ever",c1:"#ffffff",c2:"#4a2a55",ic:"💠",special:true}};
+const CSETS={lm:{name:"League Moments",doc:"cards_lm",tag:"Debbie's Dynasty Dozen history",c1:"#f5c542",c2:"#7a1f1f",ic:"🏈"},fl:{name:"Fantasyland",doc:"cards_fl",tag:"Somewhere over the league",c1:"#ff4fd8",c2:"#2a1a6e",ic:"🌈",rainbow:true},mv:{name:"Multiverse",doc:"cards_mv",tag:"Coming soon",c1:"#b06cff",c2:"#0b3a4a",ic:"🌌"},pm:{name:"Platinum Mysterio",doc:"cards_pm",tag:"Limited time · 150 cards ever",c1:"#ffffff",c2:"#4a2a55",ic:"💠",special:true}};
 const CR_LIM=[Infinity,1000,100,10,5,3,1,15,1]; /* print run per card by rarity (commons are unlimited; Common/Uncommon/Rare always use these) */
 const limTxt=l=>isFinite(l)?Number(l).toLocaleString():"∞";
 /* a set opens once it has cards; until it is marked live, only the admin can see it (for testing) */
-const setOpen=k=>{if(k==="lm")return true;if(k==="pm")return pmLaunched();const m=(S.cardMeta||{})[k];return !!(m&&(m.cards||[]).length&&(m.live||S.canEdit))};
+const setOpen=k=>{if(k==="lm"||k==="fl")return true;if(k==="pm")return pmLaunched();const m=(S.cardMeta||{})[k];return !!(m&&(m.cards||[]).length&&(m.live||S.canEdit))};
 const cardSet=cid=>String(cid).split("-")[0];
 /* per-slot odds (%) by pack before floors; floors = minimum rarity for each slot */
 /* Card values (for pricing): Common 500 · Uncommon 1,500 · Rare 5,000 · Super Rare 20,000 · Elite 60,000 · Grail 150,000 · Dragon 1,500,000.
@@ -5120,6 +5133,27 @@ const MV_ADD=[
   ["craps-dean-strow",4,"Craps Dean Strow",{abil:"dean"}],["heart-of-finance",4,"Heart of Finance",{abil:"hof"}],
   ["joe-camel",4,"Joe Camel",{div:6999,img:false}],
   ["king-slop",5,"King Slop",{abil:"slop"}],["shrex",5,"Shrex",{abil:"shrex",img:false}]];
+/* ===== Fantasyland (Oct 23 2026, owner): a code-defined collection, rainbow themed, in place of the old "Based PBA Moments" slot.
+   Same pattern as MV_ADD: [slug, rarity, "Title", {opts}], art = public/cards/fl/<slug>.webp (620 px), ids "fl-<slug>" (never rename).
+   Owner's print runs (limF, override CR_LIM): Common unlimited, Uncommon 100, Rare 25, Super Rare 7, Elite 3, Grail 2. No Dragon.
+   opts.img:false = placeholder face. opts.fx = card aura (same effects as the Platinum Mysterio cards): zap (Peter's lightning), emo (floating emoji, opts.emo). */
+const FL_IMGV=1,FL_LIM=[Infinity,100,25,7,3,2];
+const FL_ADD=[
+  ["bucket-hat-bros",0,"Bucket Hat Bros"],["brew-brothers",0,"Brew Brothers"],["sunny-side-up",0,"Sunny Side Up"],["check-please",0,"Check Please"],
+  ["hung-over",0,"Hung Over"],["watch-out",0,"Watch Out"],["supply-drop",0,"Trading Card: Supply Drop",{img:false}],["couch-gremlin",0,"Couch Gremlin"],
+  ["trash-panda",0,"Trash Panda"],["rocktopus",0,"Rocktopus",{img:false}],["ball-head",0,"Ball Head"],["rizz-drinking",0,"Rizz Drinking"],
+  ["carolina-dog",0,"Carolina Dog"],["honors-class-clown",0,"Honors Class Clown"],["cardboard-centurion",0,"The Cardboard Centurion"],
+  ["captain-now",0,"I'm the Captain Now"],["squish-mode",0,"Squish Mode"],["swole-jesus",0,"Swole Jesus"],["front-cam",0,"Front Cam"],["mr-carroll",0,"Mr Carroll"],
+  ["forbidden-archive",1,"The Forbidden Archive",{img:false}],["milk-lover",1,"The Milk Lover"],["booty-cheese",1,"Booty Cheese"],["squeaky-clean",1,"Squeaky Clean"],
+  ["shine-employee",1,"Shine Employee"],["commissioners-most-wanted",1,"Commissioner's Most Wanted"],["nobu-encounter",1,"Global High-Roller: Nobu Encounter"],
+  ["eggdog",1,"Eggdog"],["average-cowboys-fan",1,"Average Cowboys Fan",{img:false}],["diva-dance-floor",1,"Diva on the Dance Floor"],
+  ["drunk-poops",2,"Drunk Poops"],["merman",2,"Merman"],["meta-verse",2,"The Meta Verse"],["autism-attack",2,"Autism Attack"],["triple-threat",2,"Triple Threat"],
+  ["minion-commander",2,"Minion Commander",{img:false}],["rinker-rizzler",2,"The Rinker Rizzler"],
+  ["distinguished-gentleman",3,"The Distinguished Gentleman"],["darth-slop",3,"Darth Slop"],["gone-out-milk",3,"Gone out to Get Milk"],["poker-wizard",3,"The Poker Wizard"],
+  ["window-stalker",3,"Window Stalker"],["legendary-crew",3,"Legendary Crew",{img:false}],
+  ["another-day",4,"Another Day in Paradise",{img:false}],["berserker",4,"Berserker",{abil:"bers"}],["deathmatch",4,"Deathmatch"],["the-swamp",4,"The Swamp"],["crndd-part-two",4,"CRNDD Part Two"],
+  ["biggiecheese-rookie",5,"BiggieCheese Rookie",{fx:"emo",emo:"🧀"}],["the-gooner",5,"The Gooner",{fx:"zap"}],["vail-grail",5,"The Vail Grail",{fx:"emo",emo:"🦶"}]];
+let _FLC=null;const flCards=()=>_FLC||(_FLC=FL_ADD.map(([k,r,name,o])=>{o=o||{};return{id:"fl-"+k,r,name,sub:"Fantasyland",desc:o.desc||(o.img===false?"Art coming soon. Part of the Fantasyland collection.":"Part of the Fantasyland collection."),full:true,code:true,limF:FL_LIM[r],img:o.img===false?null:`/cards/fl/${k}.webp?v=${FL_IMGV}`,...(o.abil?{abil:o.abil}:{}),...(o.fx?{fx:o.fx,cfx:true}:{}),...(o.emo?{emo:o.emo}:{})}}));
 /* abilities shown on the card back under the description (heading "Ability · name") */
 const CURSE_FEE=5000,SLOP_DAY=3;
 const CARD_ABIL={
@@ -5129,6 +5163,7 @@ const CARD_ABIL={
   slop:{n:"Royal Respin",ic:"🎡",t:"3 roulette respins a day. After a spin that loses you money, tap Respin: that spin is cancelled and the wheel spins again with the exact same bets. The new result counts, win or lose. Resets at 1 AM ET. Extra copies don't stack."},
   shrex:{n:"Swamp Blackjack",ic:"🟢",t:"Every blackjack you're dealt pays 3× your bet (instead of 3 to 2) while you hold it, and your profile picture gets a green swamp glow. Extra copies don't stack."},
   hilo:{n:"Hot Streak",ic:"🔥",t:"High-Low: once you have 4 right in a row, every guess after that pays with a 2% edge for you instead of the house's 3%. Cash out any time. Extra copies don't stack."},
+  bers:{n:"Berserk Mode",ic:"🪓",t:"3 auto-kills a day in the Blackjack rat hunt (Revenge): tap AUTO KILL and the rat goes down, no aiming needed (a normal kill, 1,000 BB). Resets at 1 AM ET. Extra copies don't stack."},
   social:{n:"Social Credit",ic:"📣",t:"Whoever pulls this card from a pack gets announced in league chat: +10 million social credit score! No money involved."}};
 const mvAddCards=()=>MV_ADD.map(([k,r,name,o])=>{o=o||{};return{id:"mv-"+k,r,name,sub:"Multiverse",desc:o.desc||(o.img===false?"Art coming soon. Part of the Multiverse collection.":"Part of the Multiverse collection."),full:true,code:true,img:o.img===false?null:`/cards/mv/${k}.webp?v=${MV_IMGV}`,...(o.abil?{abil:o.abil}:{}),...(o.lim?{lim:o.lim}:{}),...(o.pw!=null?{pw:o.pw}:{}),...(o.div!=null?{div:o.div}:{})}});
 /* abilities for cards that live in meta/cards_mv (made with the Admin tools, so they carry no abil field) */
@@ -5152,6 +5187,7 @@ function activeCards(id){id=id||S.me;const cs=myCards(id),out=[],seen=new Set(),
     else if(c.abil==="shrex")add(k,"🟢","Blackjacks pay 3× your bet + swamp glow",["bj"]);
     else if(c.abil==="hilo")add(k,"🔥","High-Low: 2% edge for you after 4 right in a row",["hl"]);
     else if(c.abil==="hof")add(k,"🏦","Borrow 10,000 BB from the House (Bank)",["bank"]);
+    else if(c.abil==="bers")add(k,"🪓",me?`${bersLeft()} of ${BERS_DAY} rat-hunt auto-kills left today`:`${BERS_DAY} rat-hunt auto-kills a day`,["bj"]);
     if(c.div!=null&&c.abil!=="curse")add(k,"💸",`Pays ${Number(c.div).toLocaleString()} BB a day`,["div"]);
     if(k==="pm-peter")add(k,"⚡",`Card dividend ×${Math.min(3,Math.pow(1.5,Math.min(3,Number(cs[k])||0)))}`,["div"]);
     if(k==="pm-debby")add(k,"🧙‍♀️","Steals 10,000 BB a day from someone",["div"]);
@@ -5169,7 +5205,7 @@ function cardPh(c){if(PH_C[c.id])return PH_C[c.id];const R=CR[c.r]||CR[0];const 
   const words=String(c.name||"").split(" "),lines=[];let cur="";for(const w of words){if((cur+" "+w).trim().length>12&&cur){lines.push(cur);cur=w}else cur=(cur+" "+w).trim()}if(cur)lines.push(cur);
   const fs=lines.some(l=>l.length>10)?54:64,y0=350-(lines.length-1)*fs*.55;
   const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 700"><defs><radialGradient id="g" cx="50%" cy="38%" r="80%"><stop offset="0" stop-color="${R.c}"/><stop offset=".55" stop-color="${R.g}"/><stop offset="1" stop-color="#05040a"/></radialGradient><linearGradient id="f" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset=".5" stop-color="${R.c}"/><stop offset="1" stop-color="#fff" stop-opacity=".7"/></linearGradient></defs><rect width="500" height="700" rx="26" fill="url(#g)"/>${Array.from({length:7},(_,i)=>`<rect x="${-120+i*110}" y="-80" width="36" height="900" fill="#fff" opacity=".045" transform="rotate(24 250 350)"/>`).join("")}<rect x="16" y="16" width="468" height="668" rx="18" fill="none" stroke="url(#f)" stroke-width="6"/><rect x="30" y="30" width="440" height="640" rx="12" fill="none" stroke="#fff" stroke-opacity=".25" stroke-width="2"/>
-<text x="250" y="92" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="26" letter-spacing="5" fill="#fff" opacity=".85">${X(R.n.toUpperCase())}</text><text x="250" y="128" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" letter-spacing="7" fill="#fff" opacity=".55">MULTIVERSE</text>
+<text x="250" y="92" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="26" letter-spacing="5" fill="#fff" opacity=".85">${X(R.n.toUpperCase())}</text><text x="250" y="128" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" letter-spacing="7" fill="#fff" opacity=".55">${cardSet(c.id)==="fl"?"FANTASYLAND":"MULTIVERSE"}</text>
 ${lines.map((l,i)=>`<text x="250" y="${y0+i*fs*1.1}" text-anchor="middle" font-family="Impact,Arial Black,sans-serif" font-weight="900" font-size="${fs}" fill="#fff" stroke="#000" stroke-width="3" paint-order="stroke">${X(l)}</text>`).join("")}
 <rect x="120" y="560" width="260" height="52" rx="26" fill="#000" fill-opacity=".45" stroke="#fff" stroke-opacity=".35"/><text x="250" y="594" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="22" fill="#fff">🎨 Art coming soon</text></svg>`;
   return PH_C[c.id]="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg).replace(/\(/g,"%28").replace(/\)/g,"%29").replace(/'/g,"%27")}
@@ -5179,7 +5215,7 @@ function abHtml(c){const out=[];const A=c&&c.abil&&CARD_ABIL[c.abil];if(A)out.pu
   return out.map(([i,n,t])=>`<div class="tbab${c.abil==="curse"?" curse":""}"><span class="tbabh">${i} Ability · ${esc(n)}</span><span>${esc(t)}</span></div>`).join("")}
 const CAT_CACHE={};
 function cardsCat(set){set=set||pkSt().set||"lm";const m=(S.cardMeta||{})[set];const k=set+":"+((m&&m.at)||0);if(CAT_CACHE[set]&&CAT_CACHE[set].k===k)return CAT_CACHE[set].v;
-  const has=m&&Array.isArray(m.cards)&&m.cards.length;const v=(set==="mv"?mvMerge(has?m.cards:[]):has?m.cards:cardsDefault(set)).map(c=>({...c,lim:c.r<=2?CR_LIM[c.r]:Number(c.lim)||CR_LIM[c.r]}));CAT_CACHE[set]={k,v};return v}
+  const has=m&&Array.isArray(m.cards)&&m.cards.length;const v=(set==="fl"?flCards():set==="mv"?mvMerge(has?m.cards:[]):has?m.cards:cardsDefault(set)).map(c=>({...c,lim:c.limF?c.limF:c.r<=2?CR_LIM[c.r]:Number(c.lim)||CR_LIM[c.r]}));CAT_CACHE[set]={k,v};return v}
 const cardById=id=>{const s=cardSet(id),v=cardsCat(s),e=CAT_CACHE[s];if(e&&e.v===v){if(!e.m){e.m=new Map();v.forEach(c=>{if(!e.m.has(c.id))e.m.set(c.id,c)})}return e.m.get(id)}return v.find(c=>c.id===id)};
 /* copies in existence = everyone's collections + cards sitting in open market listings */
 /* counted for every card in one pass, cached until the current task ends (like ledger()) */
@@ -5221,7 +5257,7 @@ function pkOpen(p,set){const cat=cardsCat(set),used={};const left=c=>c.lim-minte
 /* copies left to mint per rarity in a collection (Infinity = unlimited) */
 function pkLeft(set){const out=[0,0,0,0,0,0,0];for(const c of cardsCat(set)){if(c.r>6)continue;out[c.r]+=isFinite(c.lim)?Math.max(0,c.lim-minted(c.id)):Infinity}return out}
 /* a pack can't be sold once one of its guaranteed slots has nothing left at (or above) its floor */
-function pkBlocked(p,set){const L=pkLeft(set),above=f=>L.slice(f).reduce((a,b)=>a+b,0);for(let i=0;i<p.n;i++){if(p.fixed&&i<p.fixed.length){if(!(above(p.fixed[i])>0))return true;continue}if(p.custom&&p.custom[i])continue;const f=p.floors[i]||0;if(f>0&&!(above(f)>0))return true}return false}
+function pkBlocked(p,set){if(p.r===6&&!cardsCat(set).some(c=>c.r===6))return true;/* no Dragons in this collection (Fantasyland): no Dragon packs */const L=pkLeft(set),above=f=>L.slice(f).reduce((a,b)=>a+b,0);for(let i=0;i<p.n;i++){if(p.fixed&&i<p.fixed.length){if(!(above(p.fixed[i])>0))return true;continue}if(p.custom&&p.custom[i])continue;const f=p.floors[i]||0;if(f>0&&!(above(f)>0))return true}return false}
 /* exact per-pack chance of at least one card of rarity >= r (shown in the shop) */
 function pkChance(p,r,set){let miss=1;for(let i=0;i<p.n;i++){const w=pkSlot(p,i,set);miss*=1-w.reduce((a,x,k)=>a+(k>=r?x:0),0)}return 1-miss}
 const fmtPct=x=>x>=.995?"100%":x>=.1?Math.round(x*100)+"%":x>=.01?(x*100).toFixed(1)+"%":(x*100).toFixed(2)+"%";
@@ -5311,7 +5347,7 @@ function pmFireBake(){if(PM_FIRE.st||!PERF_LITE)return;PM_FIRE.st=1;
   (async()=>{try{const big=await sheet(309,413,1);const de=document.documentElement;de.style.setProperty("--pmfireB",`url(${big})`);de.classList.add("pmfire-sprite");
       const sm=await sheet(111,148,1.4);de.style.setProperty("--pmfireS",`url(${sm})`);de.classList.add("pmfire-sm");PM_FIRE.st=2}
     catch(_){PM_FIRE.st=3;document.documentElement.classList.remove("pmfire-lite","pmfire-sprite","pmfire-sm");try{const f=document.querySelector("svg #pmFireF");f&&f.ownerSVGElement&&f.ownerSVGElement.unpauseAnimations()}catch(__){}}})()}
-function pmFxHtml(c){if(c.fx==="flame"){pmFireBake();return `<div class="pmfx fl"><i></i><i></i><i></i><i></i><i></i></div>`}if(c.fx==="gold")return `<div class="pmfx au"><i></i><i></i></div>`;if(c.fx==="zap")return `<div class="pmfx zp"></div>`;return ""}
+function pmFxHtml(c){if(c.fx==="flame"){pmFireBake();return `<div class="pmfx fl"><i></i><i></i><i></i><i></i><i></i></div>`}if(c.fx==="gold")return `<div class="pmfx au"><i></i><i></i></div>`;if(c.fx==="zap")return `<div class="pmfx zp"></div>`;if(c.fx==="emo")return `<div class="pmfx emo">${Array.from({length:10},(_,i)=>`<i style="--i:${i}">${c.emo||"✨"}</i>`).join("")}</div>`;return ""}
 function pmOverHtml(c){if(c.fx==="gold")return `<b class="pmov"><i class="sh"></i><i class="sp"></i></b>`;if(c.fx==="zap")return PM_ZAP;if(c.r===7)return `<b class="pmov pk"><i class="sh"></i></b>`;return ""}
 const pmBackHtml=()=>`<div class="pmback"><span class="pmqw"><span class="pmq">?</span></span><b>PLATINUM</b><b>MYSTERIO</b><small>LIMITED · 150 EVER</small></div>`;
 function pmPackArt(big){return `<div class="pmart${big?" big":""}"><i class="pmcrimp t"></i><div class="pmfoil"><span class="pmset">PLATINUM MYSTERIO</span><span class="pmqw"><span class="pmq">?</span></span><b>Mystery Pack</b><span class="pmn">${PM_PACK.n} CARDS INSIDE</span></div><i class="pmcrimp b"></i></div>`}
@@ -5455,7 +5491,7 @@ function pmShowOpen(cards,n,cap,demo){cards=cards.filter(cardById).sort((a,b)=>c
 const LOGO={
  brand:`<svg viewBox="0 0 120 120" class="lg"><defs><linearGradient id="lgb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe27a"/><stop offset="1" stop-color="#d99a00"/></linearGradient></defs><path d="M60 6 106 30v40c0 24-20 38-46 44C34 108 14 94 14 70V30Z" fill="#1a1206" stroke="url(#lgb)" stroke-width="6"/><path d="M30 78 60 34l30 44Z" fill="url(#lgb)"/><circle cx="56" cy="62" r="5" fill="#1a1206"/><circle cx="68" cy="70" r="3.5" fill="#1a1206"/><circle cx="50" cy="73" r="3" fill="#1a1206"/><text x="60" y="100" text-anchor="middle" font-family="Impact,Arial Black,sans-serif" font-size="15" fill="#ffe27a" letter-spacing="1">BIGGIE</text></svg>`,
  lm:`<svg viewBox="0 0 120 120" class="lg"><defs><linearGradient id="lgl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd76a"/><stop offset="1" stop-color="#b8860b"/></linearGradient></defs><path d="M60 6 106 24v38c0 28-22 44-46 52C36 106 14 90 14 62V24Z" fill="#5a1414" stroke="url(#lgl)" stroke-width="5"/><ellipse cx="60" cy="56" rx="30" ry="18" fill="#7b3f12" stroke="#fff" stroke-width="2" transform="rotate(-25 60 56)"/><path d="M47 62 73 50M52 52l3 6m4-8 3 6m4-8 3 6" stroke="#fff" stroke-width="2.5" stroke-linecap="round" fill="none"/><path d="M38 20l6 6 6-8 6 8 6-8 6 8 6-8 6 8 6-6" stroke="url(#lgl)" stroke-width="3" fill="none"/><text x="60" y="98" text-anchor="middle" font-family="Impact,Arial Black,sans-serif" font-size="17" fill="url(#lgl)">DDD</text></svg>`,
- pba:`<svg viewBox="0 0 120 120" class="lg"><circle cx="60" cy="60" r="52" fill="#0b1f3d" stroke="#5fb0ff" stroke-width="5"/><path d="M60 22c-8 0-10 10-8 18 2 6-6 14-6 30 0 14 6 24 14 24s14-10 14-24c0-16-8-24-6-30 2-8 0-18-8-18Z" fill="#fff"/><path d="M53 44h14M51 50h18" stroke="#e33" stroke-width="3"/><circle cx="84" cy="80" r="16" fill="#1d5fd1" stroke="#fff" stroke-width="2"/><circle cx="80" cy="75" r="2.5" fill="#fff"/><circle cx="87" cy="74" r="2.5" fill="#fff"/><circle cx="84" cy="81" r="2.5" fill="#fff"/><text x="60" y="112" text-anchor="middle" font-family="Impact,Arial Black,sans-serif" font-size="13" fill="#5fb0ff">PBA</text></svg>`,
+ fl:`<svg viewBox="0 0 120 120" class="lg"><defs><clipPath id="lgfc"><rect x="0" y="0" width="120" height="74"/></clipPath></defs><circle cx="60" cy="60" r="54" fill="#1a1046"/><g clip-path="url(#lgfc)" fill="none" stroke-width="7">${["#ff3b3b","#ff9a1f","#ffe83a","#3bd16f","#3aa8ff","#8a5bff"].map((c,k)=>`<circle cx="60" cy="74" r="${46-k*7}" stroke="${c}"/>`).join("")}</g><ellipse cx="30" cy="76" rx="16" ry="8" fill="#fff"/><ellipse cx="90" cy="76" rx="16" ry="8" fill="#fff"/><text x="60" y="104" text-anchor="middle" font-family="Impact,Arial Black,sans-serif" font-size="15" fill="#fff" letter-spacing="1">FANTASY</text><text x="60" y="114" text-anchor="middle" font-family="Impact,Arial Black,sans-serif" font-size="8" fill="#ffd1f3" letter-spacing="3">LAND</text></svg>`,
  mv:`<svg viewBox="0 0 120 120" class="lg"><defs><radialGradient id="lgm"><stop offset="0" stop-color="#fff"/><stop offset=".3" stop-color="#c08bff"/><stop offset=".7" stop-color="#3b1a7a"/><stop offset="1" stop-color="#0a0520"/></radialGradient><linearGradient id="lgm2" x1="0" x2="1"><stop offset="0" stop-color="#ff4fd8"/><stop offset=".5" stop-color="#5ad8ff"/><stop offset="1" stop-color="#fff35a"/></linearGradient></defs><circle cx="60" cy="60" r="52" fill="url(#lgm)"/><ellipse cx="60" cy="60" rx="56" ry="16" fill="none" stroke="url(#lgm2)" stroke-width="4" transform="rotate(-20 60 60)"/><ellipse cx="60" cy="60" rx="56" ry="16" fill="none" stroke="url(#lgm2)" stroke-width="3" opacity=".7" transform="rotate(40 60 60)"/><path d="M60 40l4 12 12 4-12 4-4 12-4-12-12-4 12-4Z" fill="#fff"/><circle cx="30" cy="30" r="2" fill="#fff"/><circle cx="92" cy="88" r="2.5" fill="#fff"/><circle cx="95" cy="32" r="1.5" fill="#fff"/></svg>`};
 /* sale history comes straight from sold marketplace listings; estimated value follows recent sales */
 const cardSales=cid=>(S.market||[]).filter(l=>l.status==="sold"&&l.cid===cid&&l.price>0&&!(l.gotCids||[]).length).sort((a,b)=>(b.soldAt||0)-(a.soldAt||0));
@@ -5486,7 +5522,7 @@ function cardArt(c){if(ART_C[c.id])return ART_C[c.id];const R=CR[c.r],sub=c.sub|
     ${small?`<text x="100" y="${icon?155:150}" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="${small.length>18?12:15}" fill="#fff" opacity=".9">${X(small)}</text>`:""}</svg>`;
   return ART_C[c.id]="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg).replace(/\(/g,"%28").replace(/\)/g,"%29").replace(/'/g,"%27")}
 function cardHtml(c,opt){opt=opt||{};if(opt.missing)return `<div class="tcard tmyst${cardSet(c.id)==="pm"?" pmmyst":""}${opt.small?" small":""}"><div class="tmin"><span>?</span>${c.r<6||(crPm(c.r)&&pmSeen(c.id))?`<small class="tmr" style="color:${CR[c.r].c}">${esc(CR[c.r].n)}</small>`:""}</div></div>`;const R=CR[c.r],img=cardImg(c.id)||(cardSet(c.id)==="lm"&&c.r<6&&!opt.missing?cardArt(c):null);const cnt=opt.count;
-  if(c.full&&!opt.missing)return `<div class="tcard tfull r${c.r}${c.fx?" pmx-"+c.fx:""}${opt.small?" small":""}" style="--rc:${R.c};--rg:${R.g}" ${opt.click?`data-cardview="${c.id}"${opt.who?` data-cardwho="${esc(opt.who)}"`:""}`:""}>${crPm(c.r)?pmFxHtml(c):""}<div class="tfimg${img?" has":""}" data-cimg="${c.id}" style="${img?`background-image:url(${img})`:""}"><span class="tcph">🖼️<small>Loading…</small></span></div>${crPm(c.r)?pmOverHtml(c):""}${cnt>1?`<b class="tfcnt">×${cnt}</b>`:""}${cardDiv(c)>0?`<b class="tfdiv" title="Daily dividend per copy">💸 ${divShort(cardDiv(c))}/day</b>`:""}</div>`;
+  if(c.full&&!opt.missing)return `<div class="tcard tfull r${c.r}${c.fx?" pmx-"+c.fx:""}${cardSet(c.id)==="fl"?" flc":""}${opt.small?" small":""}" style="--rc:${R.c};--rg:${R.g}" ${opt.click?`data-cardview="${c.id}"${opt.who?` data-cardwho="${esc(opt.who)}"`:""}`:""}>${crPm(c.r)||c.cfx?pmFxHtml(c):""}<div class="tfimg${img?" has":""}" data-cimg="${c.id}" style="${img?`background-image:url(${img})`:""}"><span class="tcph">🖼️<small>Loading…</small></span></div>${crPm(c.r)||c.cfx?pmOverHtml(c):""}${cnt>1?`<b class="tfcnt">×${cnt}</b>`:""}${cardDiv(c)>0?`<b class="tfdiv" title="Daily dividend per copy">💸 ${divShort(cardDiv(c))}/day</b>`:""}</div>`;
   return `<div class="tcard r${c.r}${opt.missing?" missing":""}${opt.small?" small":""}" style="--rc:${R.c};--rg:${R.g}" ${opt.click?`data-cardview="${c.id}"${opt.who?` data-cardwho="${esc(opt.who)}"`:""}`:""}>${c.r>=4&&!opt.missing?`<div class="tcfx fx${c.r}"><i></i><i></i></div>`:""}
     <div class="tcin"><div class="tctop"><span>${esc(R.n)}</span>${cnt>1?`<b>×${cnt}</b>`:""}</div>
     <div class="tcimg${img?" has":""}" data-cimg="${c.id}" style="${img?`background-image:url(${img})`:""}"><span class="tcph">${opt.missing?"?":"🖼️"}<small>${opt.missing?"Not collected":"Image coming soon"}</small></span></div>
@@ -5498,7 +5534,7 @@ function viewPacks(){if(!S.me)return `<div class="empty">Sign in to collect card
   const shell=(title,inner,back)=>`<div class="pkwrap">${back?`<button type="button" class="pkback" data-pkset="">‹ All collections</button>`:""}<div class="pkhead"><h2 class="pkh2"><span class="pkbrand">${LOGO.brand}</span>${title}</h2><span class="small muted">Bank <b class="num">${bal.toLocaleString()} BB</b></span></div><div class="pktabs">${tabs}</div>${inner}</div>`;
   if(st.tab==="shop"&&(!st.set||!CSETS[st.set])){return shell("Card Packs",`<p class="small muted">Pick a collection to open its packs.</p>
     <div class="setgrid">${Object.entries(CSETS).filter(([k])=>!CSETS[k].special).map(([k,s])=>{const cat=cardsCat(k),have=cat.filter(c=>cardCount(c.id)>0).length;const real=setOpen(k);
-      return `<button type="button" class="setcard${real?"":" locked"}" ${real?`data-pkset="${k}"`:"disabled"} style="--c1:${s.c1};--c2:${s.c2}"><span class="setic">${LOGO[k]||s.ic}</span><span class="setname">${esc(s.name)}</span><span class="settag">${real?esc(s.tag):"Cards coming soon"}</span>
+      return `<button type="button" class="setcard${s.rainbow?" rainbow":""}${real?"":" locked"}" ${real?`data-pkset="${k}"`:"disabled"} style="--c1:${s.c1};--c2:${s.c2}"><span class="setic">${LOGO[k]||s.ic}</span><span class="setname">${esc(s.name)}</span><span class="settag">${real?esc(s.tag):"Cards coming soon"}</span>
         <span class="setprog"><span>${have}/${cat.length} collected</span><i><b style="width:${Math.round(have/cat.length*100)}%"></b></i></span><span class="setgo">${real?"Open ›":"🔒 Soon"}</span></button>`}).join("")}</div>${pmPackHtml(bal)}`)}
   const SET=CSETS[st.set]||CSETS.lm;
   let body="";
@@ -5730,6 +5766,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:69,d:"Oct 23",t:[["🌈","New card collection: Fantasyland! 51 cards, open its packs in Cards"],["🪓","Berserker (Elite) gives you 3 auto-kills a day in the Blackjack rat hunt"],["⚡","Fantasyland Grails come with their own card auras"],["🪑","Fixed: an old seat at a live table could stop you from sitting down"]]},
  {v:68,d:"Oct 23",t:[["⛏️","The BB miner is turned off. You no longer earn BB just for having the app open (what you already mined stays yours)"],["🎥","Third person now sits your character properly on the chair, and you can see your own neck stretch when you zoom in"]]},
  {v:67,d:"Oct 23",t:[["🎥","New camera button at Russian Roulette and Hold'em: switch between first person and third person (behind your own character)"],["🎅","Santa got real legs"]]},
  {v:66,d:"Oct 23",t:[["🎅","Santa looks like his original model again: arms at his sides, legs fixed"],["👧","Anime Girl has left the shop (if you own her, she's still yours)"]]},
@@ -7590,7 +7627,7 @@ render();
   chatSub(CHAT_N0);
   if(S.me){dmSubThreads();ofSub()}
   db.doc("meta/futures").onSnapshot(s=>{S.futures=(s.exists&&s.data())||null;renderSoon()},()=>{});
-  ["lm","pba","mv"].forEach(k=>db.doc("meta/cards_"+k).onSnapshot(s=>{S.cardMeta=S.cardMeta||{};S.cardMeta[k]=(s.exists&&s.data())||null;renderSoon()},()=>{}));
+  ["lm","fl","mv"].forEach(k=>db.doc("meta/cards_"+k).onSnapshot(s=>{S.cardMeta=S.cardMeta||{};S.cardMeta[k]=(s.exists&&s.data())||null;renderSoon()},()=>{}));
   db.doc("meta/plat").onSnapshot(s=>{S.platMeta=(s.exists&&s.data())||null;renderSoon()},()=>{});
   db.collection("plat").onSnapshot(s=>{S.plat=s.docs.map(d=>({id:d.id,...d.data()}));renderSoon()},()=>{});
   /* cancelled listings are never shown or counted (the balance only uses sold ones), so they aren't loaded */

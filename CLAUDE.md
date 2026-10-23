@@ -180,6 +180,13 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
     High-Low guesses after 4 right in a row (`st.n`, run counter, in `hlSnap`) are priced at `HL_CHR_EDGE` 1.02/p instead of 0.97/p (`hlMultX`).
   - `div:6999` **Joe Camel** (Elite, art pending).
   Tests: `node tools/test/mv-abilities.test.mjs` (craps factors exact + Monte Carlo through `crResolve`, tithe split math, respin math).
+- **Fantasyland** (`fl`, Oct 23, replaced the empty "Based PBA Moments" slot): code-defined like MV_ADD — `FL_ADD` rows, `flCards()`, art
+  `public/cards/fl/<slug>.webp` (`FL_IMGV`), ids `fl-<slug>`. Owner's print runs `FL_LIM` [∞,100,25,7,3,2] via `limF` (overrides CR_LIM). No Dragons,
+  so `pkBlocked` blocks the Dragon pack there. Rainbow theme: `.setcard.rainbow`, `.tcard.tfull.flc` animated rainbow frame, LOGO.fl. Card auras on Grails
+  (`fx`+`cfx`, rendered by pmFxHtml/pmOverHtml): `zap` = Peter's lightning (The Gooner), `emo` = floating emoji `c.emo` (Vail Grail 🦶, BiggieCheese Rookie 🧀).
+  `bers` **Berserker** (Elite): AUTO KILL button in the rat hunt (`revengeStart`, `#revAuto`), 3/day (`BERS_DAY`, `prefs.bersDay/bersUsed`, divDay), a normal 1,000 kill.
+  Placeholders (`img:false`): supply-drop, rocktopus, forbidden-archive, average-cowboys-fan, minion-commander, legendary-crew, another-day (owner's art not usable:
+  copyrighted characters / slur title). Faces of bystanders blurred in honors-class-clown, autism-attack; mirror reflection in squeaky-clean.
 - **Market**: list for price and/or trade wants (specific card or "rarity or better"), private listings (`only`).
 - **Offers** (`of*`): BB and/or cards on any open listing. Offered cards leave the offerer's prefs while pending
   (`esc`) and come back on decline/cancel/expiry (48 h)/failure (`returned`, offerer's page). Accept = status race on the
