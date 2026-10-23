@@ -233,6 +233,11 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   `cerb` (Cerberus, `HUMAN_V.cerb`): multi-material A-pose model → v2 file: header `bones` list (parent rig object, local pos, rest quaternion,
   bind joint) incl. a rigid tail bone swung back behind the chair; textures atlased 2×2 into `cerb.jpg` + emissive `cerb_e.jpg`; joins between
   the hanging arms and the body were cut in the bake. Bake scripts: scratch `hbake/bake.mjs` (T-pose) / `bake2.mjs` (hand-measured joints).
+  `ag` (Anime Girl): CC-BY-4.0 model “Anime girl” by Imran Aziz (sketchfab.com/bayharborbutcher) — the credit is in the skin's shop
+  description and must stay. Half-body model (cut at mid-thigh): `bake5.mjs` generates lower legs + feet (skin-coloured tubes),
+  hard texture seam where they join (no UV blend across the atlas); the right arm is found by growing over the welded mesh from the
+  elbow (stops at the shoulder plane, dark hair texels, 3.6 from the arm chain) and every arm/body triangle away from the shoulder is cut;
+  the left arm stays in its posed hand-behind-head; bikini bottom/ties ride the hips. Bake source: scratch `hbake/bake5.mjs`.
   `uni` (Unicorn): chibi plush; lower body + feet rigid with the root (sits on the chair like a stuffed toy), `gy` lifts it onto the seat, negative `rise` (standing lowers it to the floor); `bake3.mjs`. Both files are v2 now and carry finger bones (`fingR`/`fingL`, parent = hand):
   `rrHuman` curls them (relaxed .45 rad, 1.2 while the arm IK goal is a world target = gripping gun/mug/cards, .2 in emotes).
   prefs `skins` {id:true}, `skin` (worn, null = your seat's animal), `skinSpent` (ledger). `skinOf(id)`; the table builds animals through
