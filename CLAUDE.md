@@ -118,6 +118,11 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   `gameById()` synthesizes a game from the results doc (`nflGame`), `grade()` → `nflGrade` (OT counts; tie/exact line/void =
   push), so the ledger, My bets, recaps and standings need nothing special. Price is re-checked against `meta/nfl` on submit.
   Rules: NFL bets can only be created before `nfl/{wk}.g[id].kick`, and only admins can change them afterwards.
+- **NBA bets** (`nba*`, Oct 23, side menu Sports betting → NBA bets): the NFL module copied by scratch `nba/gen.py` (identifiers nfl→nba; CSS classes shared).
+  `tools/jobs/nba.py` (hourly, after nfl.py; imports its pricing/grading): ESPN predictor (BPI) → else posted spread (sd 12) → else no lines; totals = feed O/U.
+  `meta/nba` = today's + tomorrow's games (each row has its own `wk` = ET date YYYYMMDD); results `nba/{YYYYMMDD}.g[espnId]`, void if not final by the end of
+  the day after. gameId `nba:{YYYYMMDD}:{espnId}:{ml|sp|tot}`, parlays `nba:true`; `nbaGame` sets `nfl:true, lg:"NBA"` so shared grading/titles work.
+  Rules: the NFL kickoff lock covers `nba:` ids too (`nflId`, `docPath(p[0],…)`), `nba` is admin-only. Tests: `python3 -m unittest test_nba`.
 - **Casino**: Blackjack (`bj*`; 2-deck shoes, streak bonus = `bjStreakBB(n)`: a flat 1,000 BB every 5 wins in a row (5, 10, 15 …), no deal cooldown), Roulette (`rl*` — note `rl` prefix is ALSO used for live Russian Roulette lobby code),
   Craps (`cr*`), High-Low (`hl*`), Flappy Cheese = Cheese Farm (`fp*`: Press `FP_PRESS` 1/10/30/100/250/500 BB per pipe, Silo `FP_SILO` 5k…500k daily cap (every daily reset — dividends, Debby, King Slop, farm cap, Vector run — uses `divDay()` = the 1 AM ET day; `divLeft()` = ms to the next reset); levels
   `prefs.fpPress/fpSilo`, upgrade spend `prefs.farmSpent` in the ledger; Vector card gives one 10× uncapped run/day),
