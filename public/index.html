@@ -2429,6 +2429,7 @@ async function auEquip(id){if(!S.me)return;if(S.readOnly)return toast("View only
 const EMOTES_PUBLIC=true;
 const EMOTES=[{id:"ldance",n:"L Dance",p:500000,d:"Stand up from your chair and hit the L dance",ic:"🕺",len:7,f:k=>emLDance(k)},
   {id:"twerk",n:"Table Twerk",p:500000,d:"Hop up on the table and twerk",ic:"🍑",len:9,f:k=>emTwerk(k),cam:[1.05,2.55,-2.55],prev:{table:1,cam:[2.9,2.75,-5.1],tgt:[0,1.62,-.9]}},
+  {id:"tbag",n:"Table T-Bag",p:250000,d:"Hop up on the table and squat up and down like it's a video game",ic:"🫖",len:9,f:k=>emTwerk(k,"tbag"),cam:[1.05,2.55,-2.55],prev:{table:1,cam:[2.9,2.75,-5.1],tgt:[0,1.62,-.9]}},
   {id:"tongue",n:"Tongue Shake",p:250000,d:"Mouth wide open, tongue out, shake your head like crazy",ic:"😜",len:3.6,f:k=>emTongue(k),prev:{cam:[.95,1.85,-2.3],tgt:[0,1.5,-.1]}}];
 const EM_BY=Object.fromEntries(EMOTES.map(e=>[e.id,e]));
 const EM_CD=8000;const EM={seen:{}};
@@ -2553,7 +2554,7 @@ function emLDance(k){const seg=(a,b)=>emSS((k-a)/(b-a));
    paws on knees and bounce the hips (with a slow sway and a look back over the shoulder), turn back, hop down, sit. ~9 s.
    Seat frame: -z = toward the table centre. The felt is .9 up; standing there = +.9 on y. */
 const EM_TW={z0:-.3,z1:-1.08,top:.9};
-function emTwerk(k){const seg=(a,b)=>emSS((k-a)/(b-a)),lin=(a,b)=>Math.max(0,Math.min(1,(k-a)/(b-a))),{z0,z1,top}=EM_TW;
+function emTwerk(k,mode){const tb=mode==="tbag";const seg=(a,b)=>emSS((k-a)/(b-a)),lin=(a,b)=>Math.max(0,Math.min(1,(k-a)/(b-a))),{z0,z1,top}=EM_TW;
   const P={cb:.5*(seg(0,.6)-seg(8.3,8.95)),rise:seg(.2,.85)-seg(7.75,8.4),x:0,y:0,z:0,ry:0,rz:0,rx:0,hx:0,hy:0,hz:0,
     lh0:0,lh1:0,lk0:0,lk1:0,lz0:0,lz1:0,la:0,ls:0,lal:0,lpx:-.3,lpy:-.95,lpz:-.05,ral:0,rpx:.3,rpy:-.95,rpz:-.05};
   /* walk up to the table and, at the end, back to the chair */
@@ -2567,11 +2568,15 @@ function emTwerk(k){const seg=(a,b)=>emSS((k-a)/(b-a)),lin=(a,b)=>Math.max(0,Mat
   if(crouch>0){P.lh0+=.6*crouch;P.lh1+=.6*crouch;P.lk0+=.9*crouch;P.lk1+=.9*crouch;P.y-=.1*crouch;P.rx-=.22*crouch;P.lal=Math.max(P.lal,crouch);P.ral=Math.max(P.ral,crouch);P.lpx=-.25;P.lpy=-.7;P.lpz=.55;P.rpx=.25;P.rpy=-.7;P.rpz=.55}
   if(air){const t=k<2.05?upq:dnq,tu=Math.sin(t*Math.PI);P.lh0+=.55*tu;P.lh1+=.55*tu;P.lk0+=.95*tu;P.lk1+=.95*tu;P.lal=P.ral=1;P.lpx=-.35;P.lpy=.75;P.lpz=-.35;P.rpx=.35;P.rpy=.75;P.rpz=-.35}
   /* turn to face your own seat (backside to the room) and back */
-  P.ry=Math.PI*(seg(2.3,2.8)-seg(6.2,6.6));
+  if(!tb)P.ry=Math.PI*(seg(2.3,2.8)-seg(6.2,6.6));
   /* the cheeks grow in while turning around and shrink away before hopping down */
-  P.bt=seg(2.35,2.85)-seg(6.15,6.6);
+  P.bt=tb?0:seg(2.35,2.85)-seg(6.15,6.6);
   /* the twerk */
-  const tw=seg(2.75,3.05)-seg(5.95,6.25);
+  const tw=tb?0:seg(2.75,3.05)-seg(5.95,6.25);
+  /* Table T-Bag: facing the middle of the table, hands on hips, squat all the way down and up again, about twice a second */
+  const tq=tb?seg(2.3,2.6)-seg(6.0,6.3):0;if(tq>0){const t=k-2.6,q=(1-Math.cos(Math.max(0,t)*Math.PI*2*2.1))/2*tq;
+    P.lh0+=1.25*q;P.lh1+=1.25*q;P.lk0+=2.05*q;P.lk1+=2.05*q;P.lz0+=.28*q;P.lz1+=.28*q;P.y-=.34*q;P.rx-=.12*q;P.hx+=.12*q;
+    P.lal=Math.max(P.lal,tq);P.ral=Math.max(P.ral,tq);P.lpx=-.42;P.lpy=-.62;P.lpz=.22;P.rpx=.42;P.rpy=-.62;P.rpz=.22}
   if(tw>0){const t=k-2.8,b=Math.sin(t*Math.PI*2*3.2),wg=Math.sin(t*Math.PI*3.2);
     P.lh0+=.95*tw;P.lh1+=.95*tw;P.lk0+=1.2*tw;P.lk1+=1.2*tw;P.lz0+=.2*tw;P.lz1+=.2*tw;P.y-=.15*tw;
     P.rx+=.62*tw+.15*b*tw;P.y+=.03*b*tw;P.rz+=.06*wg*tw;P.ry+=.32*Math.sin(t*.95)*tw;
@@ -5703,6 +5708,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:62,d:"Oct 23",t:[["🫖","New emote: Table T-Bag (250,000 BB). Aura Shop → Emotes"]]},
  {v:61,d:"Oct 23",t:[["💸","Every card now shows how much it pays you per day in dividends (per copy, before set bonuses)"]]},
  {v:60,d:"Oct 23",t:[["🔍","Close-up neck stretch looks clean on all the human skins now (no more smeared skin)"]]},
  {v:59,d:"Oct 23",t:[["😜","New emote: Tongue Shake (250,000 BB). Aura Shop → Emotes"]]},
