@@ -4877,7 +4877,7 @@ const MV_ADD=[
   ["goat-fuel",2,"Goat Fuel"],["root-beer-knight",2,"Root Beer Knight"],["millar-monday",2,"Millar Monday"],["cheetoh-bros",2,"Cheetoh Bros"],
   ["diverse-family",2,"Diverse Family",{abil:"social",img:false}],
   ["die-for-the-whale",3,"Die for the Whale"],["caf-gang",3,"Caf Gang"],
-  ["jimmy-scroggins-rookie",3,"Jimmy Scroggins Rookie",{abil:"curse",desc:"A cursed rookie card."}],
+  ["jimmy-scroggins-rookie",3,"Jimmy Scroggins Rookie",{abil:"curse",lim:3,pw:.15,desc:"A cursed rookie card."}],
   ["craps-dean-strow",4,"Craps Dean Strow",{abil:"dean"}],["heart-of-finance",4,"Heart of Finance",{abil:"hof"}],
   ["joe-camel",4,"Joe Camel",{div:6999,img:false}],
   ["king-slop",5,"King Slop",{abil:"slop"}],["shrex",5,"Shrex",{abil:"shrex",img:false}]];
@@ -4891,7 +4891,7 @@ const CARD_ABIL={
   shrex:{n:"Swamp Streak",ic:"🟢",t:"Blackjack win-streak bonuses pay 1.5× while you hold it, and your profile picture gets a green swamp glow. Extra copies don't stack."},
   hilo:{n:"Hot Streak",ic:"🔥",t:"High-Low: once you have 4 right in a row, every guess after that pays with a 2% edge for you instead of the house's 3%. Cash out any time. Extra copies don't stack."},
   social:{n:"Social Credit",ic:"📣",t:"Whoever pulls this card from a pack gets announced in league chat: +10 million social credit score! No money involved."}};
-const mvAddCards=()=>MV_ADD.map(([k,r,name,o])=>{o=o||{};return{id:"mv-"+k,r,name,sub:"Multiverse",desc:o.desc||(o.img===false?"Art coming soon. Part of the Multiverse collection.":"Part of the Multiverse collection."),full:true,code:true,img:o.img===false?null:`/cards/mv/${k}.webp?v=${MV_IMGV}`,...(o.abil?{abil:o.abil}:{}),...(o.div!=null?{div:o.div}:{})}});
+const mvAddCards=()=>MV_ADD.map(([k,r,name,o])=>{o=o||{};return{id:"mv-"+k,r,name,sub:"Multiverse",desc:o.desc||(o.img===false?"Art coming soon. Part of the Multiverse collection.":"Part of the Multiverse collection."),full:true,code:true,img:o.img===false?null:`/cards/mv/${k}.webp?v=${MV_IMGV}`,...(o.abil?{abil:o.abil}:{}),...(o.lim?{lim:o.lim}:{}),...(o.pw!=null?{pw:o.pw}:{}),...(o.div!=null?{div:o.div}:{})}});
 /* abilities for cards that live in meta/cards_mv (made with the Admin tools, so they carry no abil field) */
 const MV_ABIL={"mv-art-63":"hilo"};
 function mvMerge(list){const ids=new Set(list.map(c=>c.id));list=list.map(c=>MV_ABIL[c.id]&&!c.abil?{...c,abil:MV_ABIL[c.id]}:c);return[...list,...mvAddCards().filter(c=>!ids.has(c.id))]}
@@ -4956,6 +4956,8 @@ const cardCount=(cid,id)=>Number(myCards(id)[cid])||0;
 function cardMoney(id){let v=-(Number((S.prefs[id]||{}).packSpent)||0)+(Number((S.prefs[id]||{}).quickSold)||0);for(const l of S.market||[]){if(l.status!=="sold")continue;if(l.seller===id)v+=Number(l.price)||0;if(l.buyer===id)v-=Number(l.price)||0}return v}
 const pkRand=()=>{const u=new Uint32Array(1);crypto.getRandomValues(u);return u[0]/4294967296};
 function pkPullTier(p,i,set){const w=pkSlot(p,i,set);let x=pkRand();for(let r=0;r<w.length;r++){x-=w[r];if(x<0)return r}return w.length-1}
+/* pick one card from a rarity's pool; c.pw = how likely vs a normal card (Jimmy .15 = 85% less likely, owner Oct 22) */
+function pkPick(pool){const w=c=>c.pw!=null?Number(c.pw):1;let x=pkRand()*pool.reduce((a,c)=>a+w(c),0);for(const c of pool){x-=w(c);if(x<0)return c}return pool[pool.length-1]}
 function pkOpen(p,set){const cat=cardsCat(set),used={};const left=c=>c.lim-minted(c.id)-(used[c.id]||0);
   /* owner's rule: odds never change with supply. If the rolled rarity has no copies left, you still pull a card of that
      rarity, but it's over the max supply: it isn't added to your collection and is auto-sold at its quick-sell value
@@ -4964,9 +4966,9 @@ function pkOpen(p,set){const cat=cardsCat(set),used={};const left=c=>c.lim-minte
      Exception (owner, Oct 22): a Dragon that's already in someone's collection can't be pulled again: a Dragon roll with no
      Dragon copies left drops to the best rarity below that still has copies. */
   const out=Array.from({length:p.n},(_,i)=>{let r=pkPullTier(p,i,set);let pool=cat.filter(c=>c.r===r&&left(c)>0);
-    if(!pool.length&&r!==6){const all=cat.filter(c=>c.r===r);if(all.length)return{cid:all[Math.floor(pkRand()*all.length)].id,over:true}}
+    if(!pool.length&&r!==6){const all=cat.filter(c=>c.r===r);if(all.length)return{cid:pkPick(all).id,over:true}}
     let k=r;while(!pool.length&&k>0){k--;pool=cat.filter(c=>c.r===k&&left(c)>0)}
-    if(!pool.length)return null;const c=pool[Math.floor(pkRand()*pool.length)];used[c.id]=(used[c.id]||0)+1;return{cid:c.id,over:false}}).filter(Boolean).sort((a,b)=>cardById(a.cid).r-cardById(b.cid).r);
+    if(!pool.length)return null;const c=pkPick(pool);used[c.id]=(used[c.id]||0)+1;return{cid:c.id,over:false}}).filter(Boolean).sort((a,b)=>cardById(a.cid).r-cardById(b.cid).r);
   const ids=out.map(x=>x.cid);ids.over=out.map(x=>x.over);return ids}
 /* copies left to mint per rarity in a collection (Infinity = unlimited) */
 function pkLeft(set){const out=[0,0,0,0,0,0,0];for(const c of cardsCat(set)){if(c.r>6)continue;out[c.r]+=isFinite(c.lim)?Math.max(0,c.lim-minted(c.id)):Infinity}return out}

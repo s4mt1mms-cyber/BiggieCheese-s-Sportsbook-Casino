@@ -155,7 +155,7 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   to add art later drop in the WebP and delete `img:false`. `abil:"<key>"` attaches an ability (`CARD_ABIL`, shown on the card back
   by `abHtml` as "Ability · name"); `div:N` overrides the daily dividend per copy (`cardDiv`, used inside `divCalc`, so the collection header and the 1 AM payout agree; the curse card is skipped there too). Blur bystanders' faces in new art.
   Abilities (`hasAb(key,id)`; extra copies never stack):
-  - `curse` **Jimmy Scroggins Rookie** (Super Rare). Pull: 10% of the puller's balance (floor) per copy, split in whole BB among all
+  - `curse` **Jimmy Scroggins Rookie** (Super Rare). Only 3 copies (`lim:3`) and 85% less likely than other Super Rares in a pack (`pw:.15`, `pkPick`). Pull: 10% of the puller's balance (floor) per copy, split in whole BB among all
     other players (`tiRecips`: everyone else with a team), remainder vanishes; bank doc `{kind:"tithe",src:"pull",from,tos,each,amt}`;
     "THANK YOU FOR TITHING" popup when the card flips. While held: 10% of every win (BJ hand net + streak bonus, roulette spin net,
     craps roll net, High-Low cash-out profit, RR/Hold'em profit, sports-bet wins, dividends, mining, Flappy, rat hunt, Debby) —
