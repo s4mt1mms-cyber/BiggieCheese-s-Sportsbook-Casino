@@ -121,7 +121,7 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
 - **Casino**: Blackjack (`bj*`; 2-deck shoes, streak bonus = `bjStreakBB(n)`: a flat 1,000 BB every 5 wins in a row (5, 10, 15 …), no deal cooldown), Roulette (`rl*` — note `rl` prefix is ALSO used for live Russian Roulette lobby code),
   Craps (`cr*`), High-Low (`hl*`), Flappy Cheese = Cheese Farm (`fp*`: Press `FP_PRESS` 1/10/30/100/250/500 BB per pipe, Silo `FP_SILO` 5k…500k daily cap (every daily reset — dividends, Debby, King Slop, farm cap, Vector run — uses `divDay()` = the 1 AM ET day; `divLeft()` = ms to the next reset); levels
   `prefs.fpPress/fpSilo`, upgrade spend `prefs.farmSpent` in the ledger; Vector card gives one 10× uncapped run/day),
-  Revenge rat hunt (`revengeStart`), mining (25 BB/min while the app is on screen).
+  Revenge rat hunt (`revengeStart`), mining (25 BB/min — OFF since Oct 23: `MINE_ON=false` only stamps `mineAt` for presence).
 - **Russian Roulette**: solo vs bots and live 4-seat animal bar (three.js scene, `rr*`/`rl*`), drinking/blackout,
   shoot-someone + return fire, winner gets 4× final bet.
 - **Texas Hold'em** (`th*`): live open cash table, same bar scene, server-hosted.
@@ -261,7 +261,8 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   (`k==="lemur"`: lathed body, canvas fur texture `lemFur` as map+bump, tapered tube tail with painted rings `lemRings`, mask, cheek ruffs, orange eyes). Shop preview reuses `emPrevBuild` via `SK_PREV["skin:<id>"]` (turntable + wave). 10% `shopFee("skin")`.
 - **Camera toggle** (`camTP`, Oct 23): 🎥 `#camBtn` at RR + Hold'em flips `S.camTP` (localStorage `camTP`); `camTP(ctx)` runs every frame after the
   per-frame camera position: eases (`c.tpK`) to behind + above your seat with a little extra pitch down, shows your own head; drops back to first
-  person while the revolver is camera-mounted (`c.gun.parent===cam`). Emote camera (`emCam`) still wins while you dance.
+  person while the revolver is camera-mounted (`c.gun.parent===cam`). Third person also moves your body from its pushed-back first-person spot
+  (`selfPos`) onto the chair (`natPos`) and runs `rrNeckAnim(0,…)` for your own head (close-up neck stretch visible; the camera stays behind). Emote camera (`emCam`) still wins while you dance.
 - **Table head tags**: over each seated animal at RR / Hold'em, real players show their profile picture in their aura (`hdPic`,
   `md` level, cached; tap for the name), bots their name. RR: HTML `#rrTags` moved by `rrTagsTick` (replaced the canvas sprites);
   Hold'em: inside `thTags`.
