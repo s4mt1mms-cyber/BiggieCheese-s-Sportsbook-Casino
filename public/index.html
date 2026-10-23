@@ -4070,7 +4070,7 @@ const HUMAN_V={diamond:{f:"diamond",hip:.11,thigh:.396,sh:[.173,.56,.024],L1:.28
   monk:{f:"monk",v:1,ds:1,nc:0x1c1a1a,hip:.165,thigh:.2807,sh:[.2,.83,.02],L1:.3197,L2:.2588,head:[0,.96,-.03],rise:.0768,lsOff:[.07,.22,-.2],mouth:[0,.06,-.13],tgS:1,nr:.06},
 paladin:{f:"paladin",v:1,ds:1,nc:0x3a3a42,hip:.1233,thigh:.4429,sh:[.2569,.5331,0],L1:.2869,L2:.2452,head:[0,.6769,.0206],rise:.4536,lsOff:[.07,.22,-.2],mouth:[0,.06,-.15],tgS:1.1,nr:.07},
 bigfoot:{f:"bigfoot",v:2,ds:1,gy:.1,gz:-.1,nc:0x2b2019,hip:.145,thigh:.35,sh:[.32,.71,.03],L1:.3344,L2:.2835,head:[-.01,.87,-.13],rise:.1888,lsOff:[.08,.3,-.3],mouth:[0,.08,-.24],tgS:1.4,nr:.11},
-santa:{f:"santa",v:5,nc:0xb3121a,hip:.1216,thigh:.2947,sh:[.2816,.7156,0],L1:.2319,L2:.2077,head:[0,.8436,-.0256],rise:.0768,lsOff:[.07,.22,-.2],mouth:[0,.09,-.17],nr:.07},
+santa:{f:"santa",v:5,gy:.06,nc:0xb3121a,hip:.1216,thigh:.2947,sh:[.2816,.7156,0],L1:.2319,L2:.2077,head:[0,.8436,-.0256],rise:.0768,lsOff:[.07,.22,-.2],mouth:[0,.09,-.17],nr:.07},
   cerb:{f:"cerb",nc:0x24282e,emis:1,hip:.1038,thigh:.5398,sh:[.1868,.6,.0311],L1:.284,L2:.2475,head:[0,.7038,.0415],rise:.6046,lsOff:[.06,.2,-.12],mouth:[0,.1,-.2],tgS:1.2,nr:.06}};
 const HUMAN_P={};
 function humanData(T,hv){const V=HUMAN_V[hv]||HUMAN_V.diamond;if(HUMAN_P[V.f])return HUMAN_P[V.f];return HUMAN_P[V.f]=fetch("/skins/"+V.f+".bin"+(V.v?"?v="+V.v:"")).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(buf=>{
