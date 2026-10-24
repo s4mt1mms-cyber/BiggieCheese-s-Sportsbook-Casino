@@ -219,7 +219,7 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   are REQUIRED collateral and leave prefs at once (`collateral` on the doc, `req:true`, `borrower` set, no lender; `mintedAll` counts them). "Lend" (`bkFund`, tap twice)
   writes lender/takenAt/sched/status active → from then on a normal loan. "Take down" (`bkRqCancel`) → cancelled → `bkProcess` returns the cards (collateralBackClaimed).
   Bank page tabs (`S.bkTab`): Money (ability boxes, Send, Recent activity) · Loans (offer/ask buttons → form, requests + offers) · My loans (borrowing, lending, past).
-- **Admin House loans** (Oct 24): `prefs.giftLoan` {id,P,mins} (job-fix, e.g. `kjloan`) → `giftLoanCheck` on the player's own page creates `loans/gift_<id>_<giftId>` (lender house, 0%, 1 payment after `mins` minutes, gradual/late 7 days then default, `gift:true`), sets `prefs.giftLoanDone`, shows a popup. No chat post.
+- **Admin House loans** (Oct 24): `prefs.giftLoan` {id,P,mins} (job-fix, e.g. `kjloan`) → `giftLoanCheck` on the player's own page creates `loans/gift_<id>_<giftId>` (lender house, 0%, 1 payment after `mins` minutes, unsecured, a miss = immediate default (owner), `gift:true`), sets `prefs.giftLoanDone`, shows a popup. No chat post.
 - **Aura Shop** (`au*`, side menu, tab `aura`, `viewAura`): glowing auras around profile pictures. Catalog `AURAS` (Mythic
   Celestial 1,000,000; Legendary Flames/Electricity(`zap`)/Void 250,000; Animated Sparkles/Rainbow/Hearts 150,000; solid colors 25,000).
   Data on the player's own prefs: `auras` {id:true} (owned forever), `aura` (equipped id, null = none), `auraSpent` (total BB spent,

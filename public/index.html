@@ -6534,11 +6534,11 @@ window.__mv={tiSettle,tiSbCheck,tiConf,TI,crDeanF,slopLeft:()=>slopLeft(),hofTak
 const HOF_T={P:10000,rate:5,rateU:"day",compN:1,compU:"day",payN:1,payU:"day",n:1};
 const hofLoans=me=>(S.loans||[]).filter(l=>l.hof&&l.lender==="house"&&l.borrower===me);
 /* admin-granted House loan (owner, Oct 24): prefs.giftLoan = {id,P,mins} (written by job-fix); the player's own page opens it once on their next
-   visit as a normal House loan (0%, one payment due after `mins` minutes, late payments allowed for 7 days, then default). No chat post. */
+   visit as a normal House loan (0%, one payment due after `mins` minutes, unsecured: a miss is an immediate default). No chat post. */
 async function giftLoanCheck(){const me=S.me,q=me&&S.prefs[me];if(!q||!q.giftLoan||S.readOnly||!S.ready||!S.ld||!S.ld.bank||giftLoanCheck.busy)return;const G=q.giftLoan;if(q.giftLoanDone===G.id)return;
   giftLoanCheck.busy=true;try{const T={P:Math.floor(Number(G.P)),rate:0,rateU:"day",compN:1,compU:"day",payN:Math.max(1,Math.floor(Number(G.mins)||5)),payU:"minute",n:1},c=bkCalc(T);if(!c||c.err)return;
     const id="gift_"+me+"_"+G.id,ref=db.doc("loans/"+id);if(!(await ref.get()).exists){const now=Date.now();
-      await ref.set({lender:"house",...T,coll:[],collateral:[],seizeMode:"gradual",seizeN:7,seizeU:"day",only:[],note:G.note||"House loan",status:"active",borrower:me,at:now,takenAt:now,sched:{payMs:c.payMs,amts:c.amts},payments:[],gift:true})}
+      await ref.set({lender:"house",...T,coll:[],collateral:[],seizeMode:"all",seizeN:null,seizeU:null,only:[],note:G.note||"House loan",status:"active",borrower:me,at:now,takenAt:now,sched:{payMs:c.payMs,amts:c.amts},payments:[],gift:true})}
     q.giftLoanDone=G.id;await db.doc("prefs/"+me).update({giftLoanDone:G.id});
     const o=document.createElement("div");o.className="overlay";o.innerHTML=`<div class="pickbox recapbox"><h2>🏦 The House lent you ${c.P.toLocaleString()} BB</h2><p>0% interest. The full ${c.total.toLocaleString()} BB is due in <b>${T.payN} minute${T.payN>1?"s":""}</b> and comes out of your balance automatically.</p><p class="small muted">Bank → My loans to pay it back early.</p><button class="btn" type="button">OK</button></div>`;
     document.body.appendChild(o);o.querySelector("button").onclick=()=>o.remove();render()}
