@@ -5571,7 +5571,9 @@ function pmState(){const M=S.platMeta||{},sold=pmSlots().length,cap=Number(M.pac
   return{on:!!ends,sold,cap,ends,left:Math.max(0,cap-sold),live:!!ends&&Date.now()<ends&&sold<cap&&left>0}}
 const pmLaunched=()=>!!(S.platMeta&&S.platMeta.endsAt)||pmSlots().length>0;
 /* owner, Oct 24: quick-sell ×1.5 (QS_X) */
-const QS_X=1.5,qsVal=c=>c?(c.abil==="curse"?0:Math.floor((c.id==="pm-claire"?35000:Number(QS_VAL[c.r])||0)*QS_X)):0;
+/* owner, Oct 24: a leveled copy quick-sells for every Level 1 copy that went into it (e.g. Common LV 3 = 3×3 = 9 copies); the craft fee isn't refunded */
+const lvCopies=c=>{let n=1;if(c&&(c.lv||1)>1&&craftable(c))for(let L=1;L<c.lv;L++)n*=(CRAFT[c.r][L-1]||[1])[0];return n};
+const QS_X=1.5,qsVal=c=>c?(c.abil==="curse"?0:Math.floor((c.id==="pm-claire"?35000:Number(QS_VAL[c.r])||0)*QS_X)*lvCopies(c)):0;
 /* serial number of a pulled copy: copies pulled in earlier packs + earlier in this pack + 1 */
 function pmSerial(cid,n,idx,cards){let k=0;(S.plat||[]).filter(isPmSlot).forEach(d=>{const m=Number(String(d.id).slice(5));if(n&&m<n)d.cards.forEach(c=>{if(c===cid)k++})});for(let i=0;i<idx;i++)if(cards[i]===cid)k++;return k+1}
 const pmBadge=c=>c.lim===1?"1/1":`1 of ${c.lim}`;
@@ -6304,6 +6306,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:99,d:"Oct 24",t:[["⚡","Leveled cards now quick-sell for all the cards that went into them (a LV 3 Common is worth 9 Commons)"]]},
  {v:98,d:"Oct 24",t:[["🎰","New in the casino: Cheese Slots! Bets from 1 BB"]]},
  {v:97,d:"Oct 24",t:[["🎡","New: the Daily Spin! A free spin every 12 hours (midnight and noon Eastern) for up to 50,000 BB. Use it or lose it. Find it in the side menu"]]},
  {v:96,d:"Oct 24",t:[["🃏","Elite packs now have a 5% chance at a Grail"]]},
