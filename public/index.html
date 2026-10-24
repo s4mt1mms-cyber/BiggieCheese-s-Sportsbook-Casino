@@ -6529,6 +6529,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:109,d:"Oct 24",t:[["⚡","Vector's 10× Flappy boost is back to 1 run a day"]]},
  {v:108,d:"Oct 24",t:[["💰","When your sports bets get paid out, you get a popup next time you open the app showing what you won or lost"],["✅","Bet history now shows your picks in green (hit) or red (missed), leg by leg on parlays"]]},
  {v:107,d:"Oct 24",t:[["🧀","Cheese Farm upgrades are 15% cheaper again"]]},
  {v:106,d:"Oct 24",t:[["🏒","NHL bets: bet real NHL games (moneyline, puck line, total) and build NHL parlays. Sports betting → NHL bets in the menu"]]},
@@ -7132,7 +7133,7 @@ function fpStatsHtml(){const q=S.prefs[S.me]||{},today=fpToday(S.me),FP_CAP=fpCa
 const FP_BOOST_CARD="mv-art-72",FP_BOOST_MULT=10,FP_BOOST_CD=864e5;
 const fpHasBoost=()=>Number((((S.prefs[S.me]||{}).cards)||{})[FP_BOOST_CARD])>0;
 /* owner, Oct 23: Vector gives 2 boosted runs a day (prefs.flapBoostDay/flapBoostN; flapBoostAt kept for the old 1-a-day stamp) */
-const FP_BOOST_DAY=2,fpBoostUsed=()=>{const q=S.prefs[S.me]||{};return q.flapBoostDay===divDay()?Number(q.flapBoostN)||0:(Number(q.flapBoostAt)&&divDay(Number(q.flapBoostAt))===divDay()?1:0)};
+const FP_BOOST_DAY=1,/* owner Oct 24 2 PM: back to 1 a day */fpBoostUsed=()=>{const q=S.prefs[S.me]||{};return q.flapBoostDay===divDay()?Number(q.flapBoostN)||0:(Number(q.flapBoostAt)&&divDay(Number(q.flapBoostAt))===divDay()?1:0)};
 const fpBoostLeft=()=>fpBoostUsed()>=FP_BOOST_DAY?divLeft():0;
 function fpBoostHtml(){if(!fpHasBoost())return "";const left=fpBoostLeft(),armed=FP&&FP.boost;
   if(FP&&FP.boostRun)return `<div class="fpboost on">⚡ BOOST LIVE · every pipe is ${(fpPer()*FP_BOOST_MULT).toLocaleString()} BB · no limit this run</div>`;
