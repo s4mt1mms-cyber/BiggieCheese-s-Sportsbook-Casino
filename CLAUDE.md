@@ -341,6 +341,8 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
 - **Pack prices (owner, Oct 23 17:36):** ÷4 from the 13:03 prices: Common 750 · Uncommon 1,875 · Rare 3,750 · SR 7,500 · Elite 18,750 · Grail 25,000 · Dragon 62,500 (odds unchanged).
 - **Oct 23 evening:** Vector = 2 boosted runs a day (`FP_BOOST_DAY`, `prefs.flapBoostDay/flapBoostN`); Debbie · Dynasty Grail (`mv-art-65`) dividend 750 (`MV_DIV` in `mvMerge`). Crafting Guide (`cfGuide`), picker Close bar (`.cfpkfoot`), ability cards first (`cfHasAb`).
 
+- **Oct 24 1 AM (owner):** every card dividend ×1.5 (`DIV_X` inside `cardDiv`) and quick-sell ×1.5 (`QS_X` in `qsVal`; Claire 52,500); players already paid on Oct 24 get the extra 50% once (`div15`, `prefs.div15`).
+
 ## Live multiplayer (server host)
 `config/mp.serverHost = true` → Cloud Functions host Russian Roulette + Hold'em: clients write inputs
 (`rrin/{id}`, `thin/{id}`, `mpreq/{id}`, `mptick/{id}`), the server runs the game in Firestore transactions and
