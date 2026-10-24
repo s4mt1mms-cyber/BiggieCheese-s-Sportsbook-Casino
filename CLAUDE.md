@@ -345,6 +345,8 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
 
 - **Elite pack (owner, Oct 24):** tune `[[6,old Dragon chance],[5,.05,6],[3,.55]]` = Grail 5%, SR+ 55%, Dragon unchanged (Elite+ became ~11.7%).
 
+- **Daily Spin (owner, Oct 24):** `WHEEL` prizes/odds (nothing 20 · 1k 35 · 2.5k 18 · 5k 15 · 10k 7 · 20k 4.5 · 50k 0.5 %), one spin per Eastern half-day (`wheelSlot`: date+am/pm), not stackable; bank doc `wheel_<me>_<slot>` {kind:"wheel",from:"house",to,amt,k} = payout + used marker. Auto-pops when ready (`wheelOpen(true)`), side menu "Daily Spin".
+
 ## Live multiplayer (server host)
 `config/mp.serverHost = true` → Cloud Functions host Russian Roulette + Hold'em: clients write inputs
 (`rrin/{id}`, `thin/{id}`, `mpreq/{id}`, `mptick/{id}`), the server runs the game in Firestore transactions and
