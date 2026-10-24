@@ -2447,10 +2447,10 @@ async function auEquip(id){if(!S.me)return;if(S.readOnly)return toast("View only
    Roulette turn, blacked out or with your chair on the floor; a fire-back or your turn cuts a dance short and sits you back down.
    Add an emote: one EMOTES row + its pose function f(seconds) → pose numbers (all 0 = seated normally; see emLDance). */
 const EMOTES_PUBLIC=true;
-const EMOTES=[{id:"ldance",n:"L Dance",p:20000,d:"Stand up from your chair and hit the L dance",ic:"🕺",len:7,f:k=>emLDance(k)},
-  {id:"twerk",n:"Table Twerk",p:20000,d:"Hop up on the table and twerk",ic:"🍑",len:9,f:k=>emTwerk(k),cam:[1.05,2.55,-2.55],prev:{table:1,cam:[2.9,2.75,-5.1],tgt:[0,1.62,-.9]}},
-  {id:"tbag",n:"Table T-Bag",p:20000,d:"Hop up on the table and squat up and down like it's a video game",ic:"🫖",len:9,f:k=>emTwerk(k,"tbag"),cam:[1.05,2.55,-2.55],prev:{table:1,cam:[2.9,2.75,-5.1],tgt:[0,1.62,-.9]}},
-  {id:"tongue",n:"Tongue Shake",p:20000,d:"Mouth wide open, tongue out, shake your head like crazy",ic:"😜",len:3.6,f:k=>emTongue(k),prev:{cam:[.95,1.85,-2.3],tgt:[0,1.5,-.1]}}];
+const EMOTES=[{id:"ldance",n:"L Dance",p:15000,d:"Stand up from your chair and hit the L dance",ic:"🕺",len:7,f:k=>emLDance(k)},
+  {id:"twerk",n:"Table Twerk",p:15000,d:"Hop up on the table and twerk",ic:"🍑",len:9,f:k=>emTwerk(k),cam:[1.05,2.55,-2.55],prev:{table:1,cam:[2.9,2.75,-5.1],tgt:[0,1.62,-.9]}},
+  {id:"tbag",n:"Table T-Bag",p:10000,d:"Hop up on the table and squat up and down like it's a video game",ic:"🫖",len:9,f:k=>emTwerk(k,"tbag"),cam:[1.05,2.55,-2.55],prev:{table:1,cam:[2.9,2.75,-5.1],tgt:[0,1.62,-.9]}},
+  {id:"tongue",n:"Tongue Shake",p:5000,d:"Mouth wide open, tongue out, shake your head like crazy",ic:"😜",len:3.6,f:k=>emTongue(k),prev:{cam:[.95,1.85,-2.3],tgt:[0,1.5,-.1]}}];
 const EM_BY=Object.fromEntries(EMOTES.map(e=>[e.id,e]));
 const EM_CD=8000;const EM={seen:{}};
 const emOn=()=>EMOTES_PUBLIC||!!S.canEdit;
@@ -2461,22 +2461,22 @@ function emShopHtml(){const me=S.me,bal=Math.floor(ledger().balOf(me)),ask=S.emA
     if(ask===e.id)return `<div class="auask"><button type="button" class="aubtn" data-em="ok" data-id="${e.id}">Buy for ${divaP(e.p).toLocaleString()} BB</button><button type="button" class="aubtn ghost" data-em="no">Cancel</button></div>`;
     return `<button type="button" class="aubtn${bal<divaP(e.p)?" short":""}" data-em="buy" data-id="${e.id}">Buy</button>`};
   return `<div class="aush"><span>Emotes</span><span>${EMOTES_PUBLIC?"":"Admin preview · "}${(EMOTES[0]||{p:0}).p.toLocaleString()} BB</span></div><div class="small muted" style="margin:-4px 2px 10px">Use them at the live Russian Roulette and Hold'em tables. Everyone at the table sees it.</div>
-  <div class="augrid">${EMOTES.map(e=>{const o=emOwns(me,e.id);return `<div class="auit emit" data-emitem="${e.id}">${o?`<span class="auown">Owned</span>`:""}<div class="emprev" data-emprev="${e.id}"></div><b>${esc(e.ic+" "+e.n)}</b><span class="small muted">${esc(e.d)}</span><span class="aupr${o?" own":""}">${o?"Yours to keep · tap 🕺 at a live table":divaP(e.p).toLocaleString()+" BB"}</span>${btn(e)}</div>`}).join("")}</div>`}
+  <div class="augrid">${EMOTES.slice().sort((a,b)=>a.p-b.p).map(e=>{const o=emOwns(me,e.id);return `<div class="auit emit" data-emitem="${e.id}">${o?`<span class="auown">Owned</span>`:""}<div class="emprev" data-emprev="${e.id}"></div><b>${esc(e.ic+" "+e.n)}</b><span class="small muted">${esc(e.d)}</span><span class="aupr${o?" own":""}">${o?"Yours to keep · tap 🕺 at a live table":divaP(e.p).toLocaleString()+" BB"}</span>${btn(e)}</div>`}).join("")}</div>`}
 /* ---------- Skins (Aura Shop → Skins): look like a different animal at the live Russian Roulette + Hold'em tables ----------
    prefs.skins {id:true} owned forever, prefs.skin = the one you wear (null = your seat's normal animal), prefs.skinSpent (in the ledger).
    The table builds your animal with skSeat(); an emote, a head tag etc. work the same on any animal. */
-const SKINS=[{id:"lemur",n:"Ring-tailed Lemur",p:50000,c:0x4d4950,ic:"🐒",d:"Grey fur, a black-and-white ringed tail and big orange eyes"},
-  {id:"diamond",kind:"human",hv:"diamond",n:"Diamond",p:50000,c:0xd9a88a,ic:"💎",d:"Sit at the table as a human player instead of an animal"},
-  {id:"ag",hid:1,kind:"human",hv:"ag",n:"Anime Girl",p:50000,c:0xe9b8a2,ic:"🌸",d:"An anime-style human player. Model: “Anime girl” by Imran Aziz (CC BY 4.0)"},
-  {id:"uni",kind:"human",hv:"uni",n:"Unicorn",p:50000,c:0xf2f0f4,ic:"🦄",d:"A plushy unicorn with a pastel mane, a big horn and stubby legs"},
-  {id:"pir",kind:"human",hv:"pir",n:"Skeleton Pirate",p:50000,c:0xe6dcc4,ic:"🏴‍☠️",d:"A salty skeleton pirate with his hat and gear. Model: “Skeleton Pirate The Drunk” by FireGoat (CC BY 4.0)"},
-  {id:"fox",hid:1,kind:"human",hv:"fox",n:"Fox Girl",p:50000,c:0xcd4e22,ic:"🦊",d:"A red fox in an orange bikini, with a big white-tipped tail"},
-  {id:"monk",kind:"human",hv:"monk",n:"Shadow Monk",p:50000,c:0x2a2626,ic:"🥷",d:"A hooded dark fantasy assassin with his staff strapped across his back. Model: “Shadow Monk Assassin - Dark Fantasy” by Pigcraft (CC BY 4.0)"},
-{id:"paladin",kind:"human",hv:"paladin",n:"The Crusader",p:50000,c:0x8a1010,ic:"⚔️",d:"A blood-soaked dark fantasy paladin in full plate. Model: “THE SAVIOR — Dark Fantasy Paladin” by Atahan (CC BY 4.0)"},
-{id:"bigfoot",kind:"human",hv:"bigfoot",n:"Bigfoot",p:50000,c:0x3a2a1e,ic:"🦶",d:"The legend himself, fresh out of the woods and ready to gamble. Model: “primitive man ( aadimanav )” by iRahulRajput (CC BY 4.0)"},
-{id:"santa",kind:"human",hv:"santa",n:"Santa",p:50000,c:0xb3121a,ic:"🎅",d:"Ho ho ho. The big man himself in his red suit. Model: “Santa Clause 3D Scan” by Christian Day (CC BY 4.0)"},
-  {id:"cerb",kind:"human",hv:"cerb",n:"Cerberus",p:50000,c:0x2a2f36,ic:"🐺",d:"A tall jackal in black armor with glowing cyan fur and a long tail"},
-  {id:"nfox",n:"Neon Fox",p:50000,c:0x0e1634,ic:"🦊",d:"Midnight-blue fur, a white chest and tail tip, glowing cyan stripes and eyes"}];
+const SKINS=[{id:"lemur",n:"Ring-tailed Lemur",p:25000,c:0x4d4950,ic:"🐒",d:"Grey fur, a black-and-white ringed tail and big orange eyes"},
+  {id:"diamond",kind:"human",hv:"diamond",n:"Diamond",p:25000,c:0xd9a88a,ic:"💎",d:"Sit at the table as a human player instead of an animal"},
+  {id:"ag",hid:1,kind:"human",hv:"ag",n:"Anime Girl",p:25000,c:0xe9b8a2,ic:"🌸",d:"An anime-style human player. Model: “Anime girl” by Imran Aziz (CC BY 4.0)"},
+  {id:"uni",kind:"human",hv:"uni",n:"Unicorn",p:25000,c:0xf2f0f4,ic:"🦄",d:"A plushy unicorn with a pastel mane, a big horn and stubby legs"},
+  {id:"pir",kind:"human",hv:"pir",n:"Skeleton Pirate",p:25000,c:0xe6dcc4,ic:"🏴‍☠️",d:"A salty skeleton pirate with his hat and gear. Model: “Skeleton Pirate The Drunk” by FireGoat (CC BY 4.0)"},
+  {id:"fox",hid:1,kind:"human",hv:"fox",n:"Fox Girl",p:25000,c:0xcd4e22,ic:"🦊",d:"A red fox in an orange bikini, with a big white-tipped tail"},
+  {id:"monk",kind:"human",hv:"monk",n:"Shadow Monk",p:25000,c:0x2a2626,ic:"🥷",d:"A hooded dark fantasy assassin with his staff strapped across his back. Model: “Shadow Monk Assassin - Dark Fantasy” by Pigcraft (CC BY 4.0)"},
+{id:"paladin",kind:"human",hv:"paladin",n:"The Crusader",p:25000,c:0x8a1010,ic:"⚔️",d:"A blood-soaked dark fantasy paladin in full plate. Model: “THE SAVIOR — Dark Fantasy Paladin” by Atahan (CC BY 4.0)"},
+{id:"bigfoot",kind:"human",hv:"bigfoot",n:"Bigfoot",p:25000,c:0x3a2a1e,ic:"🦶",d:"The legend himself, fresh out of the woods and ready to gamble. Model: “primitive man ( aadimanav )” by iRahulRajput (CC BY 4.0)"},
+{id:"santa",kind:"human",hv:"santa",n:"Santa",p:25000,c:0xb3121a,ic:"🎅",d:"Ho ho ho. The big man himself in his red suit. Model: “Santa Clause 3D Scan” by Christian Day (CC BY 4.0)"},
+  {id:"cerb",kind:"human",hv:"cerb",n:"Cerberus",p:25000,c:0x2a2f36,ic:"🐺",d:"A tall jackal in black armor with glowing cyan fur and a long tail"},
+  {id:"nfox",n:"Neon Fox",p:25000,c:0x0e1634,ic:"🦊",d:"Midnight-blue fur, a white chest and tail tip, glowing cyan stripes and eyes"}];
 const SKIN_BY=Object.fromEntries(SKINS.map(x=>[x.id,x]));
 const skOwns=(id,k)=>!!((((S.prefs||{})[id]||{}).skins||{})[k]);
 const skinOf=id=>{const q=((S.prefs||{})[id])||{};return q.skin&&SKIN_BY[q.skin]&&skOwns(id,q.skin)?q.skin:null};
@@ -6529,6 +6529,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:110,d:"Oct 24",t:[["🕺","Emote price drop: Tongue Shake 5,000, Table T-Bag 10,000, L Dance and Table Twerk 15,000"],["🦊","Every skin is now 25,000 BB"]]},
  {v:109,d:"Oct 24",t:[["⚡","Vector's 10× Flappy boost is back to 1 run a day"]]},
  {v:108,d:"Oct 24",t:[["💰","When your sports bets get paid out, you get a popup next time you open the app showing what you won or lost"],["✅","Bet history now shows your picks in green (hit) or red (missed), leg by leg on parlays"]]},
  {v:107,d:"Oct 24",t:[["🧀","Cheese Farm upgrades are 15% cheaper again"]]},
