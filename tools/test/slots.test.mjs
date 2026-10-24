@@ -3,7 +3,7 @@ import fs from "node:fs";
 import assert from "node:assert/strict";
 const html = fs.readFileSync(new URL("../../public/index.html", import.meta.url), "utf8");
 const line = html.match(/const SL_SYM=.*?;\n/)[0];
-const fn = html.match(/function slMult\(r\)\{[^\n]*?\n?[^\n]*?\}/)[0];
+const fn = html.match(/function slMult\(r\)\{.*?\n/)[0];
 const ctx = new Function(line + fn + "return {SL_W,SL_PAY,slMult};")();
 const { SL_W, slMult } = ctx, T = SL_W.reduce((a, b) => a + b, 0);
 let rtp = 0, hit = 0;
