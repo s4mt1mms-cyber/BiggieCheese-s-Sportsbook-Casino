@@ -16,3 +16,10 @@ const jr = Number(html.match(/SL_JP_RATE=([.\d]+)/)[1]);
 console.log(`base ${(rtp * 100).toFixed(4)}% + jackpot ${(jr * 100).toFixed(2)}% = ${((rtp + jr) * 100).toFixed(4)}%`);
 assert.ok(rtp + jr > 0.945 && rtp + jr < 0.955, "house edge about 5%");
 console.log("slots ok");
+// 5 paylines: Monte Carlo of how often a spin wins something / makes a profit (RTP per line is the exact number above)
+{ const W = SL_W, pick = () => { let x = Math.random() * T; for (let k = 0; k < W.length; k++) { x -= W[k]; if (x < 0) return k } return 0 };
+  const LINES = [[1,1,1],[0,0,0],[2,2,2],[0,1,2],[2,1,0]]; let N = 400000, ret = 0, any = 0, prof = 0;
+  for (let i = 0; i < N; i++) { const g = [0,1,2].map(() => [pick(), pick(), pick()]); const M = LINES.reduce((a, L) => a + slMult(L.map((r, j) => g[j][r])), 0);
+    ret += M / 5; if (M > 0) any++; if (M > 5) prof++ }
+  console.log(`5 lines (MC): return ${(ret / N * 100).toFixed(2)}% · something back ${(any / N * 100).toFixed(1)}% · profit ${(prof / N * 100).toFixed(1)}% of spins`);
+  assert.ok(Math.abs(ret / N - rtp) < 0.01) }
