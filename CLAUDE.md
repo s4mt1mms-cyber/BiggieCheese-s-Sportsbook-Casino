@@ -347,6 +347,8 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
 
 - **Daily Spin (owner, Oct 24):** `WHEEL` prizes/odds (nothing 20 · 1k 35 · 2.5k 18 · 5k 15 · 10k 7 · 20k 4.5 · 50k 0.5 %), one spin per Eastern half-day (`wheelSlot`: date+am/pm), not stackable; bank doc `wheel_<me>_<slot>` {kind:"wheel",from:"house",to,amt,k} = payout + used marker. Auto-pops when ready (`wheelOpen(true)`), side menu "Daily Spin".
 
+- **Slots (owner, Oct 24):** tab `slots` (casino menu), `viewSlots`/`slRefresh`/`slSpin`; 3 reels on strip `SL_W`, pays `SL_PAY` (+ two/one cherry), 95.0% RTP (`node tools/test/slots.test.mjs`), bets 1–`SL_MAX` 1,000. Money `prefs.slNet`/`slSpins` (LV batched, in balOf, standings casino, `stq`, session `sl`).
+
 ## Live multiplayer (server host)
 `config/mp.serverHost = true` → Cloud Functions host Russian Roulette + Hold'em: clients write inputs
 (`rrin/{id}`, `thin/{id}`, `mpreq/{id}`, `mptick/{id}`), the server runs the game in Firestore transactions and
