@@ -2428,7 +2428,7 @@ async function auBuy(id){const A=AURA_BY[id];if(!A||!S.me)return;if(S.readOnly)r
     if(Math.floor(ledger().balOf(S.me))<A.p)return toast(`You need ${A.p.toLocaleString()} BB for ${A.n}.`);
     const spent=(Number(q.auraSpent)||0)+A.p;
     await db.doc("prefs/"+S.me).update({auras:{[id]:true},aura:id,auraSpent:spent});
-    q.auras={...(q.auras||{}),[id]:true};q.aura=id;q.auraSpent=spent;shopFee("aura",id,A.p);
+    q.auras={...(q.auras||{}),[id]:true};q.aura=id;q.auraSpent=spent;shopFee("aura",id,A.p);try{db.collection("chat").add({type:"bet",kind:"shop",uid:S.me,poster:S.me,at:Date.now(),text:`🛍️ ${nm(S.me)} bought the ${A.n} aura (${A.p.toLocaleString()} BB)`})}catch(_){}
     toast(`✨ ${A.n} is yours. It's on now.`)}
   catch(e){toast("That didn't save. Check your connection and try again.")}
   finally{S._auBusy=false;render()}}
@@ -2507,7 +2507,7 @@ async function skBuy(id){const X=SKIN_BY[id];if(!X||!S.me)return;if(S._skBusy)re
     if(Math.floor(ledger().balOf(S.me))<divaP(X.p))return toast(`You need ${divaP(X.p).toLocaleString()} BB for the ${X.n}.`);
     const spent=(Number(q.skinSpent)||0)+divaP(X.p);
     await db.doc("prefs/"+S.me).update({skins:{[id]:true},skin:id,skinSpent:spent});
-    q.skins={...(q.skins||{}),[id]:true};q.skin=id;q.skinSpent=spent;shopFee("skin",id,divaP(X.p));
+    q.skins={...(q.skins||{}),[id]:true};q.skin=id;q.skinSpent=spent;shopFee("skin",id,divaP(X.p));try{db.collection("chat").add({type:"bet",kind:"shop",uid:S.me,poster:S.me,at:Date.now(),text:`🛍️ ${nm(S.me)} bought the ${X.n} skin (${divaP(X.p).toLocaleString()} BB)`})}catch(_){}
     toast(`${X.ic} You're the ${X.n} now. It shows the next time you sit at a live table.`)}
   catch(e){toast("That didn't save. Check your connection and try again.")}
   finally{S._skBusy=false;render()}}
@@ -2528,7 +2528,7 @@ async function emBuy(id){const E=EM_BY[id];if(!E||!S.me||!emOn())return;if(S.rea
     if(Math.floor(ledger().balOf(S.me))<divaP(E.p))return toast(`You need ${divaP(E.p).toLocaleString()} BB for ${E.n}.`);
     const spent=(Number(q.emoteSpent)||0)+divaP(E.p);
     await db.doc("prefs/"+S.me).update({emotes:{[id]:true},emoteSpent:spent});
-    q.emotes={...(q.emotes||{}),[id]:true};q.emoteSpent=spent;shopFee("emote",id,divaP(E.p));
+    q.emotes={...(q.emotes||{}),[id]:true};q.emoteSpent=spent;shopFee("emote",id,divaP(E.p));try{db.collection("chat").add({type:"bet",kind:"shop",uid:S.me,poster:S.me,at:Date.now(),text:`🛍️ ${nm(S.me)} bought the ${E.n} emote (${divaP(E.p).toLocaleString()} BB)`})}catch(_){}
     toast(`🕺 ${E.n} is yours. Tap 🕺 at a live Russian Roulette or Hold'em table.`)}
   catch(e){toast("That didn't save. Check your connection and try again.")}
   finally{S._emBusy=false;render()}}
@@ -5567,8 +5567,8 @@ const MV_ABIL={"mv-art-63":"hilo"};
 const MV_DIV={"mv-art-65":750};/* owner, Oct 23: Debbie · Dynasty Grail pays 1.5× the Grail dividend */
 function mvMerge(list){const ids=new Set(list.map(c=>c.id));list=list.map(c=>MV_ABIL[c.id]&&!c.abil?{...c,abil:MV_ABIL[c.id]}:c).map(c=>MV_DIV[c.id]!=null&&c.div==null?{...c,div:MV_DIV[c.id]}:c).map(c=>c.id==="mv-art-72"?{...c,desc:"⚡ FLAPPY BOOST: own this card and you get a Use Boost button on Cheese Farm. Twice a day, a run pays 10× per pipe with no daily cap. Resets at 1 AM ET."}:c);return[...list,...mvAddCards().filter(c=>!ids.has(c.id))]}
 /* daily dividend for one copy: a card's own div overrides the rarity table; the curse card pays nothing */
-/* owner, Oct 24: every card dividend ×1.5 (DIV_X) */
-const DIV_X=1.5,cardDiv0=c=>!c||c.abil==="curse"?0:(c.lv||1)>1&&craftable(c)?(c.div!=null?DIV_LV_JOE[1]:DIV_LV[c.r][(c.lv||1)-1]||0):c.div!=null?Number(c.div)||0:CARD_DIV[c.r],cardDiv=c=>cardDiv0(c)*DIV_X;
+/* owner, Oct 24: every card dividend ×1.5 (DIV_X), then ×1.2 more at 2:30 PM = ×1.8 */
+const DIV_X=1.8,cardDiv0=c=>!c||c.abil==="curse"?0:(c.lv||1)>1&&craftable(c)?(c.div!=null?DIV_LV_JOE[1]:DIV_LV[c.r][(c.lv||1)-1]||0):c.div!=null?Number(c.div)||0:CARD_DIV[c.r],cardDiv=c=>cardDiv0(c)*DIV_X;
 /* short "per day" label for card faces: 25 → 25, 5000 → 5k, 100000 → 100k */
 const divShort=n=>n>=1e6?+(n/1e6).toFixed(2)+"M":n>=1e3?+(n/1e3).toFixed(n%1e3?1:0)+"k":String(n);
 /* what abilities a player holds right now: {abil: copies}; cached until the current task ends (like ledger()) */
@@ -6196,13 +6196,21 @@ const cfHasAb=k=>{const c=cardById(k);return c&&(ab2Of(c)||c.abil||c.div!=null)?
    One free spin per half-day (Eastern time: 12:00 AM–11:59 AM and 12:00 PM–11:59 PM); a missed spin doesn't carry over.
    The prize is paid by the House as one bank doc wheel_<me>_<slot> {kind:"wheel",from:"house",to:me,amt,k} (amt 0 = nothing; the doc also
    marks the spin as used). The ledger treats it like any House payment. The wheel pops up on its own when a spin is ready. */
-const WHEEL=[{a:0,p:20,c:"#3a3a46",t:"Nothing"},{a:1000,p:35,c:"#2f8f5b"},{a:2500,p:18,c:"#2f6fb5"},{a:5000,p:15,c:"#8a4fd0"},{a:10000,p:7,c:"#d0632f"},{a:20000,p:4.5,c:"#c9302c"},{a:50000,p:.5,c:"#e8b423"}];
+/* owner, Oct 24 2:30 PM: 5% "shop item" slice (taken from the 1k slice): a random aura/emote/skin you don't own, odds ∝ 1/price */
+const WHEEL=[{a:0,p:20,c:"#3a3a46",t:"Nothing"},{a:0,p:5,c:"#d63384",t:"Shop item",shop:1},{a:1000,p:30,c:"#2f8f5b"},{a:2500,p:18,c:"#2f6fb5"},{a:5000,p:15,c:"#8a4fd0"},{a:10000,p:7,c:"#d0632f"},{a:20000,p:4.5,c:"#c9302c"},{a:50000,p:.5,c:"#e8b423"}];
 function wheelSlot(t){t=t==null?Date.now():t;const p=Object.fromEntries(new Intl.DateTimeFormat("en-CA",{timeZone:"America/New_York",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",hourCycle:"h23"}).formatToParts(new Date(t)).map(x=>[x.type,x.value]));return `${p.year}-${p.month}-${p.day}${Number(p.hour)<12?"am":"pm"}`}
 const wheelId=()=>"wheel_"+S.me+"_"+wheelSlot();
 const wheelReady=()=>!!S.me&&!!S.ld&&!!S.ld.bank&&!(S.bank||[]).some(t=>t.id===wheelId());
 function wheelNextMs(){const now=Date.now(),s=wheelSlot(now);let lo=now,hi=now+13*36e5;for(let i=0;i<40;i++){const m=(lo+hi)/2;if(wheelSlot(m)===s)lo=m;else hi=m}return Math.max(0,hi-now)}
+/* the shop-item prize: every aura/emote/skin for sale that you don't own yet, chance ∝ 1/price (cheapest most likely) */
+function wheelShopPool(me){const out=[];AURAS.filter(a=>a.p>0&&!a.card&&!auOwns(me,a.id)).forEach(a=>out.push({kind:"aura",id:a.id,n:a.n+" aura",p:a.p}));
+  if(emOn())EMOTES.filter(e=>e.p>0&&!emOwns(me,e.id)).forEach(e=>out.push({kind:"emote",id:e.id,n:e.n+" emote",p:e.p}));
+  SKINS.filter(x=>x.p>0&&!x.hid&&!skOwns(me,x.id)).forEach(x=>out.push({kind:"skin",id:x.id,n:x.n+" skin",p:x.p}));
+  const W=out.reduce((a,x)=>a+1/x.p,0);out.forEach(x=>x.ch=(1/x.p)/W);return out}
+function wheelShopPick(me){const pool=wheelShopPool(me);if(!pool.length)return null;const u=new Uint32Array(1);crypto.getRandomValues(u);let x=u[0]/4294967296;for(const it of pool){x-=it.ch;if(x<0)return it}return pool[pool.length-1]}
+const WHEEL_SHOP_FALLBACK=25000;/* already own everything: 25,000 BB instead */
 function wheelPick(){const u=new Uint32Array(1);crypto.getRandomValues(u);let x=u[0]/4294967296*100;for(let k=0;k<WHEEL.length;k++){x-=WHEEL[k].p;if(x<0)return k}return 0}
-const wheelLbl=w=>w.a?(w.a>=1000?(w.a/1000)+"K":String(w.a)):"✕";
+const wheelLbl=w=>w.shop?"🎁":w.a?(w.a>=1000?(w.a/1000)+"K":String(w.a)):"✕";
 function wheelSvg(){const n=WHEEL.length,R=100,seg=360/n;const pt=(a,r)=>[R+r*Math.sin(a*Math.PI/180),R-r*Math.cos(a*Math.PI/180)];
   return `<svg viewBox="0 0 200 200" class="whsvg">${WHEEL.map((w,k)=>{const a0=k*seg,a1=a0+seg,[x0,y0]=pt(a0,98),[x1,y1]=pt(a1,98),[tx,ty]=pt(a0+seg/2,66);
     return `<path d="M100 100 L${x0.toFixed(2)} ${y0.toFixed(2)} A98 98 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)} Z" fill="${w.c}" stroke="#0008" stroke-width="1"/><text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" transform="rotate(${a0+seg/2} ${tx.toFixed(1)} ${ty.toFixed(1)})" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-weight="900" font-size="${w.a>=10000?15:16}" fill="#fff" stroke="#0007" stroke-width=".6" paint-order="stroke">${wheelLbl(w)}</text>`}).join("")}<circle cx="100" cy="100" r="16" fill="#111" stroke="#ffd54a" stroke-width="3"/><text x="100" y="101" text-anchor="middle" dominant-baseline="middle" font-size="12">🧀</text></svg>`}
@@ -6212,22 +6220,26 @@ function wheelOpen(auto){if(!S.me||$("#whOv"))return;if(auto&&($("#recapOv")||$(
     <div class="whwrap"><div class="whptr">▼</div><div class="whwheel" id="whWheel">${wheelSvg()}</div></div>
     <div class="whres" id="whRes">${ready?"":`Next spin in <b class="num">${bkCd(wheelNextMs())}</b>`}</div>
     <div class="row" style="justify-content:center"><button type="button" class="btn" id="whGo" ${ready?"":"disabled"}>${ready?"Spin!":"Come back later"}</button><button type="button" class="btn ghost" id="whX">Close</button></div>
-    <details class="small muted whodds"><summary>Chances</summary>${WHEEL.map(w=>`<div>${w.a?w.a.toLocaleString()+" BB":"Nothing"} · ${w.p}%</div>`).join("")}</details></div>`;
+    <details class="small muted whodds"><summary>Chances</summary>${WHEEL.map(w=>`<div>${w.shop?"🎁 Random shop item (cheaper items more likely)":w.a?w.a.toLocaleString()+" BB":"Nothing"} · ${w.p}%</div>`).join("")}${(()=>{const P=wheelShopPool(S.me);return P.length?`<div style="margin-top:6px">If you land 🎁: ${P.slice().sort((a,b)=>b.ch-a.ch).map(x=>`${esc(x.n)} ${(x.ch*100).toFixed(1)}%`).join(" · ")}</div>`:""})()}</details></div>`;
   document.body.appendChild(o);S._whShown=wheelSlot();
   o.querySelector("#whX").onclick=()=>{if(!S._whSpin)o.remove()};o.querySelector("#whGo").onclick=()=>wheelSpin(o)}
 async function wheelSpin(o){if(S._whSpin||!wheelReady())return;if(S.readOnly)return toast("View only. Ask the commish for access.");S._whSpin=true;const go=o.querySelector("#whGo");go.disabled=true;
   const slot=wheelSlot(),id="wheel_"+S.me+"_"+slot,ref=db.doc("bank/"+id);let k;
   try{if((await ref.get()).exists){toast("You already spun this one.");S._whSpin=false;o.remove();return}
-    k=wheelPick();const w=WHEEL[k];await ref.set({from:"house",to:S.me,amt:w.a,k,kind:"wheel",note:"Daily spin",slot,at:Date.now()});
-    if(w.a>0){const tp=tiAdd({},w.a);if(tp.tiWin!=null)db.doc("prefs/"+S.me).update(tp).catch(()=>{})}}
+    k=wheelPick();const w=WHEEL[k];var item=w.shop?wheelShopPick(S.me):null;const amt=w.shop&&!item?WHEEL_SHOP_FALLBACK:w.a;
+    await ref.set({from:"house",to:S.me,amt,k,kind:"wheel",note:item?"Daily spin · "+item.n:"Daily spin",slot,at:Date.now(),...(item?{item:{kind:item.kind,id:item.id}}:{})});
+    if(item){const q=S.prefs[S.me]||{},f=item.kind==="aura"?"auras":item.kind==="emote"?"emotes":"skins",up={[f]:{[item.id]:true}};if(item.kind==="aura"&&!auraOf(S.me))up.aura=item.id;
+      await db.doc("prefs/"+S.me).update(up);q[f]={...(q[f]||{}),[item.id]:true};if(up.aura)q.aura=up.aura}
+    if(amt>0){const tp=tiAdd({},amt);if(tp.tiWin!=null)db.doc("prefs/"+S.me).update(tp).catch(()=>{})}}
   catch(e){S._whSpin=false;go.disabled=false;return toast("The spin didn't go through. Try again.")}
   const n=WHEEL.length,seg=360/n,u=new Uint32Array(1);crypto.getRandomValues(u);const off=(u[0]/4294967296-.5)*seg*.7,end=360*6-(k*seg+seg/2)+off;
   const wh=o.querySelector("#whWheel"),calm=pkCalm();wh.style.transition=calm?"none":"transform 4.6s cubic-bezier(.12,.75,.12,1)";wh.style.transform=`rotate(${end}deg)`;
   let tick=0;const tk=calm?0:setInterval(()=>{try{cfSfx("clang")}catch(_){}if(++tick>14)clearInterval(tk)},280);
   setTimeout(()=>{clearInterval(tk);const w=WHEEL[k],r=o.querySelector("#whRes");S._whSpin=false;
-    r.innerHTML=w.a?`<div class="whwin num">+${w.a.toLocaleString()} BB</div>`:`<div class="whlose">Nothing this time 😬</div>`;
-    go.textContent="Come back later";o.querySelector("#whX").textContent="Nice";try{cfSfx(w.a>=20000?"max":w.a?"burst":"rise");haptic()}catch(_){}
+    r.innerHTML=w.shop?(item?`<div class="whwin">🎁 ${esc(item.n)}!</div><div class="small muted">It's yours. Find it in the Aura Shop.</div>`:`<div class="whwin num">🎁 +${WHEEL_SHOP_FALLBACK.toLocaleString()} BB</div><div class="small muted">You already own everything in the shop, so here's BB instead.</div>`):w.a?`<div class="whwin num">+${w.a.toLocaleString()} BB</div>`:`<div class="whlose">Nothing this time 😬</div>`;
+    go.textContent="Come back later";o.querySelector("#whX").textContent="Nice";try{cfSfx(w.a>=20000||item?"max":w.a?"burst":"rise");haptic()}catch(_){}
     if(w.a>=20000)try{db.collection("chat").add({type:"bet",kind:"bank",uid:S.me,poster:S.me,at:Date.now(),text:`🎡 ${nm(S.me)} hit ${w.a.toLocaleString()} BB on the Daily Spin!`})}catch(_){}
+    if(item)try{db.collection("chat").add({type:"bet",kind:"shop",uid:S.me,poster:S.me,at:Date.now(),text:`🎡 ${nm(S.me)} won the ${item.n} on the Daily Spin!`})}catch(_){}
     renderSoon()},calm?300:4800)}
 /* pop the wheel up by itself once per half-day when a spin is ready */
 setInterval(()=>{if(S.ready&&wheelReady()&&S._whShown!==wheelSlot()&&!document.hidden)wheelOpen(true)},8000);
@@ -6445,7 +6457,7 @@ const TOPUP_AMT=1000,TOPUP_CAP=10000,WEEKLY_END=Date.parse("2026-10-23T17:00:00Z
 async function topUp(day){const q=S.prefs[S.me];if(!q||q.topDay===day)return;const bal=Math.floor(ledger().balOf(S.me)),add=bal<TOPUP_CAP?Math.min(TOPUP_AMT,TOPUP_CAP-bal):0;const patch={topDay:day};if(add>0)patch.topUp=(Number(q.topUp)||0)+add;await db.doc("prefs/"+S.me).update(patch);Object.assign(q,patch);if(add>0)setTimeout(()=>toast(`💵 Daily top-up: +${add.toLocaleString()} BB`),1500)}
 /* owner, Oct 24 1 AM: dividends went ×1.5 right after that day's payout; anyone already paid that day gets the extra 50% now (once, prefs.div15) */
 async function div15(){const q=S.prefs[S.me],day=divDay();if(!q||day!=="2026-10-24"||q.divDay!==day||q.div15===day||S._div15)return;S._div15=1;
-  try{const s=await db.doc("prefs/"+S.me).get(),d=s.exists?s.data():{};if(d.div15===day||d.divDay!==day)return;const add=Math.round(divCalc(S.me).amt*(DIV_X-1)/DIV_X);const patch={div15:day};if(add>0)patch.divEarn=(Number(d.divEarn)||0)+add;tiAdd(patch,add);
+  try{const s=await db.doc("prefs/"+S.me).get(),d=s.exists?s.data():{};if(d.div15===day||d.divDay!==day)return;const add=Math.round(divCalc(S.me).amt*0.5/DIV_X);/* the 1 AM top-up = half of the old 1× dividend */const patch={div15:day};if(add>0)patch.divEarn=(Number(d.divEarn)||0)+add;tiAdd(patch,add);
     await db.doc("prefs/"+S.me).update(patch);Object.assign(q,patch);if(add>0)toast(`💸 Dividends are up 50%: +${add.toLocaleString()} BB for today's payout`)}catch(_){S._div15=0}}
 async function divCheck(){if(!S.ready||!S.me||!db||S._divBusy)return;const q=S.prefs[S.me];if(!q||!q.dfl)return;const day=divDay();if(q.divDay===day){div15();return}
   const {amt,n,byR,full,mono,pk,mult,base,lvs,vt}=divCalc(S.me);
@@ -6529,6 +6541,9 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:113,d:"Oct 24",t:[["🎡","New Daily Spin prize: 🎁 a random aura, emote or skin you don't own yet (5%). Cheaper items are more likely"],["🛍️","League chat now shows when someone buys something from the shop"]]},
+ {v:112,d:"Oct 24",t:[["📈","Every card dividend is up 20% (leveled cards too), starting with tonight's payout"]]},
+ {v:111,d:"Oct 24",t:[["🏦","Paying a loan off early now costs at least the loan amount + 10% (or principal + interest so far, if that's more)"]]},
  {v:110,d:"Oct 24",t:[["🕺","Emote price drop: Tongue Shake 5,000, Table T-Bag 10,000, L Dance and Table Twerk 15,000"],["🦊","Every skin is now 25,000 BB"]]},
  {v:109,d:"Oct 24",t:[["⚡","Vector's 10× Flappy boost is back to 1 run a day"]]},
  {v:108,d:"Oct 24",t:[["💰","When your sports bets get paid out, you get a popup next time you open the app showing what you won or lost"],["✅","Bet history now shows your picks in green (hit) or red (missed), leg by leg on parlays"]]},
@@ -6802,7 +6817,10 @@ function bkAccrued(l,now){const c=bkCalc(l)||{},i=Number(c.i)||0,pm=Number((l.sc
   const g=dt=>Math.pow(1+i,Math.max(0,dt)/pm);let owed=(Math.floor(Number(l.P))||0)*g(now-t0);
   const seen=new Set();for(const p of l.payments||[]){if(seen.has(p.k))continue;seen.add(p.k);owed-=(Math.floor(Number(p.amt))||0)*g(now-(Number(p.at)||now))}
   return Math.max(0,Math.ceil(owed-1e-9))}
-function bkPayoffNow(l,now){const paid=bkPaidTot(l);return Math.max(0,Math.min(bkAccrued(l,now),bkTotalOf(l)-paid),bkCumDue(l,now)-paid)}
+/* owner, Oct 24: early payoff is at least the loan amount × 1.1 (a 10% prepayment minimum, less what's been paid); once principal + accrued
+   interest is more than that, it's principal + accrued. Still never more than the rest of the schedule, never less than what's overdue. */
+const BK_PRE=1.1,bkPreMin=l=>Math.ceil((Math.floor(Number(l.P))||0)*BK_PRE-1e-9);
+function bkPayoffNow(l,now){const paid=bkPaidTot(l);return Math.max(0,Math.min(Math.max(bkAccrued(l,now),bkPreMin(l)-paid),bkTotalOf(l)-paid),bkCumDue(l,now)-paid)}
 const bkOverAmt=(l,now)=>Math.max(0,bkCumDue(l,now)-bkPaidTot(l));
 const bkLastDue=l=>bkDue(l,bkAmts(l).length-1);
 /* next due time at which money is still owed (Infinity when chunks already cover the whole schedule) */
@@ -6864,7 +6882,7 @@ function bkTake(id){const l=(S.loans||[]).find(x=>x.id===id);if(!l||l.status!=="
   const items=l.coll||[],L={want:{items}};let pick=items.length?mkCover(L):[];if(items.length&&!pick)return toast("You don't have the collateral they ask for.");
   const own=ownCards();const o=document.createElement("div");o.className="pkov";
   const draw=()=>{o.innerHTML=`<div class="pkview"><h3>Borrow ${c.P.toLocaleString()} BB from ${esc(nm(l.lender))}</h3>
-    <p class="small muted">${c.n} payment${c.n>1?"s":""} of ~${c.amts[0].toLocaleString()} BB every ${esc(bkUT(l.payN,l.payU))}, ${c.total.toLocaleString()} BB total. Payments come out of your balance automatically on each payment date (if you're short, whatever you have is taken and the loan goes late); you can also pay any amount in between. Early payoff: principal + interest accrued so far, less what you've paid (never more than the full schedule). ${items.length?`Collateral is locked until the loan ends. ${esc(bkSeizeTxt(l))}, in the order listed.`:(bkGradual(l)?"Unsecured. A missed payment makes you late; catch up within "+esc(bkUT(l.seizeN,l.seizeU))+" of the final payment date or you default.":"Unsecured. A missed payment is a default.")}</p>
+    <p class="small muted">${c.n} payment${c.n>1?"s":""} of ~${c.amts[0].toLocaleString()} BB every ${esc(bkUT(l.payN,l.payU))}, ${c.total.toLocaleString()} BB total. Payments come out of your balance automatically on each payment date (if you're short, whatever you have is taken and the loan goes late); you can also pay any amount in between. Early payoff: the loan amount + 10% at least, or principal + interest accrued so far if that's more, less what you've paid (never more than the full schedule). ${items.length?`Collateral is locked until the loan ends. ${esc(bkSeizeTxt(l))}, in the order listed.`:(bkGradual(l)?"Unsecured. A missed payment makes you late; catch up within "+esc(bkUT(l.seizeN,l.seizeU))+" of the final payment date or you default.":"Unsecured. A missed payment is a default.")}</p>
     ${items.length?items.map((w,i)=>`<label class="mktrow"><span class="small">${esc(mkItemTxt(w))}</span><select data-ti="${i}">${own.filter(x=>mkFits(w,x)).map(x=>`<option value="${x.id}" ${pick[i]===x.id?"selected":""}>${esc(CR[x.r].n)} · ${esc(x.name)} (×${cardCount(x.id)})</option>`).join("")}</select></label>`).join("")+`<div class="cgrid tradepick">${pick.map(g=>cardHtml(cardById(g),{small:true})).join("")}</div>`:`<p class="small">No collateral needed.</p>`}
     <button type="button" class="btn" data-tgo>Take loan${pick.length?` · put up ${pick.length} card${pick.length>1?"s":""}`:""}</button><button type="button" class="btn ghost" data-pkclose>Cancel</button></div>`};
   draw();document.body.appendChild(o);
@@ -6973,7 +6991,7 @@ function bkLvMax(F){const x=cardById((F.cc)||"");return craftable(x)?LV_MAX[x.r]
 function bkLvOpts(F){return `<option value="">Any level</option>`+Array.from({length:bkLvMax(F)},(_,i)=>`<option value="${i+1}" ${String(F.cl)===String(i+1)?"selected":""}>LV ${i+1}</option>`).join("")}
 function bkCardOpts(F){return Object.keys(CSETS).filter(setOpen).flatMap(k=>cardsCat(k)).filter(c=>c.r===Number(F.cr)&&pmSeen(c.id)).map(c=>`<option value="${c.id}" ${F.cc===c.id?"selected":""}>${esc(c.name)}</option>`).join("")}
 function bkPrevHtml(){const F=bkF(),c=bkCalc(bkTerms(F));if(!c||c.err)return `<span class="neg small">${esc(c?c.err:"Check the terms.")}</span>`;
-  const bal=Math.floor(ledger().balOf(S.me));return `<div class="bkstats"><div><span>Per payment</span><b class="num">${c.amts[0].toLocaleString()}${c.amts.some(a=>a!==c.amts[0])?"*":""}</b></div><div><span>Total repaid</span><b class="num">${c.total.toLocaleString()}</b></div><div><span>Interest</span><b class="num pos">+${c.interest.toLocaleString()}</b></div><div><span>Length</span><b class="num">${bkCd(c.payMs*c.n)}</b></div><div><span>Early payoff</span><b class="num">${bkTarget(c).toLocaleString()} + interest</b></div></div>${c.amts.some(a=>a!==c.amts[0])?`<div class="small muted">* whole-BB rounding: payments range ${Math.min(...c.amts)}–${Math.max(...c.amts)} BB.</div>`:""}${c.P>bal?`<div class="small neg">You only have ${bal.toLocaleString()} BB.</div>`:""}`}
+  const bal=Math.floor(ledger().balOf(S.me));return `<div class="bkstats"><div><span>Per payment</span><b class="num">${c.amts[0].toLocaleString()}${c.amts.some(a=>a!==c.amts[0])?"*":""}</b></div><div><span>Total repaid</span><b class="num">${c.total.toLocaleString()}</b></div><div><span>Interest</span><b class="num pos">+${c.interest.toLocaleString()}</b></div><div><span>Length</span><b class="num">${bkCd(c.payMs*c.n)}</b></div><div><span>Early payoff</span><b class="num">${bkPreMin(c).toLocaleString()}+</b></div></div>${c.amts.some(a=>a!==c.amts[0])?`<div class="small muted">* whole-BB rounding: payments range ${Math.min(...c.amts)}–${Math.max(...c.amts)} BB.</div>`:""}${c.P>bal?`<div class="small neg">You only have ${bal.toLocaleString()} BB.</div>`:""}`}
 function bkTermsTxt(l){return `${Number(l.rate)}%/${l.rateU}, compounded every ${bkUT(l.compN,l.compU)} · ${l.n} payment${Number(l.n)>1?"s":""} every ${bkUT(l.payN,l.payU)}`}
 function bkRow(l){const c=bkCalc(l)||{},me=S.me,st=l.status,N=l.sched?l.sched.amts.length:c.n,now=Date.now(),live=(st==="active"||st==="late")&&l.sched;
   const chip={open:"Open",active:"Active",late:"Late",repaid:"Repaid",defaulted:"Defaulted",cancelled:"Cancelled"}[st]||st;
@@ -6986,7 +7004,7 @@ function bkRow(l){const c=bkCalc(l)||{},me=S.me,st=l.status,N=l.sched?l.sched.am
       const what=col&&sz<col?"next seizure":"default";nxt=stats+`<div class="small bklate">⏰ Late since ${ago(l.lateSince)} · <b class="num">${od.toLocaleString()} BB</b> overdue · ${what} in <b class="num" data-bkdue="${ev}">${bkCd(ev-now)}</b>${nd<Infinity?` · next payment date in <b class="num" data-bkdue="${nd}">${bkCd(nd-now)}</b> (collects ${cdNext.toLocaleString()} BB)`:""}${bor?" · pay the overdue amount to catch up":""}</div>`}
     if(bor){const bal=Math.floor(ledger().balOf(me)),open=now<last,v=(S.bkPart||{})[l.id]||"";
       nxt+=`<div class="row bkpay">${open&&po>1?`<input class="n s" type="number" min="1" step="1" max="${Math.min(bal,po)}" inputmode="numeric" placeholder="BB" data-bkpart="${esc(l.id)}" value="${esc(v)}" aria-label="Amount to pay"><button type="button" class="btn ghost small" data-bk="part" data-id="${esc(l.id)}">Pay part</button>`:""}<button type="button" class="btn small" data-bk="payoff" data-id="${esc(l.id)}" data-amt="${po}" ${bal<po?"disabled":""}>Pay off now · ${po.toLocaleString()} BB</button></div>${bal<po?`<div class="small muted">You have ${bal.toLocaleString()} BB.</div>`:""}`}}
-  else if(st==="open"&&c.amts)nxt=`<div class="small muted">Early payoff: <b class="num">${bkTarget(c).toLocaleString()} BB</b> principal + interest accrued until payoff</div>`;
+  else if(st==="open"&&c.amts)nxt=`<div class="small muted">Early payoff: <b class="num">${bkPreMin(c).toLocaleString()} BB</b> minimum (loan + 10%), or principal + interest accrued if that's more</div>`;
   else if(l.sched&&(st==="repaid"||st==="defaulted"))nxt=`<div class="small muted">Paid ${bkPaidTot(l).toLocaleString()} BB in total</div>`;
   const short=st==="open"&&c.P&&Math.floor(ledger().balOf(l.lender))<c.P;
   const seized=new Set();(l.seized||[]).forEach((g,i)=>seized.add(i));
@@ -7840,7 +7858,7 @@ function chatMsgHtml(m){
   const del=S.canEdit||m.uid===S.me&&m.type!=="bet"?` <button type="button" class="cdel" data-chatdel="${esc(m.id)}" aria-label="Delete message">delete</button>`:"";
   if(m.type==="bet"&&m.kind==="plat-legend"&&m.cid&&cardById(m.cid))return pmChatHtml(m,when,del);
   if(m.type==="bet"&&m.kind==="dragon"&&m.cid&&cardById(m.cid))return dragonChatHtml(m,when,del);
-  if(m.type==="bet"){const bk=m.kind==="bank",tr=m.kind==="cardtrade"||/ traded .+ for .+ 🔁$/.test(String(m.text||"")),buy=bk||tr||m.kind==="cardbuy"||/ bought .+ for [\d,]+ BB.* 💸$/.test(String(m.text||""));return `<div class="cbet${buy?" cbuy":""}" data-hold="${esc(m.id)}"><div class="eyebrow">${bk?"🏦 Bank":tr?"Traded":buy?"Card sold":"Bet accepted"} · ${when}${del}</div><div class="cbtitle">${esc(m.text)}</div><div class="small">${esc(m.detail||"")}</div>${reactHtml(m)}</div>`;}
+  if(m.type==="bet"){const bk=m.kind==="bank",tr=m.kind==="cardtrade"||/ traded .+ for .+ 🔁$/.test(String(m.text||"")),buy=bk||tr||m.kind==="cardbuy"||/ bought .+ for [\d,]+ BB.* 💸$/.test(String(m.text||""));const shp=m.kind==="shop";return `<div class="cbet${buy||shp?" cbuy":""}" data-hold="${esc(m.id)}"><div class="eyebrow">${shp?"🛍️ Shop":bk?"🏦 Bank":tr?"Traded":buy?"Card sold":"Bet accepted"} · ${when}${del}</div><div class="cbtitle">${esc(m.text)}</div><div class="small">${esc(m.detail||"")}</div>${reactHtml(m)}</div>`;}
   const mine=m.uid===S.me;
   return `<div class="cmsg${mine?" mine":""}${m.pending?" pending":""}">${mine?pic(m.uid):(logoOf(m.uid)?`<button type="button" class="zoombtn" data-zoom="${esc(m.uid)}" aria-label="View photo">${pic(m.uid)}</button>`:pic(m.uid))}<div class="cbody"><div class="cmeta">${mine?"You":`<button type="button" class="mlink" data-member="${esc(m.uid)}">${esc(nm(m.uid))}</button>`} · ${when}${del}</div><div class="ctext${m.gif?" hasgif":""}" data-hold="${esc(m.id)}">${m.gif||m.media?`<img class="cgif" data-mkey="${esc(m.id)}" alt="GIF">`:""}${m.text?esc(m.text):""}</div>${reactHtml(m)}</div></div>`;
 }
