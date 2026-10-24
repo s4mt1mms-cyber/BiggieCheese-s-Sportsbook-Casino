@@ -123,6 +123,10 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   `meta/nba` = today's + tomorrow's games (each row has its own `wk` = ET date YYYYMMDD); results `nba/{YYYYMMDD}.g[espnId]`, void if not final by the end of
   the day after. gameId `nba:{YYYYMMDD}:{espnId}:{ml|sp|tot}`, parlays `nba:true`; `nbaGame` sets `nfl:true, lg:"NBA"` so shared grading/titles work.
   Rules: the NFL kickoff lock covers `nba:` ids too (`nflId`, `docPath(p[0],…)`), `nba` is admin-only. Tests: `python3 -m unittest test_nba`.
+- **NHL bets** (`nhl*`, Oct 24, side menu Sports betting → NHL bets): the NBA module copied by scratch `nhl/gen.py` (nba→nhl) with per-side puck-line prices
+  (`spread.price` = {home,away}; the quote reads either shape). `tools/jobs/nhl.py` (hourly, after nba.py): ESPN predictor → else posted moneylines de-vigged → else no lines;
+  puck line ±1.5 for the favorite priced from a Poisson goal model (`rates`/`puck_line`, EN = empty-net share) at the same EDGE; totals = feed O/U −110.
+  `meta/nhl`, results `nhl/{YYYYMMDD}`, gameId `nhl:{YYYYMMDD}:{espnId}:{ml|sp|tot}`, parlays `nhl:true`; rules: `nhl` admin-only, kickoff lock covers `nhl:`. Tests: `python3 -m unittest test_nhl`.
 - **Casino**: Blackjack (`bj*`; 2-deck shoes, streak bonus = `bjStreakBB(n)`: a flat 1,000 BB every 5 wins in a row (5, 10, 15 …), no deal cooldown), Roulette (`rl*` — note `rl` prefix is ALSO used for live Russian Roulette lobby code),
   Craps (`cr*`), High-Low (`hl*`), Flappy Cheese = Cheese Farm (`fp*`: Press `FP_PRESS` 1/10/30/100/250/500 BB per pipe, Silo `FP_SILO` 5k…500k daily cap (every daily reset — dividends, Debby, King Slop, farm cap, Vector run — uses `divDay()` = the 1 AM ET day; `divLeft()` = ms to the next reset); levels
   `prefs.fpPress/fpSilo`, upgrade spend `prefs.farmSpent` in the ledger; Vector card gives one 10× uncapped run/day),
@@ -350,7 +354,7 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
 
 - **Slots (owner, Oct 24):** tab `slots` (casino menu), `viewSlots`/`slRefresh`/`slSpin`; 3 reels on strip `SL_W`, pays `SL_PAY` (+ two/one cherry), 95.0% RTP (`node tools/test/slots.test.mjs`), bets 1–`SL_MAX` 1,000. Money `prefs.slNet`/`slSpins` (LV batched, in balOf, standings casino, `stq`, session `sl`).
 
-- **Oct 24 1 PM (owner):** Cheese Farm upgrade costs ×0.45 (`FP_PRESS_COST`/`FP_SILO_COST`); `job-fix` `gift20k` = bank doc `gift20k_<id>` {from:"house",amt:20000,kind:"gift"} for every player with a team.
+- **Oct 24 1 PM (owner):** Cheese Farm upgrade costs ×0.45, then ×0.85 at 2 PM (`FP_PRESS_COST`/`FP_SILO_COST`); `job-fix` `gift20k` = bank doc `gift20k_<id>` {from:"house",amt:20000,kind:"gift"} for every player with a team.
 - **Leveled quick-sell (owner, Oct 24):** `qsVal` × `lvCopies(c)` = product of the recipe card counts up to that level (no fee refund; no arbitrage vs quick-selling the copies).
 
 ## Live multiplayer (server host)
