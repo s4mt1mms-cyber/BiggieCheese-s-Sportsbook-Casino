@@ -2866,23 +2866,45 @@ function boardParlaysHtml(){const ps=S.bets.filter(b=>b.type==="parlay"&&b.statu
 const recapTime=wk=>allowanceTime(wk)+2*36e5;
 function weekRecaps(me){const out={};
   for(const b of S.bets){if(b.status!=="live")continue;const mineP=b.posterId===me,mineT=b.takerId===me;if(!mineP&&!mineT)continue;
-    let wk,r,stake,winAmt,lbl,sub;
-    if(b.type==="parlay"){if(!mineP)continue;wk=Number(b.week);r=gradeParlay(b);stake=Number(b.stake)||0;winAmt=parlayWin(b);lbl=`${(b.legs||[]).length}-leg parlay vs the House`;sub=(b.legs||[]).map(l=>l.label).join(" · ")}
+    let wk,r,stake,winAmt,lbl,sub;var legs=null;const bid=b.id,bat=Number(b.createdAt)||0;
+    if(b.type==="parlay"){if(!mineP)continue;wk=Number(b.week);r=gradeParlay(b);stake=Number(b.stake)||0;winAmt=parlayWin(b);lbl=`${(b.legs||[]).length}-leg parlay vs the House`;sub=(b.legs||[]).map(l=>l.label).join(" · ");var legs=(b.legs||[]).map(l=>{const g=gameById(l.gameId);return {l:l.label,x:g?grade({side:l.side,line:l.line},g):null}})}
     else{const g=gameById(b.gameId);if(!g||g.future)continue;wk=Number(g.week);r=grade(b,g);try{lbl=String(sideText(b,g,mineP)).split(", ")[0];sub=gTitle(g)+(b.takerId==="house"?" · vs the House":"")}catch(_){lbl=gTitle(g)}const ps=Number(b.stake)||0,ts=b.takerStake!=null?Number(b.takerStake):ps;stake=mineP?ps:ts;winAmt=mineP?ts:ps}
     if(!wk)continue;const W=out[wk]||(out[wk]={wk,bet:0,won:0,lost:0,n:0,w:0,l:0,p:0,open:0,items:[]});W.bet+=stake;W.n++;
-    if(!r){W.open++;W.items.push({lbl,sub,stake,res:"open",pay:0});continue}
+    if(!r){W.open++;W.items.push({lbl,sub,legs,id:bid,at:bat,stake,res:"open",pay:0});continue}
     const iWon=(r==="poster"&&mineP)||(r==="taker"&&mineT),iLost=(r==="poster"&&mineT)||(r==="taker"&&mineP);
-    if(iWon){W.won+=winAmt;W.w++;W.items.push({lbl,sub,stake,res:"win",pay:winAmt})}else if(iLost){W.lost+=stake;W.l++;W.items.push({lbl,sub,stake,res:"loss",pay:-stake})}else{W.p++;W.items.push({lbl,sub,stake,res:"push",pay:0})}}
+    if(iWon){W.won+=winAmt;W.w++;W.items.push({lbl,sub,legs,id:bid,at:bat,stake,res:"win",pay:winAmt})}else if(iLost){W.lost+=stake;W.l++;W.items.push({lbl,sub,legs,id:bid,at:bat,stake,res:"loss",pay:-stake})}else{W.p++;W.items.push({lbl,sub,legs,id:bid,at:bat,stake,res:"push",pay:0})}}
   return Object.values(out).filter(W=>W.w+W.l+W.p>0).sort((a,b)=>b.wk-a.wk)}
 const sgn=v=>`${v>0?"+":v<0?"−":""}${Math.abs(Math.round(v)).toLocaleString()} BB`;
+/* one payout line: the pick in green (won) / red (lost); parlay legs each green/red with ✓/✗ (owner, Oct 24) */
+const legHtml=L=>`<span class="${L.x==="poster"?"pos":L.x==="taker"?"neg":"muted"}">${L.x==="poster"?"✓ ":L.x==="taker"?"✗ ":L.x==="push"?"– ":""}${esc(L.l||"")}</span>`;
+const poItemHtml=x=>`<div class="poitem"><span class="pol"><b class="${x.res==="win"?"pos":x.res==="loss"?"neg":""}">${esc(x.lbl||"")}</b><small class="muted">${x.legs?x.legs.map(legHtml).join(" · "):esc(x.sub||"")} · risked ${Math.round(x.stake).toLocaleString()}</small></span><span class="por ${x.res==="win"?"pos":x.res==="loss"?"neg":"muted"}">${x.res==="open"?"Pending":x.res==="push"?"Push · 0":sgn(x.pay)}</span></div>`;
 function recapCard(W,big){const net=W.won-W.lost;
   return `<div class="wkrecap${big?" big":""}"><div class="wkrhead"><span class="eyebrow">Week ${W.wk} payouts</span><span class="small muted">${W.w}-${W.l}${W.p?`-${W.p}`:""} on ${W.n} bet${W.n===1?"":"s"}</span></div>
     <div class="wkrgrid"><div><span class="stlbl">You bet</span><b class="num">${Math.round(W.bet).toLocaleString()} BB</b></div><div><span class="stlbl">You won</span><b class="num pos">${sgn(W.won)}</b></div><div><span class="stlbl">You lost</span><b class="num neg">${W.lost?"−"+Math.round(W.lost).toLocaleString()+" BB":"0 BB"}</b></div></div>
-    ${(W.items||[]).length?`<div class="poitems">${W.items.slice().sort((a,b)=>({win:0,loss:1,push:2,open:3}[a.res]-{win:0,loss:1,push:2,open:3}[b.res])).map(x=>`<div class="poitem"><span class="pol"><b>${esc(x.lbl||"")}</b><small class="muted">${esc(x.sub||"")} · risked ${Math.round(x.stake).toLocaleString()}</small></span><span class="por ${x.res==="win"?"pos":x.res==="loss"?"neg":"muted"}">${x.res==="open"?"Pending":x.res==="push"?"Push · 0":sgn(x.pay)}</span></div>`).join("")}</div>`:""}
+    ${(W.items||[]).length?`<div class="poitems">${W.items.slice().sort((a,b)=>({win:0,loss:1,push:2,open:3}[a.res]-{win:0,loss:1,push:2,open:3}[b.res])).map(poItemHtml).join("")}</div>`:""}
     <div class="wkrnet">Total payout <b class="num ${net>0?"pos":net<0?"neg":""}">${sgn(net)}</b></div><p class="small muted">Already added to your balance · now <b class="num">${Math.floor(ledger().balOf(S.me)).toLocaleString()} BB</b></p>${W.open?`<p class="small muted">${W.open} bet${W.open===1?" is":"s are"} still waiting on a result.</p>`:""}</div>`}
+/* Bet results popup (owner, Oct 24): every sports bet of mine that got paid out since I last looked (won / lost / push), shown once on my
+   next visit. Seen ids: prefs.bsn {key:1} (+ localStorage so it never repeats before the write lands). First run: bets older than 3 days count as seen. */
+const bpKey=id=>String(id).replace(/[.\/~*\[\]]/g,"_");
+function bpSeen(){const p=S.prefs[S.me]||{},m={...(p.bsn||{})};try{Object.assign(m,JSON.parse(localStorage.getItem("sab-bsn")||"{}"))}catch(_){}return m}
+function bpSeenMark(ids){ids=(ids||[]).filter(Boolean).map(bpKey);if(!ids.length||!S.me)return;const add={};ids.forEach(k=>add[k]=1);
+  try{const m=JSON.parse(localStorage.getItem("sab-bsn")||"{}");Object.assign(m,add);localStorage.setItem("sab-bsn",JSON.stringify(m))}catch(_){}
+  const p=S.prefs[S.me];if(p)p.bsn={...(p.bsn||{}),...add};db.doc("prefs/"+S.me).update({bsn:add}).catch(()=>{})}
+function betPayPopup(){if(!S.me||!S.ready||!S.prefs[S.me]||S.tab==="chat"||S.readOnly)return;if(document.querySelector("#bpOv,#recapOv,#newsOv,#whOv,#divOv,#dflOv,.pkov,.cfov,#tiOv,.slparty"))return;
+  if(!S.ld||!S.ld.bank)return;const items=weekRecaps(S.me).flatMap(W=>W.items||[]).filter(x=>x.res!=="open"&&x.id);if(!items.length)return;
+  const p=S.prefs[S.me];if(!p.bsn&&!p.bsnInit){const old=items.filter(x=>Date.now()-(x.at||0)>3*DAY).map(x=>x.id);p.bsnInit=1;db.doc("prefs/"+S.me).update({bsnInit:1}).catch(()=>{});if(old.length)bpSeenMark(old)}
+  const seen=bpSeen(),todo=items.filter(x=>!seen[bpKey(x.id)]);if(!todo.length)return;
+  const net=todo.reduce((a,x)=>a+x.pay,0),w=todo.filter(x=>x.res==="win").length,l=todo.filter(x=>x.res==="loss").length,pu=todo.length-w-l;
+  const o=document.createElement("div");o.id="bpOv";o.className="overlay";
+  o.innerHTML=`<div class="pickbox recapbox"><h2>${net>0?"💰 Bets paid out":net<0?"Bet results":"Bet results"}</h2><p class="small muted">Since you were last here: ${w} won · ${l} lost${pu?` · ${pu} push`:""}</p>
+    <div class="wkrecap big"><div class="poitems">${todo.sort((a,b)=>({win:0,loss:1,push:2}[a.res]-{win:0,loss:1,push:2}[b.res])).map(poItemHtml).join("")}</div>
+    <div class="wkrnet">${net>=0?"You made":"You lost"} <b class="num ${net>0?"pos":net<0?"neg":""}">${sgn(net)}</b></div><p class="small muted">Already in your balance · now <b class="num">${Math.floor(ledger().balOf(S.me)).toLocaleString()} BB</b></p></div>
+    <button class="btn" type="button" id="bpOk">${net>0?"Nice":"OK"}</button></div>`;
+  document.body.appendChild(o);const close=()=>{bpSeenMark(todo.map(x=>x.id));o.remove()};o.querySelector("#bpOk").onclick=close;o.addEventListener("click",e=>{if(e.target===o)close()});
+  try{if(net>0){cfSfx("burst");haptic()}}catch(_){}}
 function recapPopup(){if(!S.me||S.tab==="chat"||$("#recapOv"))return;const R=weekRecaps(S.me).find(W=>!W.open&&Date.now()>=recapTime(W.wk));if(!R)return;if(!S.ready||!S.prefs[S.me])return;let seen=Number(S.prefs[S.me].recapSeen)||0;try{seen=Math.max(seen,Number(localStorage.getItem("sab-recap-seen"))||0)}catch(_){}
   if(R.wk<=seen)return;const o=document.createElement("div");o.id="recapOv";o.className="overlay";o.innerHTML=`<div class="pickbox recapbox"><h2>Your week ${R.wk}</h2>${recapCard(R,true)}<button class="btn" type="button" id="recapOk">Nice</button></div>`;
-  document.body.appendChild(o);const close=()=>{try{localStorage.setItem("sab-recap-seen",String(R.wk))}catch(_){}S.prefs[S.me].recapSeen=R.wk;db.doc("prefs/"+S.me).update({recapSeen:R.wk}).catch(()=>{});o.remove()};S.prefs[S.me].recapSeen=R.wk;db.doc("prefs/"+S.me).update({recapSeen:R.wk}).catch(()=>{});o.querySelector("#recapOk").onclick=close;o.addEventListener("click",e=>{if(e.target===o)close()})}
+  document.body.appendChild(o);const close=()=>{bpSeenMark((R.items||[]).filter(x=>x.res!=="open").map(x=>x.id));try{localStorage.setItem("sab-recap-seen",String(R.wk))}catch(_){}S.prefs[S.me].recapSeen=R.wk;db.doc("prefs/"+S.me).update({recapSeen:R.wk}).catch(()=>{});o.remove()};S.prefs[S.me].recapSeen=R.wk;db.doc("prefs/"+S.me).update({recapSeen:R.wk}).catch(()=>{});o.querySelector("#recapOk").onclick=close;o.addEventListener("click",e=>{if(e.target===o)close()})}
 /* ---------- Parlays vs the House: pick 2+ legs from this week's lines and the futures; every leg must hit ---------- */
 function parlayLegsAvail(){const out=[];const sb=S.scoreboard;
   if(sb&&Array.isArray(sb.matchups)){const wk=Number(sb.week)||curWeek();if(Date.now()<Date.parse(houseKickoff(wk))&&wk>=curWeek())
@@ -6507,6 +6529,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:108,d:"Oct 24",t:[["💰","When your sports bets get paid out, you get a popup next time you open the app showing what you won or lost"],["✅","Bet history now shows your picks in green (hit) or red (missed), leg by leg on parlays"]]},
  {v:107,d:"Oct 24",t:[["🧀","Cheese Farm upgrades are 15% cheaper again"]]},
  {v:106,d:"Oct 24",t:[["🏒","NHL bets: bet real NHL games (moneyline, puck line, total) and build NHL parlays. Sports betting → NHL bets in the menu"]]},
  {v:105,d:"Oct 24",t:[["🧀","Cheese Farm upgrades are now 55% cheaper"],["🎁","The House gave everyone 20,000 BB. Check your Bank statement"]]},
@@ -7449,7 +7472,7 @@ setInterval(()=>{if(document.visibilityState!=="visible"){MINE_LAST=Date.now();r
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")MINE_LAST=Date.now()});
 /* background updates coalesce into at most one render per frame, and wait while a Flappy run is in progress */
 let _rq=0;window.SB_RENDER=()=>renderSoon();function renderSoon(){if(_rq)return;_rq=requestAnimationFrame(()=>{_rq=0;if((typeof FP!=="undefined"&&FP&&FP.st==="play"&&S.tab==="flappy")||document.getElementById("revOv")){setTimeout(renderSoon,400);return}render()})}
-function render(){if(S._rTab!==S.tab){const was=S._rTab;S._rTab=S.tab;try{if(was!==undefined&&CHAT.open&&S.tab!=="chat")chatOpen(false)}catch(_){}}nflLinesWatch();nbaLinesWatch();nhlLinesWatch();setTimeout(auSpace,0);setTimeout(emPrevSync,0);lvTick();setTimeout(onlRender,0);setTimeout(autoRefill,0);if(S.gw)setTimeout(gwRender,0);setTimeout(recapPopup,400);
+function render(){if(S._rTab!==S.tab){const was=S._rTab;S._rTab=S.tab;try{if(was!==undefined&&CHAT.open&&S.tab!=="chat")chatOpen(false)}catch(_){}}nflLinesWatch();nbaLinesWatch();nhlLinesWatch();setTimeout(auSpace,0);setTimeout(emPrevSync,0);lvTick();setTimeout(onlRender,0);setTimeout(autoRefill,0);if(S.gw)setTimeout(gwRender,0);setTimeout(recapPopup,400);setTimeout(betPayPopup,1200);
   {const u=logoOf(S.me),m=$("#meAv");if(m){if(u){m.outerHTML=`<img class="dot img" id="meAv" src="${esc(u)}" alt="">`}else if(m.tagName==="IMG"){m.outerHTML=`<span class="dot" id="meAv"></span>`}}}
   setMe();if(CHAT.open)chatRender();if(S.addOpen){refreshGhosts();betPreview()}
   const ts=$("#tabSetup");if(ts)ts.hidden=!S.canEdit;
