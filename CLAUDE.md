@@ -343,6 +343,8 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
 
 - **Oct 24 1 AM (owner):** every card dividend ×1.5 (`DIV_X` inside `cardDiv`) and quick-sell ×1.5 (`QS_X` in `qsVal`; Claire 52,500); players already paid on Oct 24 get the extra 50% once (`div15`, `prefs.div15`).
 
+- **Elite pack (owner, Oct 24):** tune `[[6,old Dragon chance],[5,.05,6],[3,.55]]` = Grail 5%, SR+ 55%, Dragon unchanged (Elite+ became ~11.7%).
+
 ## Live multiplayer (server host)
 `config/mp.serverHost = true` → Cloud Functions host Russian Roulette + Hold'em: clients write inputs
 (`rrin/{id}`, `thin/{id}`, `mpreq/{id}`, `mptick/{id}`), the server runs the game in Firestore transactions and

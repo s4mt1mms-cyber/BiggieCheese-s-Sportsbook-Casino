@@ -5309,7 +5309,7 @@ const PACKS=[
   {id:"green",r:1,name:"Uncommon Pack",price:1875,n:5,odds:[69.394,24,5,.9,.505,.201,0],floors:[1,0,0,0,0]},
   {id:"blue",r:2,name:"Rare Pack",price:3750,n:5,odds:[54.597,30,12,2.5,.5,.403,0],floors:[2,0,0,0,0]},
   {id:"purple",r:3,name:"Super Rare Pack",price:7500,n:5,odds:[36.627,33,19,8.94,1.6,.813,.02],floors:[2,2,0,0,0]},
-  {id:"red",r:4,name:"Elite Pack",price:18750,n:5,coin:{0:3},tune:[[3,.55]],odds:[27.979,32,25,10,4,.971,.05],floors:[3,2,0,0,0]},
+  {id:"red",r:4,name:"Elite Pack",price:18750,n:5,coin:{0:3},tune:[[6,.0009380916933769967],[5,.05,6],[3,.55]],/* owner Oct 24: Grail 5%; Dragon pinned at its old chance */odds:[27.979,32,25,10,4,.971,.05],floors:[3,2,0,0,0]},
   {id:"gold",r:5,name:"Grail Pack",price:25000,n:5,tune:[[4,.205],[5,.125,6]],odds:[21,20,22,16,16.1,5,.1],floors:[3,3,3,0,0]},
   {id:"plat",r:6,name:"Dragon Pack",price:62500,n:5,tune:[[5,.20,6]],odds:[21,20,22,16,16,5,.2],fixed:[3,4],custom:{2:[0,0,65,30,5,0,0],3:[0,0,0,0,1,0,0]},floors:[0,0,2,4,4],last:"renorm",lastOdds:[0,0,0,0,50,45,5]}];
 function pkOdds(p){return p.odds}
@@ -6225,6 +6225,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:96,d:"Oct 24",t:[["🃏","Elite packs now have a 5% chance at a Grail"]]},
  {v:95,d:"Oct 24",t:[["💸","Every card dividend is up 50%, and today's payout gets the extra 50% too"],["⚡","Quick-sell values are up 50% (and estimated values with them)"]]},
  {v:94,d:"Oct 23",t:[["🛠️","Fixed: card abilities on the back of cards were cut off. Scroll the back of a card to read everything"]]},
  {v:93,d:"Oct 23",t:[["🃏","Card packs are a quarter of the price: Common 750 · Uncommon 1,875 · Rare 3,750 · Super Rare 7,500 · Elite 18,750 · Grail 25,000 · Dragon 62,500"]]},
