@@ -1,6 +1,7 @@
 """Owner-requested one-off data fixes (manual workflow "Admin fix"). Each fix is idempotent: it records itself in config/fixes.
   kjflap: King Julian's Cheese Farm usage today -5,000 (owner, Oct 23).
-  gift20k: 20,000 BB from the House to every player with a team (owner, Oct 24)."""
+  gift20k: 20,000 BB from the House to every player with a team (owner, Oct 24).
+  kjspin: one free Daily Spin for King Julian (owner, Oct 24)."""
 import sys, time
 from common import db
 from google.cloud import firestore
@@ -42,6 +43,11 @@ elif fix == "gift20k":
         fs.collection("bank").document("gift20k_" + d.id).set({"from": "house", "to": d.id, "amt": 20000, "kind": "gift", "note": "House gift", "at": now, "wv": "fix." + str(now)})
         cnt += 1; print("gift", d.id, x.get("team"))
     print("gifts written:", cnt)
+elif fix == "kjspin":
+    # Oct 24 (owner): one free Daily Spin for King Julian (prefs.whFree +1; the app counts used ones by bank docs wheel_<id>_free<n>)
+    ref = fs.collection("prefs").document("u_8M5oXNoWRCzPXZOwJ2g3nA")
+    ref.update({"whFree": firestore.Increment(1), "wv": "fix." + str(int(time.time()))})
+    print("whFree now", (ref.get().to_dict() or {}).get("whFree"))
 else:
     print("unknown fix", fix); sys.exit(1)
 done.set({fix: int(time.time() * 1000)}, merge=True)

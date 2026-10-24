@@ -6197,9 +6197,12 @@ const cfHasAb=k=>{const c=cardById(k);return c&&(ab2Of(c)||c.abil||c.div!=null)?
    The prize is paid by the House as one bank doc wheel_<me>_<slot> {kind:"wheel",from:"house",to:me,amt,k} (amt 0 = nothing; the doc also
    marks the spin as used). The ledger treats it like any House payment. The wheel pops up on its own when a spin is ready. */
 /* owner, Oct 24 2:30 PM: 5% "shop item" slice (taken from the 1k slice): a random aura/emote/skin you don't own, odds ∝ 1/price */
-const WHEEL=[{a:0,p:20,c:"#3a3a46",t:"Nothing"},{a:0,p:5,c:"#d63384",t:"Shop item",shop:1},{a:1000,p:30,c:"#2f8f5b"},{a:2500,p:18,c:"#2f6fb5"},{a:5000,p:15,c:"#8a4fd0"},{a:10000,p:7,c:"#d0632f"},{a:20000,p:4.5,c:"#c9302c"},{a:50000,p:.5,c:"#e8b423"}];
+const WHEEL=[{a:0,p:20,c:"#3a3a46",t:"Nothing"},{a:0,p:5,c:"#d63384",t:"Shop item",shop:1},{a:1000,p:29.5,c:"#2f8f5b"},{a:2500,p:18,c:"#2f6fb5"},{a:5000,p:15,c:"#8a4fd0"},{a:10000,p:7,c:"#d0632f"},{a:20000,p:4.5,c:"#c9302c"},{a:50000,p:1,c:"#e8b423"}];/* 50k 0.5% → 1% (owner 6 PM, from the 1k slice) */
 function wheelSlot(t){t=t==null?Date.now():t;const p=Object.fromEntries(new Intl.DateTimeFormat("en-CA",{timeZone:"America/New_York",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",hourCycle:"h23"}).formatToParts(new Date(t)).map(x=>[x.type,x.value]));return `${p.year}-${p.month}-${p.day}${Number(p.hour)<12?"am":"pm"}`}
-const wheelId=()=>"wheel_"+S.me+"_"+wheelSlot();
+/* bonus spins (owner, Oct 24): prefs.whFree = free spins granted (admin fix job); each one used = bank doc wheel_<me>_free<n> */
+const wheelFreeUsed=()=>(S.bank||[]).filter(t=>String(t.id||"").startsWith("wheel_"+S.me+"_free")).length;
+const wheelFreeLeft=()=>Math.max(0,(Number((S.prefs[S.me]||{}).whFree)||0)-wheelFreeUsed());
+const wheelId=()=>{const sid="wheel_"+S.me+"_"+wheelSlot();return !(S.bank||[]).some(t=>t.id===sid)?sid:wheelFreeLeft()>0?"wheel_"+S.me+"_free"+(wheelFreeUsed()+1):sid};
 const wheelReady=()=>!!S.me&&!!S.ld&&!!S.ld.bank&&!(S.bank||[]).some(t=>t.id===wheelId());
 function wheelNextMs(){const now=Date.now(),s=wheelSlot(now);let lo=now,hi=now+13*36e5;for(let i=0;i<40;i++){const m=(lo+hi)/2;if(wheelSlot(m)===s)lo=m;else hi=m}return Math.max(0,hi-now)}
 /* the shop-item prize: every aura/emote/skin for sale that you don't own yet, chance ∝ 1/price (cheapest most likely) */
@@ -6211,12 +6214,12 @@ function wheelShopPick(me){const pool=wheelShopPool(me);if(!pool.length)return n
 const WHEEL_SHOP_FALLBACK=25000;/* already own everything: 25,000 BB instead */
 function wheelPick(){const u=new Uint32Array(1);crypto.getRandomValues(u);let x=u[0]/4294967296*100;for(let k=0;k<WHEEL.length;k++){x-=WHEEL[k].p;if(x<0)return k}return 0}
 const wheelLbl=w=>w.shop?"🎁":w.a?(w.a>=1000?(w.a/1000)+"K":String(w.a)):"✕";
-/* slices sized by their chance (owner, Oct 24): slice k spans wheelArc(k) = [start, width] in degrees */
-function wheelArc(k){const T=WHEEL.reduce((a,w)=>a+w.p,0);let a=0;for(let i=0;i<k;i++)a+=WHEEL[i].p/T*360;return [a,WHEEL[k].p/T*360]}
-function wheelSvg(){const R=100;const pt=(a,r)=>[R+r*Math.sin(a*Math.PI/180),R-r*Math.cos(a*Math.PI/180)];
-  return `<svg viewBox="0 0 200 200" class="whsvg">${WHEEL.map((w,k)=>{const [a0,seg]=wheelArc(k),a1=a0+seg,mid=a0+seg/2,[x0,y0]=pt(a0,98),[x1,y1]=pt(a1,98);
-    const wide=seg>=28,[tx,ty]=pt(mid,wide?66:70),fs=wide?(w.a>=10000?15:16):Math.max(0,Math.min(13,seg*.75)),rot=wide?mid:mid-90;
-    return `<path d="M100 100 L${x0.toFixed(2)} ${y0.toFixed(2)} A98 98 0 ${seg>180?1:0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)} Z" fill="${w.c}" stroke="#0008" stroke-width="${seg<4?.3:1}"/>${fs>=5?`<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" transform="rotate(${rot.toFixed(2)} ${tx.toFixed(1)} ${ty.toFixed(1)})" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-weight="900" font-size="${fs.toFixed(1)}" fill="#fff" stroke="#0007" stroke-width=".6" paint-order="stroke">${wheelLbl(w)}</text>`:""}`}).join("")}<circle cx="100" cy="100" r="16" fill="#111" stroke="#ffd54a" stroke-width="3"/><text x="100" y="101" text-anchor="middle" dominant-baseline="middle" font-size="12">🧀</text></svg>`}
+/* wheel look (owner, Oct 24 6 PM): 24 equal pockets, common prizes repeated like a real prize wheel (50K once). The prize is still picked by
+   WHEEL[k].p; the wheel then lands on a random pocket showing that prize. WHEEL_LAY = prize index per pocket, clockwise from the top. */
+const WHEEL_LAY=[2,0,3,4,2,5,0,3,2,1,4,0,2,3,6,0,2,4,3,5,2,0,2,7];
+function wheelSvg(){const R=100,n=WHEEL_LAY.length,seg=360/n;const pt=(a,r)=>[R+r*Math.sin(a*Math.PI/180),R-r*Math.cos(a*Math.PI/180)];
+  return `<svg viewBox="0 0 200 200" class="whsvg">${WHEEL_LAY.map((k,i)=>{const w=WHEEL[k],a0=i*seg,a1=a0+seg,mid=a0+seg/2,[x0,y0]=pt(a0,98),[x1,y1]=pt(a1,98),[tx,ty]=pt(mid,64);
+    return `<path d="M100 100 L${x0.toFixed(2)} ${y0.toFixed(2)} A98 98 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)} Z" fill="${w.c}" stroke="#0008" stroke-width=".8"/><text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" transform="rotate(${(mid-90).toFixed(2)} ${tx.toFixed(1)} ${ty.toFixed(1)})" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-weight="900" font-size="${w.shop?13:w.a>=10000?11.5:12.5}" fill="#fff" stroke="#0007" stroke-width=".5" paint-order="stroke">${wheelLbl(w)}</text>`}).join("")}<circle cx="100" cy="100" r="16" fill="#111" stroke="#ffd54a" stroke-width="3"/><text x="100" y="101" text-anchor="middle" dominant-baseline="middle" font-size="12">🧀</text></svg>`}
 function wheelOpen(auto){if(!S.me||$("#whOv"))return;if(auto&&($("#recapOv")||$("#divOv")||$("#newsOv")||$("#dflOv")||document.querySelector(".pkov,.cfov,#tiOv"))){setTimeout(()=>wheelOpen(true),2500);return}
   const ready=wheelReady();const o=document.createElement("div");o.id="whOv";o.className="overlay whov";
   o.innerHTML=`<div class="pickbox whbox"><h2>🎡 Daily Spin</h2><p class="small muted">A free spin every 12 hours (midnight and noon Eastern). Use it or lose it.</p>
@@ -6224,10 +6227,10 @@ function wheelOpen(auto){if(!S.me||$("#whOv"))return;if(auto&&($("#recapOv")||$(
     <div class="whres" id="whRes">${ready?"":`Next spin in <b class="num">${bkCd(wheelNextMs())}</b>`}</div>
     <div class="row" style="justify-content:center"><button type="button" class="btn" id="whGo" ${ready?"":"disabled"}>${ready?"Spin!":"Come back later"}</button><button type="button" class="btn ghost" id="whX">Close</button></div>
     <details class="small muted whodds"><summary>Chances</summary>${WHEEL.map(w=>`<div>${w.shop?"🎁 Random shop item (cheaper items more likely)":w.a?w.a.toLocaleString()+" BB":"Nothing"} · ${w.p}%</div>`).join("")}${(()=>{const P=wheelShopPool(S.me);return P.length?`<div style="margin-top:6px">If you land 🎁: ${P.slice().sort((a,b)=>b.ch-a.ch).map(x=>`${esc(x.n)} ${(x.ch*100).toFixed(1)}%`).join(" · ")}</div>`:""})()}</details></div>`;
-  document.body.appendChild(o);S._whShown=wheelSlot();
+  document.body.appendChild(o);S._whShown=wheelId();
   o.querySelector("#whX").onclick=()=>{if(!S._whSpin)o.remove()};o.querySelector("#whGo").onclick=()=>wheelSpin(o)}
 async function wheelSpin(o){if(S._whSpin||!wheelReady())return;if(S.readOnly)return toast("View only. Ask the commish for access.");S._whSpin=true;const go=o.querySelector("#whGo");go.disabled=true;
-  const slot=wheelSlot(),id="wheel_"+S.me+"_"+slot,ref=db.doc("bank/"+id);let k;
+  const slot=wheelSlot(),id=wheelId(),ref=db.doc("bank/"+id);let k;
   try{if((await ref.get()).exists){toast("You already spun this one.");S._whSpin=false;o.remove();return}
     k=wheelPick();const w=WHEEL[k];var item=w.shop?wheelShopPick(S.me):null;const amt=w.shop&&!item?WHEEL_SHOP_FALLBACK:w.a;
     await ref.set({from:"house",to:S.me,amt,k,kind:"wheel",note:item?"Daily spin · "+item.n:"Daily spin",slot,at:Date.now(),...(item?{item:{kind:item.kind,id:item.id}}:{})});
@@ -6235,7 +6238,7 @@ async function wheelSpin(o){if(S._whSpin||!wheelReady())return;if(S.readOnly)ret
       await db.doc("prefs/"+S.me).update(up);q[f]={...(q[f]||{}),[item.id]:true};if(up.aura)q.aura=up.aura}
     if(amt>0){const tp=tiAdd({},amt);if(tp.tiWin!=null)db.doc("prefs/"+S.me).update(tp).catch(()=>{})}}
   catch(e){S._whSpin=false;go.disabled=false;return toast("The spin didn't go through. Try again.")}
-  const [a0,seg]=wheelArc(k),u=new Uint32Array(1);crypto.getRandomValues(u);const off=(u[0]/4294967296-.5)*seg*.7,end=360*6-(a0+seg/2)+off;
+  const seg=360/WHEEL_LAY.length,pk=WHEEL_LAY.map((x,i)=>x===k?i:-1).filter(i=>i>=0),u=new Uint32Array(2);crypto.getRandomValues(u);const pi=pk[u[1]%pk.length],off=(u[0]/4294967296-.5)*seg*.7,end=360*6-(pi*seg+seg/2)+off;
   const wh=o.querySelector("#whWheel"),calm=pkCalm();wh.style.transition=calm?"none":"transform 4.6s cubic-bezier(.12,.75,.12,1)";wh.style.transform=`rotate(${end}deg)`;
   let tick=0;const tk=calm?0:setInterval(()=>{try{cfSfx("clang")}catch(_){}if(++tick>14)clearInterval(tk)},280);
   setTimeout(()=>{clearInterval(tk);const w=WHEEL[k],r=o.querySelector("#whRes");S._whSpin=false;
@@ -6245,7 +6248,7 @@ async function wheelSpin(o){if(S._whSpin||!wheelReady())return;if(S.readOnly)ret
     if(item)try{db.collection("chat").add({type:"bet",kind:"shop",uid:S.me,poster:S.me,at:Date.now(),text:`🎡 ${nm(S.me)} won the ${item.n} on the Daily Spin!`})}catch(_){}
     renderSoon()},calm?300:4800)}
 /* pop the wheel up by itself once per half-day when a spin is ready */
-setInterval(()=>{if(S.ready&&wheelReady()&&S._whShown!==wheelSlot()&&!document.hidden)wheelOpen(true)},8000);
+setInterval(()=>{if(S.ready&&wheelReady()&&S._whShown!==wheelId()&&!document.hidden)wheelOpen(true)},8000);
 
 /* ===== Slot machine (owner, Oct 24): 3 reels, standard casino edge (95.0% return to player, 5% house edge), bets 1–1,000 BB =====
    Every reel uses the same weighted strip SL_W (blank 12, cherry 6, lemon 5, bell 4, cheese 3, diamond 2, seven 1 = 33 stops).
@@ -6544,6 +6547,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:115,d:"Oct 24",t:[["🎡","Daily Spin: the 50K jackpot is now a 1% chance, and the wheel looks like a real prize wheel again"]]},
  {v:114,d:"Oct 24",t:[["🎡","Daily Spin slices are now sized by their real chances"]]},
  {v:113,d:"Oct 24",t:[["🎡","New Daily Spin prize: 🎁 a random aura, emote or skin you don't own yet (5%). Cheaper items are more likely"],["🛍️","League chat now shows when someone buys something from the shop"]]},
  {v:112,d:"Oct 24",t:[["📈","Every card dividend is up 20% (leveled cards too), starting with tonight's payout"]]},
