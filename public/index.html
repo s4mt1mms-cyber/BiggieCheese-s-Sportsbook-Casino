@@ -6211,9 +6211,12 @@ function wheelShopPick(me){const pool=wheelShopPool(me);if(!pool.length)return n
 const WHEEL_SHOP_FALLBACK=25000;/* already own everything: 25,000 BB instead */
 function wheelPick(){const u=new Uint32Array(1);crypto.getRandomValues(u);let x=u[0]/4294967296*100;for(let k=0;k<WHEEL.length;k++){x-=WHEEL[k].p;if(x<0)return k}return 0}
 const wheelLbl=w=>w.shop?"🎁":w.a?(w.a>=1000?(w.a/1000)+"K":String(w.a)):"✕";
-function wheelSvg(){const n=WHEEL.length,R=100,seg=360/n;const pt=(a,r)=>[R+r*Math.sin(a*Math.PI/180),R-r*Math.cos(a*Math.PI/180)];
-  return `<svg viewBox="0 0 200 200" class="whsvg">${WHEEL.map((w,k)=>{const a0=k*seg,a1=a0+seg,[x0,y0]=pt(a0,98),[x1,y1]=pt(a1,98),[tx,ty]=pt(a0+seg/2,66);
-    return `<path d="M100 100 L${x0.toFixed(2)} ${y0.toFixed(2)} A98 98 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)} Z" fill="${w.c}" stroke="#0008" stroke-width="1"/><text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" transform="rotate(${a0+seg/2} ${tx.toFixed(1)} ${ty.toFixed(1)})" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-weight="900" font-size="${w.a>=10000?15:16}" fill="#fff" stroke="#0007" stroke-width=".6" paint-order="stroke">${wheelLbl(w)}</text>`}).join("")}<circle cx="100" cy="100" r="16" fill="#111" stroke="#ffd54a" stroke-width="3"/><text x="100" y="101" text-anchor="middle" dominant-baseline="middle" font-size="12">🧀</text></svg>`}
+/* slices sized by their chance (owner, Oct 24): slice k spans wheelArc(k) = [start, width] in degrees */
+function wheelArc(k){const T=WHEEL.reduce((a,w)=>a+w.p,0);let a=0;for(let i=0;i<k;i++)a+=WHEEL[i].p/T*360;return [a,WHEEL[k].p/T*360]}
+function wheelSvg(){const R=100;const pt=(a,r)=>[R+r*Math.sin(a*Math.PI/180),R-r*Math.cos(a*Math.PI/180)];
+  return `<svg viewBox="0 0 200 200" class="whsvg">${WHEEL.map((w,k)=>{const [a0,seg]=wheelArc(k),a1=a0+seg,mid=a0+seg/2,[x0,y0]=pt(a0,98),[x1,y1]=pt(a1,98);
+    const wide=seg>=28,[tx,ty]=pt(mid,wide?66:70),fs=wide?(w.a>=10000?15:16):Math.max(0,Math.min(13,seg*.75)),rot=wide?mid:mid-90;
+    return `<path d="M100 100 L${x0.toFixed(2)} ${y0.toFixed(2)} A98 98 0 ${seg>180?1:0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)} Z" fill="${w.c}" stroke="#0008" stroke-width="${seg<4?.3:1}"/>${fs>=5?`<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" transform="rotate(${rot.toFixed(2)} ${tx.toFixed(1)} ${ty.toFixed(1)})" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-weight="900" font-size="${fs.toFixed(1)}" fill="#fff" stroke="#0007" stroke-width=".6" paint-order="stroke">${wheelLbl(w)}</text>`:""}`}).join("")}<circle cx="100" cy="100" r="16" fill="#111" stroke="#ffd54a" stroke-width="3"/><text x="100" y="101" text-anchor="middle" dominant-baseline="middle" font-size="12">🧀</text></svg>`}
 function wheelOpen(auto){if(!S.me||$("#whOv"))return;if(auto&&($("#recapOv")||$("#divOv")||$("#newsOv")||$("#dflOv")||document.querySelector(".pkov,.cfov,#tiOv"))){setTimeout(()=>wheelOpen(true),2500);return}
   const ready=wheelReady();const o=document.createElement("div");o.id="whOv";o.className="overlay whov";
   o.innerHTML=`<div class="pickbox whbox"><h2>🎡 Daily Spin</h2><p class="small muted">A free spin every 12 hours (midnight and noon Eastern). Use it or lose it.</p>
@@ -6232,7 +6235,7 @@ async function wheelSpin(o){if(S._whSpin||!wheelReady())return;if(S.readOnly)ret
       await db.doc("prefs/"+S.me).update(up);q[f]={...(q[f]||{}),[item.id]:true};if(up.aura)q.aura=up.aura}
     if(amt>0){const tp=tiAdd({},amt);if(tp.tiWin!=null)db.doc("prefs/"+S.me).update(tp).catch(()=>{})}}
   catch(e){S._whSpin=false;go.disabled=false;return toast("The spin didn't go through. Try again.")}
-  const n=WHEEL.length,seg=360/n,u=new Uint32Array(1);crypto.getRandomValues(u);const off=(u[0]/4294967296-.5)*seg*.7,end=360*6-(k*seg+seg/2)+off;
+  const [a0,seg]=wheelArc(k),u=new Uint32Array(1);crypto.getRandomValues(u);const off=(u[0]/4294967296-.5)*seg*.7,end=360*6-(a0+seg/2)+off;
   const wh=o.querySelector("#whWheel"),calm=pkCalm();wh.style.transition=calm?"none":"transform 4.6s cubic-bezier(.12,.75,.12,1)";wh.style.transform=`rotate(${end}deg)`;
   let tick=0;const tk=calm?0:setInterval(()=>{try{cfSfx("clang")}catch(_){}if(++tick>14)clearInterval(tk)},280);
   setTimeout(()=>{clearInterval(tk);const w=WHEEL[k],r=o.querySelector("#whRes");S._whSpin=false;
@@ -6541,6 +6544,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:114,d:"Oct 24",t:[["🎡","Daily Spin slices are now sized by their real chances"]]},
  {v:113,d:"Oct 24",t:[["🎡","New Daily Spin prize: 🎁 a random aura, emote or skin you don't own yet (5%). Cheaper items are more likely"],["🛍️","League chat now shows when someone buys something from the shop"]]},
  {v:112,d:"Oct 24",t:[["📈","Every card dividend is up 20% (leveled cards too), starting with tonight's payout"]]},
  {v:111,d:"Oct 24",t:[["🏦","Paying a loan off early now costs at least the loan amount + 10% (or principal + interest so far, if that's more)"]]},
