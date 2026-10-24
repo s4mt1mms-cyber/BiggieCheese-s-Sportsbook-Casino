@@ -6361,6 +6361,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:105,d:"Oct 24",t:[["🧀","Cheese Farm upgrades are now 55% cheaper"],["🎁","The House gave everyone 20,000 BB. Check your Bank statement"]]},
  {v:104,d:"Oct 24",t:[["🎰","Slots now work like a real machine: you pick a bet per line (5 lines), every winning line shows what it paid, and jackpots/mega wins go off with a full-screen celebration"]]},
  {v:103,d:"Oct 24",t:[["🎰","Slots got a real casino pay table: mixed combos (any 💎/7 mix, any bar mix, any fruit mix, cherries on the first reels) and bigger top prizes. Odds for every combo are under the machine"]]},
  {v:102,d:"Oct 24",t:[["🎰","Slots now pay on 5 lines: all 3 rows and both diagonals. Wins come a lot more often"]]},
@@ -6929,8 +6930,8 @@ document.addEventListener("change",async e=>{const inp=e.target.closest("[data-c
 /* ---------- Flappy Cheese = Cheese Farm: earn BB per pipe, capped per day (ET). Two upgrade tracks (owner's numbers):
    Press = BB per pipe, Silo = daily cap. Levels on prefs.fpPress / prefs.fpSilo; prefs.farmSpent = total BB spent on
    upgrades (subtracted in ledger().balOf). An upgrade writes level + farmSpent in ONE prefs update (fpUpgrade). ---------- */
-const FP_PRESS=[1,10,30,100,250,500],FP_PRESS_COST=[0,7500,37500,150000,450000,1125000];/* Oct 23: ×1.5 */
-const FP_SILO=[5000,15000,40000,100000,250000,500000],FP_SILO_COST=[0,30000,112500,375000,1125000,3000000];/* Oct 23: ×1.5 */
+const FP_PRESS=[1,10,30,100,250,500],FP_PRESS_COST=[0,3375,16875,67500,202500,506250];/* Oct 23: ×1.5; Oct 24 owner: 55% cheaper (×0.45) */
+const FP_SILO=[5000,15000,40000,100000,250000,500000],FP_SILO_COST=[0,13500,50625,168750,506250,1350000];/* Oct 23: ×1.5; Oct 24 owner: 55% cheaper (×0.45) */
 const fpLv=(k,id)=>{const q=S.prefs[id||S.me]||{},n=Math.floor(Number(q[k])||0);return Math.max(0,Math.min(5,n))};
 const fpPer=id=>FP_PRESS[fpLv("fpPress",id)],fpCap=id=>Math.floor(FP_SILO[fpLv("fpSilo",id)]*(1+ab2("rinker",id)/100));/* The Rinker Rizzler (card): cap +% */
 async function fpUpgrade(kind){if(S._fpUpBusy||!S.me)return;const isP=kind==="press",k=isP?"fpPress":"fpSilo",lv=fpLv(k),cost=(isP?FP_PRESS_COST:FP_SILO_COST)[lv+1];

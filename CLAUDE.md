@@ -350,6 +350,7 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
 
 - **Slots (owner, Oct 24):** tab `slots` (casino menu), `viewSlots`/`slRefresh`/`slSpin`; 3 reels on strip `SL_W`, pays `SL_PAY` (+ two/one cherry), 95.0% RTP (`node tools/test/slots.test.mjs`), bets 1–`SL_MAX` 1,000. Money `prefs.slNet`/`slSpins` (LV batched, in balOf, standings casino, `stq`, session `sl`).
 
+- **Oct 24 1 PM (owner):** Cheese Farm upgrade costs ×0.45 (`FP_PRESS_COST`/`FP_SILO_COST`); `job-fix` `gift20k` = bank doc `gift20k_<id>` {from:"house",amt:20000,kind:"gift"} for every player with a team.
 - **Leveled quick-sell (owner, Oct 24):** `qsVal` × `lvCopies(c)` = product of the recipe card counts up to that level (no fee refund; no arbitrage vs quick-selling the copies).
 
 ## Live multiplayer (server host)

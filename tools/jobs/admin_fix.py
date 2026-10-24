@@ -1,5 +1,6 @@
 """Owner-requested one-off data fixes (manual workflow "Admin fix"). Each fix is idempotent: it records itself in config/fixes.
-  kjflap: King Julian's Cheese Farm usage today -5,000 (owner, Oct 23)."""
+  kjflap: King Julian's Cheese Farm usage today -5,000 (owner, Oct 23).
+  gift20k: 20,000 BB from the House to every player with a team (owner, Oct 24)."""
 import sys, time
 from common import db
 from google.cloud import firestore
@@ -32,6 +33,15 @@ elif fix == "statreset":
             sb0[k] = n(x, k)
         d.reference.update({"sb0": sb0, "wv": "fix." + str(int(time.time()))}); cnt += 1
     print("stat baselines written:", cnt)
+elif fix == "gift20k":
+    # Oct 24 (owner): the House gives every player 20,000 BB, one bank doc each (the ledger credits from:"house" docs like any transfer in).
+    now = int(time.time() * 1000); cnt = 0
+    for d in fs.collection("prefs").stream():
+        x = d.to_dict() or {}
+        if not x.get("team"): continue
+        fs.collection("bank").document("gift20k_" + d.id).set({"from": "house", "to": d.id, "amt": 20000, "kind": "gift", "note": "House gift", "at": now, "wv": "fix." + str(now)})
+        cnt += 1; print("gift", d.id, x.get("team"))
+    print("gifts written:", cnt)
 else:
     print("unknown fix", fix); sys.exit(1)
 done.set({fix: int(time.time() * 1000)}, merge=True)
