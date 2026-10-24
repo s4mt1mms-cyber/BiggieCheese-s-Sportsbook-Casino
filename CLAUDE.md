@@ -215,6 +215,10 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
 - **Bank** (`bk*`): transfers; loans with optional collateral (seizure all-at-once or one card per interval),
   auto-collection ONLY on payment dates (takes all you have if short), pay in chunks anytime, early payoff =
   max(principal × 1.1 (`BK_PRE`, `bkPreMin`; owner Oct 24: 10% prepayment minimum), principal + interest accrued so far (loan rate & compounding, payments stop accruing when made)) less paid, capped at the rest of the schedule, never below what is overdue.
+- **Loan requests** (Oct 24, from the Oct 23 WIP branch `loan-requests`): Bank → Loans → "Ask for a loan" (`bkFormHtml("req")`, `bkReqPost`): the borrower's own cards
+  are REQUIRED collateral and leave prefs at once (`collateral` on the doc, `req:true`, `borrower` set, no lender; `mintedAll` counts them). "Lend" (`bkFund`, tap twice)
+  writes lender/takenAt/sched/status active → from then on a normal loan. "Take down" (`bkRqCancel`) → cancelled → `bkProcess` returns the cards (collateralBackClaimed).
+  Bank page tabs (`S.bkTab`): Money (ability boxes, Send, Recent activity) · Loans (offer/ask buttons → form, requests + offers) · My loans (borrowing, lending, past).
 - **Aura Shop** (`au*`, side menu, tab `aura`, `viewAura`): glowing auras around profile pictures. Catalog `AURAS` (Mythic
   Celestial 1,000,000; Legendary Flames/Electricity(`zap`)/Void 250,000; Animated Sparkles/Rainbow/Hearts 150,000; solid colors 25,000).
   Data on the player's own prefs: `auras` {id:true} (owned forever), `aura` (equipped id, null = none), `auraSpent` (total BB spent,

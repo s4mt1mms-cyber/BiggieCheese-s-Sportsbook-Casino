@@ -295,7 +295,7 @@ th{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:upp
 td{padding:10px 8px;border-bottom:1px solid var(--line)}
 tbody tr:first-child td{color:var(--gold);font-weight:700}
 td.r,th.r{text-align:right}
-.bkwrap{display:flex;flex-direction:column;gap:14px}.bkhead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}.bkhead h2{margin:0}
+.bkwrap{display:flex;flex-direction:column;gap:14px}.bktabs{display:flex;width:100%}.bktabs button{flex:1;font-size:13px;padding:9px 4px;white-space:nowrap}.bkacts{display:flex;gap:8px}.bkacts .btn{flex:1}.bkchip.req{border-color:#b892ff;color:#b892ff}#bkRqC{width:100%;max-width:100%;min-width:0}.bkform label.grow:has(#bkRqC){min-width:0;flex:1 1 100%}.bkhead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}.bkhead h2{margin:0}
 .bkform{gap:8px}.bkform label.grow{flex:1 1 160px}.bkform input.n.s{width:64px}.bkpair{display:flex;gap:4px}.bkform select{max-width:100%}
 .bktx{display:flex;flex-direction:column;gap:4px}.bktx>div{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:baseline;font-size:14px;border-top:1px solid var(--line);padding-top:4px}.bktx>div>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bktx>div.pos>span:not(:last-child){color:#5cff72}.bktx>div.neg>span:not(:last-child){color:var(--loss)}.bktx .bknote{opacity:.75}
@@ -6547,6 +6547,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:116,d:"Oct 24",t:[["🙏","Bank: you can now ask for a loan. Set the amount and terms, put up cards as collateral, and anyone can lend to you"],["🏦","The Bank is split into tabs: Money, Loans and My loans"]]},
  {v:115,d:"Oct 24",t:[["🎡","Daily Spin: the 50K jackpot is now a 1% chance, and the wheel looks like a real prize wheel again"]]},
  {v:114,d:"Oct 24",t:[["🎡","Daily Spin slices are now sized by their real chances"]]},
  {v:113,d:"Oct 24",t:[["🎡","New Daily Spin prize: 🎁 a random aura, emote or skin you don't own yet (5%). Cheaper items are more likely"],["🛍️","League chat now shows when someone buys something from the shop"]]},
@@ -6875,10 +6876,35 @@ document.addEventListener("click",async e=>{const t=e.target.closest("[data-abbk
     else if(t.dataset.abbk==="shabbat"){if(Math.floor(ledger().balOf(S.me))<SHAB_AMT)return toast(`You need ${SHAB_AMT.toLocaleString()} BB.`);const ref=db.doc("bank/shabbat_"+S.me+"_"+day);if((await ref.get()).exists)return toast("You already lent the House today.");
       await ref.set({from:S.me,to:"house",amt:SHAB_AMT,back:SHAB_BACK,kind:"shabbat",note:"Shabbat Shalom",at:Date.now()});toast(`🕍 Lent the House ${SHAB_AMT.toLocaleString()} BB. ${SHAB_BACK.toLocaleString()} BB comes back over the next 24 hours.`)}}
   catch(_){toast("That didn't go through. Try again.")}finally{S._abBusy=false;render()}});
-function bkSzHelp(F,coll){return coll.length?"Collateral is locked until the loan ends. "+(F.sm==="gradual"?"Seized cards go back to the borrower if they catch up; once all are seized and they're still behind, it's a default.":"The first missed payment hands all of it to you."):""}
+/* Loan requests (owner, Oct 24): a borrower asks for BB on their own terms and MUST put up cards, which leave their collection right
+   away (held on the request; mintedAll counts them). Anyone can lend: the lender writes lender/takenAt/sched and the doc is then exactly a
+   taken loan offer (ledger, payments, seizure all unchanged). Taking it down returns the cards through bkProcess ("cancelled" → collateralBackClaimed). */
+async function bkReqPost(){if(S._bkBusy||!S.me)return;const F=bkF(),t=bkTerms(F),c=bkCalc(t);if(!c||c.err)return toast(c?c.err:"Check the terms.");
+  const cids=(S.bkRq||[]).slice(0,20),need={};if(!cids.length)return toast("Add at least one card as collateral.");cids.forEach(g=>need[g]=(need[g]||0)+1);if(Object.entries(need).some(([g,n])=>cardCount(g)<n))return toast("You don't have those cards anymore.");
+  const sz=bkSeizeTerms(F);if(sz.err)return toast(sz.err);S._bkBusy=true;let escrowed=false;
+  try{const q=S.prefs[S.me];const ch={};Object.entries(need).forEach(([g,n])=>ch[g]=cardCount(g)-n);q.cards={...(q.cards||{}),...ch};escrowed=true;await db.doc("prefs/"+S.me).update({cards:ch});
+    await db.collection("loans").add({borrower:S.me,req:true,...t,rate:Math.round(t.rate*100)/100,coll:cids.map(cid=>({cid})),collateral:cids,seizeN:null,seizeU:null,...sz,only:[],note:String(F.title||"").trim().slice(0,80),status:"open",at:Date.now()});escrowed=false;
+    S.bkRq=[];F.title="";S.bkForm=null;toast("Loan request posted.");
+    bkChat(`${nm(S.me)} is asking for a ${c.P.toLocaleString()} BB loan at ${t.rate}%/${t.rateU} · ${c.n} payment${c.n>1?"s":""} of ~${c.amts[0].toLocaleString()} BB 🙏 · collateral: ${bkCardsTxt(cids)} · ${bkSeizeTxt(sz)}`)}
+  catch(e){if(escrowed)try{await bkGive(cids)}catch(_){}toast("Couldn't post the request. Try again.")}finally{setTimeout(()=>{S._bkBusy=false},1500);render()}}
+async function bkFund(id){if(S._bkBusy||!S.me)return;const l0=(S.loans||[]).find(x=>x.id===id);if(!l0||!l0.req||l0.status!=="open")return;if(l0.borrower===S.me)return toast("You can't lend to yourself.");
+  if(!S._bkFundAsk||S._bkFundAsk.id!==id||Date.now()-S._bkFundAsk.at>8000){S._bkFundAsk={id,at:Date.now()};toast("Tap Lend again to confirm.");return render()}S._bkFundAsk=null;
+  S._bkBusy=true;try{const s=await db.doc("loans/"+id).get();if(!s.exists)return;const D=s.data();if(D.status!=="open"||!D.req||D.lender)return toast("Someone beat you to it (or it was taken down).");
+    const c=bkCalc(D);if(!c||c.err)return toast("That request has invalid terms.");if(Math.floor(ledger().balOf(S.me))<c.P)return toast("Not enough BiggieBucks to lend that.");
+    const now=Date.now();await db.doc("loans/"+id).update({status:"active",lender:S.me,takenAt:now,sched:{payMs:c.payMs,amts:c.amts},payments:[]});
+    await bkWait(700);const s2=await db.doc("loans/"+id).get();const E=s2.exists&&s2.data();
+    if(!E||E.lender!==S.me||E.status!=="active"||E.takenAt!==now)return toast("Someone beat you to it.");
+    toast(`You lent ${c.P.toLocaleString()} BB to ${nm(D.borrower)}.`);S.bkTab="mine";bkChat(`${nm(S.me)} lent ${nm(D.borrower)} ${c.P.toLocaleString()} BB on their loan request 🏦 · collateral: ${bkCardsTxt(D.collateral||[])}`)}
+  catch(e){toast("Couldn't lend. Try again.")}finally{S._bkBusy=false;render()}}
+async function bkRqCancel(id){if(S._bkBusy)return;const l=(S.loans||[]).find(x=>x.id===id);if(!l||!l.req||l.borrower!==S.me||l.status!=="open")return;S._bkBusy=true;
+  try{const s=await db.doc("loans/"+id).get();if(!s.exists||s.data().status!=="open")return toast("Someone already lent it.");
+    await db.doc("loans/"+id).update({status:"cancelled",cancelledAt:Date.now()});await bkWait(700);const s2=await db.doc("loans/"+id).get();
+    if(!s2.exists||s2.data().status!=="cancelled")return toast("Someone just lent it.");toast("Request taken down. Your cards come back.");setTimeout(bkProcess,300)}
+  catch(e){toast("Couldn't take it down. Try again.")}finally{S._bkBusy=false;render()}}
+function bkSzHelp(F,coll){const rq=S.bkForm==="req"&&!S.bkEdit;return coll.length?"Collateral is locked until the loan ends. "+(F.sm==="gradual"?(rq?"Seized cards come back to you if you catch up; once all are seized and you're still behind, it's a default.":"Seized cards go back to the borrower if they catch up; once all are seized and they're still behind, it's a default."):(rq?"Your first missed payment hands all of it to the lender.":"The first missed payment hands all of it to you.")):""}
 function bkEditLoad(id){const l=(S.loans||[]).find(x=>x.id===id);if(!l||l.lender!==S.me||l.status!=="open")return;const F=bkF();
   Object.assign(F,{P:String(l.P),rate:String(l.rate),rateU:l.rateU,compN:String(l.compN),compU:l.compU,payN:String(l.payN),payU:l.payU,n:String(l.n),title:l.note||"",only:(l.only||[]).slice(),sm:l.seizeMode==="gradual"?"gradual":"all",szN:String(l.seizeN||1),szU:l.seizeU||"day"});
-  S.bkColl=(l.coll||[]).map(w=>({...w}));S.bkEdit=id;render();setTimeout(()=>{const f=$("#bkOffer");if(f)f.scrollIntoView({behavior:"smooth",block:"start"})},30)}
+  S.bkColl=(l.coll||[]).map(w=>({...w}));S.bkEdit=id;S.bkTab="market";S.bkForm="lend";render();setTimeout(()=>{const f=$("#bkOffer");if(f)f.scrollIntoView({behavior:"smooth",block:"start"})},30)}
 async function bkCancel(id){if(S._bkBusy)return;const l=(S.loans||[]).find(x=>x.id===id);if(!l||l.lender!==S.me||l.status!=="open")return;S._bkBusy=true;
   try{const s=await db.doc("loans/"+id).get();if(!s.exists||s.data().status!=="open")return toast("That offer was already taken.");
     await db.doc("loans/"+id).update({status:"cancelled",cancelledAt:Date.now()});await bkWait(700);const s2=await db.doc("loans/"+id).get();
@@ -7014,17 +7040,19 @@ function bkRow(l){const c=bkCalc(l)||{},me=S.me,st=l.status,N=l.sched?l.sched.am
       nxt+=`<div class="row bkpay">${open&&po>1?`<input class="n s" type="number" min="1" step="1" max="${Math.min(bal,po)}" inputmode="numeric" placeholder="BB" data-bkpart="${esc(l.id)}" value="${esc(v)}" aria-label="Amount to pay"><button type="button" class="btn ghost small" data-bk="part" data-id="${esc(l.id)}">Pay part</button>`:""}<button type="button" class="btn small" data-bk="payoff" data-id="${esc(l.id)}" data-amt="${po}" ${bal<po?"disabled":""}>Pay off now · ${po.toLocaleString()} BB</button></div>${bal<po?`<div class="small muted">You have ${bal.toLocaleString()} BB.</div>`:""}`}}
   else if(st==="open"&&c.amts)nxt=`<div class="small muted">Early payoff: <b class="num">${bkPreMin(c).toLocaleString()} BB</b> minimum (loan + 10%), or principal + interest accrued if that's more</div>`;
   else if(l.sched&&(st==="repaid"||st==="defaulted"))nxt=`<div class="small muted">Paid ${bkPaidTot(l).toLocaleString()} BB in total</div>`;
-  const short=st==="open"&&c.P&&Math.floor(ledger().balOf(l.lender))<c.P;
+  const short=st==="open"&&!l.req&&c.P&&Math.floor(ledger().balOf(l.lender))<c.P;
   const seized=new Set();(l.seized||[]).forEach((g,i)=>seized.add(i));
   const has=(l.collateral&&l.collateral.length),want=l.coll&&l.coll.length;
   const coll=has?`<div class="bkcoll">${l.collateral.map((g,i)=>{const x=cardById(g);return x?`<span class="${seized.has(i)&&st==="late"?"seized":""}" style="--c:${CR[x.r].c}" data-cardview="${g}" title="${seized.has(i)?"Seized (returns if they catch up)":"Priority "+(i+1)}">${i+1}. ${esc(x.name)}${seized.has(i)&&st==="late"?" · seized":""}</span>`:""}).join("")}</div>${st==="late"&&seized.size?`<div class="small muted">Seized cards return if they catch up.</div>`:""}${["active","late"].includes(st)?`<div class="small muted">🔒 Collateral is locked until the loan ends.</div>`:""}`
     :want?`<div class="small muted">Collateral (seizure order): ${l.coll.map((w,i)=>`${i+1}. ${esc(mkItemTxt(w))}`).join(" · ")}</div>`:`<div class="small muted">No collateral — unsecured</div>`;
   const sz=(has||want)?`<div class="small muted">${esc(bkSeizeTxt(l))}</div>`:bkGradual(l)?`<div class="small muted">Late payments allowed; defaults ${esc(bkUT(l.seizeN,l.seizeU))} after the final payment date if still behind</div>`:`<div class="small muted">A missed payment is a default</div>`;
-  let btn="";if(st==="open"&&l.lender===me)btn=`<button type="button" class="btn ghost small" data-bk="edit" data-id="${esc(l.id)}" ${S.bkEdit===l.id?"disabled":""}>${S.bkEdit===l.id?"Editing…":"Edit"}</button><button type="button" class="btn ghost small" data-bk="cancel" data-id="${esc(l.id)}">Cancel</button>`;
+  const rq=!!l.req&&st==="open",rshort=rq&&me&&c.P&&Math.floor(ledger().balOf(me))<c.P;
+  let btn="";if(rq)btn=l.borrower===me?`<button type="button" class="btn ghost small" data-bk="rqcancel" data-id="${esc(l.id)}">Take down</button>`:me?`<button type="button" class="btn small" data-bk="fund" data-id="${esc(l.id)}" ${rshort?"disabled":""}>${rshort?"Not enough BB":S._bkFundAsk&&S._bkFundAsk.id===l.id?`Confirm · lend ${(c.P||0).toLocaleString()} BB`:`Lend ${(c.P||0).toLocaleString()} BB`}</button>`:"";
+  else if(st==="open"&&l.lender===me)btn=`<button type="button" class="btn ghost small" data-bk="edit" data-id="${esc(l.id)}" ${S.bkEdit===l.id?"disabled":""}>${S.bkEdit===l.id?"Editing…":"Edit"}</button><button type="button" class="btn ghost small" data-bk="cancel" data-id="${esc(l.id)}">Cancel</button>`;
   else if(st==="open"&&me&&!canTake(l))btn=`<button type="button" class="btn ghost small" disabled>Private offer for ${esc(onlyTxt(l))}</button>`;
   else if(st==="open"&&me)btn=`<button type="button" class="btn small" data-bk="take" data-id="${esc(l.id)}" ${short?"disabled":""}>${short?"Lender short":"Take loan"}</button>`;
-  return `<div class="bkrow${st==="open"&&!canTake(l)&&l.lender!==me?" bkpriv":""}"><div class="bkrh">${pic(l.lender)}<div style="min-width:0;flex:1"><b>${(c.P||0).toLocaleString()} BB</b> <span class="small muted">from ${esc(nm(l.lender))}${l.borrower?` → ${esc(nm(l.borrower))}`:""}</span>${l.note?`<div class="small">${esc(l.note)}</div>`:""}</div>${st==="open"&&l.editedAt?`<span class="bkchip edited" title="Edited ${esc(ago(l.editedAt))}">edited</span>`:""}<span class="bkchip ${st}">${chip}</span></div>
-    <div class="small muted">${esc(bkTermsTxt(l))} · ${c.total?`${c.total.toLocaleString()} BB back`:""}</div>${st==="open"?onlyBadge(l):""}${nxt}${coll}${sz}${btn?`<div class="row">${btn}</div>`:""}</div>`}
+  return `<div class="bkrow${st==="open"&&!rq&&!canTake(l)&&l.lender!==me?" bkpriv":""}"><div class="bkrh">${pic(rq?l.borrower:l.lender)}<div style="min-width:0;flex:1"><b>${(c.P||0).toLocaleString()} BB</b> <span class="small muted">${rq?`wanted by ${esc(nm(l.borrower))}`:`from ${esc(nm(l.lender))}${l.borrower?` → ${esc(nm(l.borrower))}`:""}`}</span>${l.note?`<div class="small">${esc(l.note)}</div>`:""}</div>${rq?`<span class="bkchip req">Request</span>`:""}${st==="open"&&l.editedAt?`<span class="bkchip edited" title="Edited ${esc(ago(l.editedAt))}">edited</span>`:""}<span class="bkchip ${st}">${chip}</span></div>
+    <div class="small muted">${esc(bkTermsTxt(l))} · ${c.total?`${c.total.toLocaleString()} BB back`:""}</div>${st==="open"&&!rq?onlyBadge(l):""}${nxt}${coll}${sz}${btn?`<div class="row">${btn}</div>`:""}</div>`}
 /* combined bank log for the viewer: + = money in (green), − = money out (red) */
 function bkActivity(me){const out=[],E=(at,v,h,bad)=>{if(at)out.push({at:Number(at),v,h,bad})};
   for(const t of S.bank||[]){if(t.kind==="bounty"){const pay=t.pay||{},tot=Object.entries(pay).reduce((x,[id,v])=>x+(id!==t.to?Math.floor(Number(v))||0:0),0);
@@ -7055,42 +7083,62 @@ function viewBank(){if(!S.me)return `<div class="empty">Sign in to use the bank.
   const ppl=members().filter(id=>id!==me&&teamOf(id)).sort((a,b)=>nm(a).localeCompare(nm(b)));
   const tx=bkActivity(me).slice(0,20);
   const L=(S.loans||[]).slice().sort((a,b)=>(b.takenAt||b.at||0)-(a.takenAt||a.at||0));
-  const open=L.filter(l=>l.status==="open"),lend=L.filter(l=>l.lender===me&&l.status!=="open"&&l.status!=="cancelled"),borr=L.filter(l=>l.borrower===me&&l.status!=="open"&&l.status!=="cancelled");
-  const sec=(t,a,e)=>`<section class="card"><h3>${t}</h3>${a.length?a.map(bkRow).join(""):`<div class="small muted">${e}</div>`}</section>`;
-  const coll=S.bkColl||[];
-  return `<div class="bkwrap"><div class="bkhead"><h2>🏦 Bank</h2><div class="small">Balance <b class="num" style="color:#5cff72">${bal.toLocaleString()} BB</b></div></div>${hofHtml()}${abBankHtml()}${tiBankHtml()}
+  const open=L.filter(l=>l.status==="open"&&!l.req),reqs=L.filter(l=>l.status==="open"&&l.req),lend=L.filter(l=>l.lender===me&&l.status!=="open"&&l.status!=="cancelled"),borr=L.filter(l=>l.borrower===me&&l.status!=="open"&&l.status!=="cancelled");
+  const live=x=>x.filter(l=>l.status==="active"||l.status==="late"),done=x=>x.filter(l=>!(l.status==="active"||l.status==="late"));
+  const sec=(t,a,e,id)=>`<section class="card"${id?` id="${id}"`:""}><h3>${t}${a.length?` <span class="small muted">${a.length}</span>`:""}</h3>${a.length?a.map(bkRow).join(""):`<div class="small muted">${e}</div>`}</section>`;
+  const tab=S.bkTab||"home",nMine=live(lend).length+live(borr).length,late=live(borr).some(l=>l.status==="late");
+  const tabs=`<div class="seg bktabs" role="tablist">${[["home","💸 Money"],["market",`🤝 Loans${reqs.length+open.length?` · ${reqs.length+open.length}`:""}`],["mine",`📒 My loans${nMine?` · ${nMine}`:""}${late?" ⏰":""}`]].map(([k,t])=>`<button type="button" data-bk="tab" data-t="${k}" aria-pressed="${tab===k}">${t}</button>`).join("")}</div>`;
+  let body="";
+  if(tab==="home")body=`${hofHtml()}${abBankHtml()}${tiBankHtml()}
   <section class="card"><h3>💸 Send BB</h3><div class="row bkform"><label>To<select data-bkf="to"><option value="">Pick someone</option>${ppl.map(id=>`<option value="${esc(id)}" ${F.to===id?"selected":""}>${esc(nm(id))}</option>`).join("")}</select></label>
     <label>Amount<input class="n" data-bkf="amt" inputmode="numeric" type="number" min="1" step="1" max="${bal}" value="${esc(F.amt)}" placeholder="500"></label>
-    <label class="grow">Note (optional)<input data-bkf="note" maxlength="120" value="${esc(F.note)}" placeholder="for the pizza"></label><button type="button" class="btn" data-bk="send">Send</button></div>
-    <div class="stlbl">Recent activity</div>${tx.length?`<div class="bktx">${tx.map(t=>`<div class="${t.v>0?"pos":t.v<0?"neg":t.bad?"neg":"neu"}"><span>${t.h}</span><span class="num">${t.v>0?"+":t.v<0?"−":""}${t.v?Math.abs(t.v).toLocaleString():""}</span><span class="small muted">${ago(t.at)}</span></div>`).join("")}</div>`:`<div class="small muted">No activity yet.</div>`}</section>
-  <section class="card${S.bkEdit?" bkediting":""}" id="bkOffer"><h3>${S.bkEdit?"✏️ Editing offer":"🤝 Offer a loan"}</h3><div class="row bkform">
-    <label>Principal (BB)<input class="n" data-bkf="P" type="number" min="1" step="1" value="${esc(F.P)}"></label>
+    <label class="grow">Note (optional)<input data-bkf="note" maxlength="120" value="${esc(F.note)}" placeholder="for the pizza"></label><button type="button" class="btn" data-bk="send">Send</button></div></section>
+  <section class="card"><h3>🧾 Recent activity</h3>${tx.length?`<div class="bktx">${tx.map(t=>`<div class="${t.v>0?"pos":t.v<0?"neg":t.bad?"neg":"neu"}"><span>${t.h}</span><span class="num">${t.v>0?"+":t.v<0?"−":""}${t.v?Math.abs(t.v).toLocaleString():""}</span><span class="small muted">${ago(t.at)}</span></div>`).join("")}</div>`:`<div class="small muted">No activity yet.</div>`}</section>`;
+  else if(tab==="market"){const fm=S.bkEdit?"lend":S.bkForm;
+    body=`<div class="bkacts"><button type="button" class="btn${fm==="lend"?"":" ghost"}" data-bk="form" data-m="lend">🤝 Offer a loan</button><button type="button" class="btn${fm==="req"?"":" ghost"}" data-bk="form" data-m="req">🙏 Ask for a loan</button></div>
+    ${fm?bkFormHtml(fm):""}
+    ${sec("🙏 Loan requests",reqs,"Nobody is asking for a loan right now. Lend to someone here and their cards are your collateral.")}${sec("🤝 Loan offers",open,"No open loan offers.")}`}
+  else body=`${sec("📥 Borrowing",live(borr),"You aren't borrowing anything right now.")}${sec("📤 Lending",live(lend),"You aren't lending anything right now.")}${done(borr).length+done(lend).length?sec("🗂 Past loans",done(borr).concat(done(lend)).sort((a,b)=>(b.takenAt||0)-(a.takenAt||0)),""):""}`;
+  return `<div class="bkwrap"><div class="bkhead"><h2>🏦 Bank</h2><div class="small">Balance <b class="num" style="color:#5cff72">${bal.toLocaleString()} BB</b></div></div>${tabs}${body}</div>`}
+/* the offer / request form (Loans tab). mode "lend" = offer a loan (wanted collateral, optional); "req" = ask for one (your own cards, required) */
+function bkFormHtml(mode){const F=bkF(),RQ=mode==="req"&&!S.bkEdit,coll=RQ?(S.bkRq||[]).map(cid=>({cid})):(S.bkColl||[]);
+  const own=RQ?ownCards().filter(x=>cardCount(x.id)-(S.bkRq||[]).filter(g=>g===x.id).length>0).sort((a,b)=>b.r-a.r||a.name.localeCompare(b.name)):[];
+  const list=(up,dn,rm)=>coll.length?`<div class="bkcl">${coll.map((w,i)=>`<div style="--c:${CR[w.cid?(cardById(w.cid)||{r:0}).r:w.r].c}"><b>${i+1}.</b><span>${esc(mkItemTxt(w))}</span><button type="button" data-bk="${up}" data-i="${i}" ${i?"":"disabled"} aria-label="Move up">↑</button><button type="button" data-bk="${dn}" data-i="${i}" ${i<coll.length-1?"":"disabled"} aria-label="Move down">↓</button><button type="button" data-bk="${rm}" data-i="${i}" aria-label="Remove">✕</button></div>`).join("")}</div>`:"";
+  const collHtml=RQ?`<div class="stlbl">Your collateral (required) · seizure order</div>${list("rqup","rqdn","rqrm")||`<div class="small muted">Add at least one card. Your cards leave your collection while the request is up and come back if you take it down.</div>`}
+    <div class="row bkform"><label class="grow">Card<select id="bkRqC">${own.map(x=>`<option value="${esc(x.id)}">${esc(crOf(x).n)} · ${esc(x.name)}${x.lv>1?` LV ${x.lv}`:""} (×${cardCount(x.id)-(S.bkRq||[]).filter(g=>g===x.id).length})</option>`).join("")||`<option value="">No cards</option>`}</select></label><button type="button" class="btn ghost" data-bk="rqadd">+ Add</button></div>`
+   :`<div class="stlbl">Collateral · seizure order</div>${list("upc","dnc","rmc")||`<div class="small muted">No collateral — unsecured. Optional: add cards the borrower must put up.</div>`}
+    <div class="row bkform"><label>Kind<select data-bkf="cm"><option value="r" ${F.cm==="r"?"selected":""}>Any of rarity</option><option value="up" ${F.cm==="up"?"selected":""}>Rarity or better</option><option value="cid" ${F.cm==="cid"?"selected":""}>Specific card</option></select></label>
+    <label>Rarity<select data-bkf="cr">${(setOpen("pm")?CR:CRN).map((R,i)=>`<option value="${i}" ${String(F.cr)===String(i)?"selected":""}>${esc(R.n)}</option>`).join("")}</select></label>
+    <label id="bkCCw" ${F.cm==="cid"?"":"hidden"}>Card<select data-bkf="cc" id="bkCC">${bkCardOpts(F)}</select></label><label id="bkCLw" ${F.cm==="cid"&&bkLvMax(F)>1?"":"hidden"}>Level<select data-bkf="cl" id="bkCL">${bkLvOpts(F)}</select></label>
+    <label>Qty<input class="n s" data-bkf="cq" type="number" min="1" max="10" step="1" value="${esc(F.cq)}"></label><button type="button" class="btn ghost" data-bk="addc">+ Add</button></div>`;
+  return `<section class="card${S.bkEdit?" bkediting":""}" id="bkOffer"><h3>${S.bkEdit?"✏️ Editing offer":RQ?"🙏 Ask for a loan":"🤝 Offer a loan"}</h3><div class="row bkform">
+    <label>${RQ?"Amount you want (BB)":"Principal (BB)"}<input class="n" data-bkf="P" type="number" min="1" step="1" value="${esc(F.P)}"></label>
     <label>Rate %<input class="n" data-bkf="rate" type="number" min="0" max="1000" step="0.1" value="${esc(F.rate)}"></label><label>per${bkUnitSel("rateU",F.rateU)}</label></div>
     <div class="row bkform"><label>Compound every<span class="bkpair"><input class="n s" data-bkf="compN" type="number" min="1" max="100" step="1" value="${esc(F.compN)}">${bkUnitSel("compU",F.compU)}</span></label>
     <label>Pay every<span class="bkpair"><input class="n s" data-bkf="payN" type="number" min="1" max="100" step="1" value="${esc(F.payN)}">${bkUnitSel("payU",F.payU)}</span></label>
     <label># payments<input class="n s" data-bkf="n" type="number" min="1" max="100" step="1" value="${esc(F.n)}"></label></div>
-    <div class="stlbl">Collateral · seizure order</div>${coll.length?`<div class="bkcl">${coll.map((w,i)=>`<div style="--c:${CR[w.cid?(cardById(w.cid)||{r:0}).r:w.r].c}"><b>${i+1}.</b><span>${esc(mkItemTxt(w))}</span><button type="button" data-bk="upc" data-i="${i}" ${i?"":"disabled"} aria-label="Move up">↑</button><button type="button" data-bk="dnc" data-i="${i}" ${i<coll.length-1?"":"disabled"} aria-label="Move down">↓</button><button type="button" data-bk="rmc" data-i="${i}" aria-label="Remove">✕</button></div>`).join("")}</div>`:`<div class="small muted">No collateral — unsecured. Optional: add cards the borrower must put up.</div>`}
-    <div class="row bkform"><label>Kind<select data-bkf="cm"><option value="r" ${F.cm==="r"?"selected":""}>Any of rarity</option><option value="up" ${F.cm==="up"?"selected":""}>Rarity or better</option><option value="cid" ${F.cm==="cid"?"selected":""}>Specific card</option></select></label>
-    <label>Rarity<select data-bkf="cr">${(setOpen("pm")?CR:CRN).map((R,i)=>`<option value="${i}" ${String(F.cr)===String(i)?"selected":""}>${esc(R.n)}</option>`).join("")}</select></label>
-    <label id="bkCCw" ${F.cm==="cid"?"":"hidden"}>Card<select data-bkf="cc" id="bkCC">${bkCardOpts(F)}</select></label><label id="bkCLw" ${F.cm==="cid"&&bkLvMax(F)>1?"":"hidden"}>Level<select data-bkf="cl" id="bkCL">${bkLvOpts(F)}</select></label>
-    <label>Qty<input class="n s" data-bkf="cq" type="number" min="1" max="10" step="1" value="${esc(F.cq)}"></label><button type="button" class="btn ghost" data-bk="addc">+ Add</button></div>
-    <div class="row bkform"><label>If they miss a payment<select data-bkf="sm"><option value="all" ${F.sm!=="gradual"?"selected":""}>${coll.length?"Seize all at once":"Default immediately"}</option><option value="gradual" ${F.sm==="gradual"?"selected":""}>${coll.length?"Seize one card at a time":"Allow late payments"}</option></select></label>
-    <label ${F.sm==="gradual"?"":"hidden"} id="bkSzw">${coll.length?"Every":"Grace after final payment date"}<span class="bkpair"><input class="n s" data-bkf="szN" type="number" min="1" max="100" step="1" value="${esc(F.szN)}">${bkUnitSel("szU",F.szU)}</span></label></div>
+    ${collHtml}
+    <div class="row bkform"><label>If ${RQ?"you miss":"they miss"} a payment<select data-bkf="sm"><option value="all" ${F.sm!=="gradual"?"selected":""}>${coll.length||RQ?"Seize all at once":"Default immediately"}</option><option value="gradual" ${F.sm==="gradual"?"selected":""}>${coll.length||RQ?"Seize one card at a time":"Allow late payments"}</option></select></label>
+    <label ${F.sm==="gradual"?"":"hidden"} id="bkSzw">${coll.length||RQ?"Every":"Grace after final payment date"}<span class="bkpair"><input class="n s" data-bkf="szN" type="number" min="1" max="100" step="1" value="${esc(F.szN)}">${bkUnitSel("szU",F.szU)}</span></label></div>
     <div class="small muted" id="bkSzTxt">${bkSzHelp(F,coll)}</div>
-    <label>Title (optional)<input data-bkf="title" maxlength="80" value="${esc(F.title)}" placeholder="Payday loan, no questions asked"></label>
-    ${whoPickHtml(F.only,"data-bkonly")}<div id="bkPrev">${bkPrevHtml()}</div><div class="row"><button type="button" class="btn" data-bk="post">${S.bkEdit?"Save changes":"Post offer"}</button>${S.bkEdit?`<button type="button" class="btn ghost" data-bk="editx">Cancel edit</button>`:""}</div></section>
-  ${sec("📋 Open offers",open,"No open loan offers.")}${sec("📤 My loans (lending)",lend,"You haven't lent anything.")}${sec("📥 My loans (borrowing)",borr,"You aren't borrowing anything.")}</div>`}
+    <label>Title (optional)<input data-bkf="title" maxlength="80" value="${esc(F.title)}" placeholder="${RQ?"Need it for the Dragon pack, will pay back Friday":"Payday loan, no questions asked"}"></label>
+    ${RQ?"":whoPickHtml(F.only,"data-bkonly")}<div id="bkPrev">${bkPrevHtml()}</div><div class="row"><button type="button" class="btn" data-bk="${RQ?"rqpost":"post"}" ${RQ&&!coll.length?"disabled":""}>${S.bkEdit?"Save changes":RQ?"Post request":"Post offer"}</button>${S.bkEdit?`<button type="button" class="btn ghost" data-bk="editx">Cancel edit</button>`:`<button type="button" class="btn ghost" data-bk="form" data-m="">Close</button>`}</div></section>`}
 document.addEventListener("change",e=>{const t=e.target.closest("[data-bkonly]");if(!t)return;const F=bkF();F.only=[...document.querySelectorAll("[data-bkonly]:checked")].map(x=>x.value)});
 document.addEventListener("input",e=>{const t=e.target.closest("[data-bkf]");if(!t)return;const F=bkF();F[t.dataset.bkf]=t.value;
-  if(t.dataset.bkf==="sm"){const w=$("#bkSzw");if(w)w.hidden=F.sm!=="gradual";const x=$("#bkSzTxt");if(x)x.textContent=bkSzHelp(F,S.bkColl||[])}
+  if(t.dataset.bkf==="sm"){const w=$("#bkSzw");if(w)w.hidden=F.sm!=="gradual";const x=$("#bkSzTxt");if(x)x.textContent=bkSzHelp(F,S.bkForm==="req"&&!S.bkEdit?(S.bkRq||[]):(S.bkColl||[]))}
   if(t.dataset.bkf==="cr"||t.dataset.bkf==="cm"){const w=$("#bkCCw"),s=$("#bkCC");if(w)w.hidden=F.cm!=="cid";if(s){s.innerHTML=bkCardOpts(F);F.cc=s.value}}
   if(["cr","cm","cc"].includes(t.dataset.bkf)){const w=$("#bkCLw"),s=$("#bkCL");F.cl="";if(s)s.innerHTML=bkLvOpts(F);if(w)w.hidden=F.cm!=="cid"||bkLvMax(F)<2}
   const p=$("#bkPrev");if(p)p.innerHTML=bkPrevHtml()});
 document.addEventListener("input",e=>{const t=e.target.closest("[data-bkpart]");if(!t)return;(S.bkPart||(S.bkPart={}))[t.dataset.bkpart]=t.value});
 document.addEventListener("change",e=>{if(e.target.closest("[data-bkf]"))e.target.dispatchEvent(new Event("input",{bubbles:true}))});
 document.addEventListener("click",e=>{const t=e.target.closest("[data-bk]");if(!t)return;const k=t.dataset.bk,F=bkF();
-  if(S.readOnly&&!["rmc","addc","upc","dnc"].includes(k))return toast("View only. Ask the commish for access.");
-  if(k==="send")return bkSend();if(k==="post")return bkPost();if(k==="take")return bkTake(t.dataset.id);if(k==="cancel"){if(S.bkEdit===t.dataset.id)S.bkEdit=null;return bkCancel(t.dataset.id)}if(k==="edit")return bkEditLoad(t.dataset.id);if(k==="editx"){S.bkEdit=null;S.bkColl=[];F.title="";F.only=[];return render()}if(k==="payoff")return bkPay(t.dataset.id,{payoff:Number(t.dataset.amt)});if(k==="part"){const inp=document.querySelector(`[data-bkpart="${CSS.escape(t.dataset.id)}"]`);return bkPay(t.dataset.id,Number(inp?inp.value:(S.bkPart||{})[t.dataset.id]))}
+  if(k==="tab"){S.bkTab=t.dataset.t;window.scrollTo(0,0);return render()}if(k==="form"){const m=t.dataset.m||null;if(S.bkEdit&&m!=="lend"){S.bkEdit=null;S.bkColl=[]}S.bkForm=S.bkForm===m&&!S.bkEdit?null:m;return render()}
+  if(S.readOnly&&!["rmc","addc","upc","dnc","rqadd","rqup","rqdn","rqrm"].includes(k))return toast("View only. Ask the commish for access.");
+  if(k==="rqpost")return bkReqPost();if(k==="fund")return bkFund(t.dataset.id);if(k==="rqcancel")return bkRqCancel(t.dataset.id);
+  if(k==="rqadd"){const sl=$("#bkRqC"),cid=sl&&sl.value;if(!cid||!cardById(cid))return toast("Pick a card.");S.bkRq=S.bkRq||[];if(S.bkRq.length>=20)return toast("Up to 20 collateral cards.");if(S.bkRq.filter(g=>g===cid).length>=cardCount(cid))return toast("You don't have another copy.");S.bkRq.push(cid);return render()}
+  if(k==="rqup"||k==="rqdn"){const a=S.bkRq||[],i=Number(t.dataset.i),j=k==="rqup"?i-1:i+1;if(a[i]&&a[j]){[a[i],a[j]]=[a[j],a[i]]}return render()}
+  if(k==="rqrm"){(S.bkRq||[]).splice(Number(t.dataset.i),1);return render()}
+  if(k==="send")return bkSend();if(k==="post")return bkPost();if(k==="take")return bkTake(t.dataset.id);if(k==="cancel"){if(S.bkEdit===t.dataset.id)S.bkEdit=null;return bkCancel(t.dataset.id)}if(k==="edit")return bkEditLoad(t.dataset.id);if(k==="editx"){S.bkEdit=null;S.bkColl=[];S.bkForm=null;F.title="";F.only=[];return render()}if(k==="payoff")return bkPay(t.dataset.id,{payoff:Number(t.dataset.amt)});if(k==="part"){const inp=document.querySelector(`[data-bkpart="${CSS.escape(t.dataset.id)}"]`);return bkPay(t.dataset.id,Number(inp?inp.value:(S.bkPart||{})[t.dataset.id]))}
   if(k==="upc"||k==="dnc"){const a=S.bkColl||[],i=Number(t.dataset.i),j=k==="upc"?i-1:i+1;if(a[i]&&a[j]){[a[i],a[j]]=[a[j],a[i]]}return render()}
   if(k==="rmc"){(S.bkColl||[]).splice(Number(t.dataset.i),1);return render()}
   if(k==="addc"){const q=Math.floor(Number(F.cq));if(!(q>=1&&q<=10))return toast("Quantity must be 1–10.");const r=Number(F.cr);if(!CR[r])return;
