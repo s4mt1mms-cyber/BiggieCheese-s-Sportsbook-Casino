@@ -88,7 +88,7 @@ service cloud.firestore {
 
     // Collections only admins may change (invites/links have their own rules below).
     function adminOnly(coll) {
-      return coll in ['config', 'meta', 'adjust', 'cardimg', 'nfl', 'nba', 'nhl'];
+      return coll in ['config', 'meta', 'adjust', 'cardimg', 'nfl', 'nba', 'nhl', 'econ'];
     }
 
     // One doc per player; only that player (or an admin) may change it.
