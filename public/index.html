@@ -5567,7 +5567,7 @@ const mvAddCards=()=>MV_ADD.map(([k,r,name,o])=>{o=o||{};return{id:"mv-"+k,r,nam
 /* abilities for cards that live in meta/cards_mv (made with the Admin tools, so they carry no abil field) */
 const MV_ABIL={"mv-art-63":"hilo"};
 const MV_DIV={"mv-art-65":750};/* owner, Oct 23: Debbie · Dynasty Grail pays 1.5× the Grail dividend */
-function mvMerge(list){const ids=new Set(list.map(c=>c.id));list=list.map(c=>MV_ABIL[c.id]&&!c.abil?{...c,abil:MV_ABIL[c.id]}:c).map(c=>MV_DIV[c.id]!=null&&c.div==null?{...c,div:MV_DIV[c.id]}:c).map(c=>c.id==="mv-art-72"?{...c,desc:"⚡ FLAPPY BOOST: own this card and you get a Use Boost button on Cheese Farm. Twice a day, a run pays 10× per pipe with no daily cap. Resets at 12:01 AM ET."}:c);return[...list,...mvAddCards().filter(c=>!ids.has(c.id))]}
+function mvMerge(list){const ids=new Set(list.map(c=>c.id));list=list.map(c=>MV_ABIL[c.id]&&!c.abil?{...c,abil:MV_ABIL[c.id]}:c).map(c=>MV_DIV[c.id]!=null&&c.div==null?{...c,div:MV_DIV[c.id]}:c).map(c=>c.id==="mv-art-72"?{...c,desc:"⚡ FLAPPY BOOST: own this card and you get a Use Boost button on Cheese Farm. Once a day, a run pays 5× per pipe, up to your full Silo (it fills your Silo by half of what it pays). Resets at 12:01 AM ET."}:c);return[...list,...mvAddCards().filter(c=>!ids.has(c.id))]}
 /* daily dividend for one copy: a card's own div overrides the rarity table; the curse card pays nothing */
 /* owner, Oct 24: every card dividend ×1.5 (DIV_X), then ×1.2 more at 2:30 PM = ×1.8 */
 const DIV_X=1.8,cardDiv0=c=>!c||c.abil==="curse"?0:(c.lv||1)>1&&craftable(c)?(c.div!=null?DIV_LV_JOE[1]:DIV_LV[c.r][(c.lv||1)-1]||0):c.div!=null?Number(c.div)||0:CARD_DIV[c.r],cardDiv=c=>cardDiv0(c)*DIV_X;
@@ -5592,7 +5592,7 @@ function activeCards(id){id=id||S.me;const cs=myCards(id),out=[],seen=new Set(),
     if(k==="pm-peter")add(k,"⚡",`Card dividend ×${Math.min(3,Math.pow(1.5,Math.min(3,Number(cs[k])||0)))}`,["div"]);
     if(k==="pm-debby")add(k,"🧙‍♀️","Steals 5,000 BB a day from someone",["div"]);
     if(k==="pm-claire")add(k,"🔥","Can be burned for 52,500 BB",[]);
-    if(k===FP_BOOST_CARD)add(k,"⚡",me?(fpBoostLeft()>0?"10× Flappy runs recharging":`${FP_BOOST_DAY-fpBoostUsed()} of ${FP_BOOST_DAY} 10× Flappy runs left today`):`${FP_BOOST_DAY} 10× Flappy runs a day`,["fp"]);
+    if(k===FP_BOOST_CARD)add(k,"⚡",me?(fpBoostLeft()>0?"5× Flappy run recharging":`${FP_BOOST_DAY-fpBoostUsed()} of ${FP_BOOST_DAY} 5× Flappy runs left today`):`${FP_BOOST_DAY} 5× Flappy run a day`,["fp"]);
     if(c.r===6)add(k,"🐉",`Dragon: ${cardDiv(c).toLocaleString()} BB a day + Dragon Glow`,["div"]);
     /* level abilities from the card database (Oct 23); a player's top level is what counts (ab2), so show it once per card */
     {const A=ab2Of(c);if(A){const v=ab2(A.k,id);if(v>0&&!seen.has("ab2:"+A.k)){seen.add("ab2:"+A.k);add(k,"⚡",A.t(v),AB2_G[A.k]||[])}}}}
@@ -6567,6 +6567,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:123,d:"Oct 25",t:[["⚡","Vector's Flappy boost is now 5× per pipe"],["🧀","A boosted run pays at most your full Silo, and fills your Silo by half of what it paid"]]},
  {v:122,d:"Oct 25",t:[["🔥","Daddy Christian: the ×1.25 cash-out now kicks in at 6 right in a row"]]},
  {v:121,d:"Oct 25",t:[["🔥","Daddy Christian: a High-Low streak of 8+ right now pays your whole cash-out ×1.25"]]},
  {v:120,d:"Oct 25",t:[["🔥","Daddy Christian changed: a High-Low streak of 7+ right now doubles your cash-out once (it no longer doubles every guess)"],["✨","The Celestial aura shows its spinning gold squares everywhere now"]]},
@@ -7231,15 +7232,15 @@ function fpStatsHtml(){const q=S.prefs[S.me]||{},today=fpToday(S.me),FP_CAP=fpCa
   ${left<=0?`<p class="small muted fpcapnote">You hit today's ${FP_CAP.toLocaleString()} BB cap. You can still play for a high score; earning resets at midnight ET.</p>`:""}
   <section class="card bjlb"><h3>Flappy leaderboard</h3>${rows.length?rows.map((r,i)=>`<button type="button" class="strow" data-member="${esc(r.id)}"><span class="strank num">${i+1}</span>${pic(r.id)}<span class="stmain"><span class="mrname">${esc(nm(r.id))}${r.id===S.me?' <span class="muted small">(you)</span>':""}</span><span class="stline"><span><span class="stlbl">Best</span> <span class="num">${r.b}</span></span><span><span class="stlbl">Earned</span> <span class="num pos">${r.e.toLocaleString()} BB</span></span><span><span class="stlbl">Farm</span> <span class="num">${fpPer(r.id)}/pipe</span></span></span></span></button>`).join(""):`<p class="small muted">No scores yet. Be the first.</p>`}</section>`}
 /* Vector (Grail) perk: one 10x Flappy run a day (resets at 12:01 AM ET with the dividends), no cap on that run */
-const FP_BOOST_CARD="mv-art-72",FP_BOOST_MULT=10,FP_BOOST_CD=864e5;
+const FP_BOOST_CARD="mv-art-72",FP_BOOST_MULT=5/* owner Oct 25: 5×, a boosted run pays at most your full Silo, and fills the Silo by half of what it paid */,FP_BOOST_CD=864e5;
 const fpHasBoost=()=>Number((((S.prefs[S.me]||{}).cards)||{})[FP_BOOST_CARD])>0;
 /* owner, Oct 23: Vector gives 2 boosted runs a day (prefs.flapBoostDay/flapBoostN; flapBoostAt kept for the old 1-a-day stamp) */
 const FP_BOOST_DAY=1,/* owner Oct 24 2 PM: back to 1 a day */fpBoostUsed=()=>{const q=S.prefs[S.me]||{};return q.flapBoostDay===divDay()?Number(q.flapBoostN)||0:(Number(q.flapBoostAt)&&divDay(Number(q.flapBoostAt))===divDay()?1:0)};
 const fpBoostLeft=()=>fpBoostUsed()>=FP_BOOST_DAY?divLeft():0;
 function fpBoostHtml(){if(!fpHasBoost())return "";const left=fpBoostLeft(),armed=FP&&FP.boost;
-  if(FP&&FP.boostRun)return `<div class="fpboost on">⚡ BOOST LIVE · every pipe is ${(fpPer()*FP_BOOST_MULT).toLocaleString()} BB · no limit this run</div>`;
+  if(FP&&FP.boostRun)return `<div class="fpboost on">⚡ BOOST LIVE · every pipe is ${(fpPer()*FP_BOOST_MULT).toLocaleString()} BB · up to ${fpCap().toLocaleString()} BB this run</div>`;
   if(left>0){const mm=Math.ceil(left/6e4),h=Math.floor(mm/60),m=mm%60;return `<div class="fpboost cd">⚡ Vector boost recharging · ${h}h ${m}m</div>`}
-  return `<button type="button" class="btn fpboostbtn${armed?" armed":""}" data-fpboost="1">${armed?"⚡ Boost armed · flap to start":"⚡ Use boost (Vector) · 10× next run"}</button>`}
+  return `<button type="button" class="btn fpboostbtn${armed?" armed":""}" data-fpboost="1">${armed?"⚡ Boost armed · flap to start":"⚡ Use boost (Vector) · 5× next run"}</button>`}
 document.addEventListener("click",e=>{const b=e.target.closest("[data-fpboost]");if(!b||!FP||FP.st==="play")return;if(!fpHasBoost()||fpBoostLeft()>0)return toast("Boost isn't ready yet.");FP.boost=!FP.boost;fpStats()});
 function viewFlappy(){if(!S.me)return `<div class="empty">Sign in to play.</div>`;
   return `<div class="fpwrap">${actBar("fp")}<div class="fpstage"><canvas id="fpCanvas" width="360" height="520"></canvas></div><p class="small muted fprule">Tap (or press space) to flap. ${fpPer().toLocaleString()} BB per pipe, up to ${fpCap().toLocaleString()} BB a day.</p><div id="fpStats">${fpStatsHtml()}</div></div>`}
@@ -7263,8 +7264,8 @@ function fpMount(){const c=$("#fpCanvas");if(!c)return;S._fpStats=null;const ctx
     ctx.strokeStyle="#ddd";ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(-3,15);ctx.lineTo(-14,13);ctx.moveTo(3,15);ctx.lineTo(14,13);ctx.stroke();ctx.restore()};
   const cheese=(x,y,rot)=>{ctx.save();ctx.translate(x,y);ctx.rotate(rot);ctx.fillStyle="#f5cf5d";ctx.strokeStyle="#b8860b";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-18,12);ctx.lineTo(18,12);ctx.lineTo(18,-12);ctx.closePath();ctx.fill();ctx.stroke();
     ctx.fillStyle="#d9a92f";[[8,4,3],[13,-4,2.2],[2,8,2]].forEach(([a,b,r])=>{ctx.beginPath();ctx.arc(a,b,r,0,7);ctx.fill()});ctx.fillStyle="#111";ctx.beginPath();ctx.arc(12,1,2,0,7);ctx.fill();ctx.restore()};
-  const end=async()=>{FP.st="over";FP.overAt=Date.now();FP.earn=0;if(FP.score>0)try{const fs=await db.doc("prefs/"+S.me).get();if(fs.exists){const d=fs.data();Object.assign(S.prefs[S.me]=S.prefs[S.me]||{},{flapDay:d.flapDay,flapToday:d.flapToday,flapEarn:d.flapEarn})}}catch(_){}const q=S.prefs[S.me]||{},today=fpToday(S.me);let boosted=!!FP.boostRun;FP.boostRun=false;const per=fpPer(),earn=boosted?FP.score*per*FP_BOOST_MULT:Math.max(0,Math.min(FP.score*per,fpCap()-today)),rz=Math.floor(earn*ab2("rinker")/100);FP.earn=earn+rz;/* The Rinker Rizzler: +% on each run (on top of the cap) */
-    const best=Math.max(Number(q.flapBest)||0,FP.score);const patch={flapBest:best,...(q.sb0&&FP.score>(Number(q.flapBestS)||0)?{flapBestS:FP.score}:{}),flapDay:fpDay(),flapToday:boosted?today:today+earn,flapEarn:(Number(q.flapEarn)||0)+earn+rz,flapPlays:(Number(q.flapPlays)||0)+1};tiAdd(patch,earn+rz);
+  const end=async()=>{FP.st="over";FP.overAt=Date.now();FP.earn=0;if(FP.score>0)try{const fs=await db.doc("prefs/"+S.me).get();if(fs.exists){const d=fs.data();Object.assign(S.prefs[S.me]=S.prefs[S.me]||{},{flapDay:d.flapDay,flapToday:d.flapToday,flapEarn:d.flapEarn})}}catch(_){}const q=S.prefs[S.me]||{},today=fpToday(S.me);let boosted=!!FP.boostRun;FP.boostRun=false;const per=fpPer(),earn=boosted?Math.min(FP.score*per*FP_BOOST_MULT,fpCap()):Math.max(0,Math.min(FP.score*per,fpCap()-today)),rz=Math.floor(earn*ab2("rinker")/100);FP.earn=earn+rz;/* The Rinker Rizzler: +% on each run (on top of the cap) */
+    const best=Math.max(Number(q.flapBest)||0,FP.score);const patch={flapBest:best,...(q.sb0&&FP.score>(Number(q.flapBestS)||0)?{flapBestS:FP.score}:{}),flapDay:fpDay(),flapToday:boosted?today+Math.floor(earn/2):today+earn,flapEarn:(Number(q.flapEarn)||0)+earn+rz,flapPlays:(Number(q.flapPlays)||0)+1};tiAdd(patch,earn+rz);
     if(FP.score>0||best!==(Number(q.flapBest)||0)){Object.assign(S.prefs[S.me]=S.prefs[S.me]||{},patch);fpStats();setMe&&setMe();try{await db.doc("prefs/"+S.me).update(patch)}catch(_){toast("That score didn't save. Check your connection.")}}
     if(earn>0)haptic&&haptic()};
   let last=performance.now(),acc=0;
@@ -7288,7 +7289,7 @@ function fpMount(){const c=$("#fpCanvas");if(!c)return;S._fpStats=null;const ctx
     FP.pipes.forEach(p=>{ctx.fillStyle="#2a2a2a";ctx.fillRect(p.x,0,PW,p.top);ctx.fillRect(p.x,p.top+GAP,PW,H);ctx.fillStyle="#f5cf5d";ctx.fillRect(p.x-4,p.top-16,PW+8,16);ctx.fillRect(p.x-4,p.top+GAP,PW+8,16);if(p.rat)drawRat(p)});
     ctx.fillStyle="#0a2a17";ctx.fillRect(0,H-24,W,24);ctx.fillStyle="#f5cf5d";ctx.fillRect(0,H-24,W,3);
     cheese(80,FP.y,Math.max(-.5,Math.min(1.1,FP.vy/10)));
-    ctx.textAlign="center";ctx.fillStyle="#fff";ctx.font="800 44px Barlow,sans-serif";if(FP.st!=="ready")ctx.fillText(FP.score,W/2,70);if(FP.boostRun){ctx.font="800 15px Barlow,sans-serif";ctx.fillStyle="#ffd23f";ctx.fillText("⚡ 10× BOOST · "+(FP.score*fpPer()*FP_BOOST_MULT).toLocaleString()+" BB",W/2,96)}
+    ctx.textAlign="center";ctx.fillStyle="#fff";ctx.font="800 44px Barlow,sans-serif";if(FP.st!=="ready")ctx.fillText(FP.score,W/2,70);if(FP.boostRun){ctx.font="800 15px Barlow,sans-serif";ctx.fillStyle="#ffd23f";ctx.fillText("⚡ 5× BOOST · "+Math.min(FP.score*fpPer()*FP_BOOST_MULT,fpCap()).toLocaleString()+" BB",W/2,96)}
     if(FP.st==="ready"){ctx.font="800 26px Barlow,sans-serif";ctx.fillStyle="#f5cf5d";ctx.fillText("Tap to start",W/2,H/2-60);ctx.font="600 15px Barlow,sans-serif";ctx.fillStyle="#cfe8d3";ctx.fillText(`${fpPer().toLocaleString()} BB per pipe`,W/2,H/2-36)}
     if(FP.st==="over"){ctx.fillStyle="rgba(0,0,0,.6)";ctx.fillRect(30,H/2-90,W-60,170);ctx.fillStyle="#fff";ctx.font="800 30px Barlow,sans-serif";ctx.fillText("Game over",W/2,H/2-48);
       ctx.font="700 18px Barlow,sans-serif";ctx.fillText(`Score ${FP.score}`,W/2,H/2-16);ctx.fillStyle=FP.earn>0?"#5cff72":"#a89f84";ctx.font="800 24px Barlow,sans-serif";ctx.fillText(FP.earn>0?`+${FP.earn.toLocaleString()} BB`:(fpToday(S.me)>=fpCap()?"Daily cap reached":"+0 BB"),W/2,H/2+20);
