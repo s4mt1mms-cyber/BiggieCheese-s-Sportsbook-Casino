@@ -75,6 +75,14 @@ elif fix == "zhrollback":
             return sum(cur.values()), sum(new.values())
         print(pid, "cards before/after", run(fs.transaction()))
         fs.collection("bank").document("gift75k_" + pid).set({"from": "house", "to": pid, "amt": 75000, "kind": "gift", "note": "House gift", "at": now, "wv": "fix." + str(now)})
+elif fix == "zhflap0":
+    # Oct 25 4:59 PM (owner): Zartog + hung like hernandez "Earned today" on the Cheese Farm back to 0 (their Silo can fill again today). Balances untouched.
+    now = int(time.time() * 1000)
+    for pid in ["u_jzH6I8emDBcqWaXJhIX_HA", "TOvAaEkJAveB4wAbZD5vWdMfkgA2"]:
+        ref = fs.collection("prefs").document(pid)
+        x = ref.get().to_dict() or {}
+        ref.update({"flapToday": 0, "liveT": now, "wv": "fix." + str(now)})
+        print(pid, "flapToday", x.get("flapToday"), "-> 0", "flapDay", x.get("flapDay"))
 elif fix == "zhfarm":
     # Oct 25 (owner): Chancellor Zartog + hung like hernandez Cheese Farm Press and Silo each down 2 levels (min 0). No refund, farmSpent unchanged.
     now = int(time.time() * 1000)
