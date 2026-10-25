@@ -1968,7 +1968,8 @@ function ledger0(){
   /* Tithe (Jimmy Scroggins curse): one doc pays `each` to every id in `tos`. "pull" docs take `amt` from the payer here
      (the remainder of amt/each just vanishes); "win" docs don't, because the payer's balance already has floor(tiWin/10) taken off */
   const tiPaid={},tiLast={};
-  for(const t of S.bank||[]){if(t.kind==="bounty"){if(!t.to)continue;let tot=0;for(const[id,v]of Object.entries(t.pay||{})){const a=Math.floor(Number(v))||0;if(a>0&&id!==t.to){bkA(id,-a);tot+=a}}bkA(t.to,tot);continue}
+  for(const t of S.bank||[]){/* tournament payouts with several recipients (split ties / refunds): pays {id: amt}, paid by the house */if(t.kind==="tourpay"&&t.pays){for(const[id,v]of Object.entries(t.pays)){const a=Math.floor(Number(v))||0;if(a>0)bkA(id,a)}continue}
+    if(t.kind==="bounty"){if(!t.to)continue;let tot=0;for(const[id,v]of Object.entries(t.pay||{})){const a=Math.floor(Number(v))||0;if(a>0&&id!==t.to){bkA(id,-a);tot+=a}}bkA(t.to,tot);continue}
     if(t.kind==="tithe"){if(!t.from)continue;const e=Math.floor(Number(t.each))||0,a=Math.floor(Number(t.amt))||0;if(t.src==="win"){tiPaid[t.from]=(tiPaid[t.from]||0)+a;tiLast[t.from]=Math.max(tiLast[t.from]||0,Number(t.at)||0)}else bkA(t.from,-a);
       if(e>0)for(const r of new Set(Array.isArray(t.tos)?t.tos:[]))if(r!==t.from)bkA(r,e);continue}
     /* Shabbat Shalom (card, Oct 23): 25,000 lent to the House comes back as 26,250, 1/24 of it each full hour */
@@ -6598,6 +6599,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:132,d:"Oct 25",t:[["🏆","Tournament ties: with 3 or more players, a tie for first splits the pot evenly. With just 2 players, a tie gives both their entry back"]]},
  {v:131,d:"Oct 25",t:[["🏆","Tournaments are now 3 tries a day. Tries don't win or lose BB; the pot is paid at the midnight reset"]]},
  {v:130,d:"Oct 25",t:[["🏆","Tournaments need 2 or more players: if you're the only one who entered, you get your entry back"]]},
  {v:129,d:"Oct 25",t:[["🏆","Tournament entry is now 3,000 BB"]]},
@@ -7121,7 +7123,8 @@ function bkRow(l){const c=bkCalc(l)||{},me=S.me,st=l.status,N=l.sched?l.sched.am
     <div class="small muted">${esc(bkTermsTxt(l))} · ${c.total?`${c.total.toLocaleString()} BB back`:""}</div>${st==="open"&&!rq?onlyBadge(l):""}${nxt}${coll}${sz}${btn?`<div class="row">${btn}</div>`:""}</div>`}
 /* combined bank log for the viewer: + = money in (green), − = money out (red) */
 function bkActivity(me){const out=[],E=(at,v,h,bad)=>{if(at)out.push({at:Number(at),v,h,bad})};
-  for(const t of S.bank||[]){if(t.kind==="bounty"){const pay=t.pay||{},tot=Object.entries(pay).reduce((x,[id,v])=>x+(id!==t.to?Math.floor(Number(v))||0:0),0);
+  for(const t of S.bank||[]){if(t.kind==="tourpay"&&t.pays){const a=Math.floor(Number(t.pays[me]))||0;if(a>0)E(t.at,a,`🏆 ${esc(t.note||"Tournament")}`);continue}
+    if(t.kind==="bounty"){const pay=t.pay||{},tot=Object.entries(pay).reduce((x,[id,v])=>x+(id!==t.to?Math.floor(Number(v))||0:0),0);
       if(t.to===me)E(t.at,tot,`🐉 Dragon bounty · everyone paid you`);else if(Math.floor(Number(pay[me]))>0)E(t.at,-Math.floor(Number(pay[me])),`🐉 Dragon bounty to ${esc(nm(t.to))}`);continue}
     if(t.kind==="shabbat"){if(t.from===me){const a=Math.floor(Number(t.amt))||0,h=Math.min(24,Math.floor((Date.now()-(Number(t.at)||0))/36e5)),back=Math.floor((Math.floor(Number(t.back))||0)*h/24);E(t.at,-a,`🕍 Shabbat Shalom · lent ${a.toLocaleString()} BB to the House`);if(back>0)E(Math.min(Date.now(),Number(t.at)+h*36e5),back,`🕍 Shabbat Shalom · paid back so far (${h}/24 hours)`)}continue}
     if(t.kind==="tithe"){const e=Math.floor(Number(t.each))||0,a=Math.floor(Number(t.amt))||0,tos=Array.isArray(t.tos)?t.tos:[];
@@ -7307,12 +7310,20 @@ async function tourScore(g,v,day){const e=(S.bank||[]).find(t=>t.id===tourId(g,d
 async function tourSettle(){if(!S.ready||!S.ld||!S.ld.bank||tourSettle.busy)return;tourSettle.busy=true;const today=divDay();
   try{const days={};for(const t of S.bank||[])if(t.kind==="tourney"&&t.day&&t.day<today&&TOUR[t.g])days[t.g+"|"+t.day]=1;
     for(const k of Object.keys(days)){const[g,day]=k.split("|"),pid="tourpay_"+g+"_"+day;if((S.bank||[]).some(t=>t.id===pid))continue;const E=tourEntries(g,day);if(!E.length)continue;const w=tourRank(E)[0];
-      const ref=db.doc("bank/"+pid);if((await ref.get()).exists)continue;await ref.set({kind:"tourpay",from:"house",to:w.from,amt:E.length<2?tourPaid(g,day):tourPot(g,day),...(E.length<2?{refund:true}:{}),g,day,n:E.length,best:Number(w.best)||0,at:Date.now(),note:E.length<2?`${TOUR[g].n} tournament refund (only player) · ${day}`:`${TOUR[g].n} tournament win · ${day}`})}
+      const ref=db.doc("bank/"+pid);if((await ref.get()).exists)continue;
+      /* owner, Oct 25: 1 player → refund. Tie for first: 2 players → both refunded; 3+ players → the pot split evenly among the tied (whole BB). */
+      const top=Number(w.best)||0,tied=E.filter(t=>(Number(t.best)||0)===top),N=TOUR[g].n,pays={};let note;
+      if(E.length<2){pays[w.from]=Math.floor(Number(w.amt))||0;note=`${N} tournament refund (only player) · ${day}`}
+      else if(tied.length>1&&E.length===2){E.forEach(t=>pays[t.from]=Math.floor(Number(t.amt))||0);note=`${N} tournament tie · entry refunded · ${day}`}
+      else if(tied.length>1){const each=Math.floor(tourPot(g,day)/tied.length);tied.forEach(t=>pays[t.from]=each);note=`${N} tournament · split ${tied.length} ways · ${day}`}
+      else{pays[w.from]=tourPot(g,day);note=`${N} tournament win · ${day}`}
+      const refund=E.length<2||(tied.length>1&&E.length===2),first=Object.keys(pays)[0];
+      await ref.set({kind:"tourpay",pays,to:first,from:"house",amt:pays[first],...(refund?{refund:true}:{}),...(tied.length>1&&!refund?{split:tied.length}:{}),g,day,n:E.length,best:top,at:Date.now(),note})}
     /* my own wins: popup + chat once */
-    const q=S.prefs[S.me]||{},seen=q.tourWon||{};for(const t of S.bank||[])if(t.kind==="tourpay"&&t.to===S.me&&!seen[t.id]){await db.doc("prefs/"+S.me).update({tourWon:{[t.id]:1}});q.tourWon={...(q.tourWon||{}),[t.id]:1};
-      if(t.refund){toast(`Nobody else entered the ${TOUR[t.g]?TOUR[t.g].n:""} tournament, so your ${(Number(t.amt)||0).toLocaleString()} BB came back.`);continue}
-      try{db.collection("chat").add({type:"bet",kind:"bank",uid:S.me,poster:S.me,at:Date.now(),text:`🏆 ${nm(S.me)} won the ${TOUR[t.g]?TOUR[t.g].n:""} tournament (${t.day}) with a ${TOUR[t.g]?TOUR[t.g].what:"score"} of ${t.best} · +${(Number(t.amt)||0).toLocaleString()} BB`})}catch(_){}
-      toast(`🏆 You won the ${TOUR[t.g]?TOUR[t.g].n:""} tournament! +${(Number(t.amt)||0).toLocaleString()} BB`)}}
+    const q=S.prefs[S.me]||{},seen=q.tourWon||{};for(const t of S.bank||[])if(t.kind==="tourpay"&&(t.pays?Number(t.pays[S.me])>0:t.to===S.me)&&!seen[t.id]){const mine=t.pays?Math.floor(Number(t.pays[S.me]))||0:Math.floor(Number(t.amt))||0;await db.doc("prefs/"+S.me).update({tourWon:{[t.id]:1}});q.tourWon={...(q.tourWon||{}),[t.id]:1};
+      if(t.refund){toast(t.n>1?`The ${TOUR[t.g]?TOUR[t.g].n:""} tournament ended in a tie, so your ${mine.toLocaleString()} BB came back.`:`Nobody else entered the ${TOUR[t.g]?TOUR[t.g].n:""} tournament, so your ${mine.toLocaleString()} BB came back.`);continue}
+      try{db.collection("chat").add({type:"bet",kind:"bank",uid:S.me,poster:S.me,at:Date.now(),text:`🏆 ${nm(S.me)} ${t.split?"tied for first in":"won"} the ${TOUR[t.g]?TOUR[t.g].n:""} tournament (${t.day}) with a ${TOUR[t.g]?TOUR[t.g].what:"score"} of ${t.best} · +${mine.toLocaleString()} BB`})}catch(_){}
+      toast(`🏆 You ${t.split?"tied for first in":"won"} the ${TOUR[t.g]?TOUR[t.g].n:""} tournament! +${mine.toLocaleString()} BB`)}}
   catch(_){}finally{tourSettle.busy=false}}
 setInterval(tourSettle,45000);setTimeout(tourSettle,8000);
 function tourHtml(g){const T=TOUR[g],day=divDay(),E=tourRank(tourEntries(g,day)),me=tourMine(g),left=tourLeft(g),pot=tourPot(g,day),bal=Math.floor(ledger().balOf(S.me));
@@ -7325,7 +7336,7 @@ function tourHtml(g){const T=TOUR[g],day=divDay(),E=tourRank(tourEntries(g,day))
     <div class="tourpot"><span><span class="stlbl">Winner gets</span> <b class="num pos">${E.length<2?"—":pot.toLocaleString()+" BB"}</b></span><span class="small muted">${E.length} player${E.length===1?"":"s"}${E.length<2?" · needs 2+ (a solo entry gets its BB back)":""}</span>${me?`<span class="small">Your best <b class="num">${Number(me.best)||0}</b></span>`:""}</div>
     <div class="touract">${act}</div>
     ${E.length?`<div class="tourlb">${E.slice(0,10).map((t,i)=>`<div class="tourrow${t.from===S.me?" me":""}"><span class="num">${i+1}</span>${pic(t.from)}<span class="tn">${esc(nm(t.from))}</span><b class="num">${Number(t.best)||0}</b><small class="muted">${Math.max(0,TOUR_TRIES-(Number(t.tries)||0))} left</small></div>`).join("")}</div>`:""}
-    ${yd&&!yd.refund?`<p class="small muted">Last winner: ${esc(nm(yd.to))} · ${T.what} ${yd.best} · +${(Number(yd.amt)||0).toLocaleString()} BB (${esc(yd.day)})</p>`:""}</section>`}
+    ${yd&&!yd.refund?`<p class="small muted">Last winner: ${yd.pays?Object.keys(yd.pays).map(id=>esc(nm(id))).join(" & "):esc(nm(yd.to))} · ${T.what} ${yd.best} · +${(Number(yd.amt)||0).toLocaleString()} BB${yd.split?" each":""} (${esc(yd.day)})</p>`:""}</section>`}
 async function tourHl(g){const h=S.thl;if(!h||!h.on||h.busy)return;const nx=hlDraw(),ok=g==="hi"?nx.r>h.card.r:nx.r<h.card.r;h.busy=true;
   if(ok){h.n++;h.card=nx;h.busy=false;await tourScore("hl",h.n,h.day);try{haptic()}catch(_){}}
   else{h.card=nx;h.on=false;h.last=h.n;h.busy=false;toast(`${HL_R[nx.r-1]}${HL_S[nx.s]} · streak over at ${h.n}`)}tourRef()}
