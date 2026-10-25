@@ -5556,16 +5556,16 @@ const CARD_ABIL={
   curse:{n:"Curse · Tithe",ic:"⛪",t:"THANK YOU FOR TITHING. Pulling it burns 10% of your balance. While you hold it, 10% of all your winnings (casino, sports bets, dividends, Cheese Farm, rat hunt, Debby) burns too. It can turn up in League Moments, Multiverse and Fantasyland packs. No dividend, no full-set credit, can't be quick-sold. Sell or trade it, or pay 5,000 BB to burn it and lift the curse. Extra copies don't add more."},
   dean:{n:"Card Counter",ic:"🎲",t:"While you hold him you play craps with a 1.5% edge over the house: every winning craps bet pays a little extra, so each bet type returns +1.5% on average instead of losing. Craps only. Extra copies don't stack."},
   hof:{n:"House Money",ic:"🏦",t:"While you hold it, borrow 10,000 BB from the House in the Bank for 1 day at 5%: pay back 10,500 BB after 24 hours (taken automatically on the due time, whatever you have if you're short). One loan at a time. The loan stays yours to repay even if you sell the card."},
-  slop:{n:"Royal Respin",ic:"🎡",t:"2 roulette respins a day. After a spin that loses you money, tap Respin: that spin is cancelled and the wheel spins again with the exact same bets. The new result counts, win or lose. Resets at 1 AM ET. Extra copies don't stack."},
+  slop:{n:"Royal Respin",ic:"🎡",t:"2 roulette respins a day. After a spin that loses you money, tap Respin: that spin is cancelled and the wheel spins again with the exact same bets. The new result counts, win or lose. Resets at 12:01 AM ET. Extra copies don't stack."},
   shrex:{n:"Swamp Blackjack",ic:"🟢",t:"Every blackjack you're dealt pays 3× your bet (instead of 3 to 2) while you hold it, and your profile picture gets a green swamp glow. Extra copies don't stack."},
   hilo:{n:"Hot Streak",ic:"🔥",t:"High-Low: once you have 6 right in a row, every guess after that pays double the normal multiplier. Cash out any time. Extra copies don't stack."},
-  bers:{n:"Berserk Mode",ic:"🪓",t:"3 auto-kills a day in the Blackjack rat hunt (Revenge): tap AUTO KILL and the rat goes down, no aiming needed (a normal kill, 500 BB). Resets at 1 AM ET. Extra copies don't stack."},
+  bers:{n:"Berserk Mode",ic:"🪓",t:"3 auto-kills a day in the Blackjack rat hunt (Revenge): tap AUTO KILL and the rat goes down, no aiming needed (a normal kill, 500 BB). Resets at 12:01 AM ET. Extra copies don't stack."},
   social:{n:"Social Credit",ic:"📣",t:"Whoever pulls this card from a pack gets announced in league chat: +10 million social credit score! No money involved."}};
 const mvAddCards=()=>MV_ADD.map(([k,r,name,o])=>{o=o||{};return{id:"mv-"+k,r,name,sub:"Multiverse",desc:o.desc||(o.img===false?"Art coming soon. Part of the Multiverse collection.":"Part of the Multiverse collection."),full:true,code:true,img:o.img===false?null:`/cards/mv/${k}.webp?v=${MV_IMGV}`,...(o.abil?{abil:o.abil}:{}),...(o.lim?{lim:o.lim}:{}),...(o.pw!=null?{pw:o.pw}:{}),...(o.div!=null?{div:o.div}:{})}});
 /* abilities for cards that live in meta/cards_mv (made with the Admin tools, so they carry no abil field) */
 const MV_ABIL={"mv-art-63":"hilo"};
 const MV_DIV={"mv-art-65":750};/* owner, Oct 23: Debbie · Dynasty Grail pays 1.5× the Grail dividend */
-function mvMerge(list){const ids=new Set(list.map(c=>c.id));list=list.map(c=>MV_ABIL[c.id]&&!c.abil?{...c,abil:MV_ABIL[c.id]}:c).map(c=>MV_DIV[c.id]!=null&&c.div==null?{...c,div:MV_DIV[c.id]}:c).map(c=>c.id==="mv-art-72"?{...c,desc:"⚡ FLAPPY BOOST: own this card and you get a Use Boost button on Cheese Farm. Twice a day, a run pays 10× per pipe with no daily cap. Resets at 1 AM ET."}:c);return[...list,...mvAddCards().filter(c=>!ids.has(c.id))]}
+function mvMerge(list){const ids=new Set(list.map(c=>c.id));list=list.map(c=>MV_ABIL[c.id]&&!c.abil?{...c,abil:MV_ABIL[c.id]}:c).map(c=>MV_DIV[c.id]!=null&&c.div==null?{...c,div:MV_DIV[c.id]}:c).map(c=>c.id==="mv-art-72"?{...c,desc:"⚡ FLAPPY BOOST: own this card and you get a Use Boost button on Cheese Farm. Twice a day, a run pays 10× per pipe with no daily cap. Resets at 12:01 AM ET."}:c);return[...list,...mvAddCards().filter(c=>!ids.has(c.id))]}
 /* daily dividend for one copy: a card's own div overrides the rarity table; the curse card pays nothing */
 /* owner, Oct 24: every card dividend ×1.5 (DIV_X), then ×1.2 more at 2:30 PM = ×1.8 */
 const DIV_X=1.8,cardDiv0=c=>!c||c.abil==="curse"?0:(c.lv||1)>1&&craftable(c)?(c.div!=null?DIV_LV_JOE[1]:DIV_LV[c.r][(c.lv||1)-1]||0):c.div!=null?Number(c.div)||0:CARD_DIV[c.r],cardDiv=c=>cardDiv0(c)*DIV_X;
@@ -5721,7 +5721,7 @@ const PM_FEES=[{k:"dev",to:"u_IfmXeDmDg1B3W4naCzVbSA",amt:1500,note:"Dev fee"},{
 const PM_PLAT_DESC="Part of the limited time platinum mysterio collection. 💸 Pays 250 BB a day per copy.";
 const PM_CARDS=[
   ["claire",8,"Claire Predtechenskis","Destroyer of Worlds",1,"flame","Destroyer of Worlds. Only one exists. Ability · Scorched Earth: cash her in for 52,500 BB, and she burns herself out of existence forever. No dividend, no second copy, no take-backs. Choose wisely."],
-  ["debby",8,"Evil Witch","“Debby”",1,"gold","Debby. Only one exists. Ability · Hex Tax: every day at the 1 AM dividend, Debby flies off and steals 5,000 BB from a random league member who can afford it, and hands it to whoever holds her. No dividend. Can't be quick-sold."],
+  ["debby",8,"Evil Witch","“Debby”",1,"gold","Debby. Only one exists. Ability · Hex Tax: every day at the 12:01 AM dividend, Debby flies off and steals 5,000 BB from a random league member who can afford it, and hands it to whoever holds her. No dividend. Can't be quick-sold."],
   ["peter",8,"Peter Griffin","Lightning Series",3,"zap","Hehehehe. Ability · Freakin' Sweet: multiplies your ENTIRE daily card dividend by 1.5× per Peter you hold (1 → 1.5×, 2 → 2.25×, all 3 → 3×). Only 3 exist. No dividend of his own. Can't be quick-sold."],
   ["ddom",7,"Deepthroat Dominators","Platinum",10],["aiden",7,"Aiden Carroll","Platinum",15],["hong",7,"Mr. Hong","Platinum",15],["dim",7,"Dim Futures","Platinum",15],
   ["motis",7,"Moti's Restaurant","Platinum",15],["giga",7,"Gigachad","Platinum",15],["500cig",7,"500 Cigarettes","Platinum",15],["pitstop",7,"Pit Stop","Platinum",15],
@@ -6108,13 +6108,14 @@ document.addEventListener("click",e=>{if(e.target&&e.target.id==="memberView"){S
 document.addEventListener("click",e=>{const v=e.target.closest("[data-profcoll]");if(v){e.preventDefault();if(CHAT.open)chatOpen(false);const st=pkSt();st.tab="coll";st.who=v.dataset.profcoll;S.viewMember=null;S.tab="packs";render();window.scrollTo(0,0);return}
   const p=e.target.closest("[data-uid]");if(!p||!S.prefs[p.dataset.uid])return;const act=e.target.closest("button,a,[data-cardview],canvas,.rrwrap");if(act&&act.contains(p))return;e.preventDefault();e.stopPropagation();S.viewMember=p.dataset.uid;render()},true);
 
-/* daily card dividend: first visit after 1 AM Eastern pays per copy owned, by rarity */
+/* daily card dividend: first visit after 12:01 AM Eastern pays per copy owned, by rarity */
 const CARD_DIV=[0,0,3,20,100,500,10000,25,0]/* Oct 23 deflation: ÷10, none for Common/Uncommon */;
-function divDay(t){const d=new Date((t==null?Date.now():t)-36e5);return d.toLocaleDateString("en-CA",{timeZone:"America/New_York"})}
-/* every daily thing (dividends, Debby, King Slop respins, Cheese Farm cap, Vector boost) resets at 1 AM Eastern; ms until the next reset */
+/* owner, Oct 24 11 PM: the daily reset moved from 1 AM to 12:01 AM Eastern */
+function divDay(t){const d=new Date((t==null?Date.now():t)-6e4);return d.toLocaleDateString("en-CA",{timeZone:"America/New_York"})}
+/* every daily thing (dividends, Debby, King Slop respins, Cheese Farm cap, Vector boost) resets at 12:01 AM Eastern; ms until the next reset */
 function divLeft(){const p=Object.fromEntries(new Intl.DateTimeFormat("en-US",{timeZone:"America/New_York",hour12:false,hour:"2-digit",minute:"2-digit",second:"2-digit"}).formatToParts(new Date()).map(x=>[x.type,x.value]));
-  const h=Number(p.hour)%24,m=Number(p.minute),sec=Number(p.second),since=(((h-1)+24)%24)*3600+m*60+sec;return Math.max(6e4,(86400-since)*1000)}
-/* one player's daily card dividend right now (the same math the 1 AM payout uses) */
+  const h=Number(p.hour)%24,m=Number(p.minute),sec=Number(p.second),since=((h*3600+m*60+sec)-60+86400)%86400;return Math.max(6e4,(86400-since)*1000)}
+/* one player's daily card dividend right now (the same math the 12:01 AM payout uses) */
 /* ===== Card abilities by level (owner's New_Card_Expansion_Database, Oct 23) =====
    Keyed by collection + card name. v = the value at each level (index 0 = LV 1). Common–Super Rare abilities are OFF at LV 1
    and use the sheet's value for that level from LV 2 on ("option A"); Elite and Grail abilities work at LV 1.
@@ -6131,7 +6132,7 @@ const AB2={
   "mv:logandornfootbawrelic":{k:"logan",v:[1000,5000],t:v=>`A free ${v.toLocaleString()} BB bet every day on NFL, NBA or league games (you keep the winnings)`},
   "mv:shabbatshalom":{k:"shabbat",v:[1],t:()=>`Once a day, lend the House 25,000 BB and get back 26,250 BB, paid hourly over 24 hours`},
   "fl:buckethatbros":{k:"bucket",v:[.2,.75,2,3,3.5,4,4.5],t:v=>`${pctTxt(v)} bonus on your winnings at the live multiplayer tables`},
-  "fl:shineemployee":{k:"shine",v:[500,1000,1750,2500,3500],t:v=>`A weekly ${v.toLocaleString()} BB paycheck (Fridays at 1 AM), but 35% of the time they miss your payment`},
+  "fl:shineemployee":{k:"shine",v:[500,1000,1750,2500,3500],t:v=>`A weekly ${v.toLocaleString()} BB paycheck (Fridays at 12:01 AM), but 35% of the time they miss your payment`},
   "fl:divaonthedancefloor":{k:"diva",v:[1,2,3,4,10],t:v=>`Skins and emotes are ${pctTxt(v)} off`},
   "fl:therinkerrizzler":{k:"rinker",v:[2.5,5,10],t:v=>`Cheese Farm runs pay ${pctTxt(v)} more and your daily farm cap is ${pctTxt(v)} higher`},
   "fl:darthslop":{k:"darth",v:[.5,1.25],t:v=>`Blackjack wins pay you an extra ${pctTxt(v)}`},
@@ -6419,7 +6420,7 @@ function divCalc(id){const q=S.prefs[id]||{},cards=q.cards||{};
   /* Peter Griffin: 1.5x on the whole dividend per copy, capped at 3x */
   const pk=Math.min(3,cardCount("pm-peter",id)),mult=Math.min(3,Math.pow(1.5,pk)),base=amt;amt=Math.round(amt*mult);
   return {amt,n,byR,full,mono,bon,pk,mult,base,lvs,vt}}
-/* Rich tax (owner, Oct 23): once a day at the 1 AM reset, on your balance right after the dividend, marginal:
+/* Rich tax (owner, Oct 23): once a day at the 12:01 AM reset, on your balance right after the dividend, marginal:
    5% of the part between 100k and 200k, 10% of 200k–500k, 15% above 500k. The BB is burned (paid to "house"). One bank doc per player per day. */
 const TAX_BR=[[100000,200000,.05],[200000,500000,.10],[500000,Infinity,.15]];
 const taxOf=b=>Math.floor(TAX_BR.reduce((t,[lo,hi,r])=>t+Math.max(0,Math.min(b,hi)-lo)*r,0));
@@ -6458,19 +6459,19 @@ function dflGate(){const q=S.me&&S.prefs[S.me];const need=!!(db&&S.me&&S.ready&&
   if(need&&!o){o=document.createElement("div");o.id="dflOv";o.innerHTML=`<div><b>📉 Updating your balance…</b><span>Deflation update: one moment.</span></div>`;document.body.appendChild(o)}else if(!need&&o)o.remove()}
 setInterval(()=>{dflGate();dflRun()},1500);
 const DEBBY_AMT=5000;/* Oct 23: was 10,000 */
-/* Daily top-up (owner, Oct 23; replaces the Tuesday +2,500): at the 1 AM reset, a balance under 10,000 gets +1,000 (never above 10,000). prefs.topUp = running total (ledger) */
+/* Daily top-up (owner, Oct 23; replaces the Tuesday +2,500): at the 12:01 AM reset, a balance under 10,000 gets +1,000 (never above 10,000). prefs.topUp = running total (ledger) */
 const TOPUP_AMT=1000,TOPUP_CAP=10000,WEEKLY_END=Date.parse("2026-10-23T17:00:00Z");
 async function topUp(day){const q=S.prefs[S.me];if(!q||q.topDay===day)return;const bal=Math.floor(ledger().balOf(S.me)),add=bal<TOPUP_CAP?Math.min(TOPUP_AMT,TOPUP_CAP-bal):0;const patch={topDay:day};if(add>0)patch.topUp=(Number(q.topUp)||0)+add;await db.doc("prefs/"+S.me).update(patch);Object.assign(q,patch);if(add>0)setTimeout(()=>toast(`💵 Daily top-up: +${add.toLocaleString()} BB`),1500)}
 /* owner, Oct 24 1 AM: dividends went ×1.5 right after that day's payout; anyone already paid that day gets the extra 50% now (once, prefs.div15) */
 async function div15(){const q=S.prefs[S.me],day=divDay();if(!q||day!=="2026-10-24"||q.divDay!==day||q.div15===day||S._div15)return;S._div15=1;
-  try{const s=await db.doc("prefs/"+S.me).get(),d=s.exists?s.data():{};if(d.div15===day||d.divDay!==day)return;const add=Math.round(divCalc(S.me).amt*0.5/DIV_X);/* the 1 AM top-up = half of the old 1× dividend */const patch={div15:day};if(add>0)patch.divEarn=(Number(d.divEarn)||0)+add;tiAdd(patch,add);
+  try{const s=await db.doc("prefs/"+S.me).get(),d=s.exists?s.data():{};if(d.div15===day||d.divDay!==day)return;const add=Math.round(divCalc(S.me).amt*0.5/DIV_X);/* the 12:01 AM top-up = half of the old 1× dividend */const patch={div15:day};if(add>0)patch.divEarn=(Number(d.divEarn)||0)+add;tiAdd(patch,add);
     await db.doc("prefs/"+S.me).update(patch);Object.assign(q,patch);if(add>0)toast(`💸 Dividends are up 50%: +${add.toLocaleString()} BB for today's payout`)}catch(_){S._div15=0}}
 async function divCheck(){if(!S.ready||!S.me||!db||S._divBusy)return;const q=S.prefs[S.me];if(!q||!q.dfl)return;const day=divDay();if(q.divDay===day){div15();return}
   const {amt,n,byR,full,mono,pk,mult,base,lvs,vt}=divCalc(S.me);
   /* Evil Witch (Debby): once a day her holder takes 10,000 BB from a random league member who can cover it */
   let deb=null;const hasDeb=cardCount("pm-debby")>0&&q.debbyDay!==day;
   S._divBusy=true;const patch={divDay:day,divEarn:(Number(q.divEarn)||0)+amt,div15:day};
-  /* Shine Employee (card, Oct 23): Fridays at 1 AM a paycheck of X BB, but 35% of the time they miss your payment */
+  /* Shine Employee (card, Oct 23): Fridays at 12:01 AM a paycheck of X BB, but 35% of the time they miss your payment */
   let shine=null;{const v=ab2("shine");if(v>0&&new Date(day+"T12:00:00Z").getUTCDay()===5&&q.shineDay!==day){const paid=pkRand()>=.35;shine={v,paid};patch.shineDay=day;patch.shineLog={[day]:paid?v:0};if(paid){patch.shineEarn=(Number(q.shineEarn)||0)+v;tiAdd(patch,v)}}}if(hasDeb)patch.debbyDay=day;tiAdd(patch,amt);try{await db.doc("prefs/"+S.me).update(patch);Object.assign(q,patch);richTax(day).then(()=>topUp(day)).catch(()=>{});
     if(hasDeb){try{const ref=db.doc("bank/debby_"+day);const ex=await ref.get();if(!ex.exists){const L=ledger();let pool=members().filter(id=>id!==S.me&&teamOf(id)&&Math.floor(L.balOf(id))>=DEBBY_AMT);if(!pool.length)pool=members().filter(id=>id!==S.me&&Math.floor(L.balOf(id))>=DEBBY_AMT);
       if(pool.length){const v=pool[Math.floor(pkRand()*pool.length)];await ref.set({from:v,to:S.me,amt:DEBBY_AMT,note:"Via Debby",kind:"debby",at:Date.now()});deb={v,amt:DEBBY_AMT};{const tp=tiAdd({},DEBBY_AMT);if(tp.tiWin!=null)db.doc("prefs/"+S.me).update(tp).catch(()=>{})}try{db.collection("chat").add({type:"bet",kind:"bank",uid:S.me,poster:S.me,at:Date.now(),text:`Via Debby: ${nm(S.me)} took ${DEBBY_AMT.toLocaleString()} BB from ${nm(v)} 🧙‍♀️`})}catch(_){}}}}catch(_){}}
@@ -6558,6 +6559,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:118,d:"Oct 24",t:[["🕛","Daily dividends and every daily reset now happen at 12:01 AM Eastern instead of 1 AM"]]},
  {v:117,d:"Oct 24",t:[["🙏","You can ask for a loan even with 0 BB. Your collateral is your cards"]]},
  {v:116,d:"Oct 24",t:[["🙏","Bank: you can now ask for a loan. Set the amount and terms, put up cards as collateral, and anyone can lend to you"],["🏦","The Bank is split into tabs: Money, Loans and My loans"]]},
  {v:115,d:"Oct 24",t:[["🎡","Daily Spin: the 50K jackpot is now a 1% chance, and the wheel looks like a real prize wheel again"]]},
@@ -6877,9 +6879,9 @@ async function bkPost(){if(S._bkBusy||!S.me)return;const F=S.bkF,t=bkTerms(F),c=
 const SHAB_AMT=25000,SHAB_BACK=26250;
 function abBankHtml(){if(!S.me)return "";const day=divDay(),q=S.prefs[S.me]||{},out=[];const lk=ab2("luke");
   if(lk>0){const used=q.lukeDay===day,L=ledger(),ppl=members().filter(id=>id!==S.me&&teamOf(id)).map(id=>({id,a:Math.floor(Math.floor(L.balOf(id))*lk/100)})).filter(x=>x.a>0).sort((a,b)=>b.a-a.a);
-    out.push(`<section class="card"><h3>🪦 The Luke Henry Curse</h3><p class="small muted">Once a day, steal ${pctTxt(lk)} of any player's current balance.</p>${used?`<p class="small">Used today. Back at 1 AM.</p>`:ppl.length?`<div class="row bkform"><label class="grow">Victim<select id="lukeWho">${ppl.map(x=>`<option value="${esc(x.id)}">${esc(nm(x.id))} · ${x.a.toLocaleString()} BB</option>`).join("")}</select></label><button type="button" class="btn" data-abbk="luke">Steal</button></div>`:`<p class="small muted">Nobody has anything worth stealing.</p>`}</section>`)}
+    out.push(`<section class="card"><h3>🪦 The Luke Henry Curse</h3><p class="small muted">Once a day, steal ${pctTxt(lk)} of any player's current balance.</p>${used?`<p class="small">Used today. Back at 12:01 AM.</p>`:ppl.length?`<div class="row bkform"><label class="grow">Victim<select id="lukeWho">${ppl.map(x=>`<option value="${esc(x.id)}">${esc(nm(x.id))} · ${x.a.toLocaleString()} BB</option>`).join("")}</select></label><button type="button" class="btn" data-abbk="luke">Steal</button></div>`:`<p class="small muted">Nobody has anything worth stealing.</p>`}</section>`)}
   if(hasAb("shabbat")||ab2("shabbat")){const id="shabbat_"+S.me+"_"+day,mine=(S.bank||[]).filter(t=>t.kind==="shabbat"&&t.from===S.me),today=mine.some(t=>t.id===id),live=mine.filter(t=>Date.now()-(Number(t.at)||0)<24*36e5);
-    out.push(`<section class="card"><h3>🕍 Shabbat Shalom</h3><p class="small muted">Once a day, lend the House ${SHAB_AMT.toLocaleString()} BB and get ${SHAB_BACK.toLocaleString()} BB back, paid every hour over 24 hours.</p>${live.map(t=>{const h=Math.min(24,Math.floor((Date.now()-t.at)/36e5));return `<p class="small">Paid back ${Math.floor(SHAB_BACK*h/24).toLocaleString()} of ${SHAB_BACK.toLocaleString()} BB (${h}/24 hours)</p>`}).join("")}${today?`<p class="small">Lent today. You can lend again after 1 AM.</p>`:`<button type="button" class="btn" data-abbk="shabbat" ${Math.floor(ledger().balOf(S.me))<SHAB_AMT?"disabled":""}>Lend ${SHAB_AMT.toLocaleString()} BB</button>`}</section>`)}
+    out.push(`<section class="card"><h3>🕍 Shabbat Shalom</h3><p class="small muted">Once a day, lend the House ${SHAB_AMT.toLocaleString()} BB and get ${SHAB_BACK.toLocaleString()} BB back, paid every hour over 24 hours.</p>${live.map(t=>{const h=Math.min(24,Math.floor((Date.now()-t.at)/36e5));return `<p class="small">Paid back ${Math.floor(SHAB_BACK*h/24).toLocaleString()} of ${SHAB_BACK.toLocaleString()} BB (${h}/24 hours)</p>`}).join("")}${today?`<p class="small">Lent today. You can lend again after 12:01 AM.</p>`:`<button type="button" class="btn" data-abbk="shabbat" ${Math.floor(ledger().balOf(S.me))<SHAB_AMT?"disabled":""}>Lend ${SHAB_AMT.toLocaleString()} BB</button>`}</section>`)}
   return out.join("")}
 document.addEventListener("click",async e=>{const t=e.target.closest("[data-abbk]");if(!t||!S.me||S._abBusy)return;if(S.readOnly)return toast("View only. Ask the commish for access.");const day=divDay(),q=S.prefs[S.me]||{};S._abBusy=true;
   try{if(t.dataset.abbk==="luke"){const v=ab2("luke"),who=($("#lukeWho")||{}).value;if(!(v>0)||!who||q.lukeDay===day)return;const amt=Math.floor(Math.floor(ledger().balOf(who))*v/100);if(!(amt>0))return toast("They don't have enough to steal from.");
@@ -7074,7 +7076,7 @@ function bkActivity(me){const out=[],E=(at,v,h,bad)=>{if(at)out.push({at:Number(
       if(t.from===me)E(t.at,t.src==="win"?0:-a,t.src==="win"?`⛪ Tithe · ${a.toLocaleString()} BB of your winnings paid out to ${tos.length} players`:(tos.length?`⛪ Tithe · 10% of your balance to the league`:`⛪ Tithe · 10% of your balance burned`));
       else if(tos.includes(me)&&e>0)E(t.at,e,`⛪ Tithe from ${esc(nm(t.from))}`);continue}
     const a=Math.floor(Number(t.amt))||0;if(!(a>0)||t.from===t.to)continue;const note=t.note&&t.kind!=="debby"?` <span class="bknote">· ${esc(t.note)}</span>`:"";
-    if(t.kind==="tax"){if(t.from===me)E(t.at,-a,`🏛️ Rich tax · ${esc(t.note||"1 AM")}`,true);continue}
+    if(t.kind==="tax"){if(t.from===me)E(t.at,-a,`🏛️ Rich tax · ${esc(t.note||"12:01 AM")}`,true);continue}
     if(t.kind==="luke"){if(t.to===me)E(t.at,a,`🪦 The Luke Henry Curse · stole from ${esc(nm(t.from))}`);else if(t.from===me)E(t.at,-a,`🪦 The Luke Henry Curse · ${esc(nm(t.to))} stole from you`);continue}
     if(t.kind==="debby"){if(t.to===me)E(t.at,a,`🦹 Via Debby · stole from ${esc(nm(t.from))}`);else if(t.from===me)E(t.at,-a,`🦹 Via Debby · ${esc(nm(t.to))} stole from you`);continue}
     if(t.to===me)E(t.at,a,`← ${t.kind==="platfee"||t.kind==="packfee"||t.kind==="shopfee"||t.from==="house"?"The House":esc(nm(t.from))}${note}`);else if(t.from===me&&t.from!=="house")E(t.at,-a,`→ ${esc(nm(t.to))}${note}`)}
@@ -7216,7 +7218,7 @@ function fpStatsHtml(){const q=S.prefs[S.me]||{},today=fpToday(S.me),FP_CAP=fpCa
   return `${bh}${fpFarmHtml()}<div class="fpinfo"><span><span class="stlbl">Earned today</span> <b class="num pos">${today.toLocaleString()} / ${FP_CAP.toLocaleString()} BB</b></span><span><span class="stlbl">Best</span> <b class="num">${Number(stq(q).flapBest)||0}</b></span><span><span class="stlbl">Overall</span> <b class="num pos">${(Number(stq(q).flapEarn)||0).toLocaleString()} BB</b></span></div>
   ${left<=0?`<p class="small muted fpcapnote">You hit today's ${FP_CAP.toLocaleString()} BB cap. You can still play for a high score; earning resets at midnight ET.</p>`:""}
   <section class="card bjlb"><h3>Flappy leaderboard</h3>${rows.length?rows.map((r,i)=>`<button type="button" class="strow" data-member="${esc(r.id)}"><span class="strank num">${i+1}</span>${pic(r.id)}<span class="stmain"><span class="mrname">${esc(nm(r.id))}${r.id===S.me?' <span class="muted small">(you)</span>':""}</span><span class="stline"><span><span class="stlbl">Best</span> <span class="num">${r.b}</span></span><span><span class="stlbl">Earned</span> <span class="num pos">${r.e.toLocaleString()} BB</span></span><span><span class="stlbl">Farm</span> <span class="num">${fpPer(r.id)}/pipe</span></span></span></span></button>`).join(""):`<p class="small muted">No scores yet. Be the first.</p>`}</section>`}
-/* Vector (Grail) perk: one 10x Flappy run a day (resets at 1 AM ET with the dividends), no cap on that run */
+/* Vector (Grail) perk: one 10x Flappy run a day (resets at 12:01 AM ET with the dividends), no cap on that run */
 const FP_BOOST_CARD="mv-art-72",FP_BOOST_MULT=10,FP_BOOST_CD=864e5;
 const fpHasBoost=()=>Number((((S.prefs[S.me]||{}).cards)||{})[FP_BOOST_CARD])>0;
 /* owner, Oct 23: Vector gives 2 boosted runs a day (prefs.flapBoostDay/flapBoostN; flapBoostAt kept for the old 1-a-day stamp) */
@@ -7483,7 +7485,7 @@ function viewStandings(){
   const bjOf=id=>{const q=stq(S.prefs[id]||{});return bjPL(q)+(Number(q.rlNet)||0)+crPL(q)+(Number(q.hlNet)||0)+(Number(q.rrNet)||0)+(Number(q.thNet)||0)+(Number(q.slNet)||0)};
   const rows=[...ids].map(id=>({id,r:L.rec[id]||{w:0,l:0,p:0},net:(L.net[id]||0)+(inc?bjOf(id):0),bj:bjOf(id)})).sort((a,b)=>b.net-a.net||b.r.w-a.r.w);
   const cl=v=>v>0?"pos":v<0?"neg":"";
-  let h=`<div class="sthead"><h2>Season standings</h2><button type="button" class="tgl" role="switch" aria-checked="${inc}" data-stbj="${inc?0:1}"><span class="tgllbl">Include casino</span><span class="track"><span class="knob"></span></span></button></div>${inc?`<p class="note">Showing betting profit <strong>plus</strong> casino winnings and losses (blackjack, roulette and craps).</p>`:""}<p class="small muted">Ranked by profit: BiggieBucks won minus BiggieBucks lost on graded bets. Everyone starts with 25,000 BB, and anyone under 10,000 gets +1,000 a day at 1 AM (up to 10,000). Top-ups don't count as profit.</p>
+  let h=`<div class="sthead"><h2>Season standings</h2><button type="button" class="tgl" role="switch" aria-checked="${inc}" data-stbj="${inc?0:1}"><span class="tgllbl">Include casino</span><span class="track"><span class="knob"></span></span></button></div>${inc?`<p class="note">Showing betting profit <strong>plus</strong> casino winnings and losses (blackjack, roulette and craps).</p>`:""}<p class="small muted">Ranked by profit: BiggieBucks won minus BiggieBucks lost on graded bets. Everyone starts with 25,000 BB, and anyone under 10,000 gets +1,000 a day at 12:01 AM (up to 10,000). Top-ups don't count as profit.</p>
   <div class="card stlist">${rows.map((x,i)=>`<button type="button" class="strow" data-member="${esc(x.id)}">
     <span class="strank num">${i+1}</span>${pic(x.id)}
     <span class="stmain"><span class="mrname">${esc(nm(x.id))}${x.id===S.me?' <span class="muted small">(you)</span>':""}</span>
