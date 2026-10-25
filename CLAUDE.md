@@ -339,6 +339,7 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   Every craft needs copies of the same card (`cfAny` false, owner Oct 23). Card Crafting tab (`viewCraft`, state `S.cf`, recipes `CRAFT`, pickers `cfPick`, `cfAuto`): `craftDo` re-reads prefs, then ONE prefs update (cards, `craftSpent`
   += fee (burned, in balOf), `craftLog.<at>` → Bank statement line). Animation `cfAnim` (+ `cfSfx`; `pkCalm()` = short version). Crafting to MAX posts in chat.
   Level badge `lvBadge` in `cardHtml` (MAX for non-craftable). Wants/collateral may carry `lv` (`mkFits`; "Any level" when omitted).
+- **Craft to max (Oct 25):** first Crafting screen lists `cfMaxList()`; `cfMaxPlan(id,cards,bal)` = fewest crafts taking ONE copy to the highest level the copies (and balance; else `short`) allow, using higher-level copies first; `craftMax` re-reads prefs and does it in ONE prefs update (one `craftLog` entry per level step).
 - **Level abilities (`AB2`, keyed `set:nmKey(name)`; `ab2(k,id)` = the player's best value = their top-level copy):** Common–Super Rare are OFF at LV 1 and use
   the sheet's value for that level from LV 2 ("option A"); Elite/Grail work at LV 1. Wired: `vontrap` (+X BB/day per LV2+ copy, divCalc `vt`), `dwillie`
   (all-in loss refund: roulette/BJ/High-Low, `abWin(d,extra,allin)`), `shock` (+% on casino wins and on bets via `bx`), `luke` (Bank: steal % of a balance 1/day,
