@@ -75,6 +75,15 @@ elif fix == "zhrollback":
             return sum(cur.values()), sum(new.values())
         print(pid, "cards before/after", run(fs.transaction()))
         fs.collection("bank").document("gift75k_" + pid).set({"from": "house", "to": pid, "amt": 75000, "kind": "gift", "note": "House gift", "at": now, "wv": "fix." + str(now)})
+elif fix == "zhfarm":
+    # Oct 25 (owner): Chancellor Zartog + hung like hernandez Cheese Farm Press and Silo each down 2 levels (min 0). No refund, farmSpent unchanged.
+    now = int(time.time() * 1000)
+    for pid in ["u_jzH6I8emDBcqWaXJhIX_HA", "TOvAaEkJAveB4wAbZD5vWdMfkgA2"]:
+        ref = fs.collection("prefs").document(pid)
+        x = ref.get().to_dict() or {}
+        p0, s0 = int(x.get("fpPress") or 0), int(x.get("fpSilo") or 0)
+        ref.update({"fpPress": max(0, p0 - 2), "fpSilo": max(0, s0 - 2), "wv": "fix." + str(now)})
+        print(pid, "press", p0, "->", max(0, p0 - 2), "silo", s0, "->", max(0, s0 - 2))
 elif fix == "zcelestial":
     # Oct 25 (owner): Chancellor Zartog loses the Celestial aura (bought with High-Low exploit money). No refund; unequipped if worn.
     ref = fs.collection("prefs").document("u_jzH6I8emDBcqWaXJhIX_HA")

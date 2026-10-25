@@ -382,7 +382,7 @@ player's own client to prefs (`rrNet`/`thNet`).
 - `job-mpflag.yml` manual — live-tables server switch.
 - `job-econ.yml` manual, read-only — dumps prefs/bets/games/bank/market/loans/adjust/offers/plat/meta/nfl/nba/profiles as a 1-day private artifact
   (`gh run download <id> -n econ`; load into the emulator with tools/migrate/import.js, then read `ledger()`/`divCalc` in the app). Never commit it.
-- `job-fix.yml` manual — named one-off data fixes in `tools/jobs/admin_fix.py` (each recorded in config/fixes; `kjflap` = King Julian farm usage −5,000 on Oct 23; `zhrollback` Oct 25 = Zartog + hung like hernandez card counts → min(now, Oct 23 2:21 PM snapshot) after the High-Low exploit pack spree, no refund, +75,000 each); `zcelestial` = Zartog loses the Celestial aura, no refund). Pack openings aren't logged per card, so exact "bought after X" removals aren't possible.
+- `job-fix.yml` manual — named one-off data fixes in `tools/jobs/admin_fix.py` (each recorded in config/fixes; `kjflap` = King Julian farm usage −5,000 on Oct 23; `zhrollback` Oct 25 = Zartog + hung like hernandez card counts → min(now, Oct 23 2:21 PM snapshot) after the High-Low exploit pack spree, no refund, +75,000 each); `zcelestial` = Zartog loses the Celestial aura, no refund; `zhfarm` = both of them Press + Silo −2 levels, no refund). Pack openings aren't logged per card, so exact "bought after X" removals aren't possible.
 - Session counter (Oct 23): `sessLn(game, net, inPlay)` fills the `sessChip(game)` pill next to each game's balance (3D tables: `.sessstg` at the top); counts settled results only.
 All use the `FIREBASE_SERVICE_ACCOUNT` repo secret.
 
