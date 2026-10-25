@@ -75,6 +75,12 @@ elif fix == "zhrollback":
             return sum(cur.values()), sum(new.values())
         print(pid, "cards before/after", run(fs.transaction()))
         fs.collection("bank").document("gift75k_" + pid).set({"from": "house", "to": pid, "amt": 75000, "kind": "gift", "note": "House gift", "at": now, "wv": "fix." + str(now)})
+elif fix == "ownhltry":
+    # Oct 25 5:05 PM: the High-Low tournament card covered the screen for the owner; give back the try it used.
+    for d in fs.collection("bank").where("kind", "==", "tourney").stream():
+        x = d.to_dict() or {}
+        if x.get("from") == "u_IfmXeDmDg1B3W4naCzVbSA" and x.get("g") == "hl" and x.get("day") == "2026-10-25":
+            d.reference.update({"tries": max(0, int(x.get("tries") or 0) - 1), "wv": "fix." + str(int(time.time()))}); print("tries", x.get("tries"), "-> -1")
 elif fix == "zhflap0":
     # Oct 25 4:59 PM (owner): Zartog + hung like hernandez "Earned today" on the Cheese Farm back to 0 (their Silo can fill again today). Balances untouched.
     now = int(time.time() * 1000)
