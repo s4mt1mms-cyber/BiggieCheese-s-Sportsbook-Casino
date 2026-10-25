@@ -6598,6 +6598,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:130,d:"Oct 25",t:[["🏆","Tournaments need 2 or more players: if you're the only one who entered, you get your entry back"]]},
  {v:129,d:"Oct 25",t:[["🏆","Tournament entry is now 3,000 BB"]]},
  {v:128,d:"Oct 25",t:[["🏆","New daily tournaments on Flappy and High-Low: 2,500 BB to enter, 5 tries, best score or streak takes the whole pot. Resets at midnight ET"],["🎡","Daily Spin: after your free spin you can spin again for 4,500 BB"],["🔥","Daddy Christian: the ×1.25 cash-out now starts at 7 right in a row"]]},
  {v:127,d:"Oct 25",t:[["🔨","Card crafting animation is faster, and the hammer is now a rune-carved storm hammer with lightning"]]},
@@ -7305,9 +7306,10 @@ async function tourScore(g,v,day){const e=(S.bank||[]).find(t=>t.id===tourId(g,d
 async function tourSettle(){if(!S.ready||!S.ld||!S.ld.bank||tourSettle.busy)return;tourSettle.busy=true;const today=divDay();
   try{const days={};for(const t of S.bank||[])if(t.kind==="tourney"&&t.day&&t.day<today&&TOUR[t.g])days[t.g+"|"+t.day]=1;
     for(const k of Object.keys(days)){const[g,day]=k.split("|"),pid="tourpay_"+g+"_"+day;if((S.bank||[]).some(t=>t.id===pid))continue;const E=tourEntries(g,day);if(!E.length)continue;const w=tourRank(E)[0];
-      const ref=db.doc("bank/"+pid);if((await ref.get()).exists)continue;await ref.set({kind:"tourpay",from:"house",to:w.from,amt:tourPot(g,day),g,day,n:E.length,best:Number(w.best)||0,at:Date.now(),note:`${TOUR[g].n} tournament win · ${day}`})}
+      const ref=db.doc("bank/"+pid);if((await ref.get()).exists)continue;await ref.set({kind:"tourpay",from:"house",to:w.from,amt:E.length<2?tourPaid(g,day):tourPot(g,day),...(E.length<2?{refund:true}:{}),g,day,n:E.length,best:Number(w.best)||0,at:Date.now(),note:E.length<2?`${TOUR[g].n} tournament refund (only player) · ${day}`:`${TOUR[g].n} tournament win · ${day}`})}
     /* my own wins: popup + chat once */
     const q=S.prefs[S.me]||{},seen=q.tourWon||{};for(const t of S.bank||[])if(t.kind==="tourpay"&&t.to===S.me&&!seen[t.id]){await db.doc("prefs/"+S.me).update({tourWon:{[t.id]:1}});q.tourWon={...(q.tourWon||{}),[t.id]:1};
+      if(t.refund){toast(`Nobody else entered the ${TOUR[t.g]?TOUR[t.g].n:""} tournament, so your ${(Number(t.amt)||0).toLocaleString()} BB came back.`);continue}
       try{db.collection("chat").add({type:"bet",kind:"bank",uid:S.me,poster:S.me,at:Date.now(),text:`🏆 ${nm(S.me)} won the ${TOUR[t.g]?TOUR[t.g].n:""} tournament (${t.day}) with a ${TOUR[t.g]?TOUR[t.g].what:"score"} of ${t.best} · +${(Number(t.amt)||0).toLocaleString()} BB`})}catch(_){}
       toast(`🏆 You won the ${TOUR[t.g]?TOUR[t.g].n:""} tournament! +${(Number(t.amt)||0).toLocaleString()} BB`)}}
   catch(_){}finally{tourSettle.busy=false}}
@@ -7319,10 +7321,10 @@ function tourHtml(g){const T=TOUR[g],day=divDay(),E=tourRank(tourEntries(g,day))
   else{const h=S.thl;if(h&&h.on)act=`<div class="thl"><div class="thlc">${hlCard(h.card)}</div><div class="thls"><span class="stlbl">Streak</span><b class="num">${h.n}</b></div><div class="hlbtns"><button type="button" class="btn hlg" data-tour="hl:hi" ${h.card.r>=13||h.busy?"disabled":""}>▲ Higher</button><button type="button" class="btn hlg" data-tour="hl:lo" ${h.card.r<=1||h.busy?"disabled":""}>▼ Lower</button></div></div>`;
     else act=(h&&h.last!=null?`<p class="small">Last try: streak <b class="num">${h.last}</b></p>`:"")+(left>0?`<button type="button" class="btn" data-tour="hlgo">Start a try (${left} left)</button>`:`<span class="small muted">All ${TOUR_TRIES} tries used. Good luck!</span>`)}
   return `<section class="card tourc"><h3>🏆 Daily ${T.n} Tournament</h3><p class="small muted">${T.fee.toLocaleString()} BB to enter · ${TOUR_TRIES} tries · highest ${T.what} takes the whole pot${g==="hl"?" (no bet, ties lose)":" (tournament runs pay no farm BB)"}. Ends in <b>${bkCd(divLeft())}</b>.</p>
-    <div class="tourpot"><span><span class="stlbl">Winner gets</span> <b class="num pos">${pot.toLocaleString()} BB</b></span><span class="small muted">${E.length} player${E.length===1?"":"s"}</span>${me?`<span class="small">Your best <b class="num">${Number(me.best)||0}</b></span>`:""}</div>
+    <div class="tourpot"><span><span class="stlbl">Winner gets</span> <b class="num pos">${E.length<2?"—":pot.toLocaleString()+" BB"}</b></span><span class="small muted">${E.length} player${E.length===1?"":"s"}${E.length<2?" · needs 2+ (a solo entry gets its BB back)":""}</span>${me?`<span class="small">Your best <b class="num">${Number(me.best)||0}</b></span>`:""}</div>
     <div class="touract">${act}</div>
     ${E.length?`<div class="tourlb">${E.slice(0,10).map((t,i)=>`<div class="tourrow${t.from===S.me?" me":""}"><span class="num">${i+1}</span>${pic(t.from)}<span class="tn">${esc(nm(t.from))}</span><b class="num">${Number(t.best)||0}</b><small class="muted">${Math.max(0,TOUR_TRIES-(Number(t.tries)||0))} left</small></div>`).join("")}</div>`:""}
-    ${yd?`<p class="small muted">Last winner: ${esc(nm(yd.to))} · ${T.what} ${yd.best} · +${(Number(yd.amt)||0).toLocaleString()} BB (${esc(yd.day)})</p>`:""}</section>`}
+    ${yd&&!yd.refund?`<p class="small muted">Last winner: ${esc(nm(yd.to))} · ${T.what} ${yd.best} · +${(Number(yd.amt)||0).toLocaleString()} BB (${esc(yd.day)})</p>`:""}</section>`}
 async function tourHl(g){const h=S.thl;if(!h||!h.on||h.busy)return;const nx=hlDraw(),ok=g==="hi"?nx.r>h.card.r:nx.r<h.card.r;h.busy=true;
   if(ok){h.n++;h.card=nx;h.busy=false;await tourScore("hl",h.n,h.day);try{haptic()}catch(_){}}
   else{h.card=nx;h.on=false;h.last=h.n;h.busy=false;toast(`${HL_R[nx.r-1]}${HL_S[nx.s]} · streak over at ${h.n}`)}tourRef()}
