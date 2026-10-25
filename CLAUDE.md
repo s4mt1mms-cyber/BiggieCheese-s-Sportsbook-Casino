@@ -322,7 +322,7 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   left arm + staff static on the chest, right arm rigged.
 
 - **Oct 23 later (owner):** Jimmy (curse) `pw:.5` and pulled from League Moments + Fantasyland packs too (`packCat` adds `curseCards()`; also shown in those
-  collections; still 3 copies total); his tithes burn (`TI_BURN`: pull docs have `tos:[]`, `tiSettle` does nothing — balOf already takes floor(tiWin/10)).
+  collections; still 3 copies total); his tithes burn (`TI_BURN`: pull docs have `tos:[]`, `tiSettle` does nothing — balOf already takes floor(tiWin/10)). **Oct 25 (owner): undone** — `TI_BURN=false`, tithes split among the others again; owed amounts from the burn days are written off once per player (`prefs.tiBurnFix` + a `ti_<me>_<paid>` doc with `tos:[]`). The 5,000 Remove-curse fee is now a pull-style tithe doc (`note:"Curse removal"`) split among the others instead of `prefs.curseFee`.
   Dev fees removed (`PACK_FEES=[]`, `SHOP_FEE=0`). 5% of every player-to-player card sale burned from the seller (`mkFee`, sales with soldAt ≥ `MK_FEE_AT`, in `cardMoney`).
 
 - **Stats reset (Oct 23, 3:45 PM ET):** leaderboards/standings/"overall" lines start over without touching balances. Casino: `prefs.sb0` = stat values at the reset
