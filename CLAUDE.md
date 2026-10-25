@@ -137,7 +137,7 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
 - **Texas Hold'em** (`th*`): live open cash table, same bar scene, server-hosted. House rake (Oct 23): `thRake` (TH_PURE) takes `TH_RAKE` 5% of every pot that saw a flop, uncalled bets excluded; `H.rk` this hand, `H.rkT` game total (both engines; tests count it in chip conservation).
 - **Cards**: collections League Moments (`lm`), Multiverse (`mv`), Platinum Mysterio (`pm`, limited, ended Oct 23 2026).
   Rarities `CR` 0 Common … 6 Dragon, 7 Platinum, 8 Platinum Mysterio Legendary.
-  Mint limits `CR_LIM=[∞,1000,100,10,5,3,1,15,1]`. Packs: Common 5k, Uncommon 10k, Rare 25k, Super Rare 50k,
+  Mint limits `CR_LIM=[∞,1000,100,10,5,3,1,15,1]`. Since Oct 25 every Super Rare gets +`SR_EXTRA` 2 on top (in `cardsCat`; MV/LM 12, FL 9; not the curse). Packs: Common 5k, Uncommon 10k, Rare 25k, Super Rare 50k,
   Elite 100k, Grail 250k, Dragon 765,432 (odds in `pkPullTier/pkSlot/pkChance` — don't change).
   Owner's Oct 22 odds change: Elite/Grail weights ≥5 cut (≤10 → 5, >10 → −5; removed weight moved to Common): Grail pack Elite 16.1 / Grail 5,
   Dragon pack Elite 16 / Grail 5 (+ its slot-3 Elite 10 → 5, to Rare). Dragons and anything under 5% unchanged.
