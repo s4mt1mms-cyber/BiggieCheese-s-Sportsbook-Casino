@@ -300,7 +300,7 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
 - One-time per player (`dflRun`/`dflPatch`, `DFL_V`): balance ÷15 with a 10,000 minimum, stored as `prefs.rb15` (new − old, added in `ledger().balOf`)
   + `rbFrom/rbTo/dflAt`; Flappy levels reset (`fpPress/fpSilo` 0, `farmSpent` kept); rat hunt counter → `revMark` (1 hunt per `REV_N`=6 dealer 21s, leftover hunts kept).
   Own page runs it once bank/market/loans/adjust have loaded (`S.ld`, UI blocked by `#dflOv`); the admin's page also migrates offline players. Shown in the Bank statement.
-- Rich tax (`richTax`, `taxOf`, `TAX_BR`): at the 1 AM `divCheck`, marginal 5% 100–200k / 10% 200–500k / 15% 500k+, burned: `bank/tax_<me>_<day>` {kind:"tax", to:"house"}.
+- Rich tax (`richTax`, `taxOf`, `TAX_BR`): at the 1 AM `divCheck`, marginal 10% 100–200k / 20% 200–500k / 30% 500k+ (doubled Oct 25; was 5/10/15), burned: `bank/tax_<me>_<day>` {kind:"tax", to:"house"}.
 - Prices: packs (owner 13:03) Common 3k · Uncommon 7.5k · Rare 15k · SR 30k · Elite 75k · Grail 100k · Dragon 250k; Elite pack `coin:{0:3}` = its SR slot is a 50% chance (else Rare); `QS_VAL` ÷15 (Claire burn 35,000 since Oct 23), `CARD_DIV` [0,0,3,20,100,500,10000,25,0] (Joe Camel 700), emotes/skins ÷3 rounded up to 5k,
   `FP_*_COST` ×1.5. `pkHalf` (inside `pkSlot`): every chance above a slot's lowest rarity halved, removed chance → that lowest rarity.
   Set bonuses 1.25× each (full rarity set / own every copy), Super Rare–Grail only. No BJ streak bonus (`BJ_STREAK_BB=0`). Rat ×2 speed, 500 body / 1,000 head.

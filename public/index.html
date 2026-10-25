@@ -6424,7 +6424,7 @@ function divCalc(id){const q=S.prefs[id]||{},cards=q.cards||{};
   return {amt,n,byR,full,mono,bon,pk,mult,base,lvs,vt}}
 /* Rich tax (owner, Oct 23): once a day at the 12:01 AM reset, on your balance right after the dividend, marginal:
    5% of the part between 100k and 200k, 10% of 200k–500k, 15% above 500k. The BB is burned (paid to "house"). One bank doc per player per day. */
-const TAX_BR=[[100000,200000,.05],[200000,500000,.10],[500000,Infinity,.15]];
+const TAX_BR=[[100000,200000,.10],[200000,500000,.20],[500000,Infinity,.30]];/* owner Oct 25: rates ×2 (were 5/10/15%) */
 const taxOf=b=>Math.floor(TAX_BR.reduce((t,[lo,hi,r])=>t+Math.max(0,Math.min(b,hi)-lo)*r,0));
 async function richTax(day){const id="tax_"+S.me+"_"+day,ref=db.doc("bank/"+id);if((S.bank||[]).some(t=>t.id===id))return;const bal=Math.floor(ledger().balOf(S.me)),amt=taxOf(bal);if(!(amt>0))return;
   const ex=await ref.get();if(ex.exists)return;const doc={from:S.me,to:"house",amt,kind:"tax",note:`${day} · on ${bal.toLocaleString()} BB`,day,bal,at:Date.now()};await ref.set(doc);S.bank=S.bank||[];if(!S.bank.some(t=>t.id===id))S.bank.push({id,...doc});renderSoon()}
@@ -6567,6 +6567,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:124,d:"Oct 25",t:[["🏛️","Rich tax doubled: 10% of what you hold between 100k and 200k, 20% from 200k to 500k, 30% above 500k (charged at the 12:01 AM reset)"]]},
  {v:123,d:"Oct 25",t:[["⚡","Vector's Flappy boost is now 5× per pipe"],["🧀","A boosted run pays at most your full Silo, and fills your Silo by half of what it paid"]]},
  {v:122,d:"Oct 25",t:[["🔥","Daddy Christian: the ×1.25 cash-out now kicks in at 6 right in a row"]]},
  {v:121,d:"Oct 25",t:[["🔥","Daddy Christian: a High-Low streak of 8+ right now pays your whole cash-out ×1.25"]]},
