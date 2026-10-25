@@ -1,6 +1,7 @@
 """Owner-requested one-off data fixes (manual workflow "Admin fix"). Each fix is idempotent: it records itself in config/fixes.
   kjflap: King Julian's Cheese Farm usage today -5,000 (owner, Oct 23).
   gift20k: 20,000 BB from the House to every player with a team (owner, Oct 24).
+  zcelestial: Chancellor Zartog loses the Celestial aura, no refund (owner, Oct 25).
   zhrollback: Zartog + hung like hernandez cards back to the Oct 23 snapshot (min), +75,000 each (owner, Oct 25).
   kjloan: 1M House loan, 0%, due 5 minutes after King Julian's next visit (owner, Oct 24).
   kjspin: one free Daily Spin for King Julian (owner, Oct 24)."""
@@ -74,6 +75,14 @@ elif fix == "zhrollback":
             return sum(cur.values()), sum(new.values())
         print(pid, "cards before/after", run(fs.transaction()))
         fs.collection("bank").document("gift75k_" + pid).set({"from": "house", "to": pid, "amt": 75000, "kind": "gift", "note": "House gift", "at": now, "wv": "fix." + str(now)})
+elif fix == "zcelestial":
+    # Oct 25 (owner): Chancellor Zartog loses the Celestial aura (bought with High-Low exploit money). No refund; unequipped if worn.
+    ref = fs.collection("prefs").document("u_jzH6I8emDBcqWaXJhIX_HA")
+    x = ref.get().to_dict() or {}
+    up = {"auras.celestial": firestore.DELETE_FIELD, "wv": "fix." + str(int(time.time()))}
+    if x.get("aura") == "celestial": up["aura"] = None
+    ref.update(up)
+    print("auras now", sorted(((ref.get().to_dict() or {}).get("auras") or {}).keys()), "equipped", (ref.get().to_dict() or {}).get("aura"))
 else:
     print("unknown fix", fix); sys.exit(1)
 done.set({fix: int(time.time() * 1000)}, merge=True)
