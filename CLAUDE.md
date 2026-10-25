@@ -337,7 +337,7 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   Craftable = Multiverse/Fantasyland, Common–Elite, not the curse (`craftable`); `LV_MAX=[7,5,3,2,2]`; dividends `DIV_LV` (Joe Camel 700/1,200 via `DIV_LV_JOE`);
   `divCalc`: per card only the top-level copy pays its level, the rest pay LV 1; full rarity set (any level) 1.25× for SR–Grail; the "own every copy" bonus is gone.
   Every craft needs copies of the same card (`cfAny` false, owner Oct 23). Card Crafting tab (`viewCraft`, state `S.cf`, recipes `CRAFT`, pickers `cfPick`, `cfAuto`): `craftDo` re-reads prefs, then ONE prefs update (cards, `craftSpent`
-  += fee (burned, in balOf), `craftLog.<at>` → Bank statement line). Animation `cfAnim` (+ `cfSfx`; `pkCalm()` = short version). Crafting to MAX posts in chat.
+  += fee (burned, in balOf), `craftLog.<at>` → Bank statement line). Animation `cfAnim` (35% faster since Oct 25; the hammer is an original inline SVG Norse storm hammer with `.cfbolt` lightning, not Marvel's design) (+ `cfSfx`; `pkCalm()` = short version). Crafting to MAX posts in chat.
   Level badge `lvBadge` in `cardHtml` (MAX for non-craftable). Wants/collateral may carry `lv` (`mkFits`; "Any level" when omitted).
 - **Craft to max (Oct 25):** first Crafting screen lists `cfMaxList()`; `cfMaxPlan(id,cards,bal)` = fewest crafts taking ONE copy to the highest level the copies (and balance; else `short`) allow, using higher-level copies first; `craftMax` re-reads prefs and does it in ONE prefs update (one `craftLog` entry per level step).
 - **Level abilities (`AB2`, keyed `set:nmKey(name)`; `ab2(k,id)` = the player's best value = their top-level copy):** Common–Super Rare are OFF at LV 1 and use
