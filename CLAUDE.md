@@ -197,6 +197,7 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   `bers` **Berserker** (Elite): AUTO KILL button in the rat hunt (`revengeStart`, `#revAuto`), 3/day (`BERS_DAY`, `prefs.bersDay/bersUsed`, divDay), a normal 1,000 kill.
   Placeholders (`img:false`): supply-drop, rocktopus, forbidden-archive, average-cowboys-fan, minion-commander, legendary-crew, another-day (owner's art not usable:
   copyrighted characters / slur title). Faces of bystanders blurred in honors-class-clown, autism-attack; mirror reflection in squeaky-clean.
+- **Multi-pack (Oct 25):** shop "Packs at a time" 1/3/5/10 (`S.pk.qty`, `[data-pkqty]`); `pkBuy` loops `pkBuy1` (the old single purchase, unchanged money path) and awaits each `pkShowOpen` promise (Done button reads "Next pack (k of n)"); balance/sold-out re-checked before each; free packs always 1. Done now stays on the shop.
 - **Market**: list for price and/or trade wants (specific card or "rarity or better"), private listings (`only`).
 - **Offers** (`of*`): BB and/or cards on any open listing. Offered cards leave the offerer's prefs while pending
   (`esc`) and come back on decline/cancel/expiry (48 h)/failure (`returned`, offerer's page). Accept = status race on the
