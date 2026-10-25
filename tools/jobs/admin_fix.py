@@ -1,6 +1,7 @@
 """Owner-requested one-off data fixes (manual workflow "Admin fix"). Each fix is idempotent: it records itself in config/fixes.
   kjflap: King Julian's Cheese Farm usage today -5,000 (owner, Oct 23).
   gift20k: 20,000 BB from the House to every player with a team (owner, Oct 24).
+  zhrollback: Zartog + hung like hernandez cards back to the Oct 23 snapshot (min), +75,000 each (owner, Oct 25).
   kjloan: 1M House loan, 0%, due 5 minutes after King Julian's next visit (owner, Oct 24).
   kjspin: one free Daily Spin for King Julian (owner, Oct 24)."""
 import sys, time
@@ -54,6 +55,25 @@ elif fix == "kjloan":
     ref = fs.collection("prefs").document("u_8M5oXNoWRCzPXZOwJ2g3nA")
     ref.update({"giftLoan": {"id": int(time.time() * 1000), "P": 1000000, "mins": 5, "note": "House loan"}, "wv": "fix." + str(int(time.time()))})
     print("giftLoan", (ref.get().to_dict() or {}).get("giftLoan"))
+elif fix == "zhrollback":
+    # Oct 25 (owner): Chancellor Zartog + hung like hernandez bought up packs with High-Low exploit money. Their collections go back to the
+    # Oct 23 2:21 PM snapshot: each card count becomes min(now, snapshot) (gains removed, nothing they traded away comes back);
+    # the removed copies simply return to the pack supply. No refund. Then each gets 75,000 BB from the House (owner).
+    import base64, json, zlib
+    SNAP = json.loads(zlib.decompress(base64.b64decode("eNqNVt+PnDgM/l943kg4hF/zNlVPaitVfTmp1b1UATKQXSAcMDM7V+3/fiZsIJ7bvbuX0QQ7tmN//uxfwfnn41+fks+Z6j5+KP/8Ln98aT7/+PnpGBx+Bd2FyXFmWXCIH4K2Y/WobgwgOMCDk0WxFb6eRGJlq6rq73TjNDhkD8HQscb0dXBIrORkzMxK+aR8VdRMt0PCg0O0B8DRCbfCSlasMFVwELs0Ii7TxLpEYdGeFQNryAWLoUNoj50c28KMhj2edakK82w9bA6Fb3Jx78Um3KlslJpNw4rRTL6bSGxu7HV8DHjGIfWNJ5mfTsiIIfBlfHvnqC6qrxUzJzY3iik5zWpkxbnvb/YC5rvWtbRZQvVF53Tuy1mb3n0bZKlPumS9GefmqqYZjU5qvGw1KeWJ1XIp2vrYU6sH/DH4M+pK3myc6KhSRXFzl+pRDk0nn5/1ctFPaEphwkN3pdNtK0fWmd4aFXtiInqFZE1kJMUp+BUSi/E1i5XGp5vRpuDayFb5HrJFL92xEpO6WBg5HIMD1RoLgUec+aoidzWrjZwx76p1ysO5YOUor+2GZswdBij7ik1LafZap4sHYRM8FENwyNe/ep5mM/iKsZU59CQr0twxtR2HF+MwLPVayq0i/hMg8p+w9PBuJYr83Ma5s1npzoGtVbU29vvOA5mr3nAeh1bRlEHuuMACm7QAX+q+qj4ahTjsXjO42c6cqVkipkvZstamsDwXkkSeucgbtZyxXU66l31JiSfb/E3NqJ5JnGKTDUoNCCM9EQ85SbjgG/AshHIfbZy+OfULl1L2I7J4z4cVgpfom41wD8C21e4y2mpVmc6PJc0JLQo/slhsbxoXoi4UcstTr+tm9ssUhaQDgUyMiO/tXdmrWMe5bFysV90jY01smrGgKDPITrqlDyPdmBIQpiEBDOmBJHTdInWlSFPlW3IqfUH3SA0S6YewjgBSl5hgP3b57My8AGFtmfk2LS+YdO8oz7IJAbwgJRWR7xJilzt7L/ILGoekNIkrG9LIMCF/yH7JobmSO9z5KhvZDUj6U4PcXWCSK6cHlndRZMs7uWm7jszQt5YkZPgnJPMEfK9TbyOY3OvaG6NmUoJp2PumlMMsdc8uGNqMj/Rxilri5SH4/dvlKH97+nK8qA/ieiz++BhfvldfT0/1kb/uMB5x7Nez+y3mLT76J1OI+13nLaJYFh1+v9x4PEHYVpBTQk48JfcIiBY+4WQPAcIgdGMBwjycLEERZRdCLv9jxQCfYYAyxzvEcb9U8HeWCk5GPCcTHsiE52SO8/fGfUR4AgiHcMIaZPaDzxrRf5AGhPf7AJB9AO73AU74Bt5ocEcT8E67A2l3oCsA2QD+rZWBNC9pT+8abRW4a0kg85aTqQ4vL38D6RGj4Q==")))
+    now = int(time.time() * 1000)
+    for pid, snap in SNAP.items():
+        ref = fs.collection("prefs").document(pid)
+        @firestore.transactional
+        def run(tx):
+            x = ref.get(transaction=tx).to_dict() or {}
+            cur = {k: int(v) for k, v in (x.get("cards") or {}).items() if isinstance(v, (int, float))}
+            new = {k: min(v, int(snap.get(k, 0))) for k, v in cur.items()}
+            new = {k: v for k, v in new.items() if v > 0}
+            tx.update(ref, {"cards": new, "liveT": now, "wv": "fix." + str(now), "zhRollback": now})
+            return sum(cur.values()), sum(new.values())
+        print(pid, "cards before/after", run(fs.transaction()))
+        fs.collection("bank").document("gift75k_" + pid).set({"from": "house", "to": pid, "amt": 75000, "kind": "gift", "note": "House gift", "at": now, "wv": "fix." + str(now)})
 else:
     print("unknown fix", fix); sys.exit(1)
 done.set({fix: int(time.time() * 1000)}, merge=True)
