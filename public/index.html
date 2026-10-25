@@ -1736,7 +1736,7 @@ html.lite .aw.fx.au-zap::before{filter:url(#auZap) drop-shadow(0 0 calc(var(--s)
 .au-celestial::before{inset:calc(var(--s)*-.1);z-index:3;background:conic-gradient(from 0deg,#fff6c8,#ffcf2f,#a8740a,#ffe680,#fff,#ffcf2f,#a8740a,#ffeaa0,#fff6c8);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - var(--s)*.065 - 1px),#000 calc(100% - var(--s)*.065));mask:radial-gradient(farthest-side,transparent calc(100% - var(--s)*.065 - 1px),#000 calc(100% - var(--s)*.065));animation:auSpin 6s linear infinite}
 .au-celestial::after{inset:calc(var(--s)*-.42);z-index:0;background:repeating-conic-gradient(from 0deg,rgba(255,232,150,.42) 0 3deg,transparent 3deg 14deg);-webkit-mask:radial-gradient(closest-side,transparent 52%,#000 60%,transparent 100%);mask:radial-gradient(closest-side,transparent 52%,#000 60%,transparent 100%);animation:auSpinR 40s linear infinite}
 .aw:not(.fx).au-celestial::after{inset:calc(var(--s)*-.24);z-index:4;background:none;-webkit-mask:none;mask:none;animation:auSpin 3.2s linear infinite}
-.aw:not(.fx).au-celestial::after{background:radial-gradient(circle at 50% calc(var(--s)*.03),#fff 0 calc(var(--s)*.035),#ffe27a calc(var(--s)*.05),transparent calc(var(--s)*.1))}
+.aw:not(.fx).au-celestial::after{background:radial-gradient(circle at 50% calc(var(--s)*.03),#fff 0 calc(var(--s)*.035),#ffe27a calc(var(--s)*.05),transparent calc(var(--s)*.1))}.aw.md.au-celestial::after{display:none}.aw.md.au-celestial .sq{position:absolute;inset:calc(var(--s)*-.08);z-index:2;pointer-events:none;border:calc(var(--s)*.025 + .6px) solid #ffe27a;box-shadow:0 0 calc(var(--s)*.12) rgba(255,214,90,.85),inset 0 0 calc(var(--s)*.06) rgba(255,230,140,.7);animation:auSpin 7s linear infinite}.aw.md.au-celestial .sq.r{inset:calc(var(--s)*-.05);border-color:#fff3c0;animation:auSpinR 10s linear infinite;opacity:.9}@media (prefers-reduced-motion:reduce){.aw.md.au-celestial .sq{animation:none}.aw.md.au-celestial .sq.r{transform:rotate(45deg)}}
 .aw.lt.au-celestial::after{display:none}
 .au-celestial .co{inset:calc(var(--s)*var(--r));z-index:4;animation:auSpin var(--t) linear infinite;animation-delay:var(--d)}
 .au-celestial .co.r{animation-name:auSpinR}
@@ -2356,7 +2356,7 @@ const AU_TIERS=[["Mythic",1000000],["Legendary",250000],["Animated",150000],["So
 const auCardHas=(id,a)=>a==="dragon"?hasDragon(id):a==="swamp"?hasAb("shrex",id):false;
 const auOwns=(id,a)=>AURA_BY[a]&&AURA_BY[a].card?auCardHas(id,a):!!((((S.prefs||{})[id]||{}).auras||{})[a]);
 const auraOf=id=>{const a=(((S.prefs||{})[id])||{}).aura;return a&&AURA_BY[a]&&auOwns(id,a)?a:""};
-function auExtras(a,lvl){if(lvl!=="fx")return"";
+function auExtras(a,lvl){if(lvl==="md"&&a==="celestial")return `<i class="sq"></i><i class="sq r"></i>`;/* owner Oct 25: the spinning gold squares show on normal-size pictures too */if(lvl!=="fx")return"";
   if(a==="sparkles")return Array.from({length:7},(_,i)=>`<i class="sp" style="--a:${i*360/7+15}deg;--d:${((i*0.37)%1.8).toFixed(2)}s"></i>`).join("");
   if(a==="hearts")return Array.from({length:6},(_,i)=>{const g=i*60+30;return `<i class="ht" style="--a:${g}deg;--d:${(i*0.47).toFixed(2)}s;--dx:${(Math.cos(g*Math.PI/180)*.16).toFixed(3)}"></i>`}).join("");
   if(a==="zap")return `<i class="za za1"></i><i class="za za2"></i><i class="za za3"></i>`;
@@ -3869,8 +3869,10 @@ const hlP=(r,g)=>(g==="hi"?13-r:r-1)/13;
 const hlMult=(r,g,e)=>{const p=hlP(r,g);return p>0?Math.floor((e||HL_EDGE)/p*100)/100:0};
 /* Daddy Christian (abil "hilo"): once you have 4 right in a row, every guess after that is priced with a 2% edge for you */
 const HL_CHR_AFTER=6;/* owner, Oct 23: after 6 right in a row, every guess pays double the normal multiplier (was: 2% edge after 4) */
-const hlChr=st=>st.run&&(st.n||0)>=HL_CHR_AFTER&&hasAb("hilo");
-const hlMultX=(st,g)=>{const m=hlMult(st.card.r,g);return hlChr(st)?Math.floor(m*2*100)/100:m};
+/* owner, Oct 25: the per-guess doubling compounded (Zartog +20M overnight). Now: a streak of more than 6 right (7+) doubles the CASH-OUT once. */
+const hlChr=st=>st.run&&(st.n||0)>HL_CHR_AFTER&&hasAb("hilo");
+const hlMultX=(st,g)=>hlMult(st.card.r,g);
+const hlPayNow=st=>Math.floor(st.stake*st.mult)*(hlChr(st)?2:1);
 const hlDraw=()=>{const u=new Uint32Array(2);crypto.getRandomValues(u);return{r:1+u[0]%13,s:u[1]%4}};
 const hlCard=(c,cls)=>`<div class="hlcard ${cls||""} ${c.s===1||c.s===2?"red":""}"><span>${HL_R[c.r-1]}</span><i>${HL_S[c.s]}</i><span class="br">${HL_R[c.r-1]}</span></div>`;
 function hlSt(){if(!S.hl){const p=S.prefs[S.me]||{};S.hl={stake:0,mult:1,n:0,card:(p.hlCard)||hlDraw(),run:false,busy:false,hist:[]}}return S.hl}
@@ -3887,7 +3889,7 @@ function hlRefresh(){const st=hlSt(),p=S.prefs[S.me]||{},bal=Math.floor(ledger()
   const mh=hlMultX(st,"hi"),ml=hlMultX(st,"lo");set("#hlHi",mh?mh.toFixed(2)+"×":"—");set("#hlLo",ml?ml.toFixed(2)+"×":"—");
   document.querySelectorAll("[data-hl]").forEach(b=>{b.disabled=st.busy||!hlMult(st.card.r,b.dataset.hl)||(!st.run&&!st.stake)});
   set("#hlStake",st.stake.toLocaleString()+" BB");set("#hlBal",(bal-(st.run?0:st.stake)).toLocaleString()+" BB");
-  const cash=$("#hlCash");if(cash){cash.disabled=!st.run||st.busy;cash.textContent=st.run?`Cash out ${Math.floor(st.stake*st.mult).toLocaleString()}`:"Cash out"}
+  const cash=$("#hlCash");if(cash){cash.disabled=!st.run||st.busy;cash.textContent=st.run?`Cash out ${hlPayNow(st).toLocaleString()}${hlChr(st)?" 🔥×2":""}`:"Cash out"}
   document.querySelectorAll('[data-hlact="clear"],[data-hlact="skip"]').forEach(b=>b.disabled=st.run||st.busy);
   const ch=$("#hlChips");if(ch){const k=[25,100,500,1000,5000,25000].filter(v=>v<=Math.max(25,bal)).join();if(ch.dataset.k!==k){ch.dataset.k=k;ch.innerHTML=k.split(",").map(Number).map(v=>`<button type="button" class="chip" data-hlchip="${v}">+${v>=1000?v/1000+"k":v}</button>`).join("")+`<button type="button" class="chip" data-hlchip="all">ALL IN</button>`}}
   set("#hlHist",st.hist.slice(0,12).map(x=>`<span class="${x.w?"pos":"neg"}">${HL_R[x.r-1]}</span>`).join(""));
@@ -3905,11 +3907,11 @@ async function hlGuess(g){const st=hlSt();if(st.busy)return;const m=hlMultX(st,g
   const box=$("#hlCard");if(box)box.innerHTML=hlCard(old,"out")+hlCard(nx,"in");
   await new Promise(r=>setTimeout(r,550));st.busy=false;st.card=nx;
   const won=g==="hi"?nx.r>old.r:nx.r<old.r;st.hist.unshift({r:nx.r,w:won});const q=S.prefs[S.me]||{};
-  if(won){st.mult=Math.floor(st.mult*m*100)/100;st.n=(st.n||0)+1;haptic&&haptic();hlMsg(`<span class="pos">${HL_R[nx.r-1]}! Riding ${Math.floor(st.stake*st.mult).toLocaleString()} BB.</span>${hlChr(st)?" 🔥 Daddy Christian doubles your multiplier.":""} Keep going or cash out.`,"win");hlSave({hlCard:nx})}
+  if(won){st.mult=Math.floor(st.mult*m*100)/100;st.n=(st.n||0)+1;haptic&&haptic();hlMsg(`<span class="pos">${HL_R[nx.r-1]}! Riding ${Math.floor(st.stake*st.mult).toLocaleString()} BB.</span>${hlChr(st)?` 🔥 Daddy Christian: cash out now for double (${hlPayNow(st).toLocaleString()} BB).`:""} Keep going or cash out.`,"win");hlSave({hlCard:nx})}
   else{const lost=st.stake;st.run=false;st.mult=1;st.n=0;hlMsg(`<span class="neg">${HL_R[nx.r-1]}${nx.r===old.r?", same rank, house wins":""}. Lost <b class="num">−${lost.toLocaleString()} BB</b>.</span>`,"lose");
     {const back=abWin(-lost,0,st.allin);hlSave({hlCard:nx,hlRounds:(Number(q.hlRounds)||0)+1,...(back>0?{hlNet:(Number(q.hlNet)||0)+back}:{})});if(back>0)setTimeout(()=>toast(`💸 Dwillie's Revenge: +${back.toLocaleString()} BB back`),900)}if(st.stake>Math.floor(ledger().balOf(S.me)))st.stake=0}
   hlRefresh()}
-async function hlCash(){const st=hlSt();if(!st.run||st.busy)return;const pay0=Math.floor(st.stake*st.mult),pay=pay0+abWin(pay0-st.stake),p=S.prefs[S.me]||{};st.run=false;st.mult=1;st.n=0;
+async function hlCash(){const st=hlSt();if(!st.run||st.busy)return;const pay0=hlPayNow(st),pay=pay0+abWin(pay0-st.stake),p=S.prefs[S.me]||{};st.run=false;st.mult=1;st.n=0;
   hlMsg(`<span class="pos">Cashed out <b class="num">+${(pay-st.stake).toLocaleString()} BB</b> profit.</span>`,"win");
   await hlSave(tiAdd({hlNet:(Number(p.hlNet)||0)+pay,hlRounds:(Number(p.hlRounds)||0)+1},pay-st.stake));if(st.stake>Math.floor(ledger().balOf(S.me)))st.stake=0;hlRefresh()}
 document.addEventListener("click",e=>{const t=e.target.closest("[data-hl],[data-hlchip],[data-hlact]");if(!t||S.tab!=="hilo")return;const st=hlSt();
@@ -5558,7 +5560,7 @@ const CARD_ABIL={
   hof:{n:"House Money",ic:"🏦",t:"While you hold it, borrow 10,000 BB from the House in the Bank for 1 day at 5%: pay back 10,500 BB after 24 hours (taken automatically on the due time, whatever you have if you're short). One loan at a time. The loan stays yours to repay even if you sell the card."},
   slop:{n:"Royal Respin",ic:"🎡",t:"2 roulette respins a day. After a spin that loses you money, tap Respin: that spin is cancelled and the wheel spins again with the exact same bets. The new result counts, win or lose. Resets at 12:01 AM ET. Extra copies don't stack."},
   shrex:{n:"Swamp Blackjack",ic:"🟢",t:"Every blackjack you're dealt pays 3× your bet (instead of 3 to 2) while you hold it, and your profile picture gets a green swamp glow. Extra copies don't stack."},
-  hilo:{n:"Hot Streak",ic:"🔥",t:"High-Low: once you have 6 right in a row, every guess after that pays double the normal multiplier. Cash out any time. Extra copies don't stack."},
+  hilo:{n:"Hot Streak",ic:"🔥",t:"High-Low: get more than 6 right in a row (7+) and your cash-out pays double. Cash out any time. Extra copies don't stack."},
   bers:{n:"Berserk Mode",ic:"🪓",t:"3 auto-kills a day in the Blackjack rat hunt (Revenge): tap AUTO KILL and the rat goes down, no aiming needed (a normal kill, 500 BB). Resets at 12:01 AM ET. Extra copies don't stack."},
   social:{n:"Social Credit",ic:"📣",t:"Whoever pulls this card from a pack gets announced in league chat: +10 million social credit score! No money involved."}};
 const mvAddCards=()=>MV_ADD.map(([k,r,name,o])=>{o=o||{};return{id:"mv-"+k,r,name,sub:"Multiverse",desc:o.desc||(o.img===false?"Art coming soon. Part of the Multiverse collection.":"Part of the Multiverse collection."),full:true,code:true,img:o.img===false?null:`/cards/mv/${k}.webp?v=${MV_IMGV}`,...(o.abil?{abil:o.abil}:{}),...(o.lim?{lim:o.lim}:{}),...(o.pw!=null?{pw:o.pw}:{}),...(o.div!=null?{div:o.div}:{})}});
@@ -6565,6 +6567,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:120,d:"Oct 25",t:[["🔥","Daddy Christian changed: a High-Low streak of 7+ right now doubles your cash-out once (it no longer doubles every guess)"],["✨","The Celestial aura shows its spinning gold squares everywhere now"]]},
  {v:119,d:"Oct 25",t:[["⛪","Jimmy Scroggins pays everyone again: his tithes (10% on the pull and 10% of the holder's winnings) are split among the other players"],["🔥","Paying to remove his curse now splits the 5,000 BB among everyone else too"]]},
  {v:118,d:"Oct 24",t:[["🕛","Daily dividends and every daily reset now happen at 12:01 AM Eastern instead of 1 AM"]]},
  {v:117,d:"Oct 24",t:[["🙏","You can ask for a loan even with 0 BB. Your collateral is your cards"]]},
