@@ -5575,7 +5575,7 @@ const MV_DIV={"mv-art-65":750};/* owner, Oct 23: Debbie · Dynasty Grail pays 1.
 function mvMerge(list){const ids=new Set(list.map(c=>c.id));list=list.map(c=>MV_ABIL[c.id]&&!c.abil?{...c,abil:MV_ABIL[c.id]}:c).map(c=>MV_DIV[c.id]!=null&&c.div==null?{...c,div:MV_DIV[c.id]}:c).map(c=>c.id==="mv-art-72"?{...c,desc:"⚡ FLAPPY BOOST: own this card and you get a Use Boost button on Cheese Farm. Once a day, a run pays 5× per pipe, up to your full Silo (it fills your Silo by half of what it pays). Resets at 12:01 AM ET."}:c);return[...list,...mvAddCards().filter(c=>!ids.has(c.id))]}
 /* daily dividend for one copy: a card's own div overrides the rarity table; the curse card pays nothing */
 /* owner, Oct 24: every card dividend ×1.5 (DIV_X), then ×1.2 more at 2:30 PM = ×1.8 */
-const DIV_X=1.8,cardDiv0=c=>!c||c.abil==="curse"?0:(c.lv||1)>1&&craftable(c)?(c.div!=null?DIV_LV_JOE[1]:DIV_LV[c.r][(c.lv||1)-1]||0):c.div!=null?Number(c.div)||0:CARD_DIV[c.r],cardDiv=c=>cardDiv0(c)*DIV_X;
+const DIV_X=1.8,cardDiv0=c=>!c||c.abil==="curse"?0:(c.lv||1)>1&&craftable(c)?(c.div!=null?DIV_LV_JOE[1]:DIV_LV[c.r][(c.lv||1)-1]||0):c.div!=null?Number(c.div)||0:CARD_DIV[c.r],cardDiv=c=>{const b=cardDiv0(c);return c&&c.r===5&&b===CARD_DIV[5]?GRAIL_DIV:b*DIV_X},GRAIL_DIV=1000/* owner Oct 26: every Grail pays 1,000 BB/day (was 500×1.8 = 900); cards with their own dividend keep it */;
 /* short "per day" label for card faces: 25 → 25, 5000 → 5k, 100000 → 100k */
 const divShort=n=>n>=1e6?+(n/1e6).toFixed(2)+"M":n>=1e3?+(n/1e3).toFixed(n%1e3?1:0)+"k":String(n);
 /* what abilities a player holds right now: {abil: copies}; cached until the current task ends (like ledger()) */
@@ -5645,7 +5645,7 @@ const cardCount=(cid,id)=>Number(myCards(id)[cid])||0;
    like any other card. cardById("x@2") is the base card with {id:"x@2", base:"x", lv:2}. cardCount(key) = copies of that exact
    key; cardCountAll(id) = copies at every level (ownership, set completion, abilities). */
 const baseOf=id=>String(id).split("@")[0],lvOf=id=>{const m=/@(\d+)$/.exec(String(id));return m?Number(m[1]):1},lvK=(cid,lv)=>lv>1?baseOf(cid)+"@"+lv:baseOf(cid);
-const LV_MAX=[7,5,3,2,2],DIV_LV=[[0,1,3,8,20,50,120],[0,4,12,40,150],[3,30,250],[20,350],[100,600]],DIV_LV_JOE=[700,1200];
+const LV_MAX=[7,5,4,3,2]/* owner Oct 26: Rare max LV 4 (was 3), Super Rare max LV 3 (was 2) */,DIV_LV=[[0,1,3,8,20,50,120],[0,4,12,40,150],[3,30,250,1200],[20,350,1800],[100,600]],DIV_LV_JOE=[700,1200];
 const craftable=c=>!!c&&(cardSet(c.id)==="mv"||cardSet(c.id)==="fl")&&c.r<=4&&c.abil!=="curse";
 const isMaxLv=c=>!craftable(c)||(c.lv||1)>=LV_MAX[c.r];
 function cardCountAll(cid,id){cid=baseOf(cid);const cs=myCards(id);let n=0;for(const k in cs)if(k===cid||k.startsWith(cid+"@"))n+=Number(cs[k])||0;return n}
@@ -6139,16 +6139,16 @@ const AB2={
   "mv:dwilliesrevenge":{k:"dwillie",v:[.5,1,1.5,2,2.5,3,4],t:v=>`Going all in (your whole balance) at roulette, blackjack or High-Low and losing gives back ${pctTxt(v)}`},
   "mv:signatureshockwave":{k:"shock",v:[.01,.02,.04,.05,.1,.2,.3],t:v=>`All casino games and bets pay ${pctTxt(v)} more`},
   "mv:thelukehenrycurse":{k:"luke",v:[.1,2,3,4,5],t:v=>`Once a day, steal ${pctTxt(v)} of any player's current balance`},
-  "mv:thanosscock":{k:"thanos",v:[1,2.5,5],t:v=>`When the dealer gets a blackjack, get ${pctTxt(v)} of your bet back`},
-  "mv:cakedupjulian":{k:"caked",v:[1,2,4],t:v=>`Earn ${pctTxt(v)} of your bet when you push the dealer in blackjack`},
-  "mv:logandornfootbawrelic":{k:"logan",v:[1000,5000],t:v=>`A free ${v.toLocaleString()} BB bet every day on NFL, NBA or league games (you keep the winnings)`},
+  "mv:thanosscock":{k:"thanos",v:[1,2.5,5,7.5],t:v=>`When the dealer gets a blackjack, get ${pctTxt(v)} of your bet back`},
+  "mv:cakedupjulian":{k:"caked",v:[1,2,4,6],t:v=>`Earn ${pctTxt(v)} of your bet when you push the dealer in blackjack`},
+  "mv:logandornfootbawrelic":{k:"logan",v:[1000,5000,10000],t:v=>`A free ${v.toLocaleString()} BB bet every day on NFL, NBA or league games (you keep the winnings)`},
   "mv:shabbatshalom":{k:"shabbat",v:[1],t:()=>`Once a day, lend the House 25,000 BB and get back 26,250 BB, paid hourly over 24 hours`},
   "fl:buckethatbros":{k:"bucket",v:[.2,.75,2,3,3.5,4,4.5],t:v=>`${pctTxt(v)} bonus on your winnings at the live multiplayer tables`},
   "fl:shineemployee":{k:"shine",v:[500,1000,1750,2500,3500],t:v=>`A weekly ${v.toLocaleString()} BB paycheck (Fridays at 12:01 AM), but 35% of the time they miss your payment`},
   "fl:divaonthedancefloor":{k:"diva",v:[1,2,3,4,10],t:v=>`Skins and emotes are ${pctTxt(v)} off`},
-  "fl:therinkerrizzler":{k:"rinker",v:[2.5,5,10],t:v=>`Cheese Farm runs pay ${pctTxt(v)} more and your daily farm cap is ${pctTxt(v)} higher`},
-  "fl:darthslop":{k:"darth",v:[.5,1.25],t:v=>`Blackjack wins pay you an extra ${pctTxt(v)}`},
-  "fl:legendarycrew":{k:"crew",v:[1,2],t:v=>`Parlays pay out an extra ${pctTxt(v)}`},
+  "fl:therinkerrizzler":{k:"rinker",v:[2.5,5,10,15],t:v=>`Cheese Farm runs pay ${pctTxt(v)} more and your daily farm cap is ${pctTxt(v)} higher`},
+  "fl:darthslop":{k:"darth",v:[.5,1.25,2],t:v=>`Blackjack wins pay you an extra ${pctTxt(v)}`},
+  "fl:legendarycrew":{k:"crew",v:[1,2,3],t:v=>`Parlays pay out an extra ${pctTxt(v)}`},
   "fl:anotherdayinparadise":{k:"paradise",v:[1],t:()=>`Every 5 card packs you buy earns a free Common pack`},
   "fl:crnddparttwo":{k:"crndd",v:[1],t:()=>`Russian Roulette: a kill while 10 beers deep adds 25% of your buy-in; blacking out gives back half your buy-in`},
   "fl:biggiecheeserookie":{k:"rookie",v:[1],t:()=>`Shooting the rat in the blackjack rat hunt pays 2×`},
@@ -6169,7 +6169,7 @@ let _AB2=null;function ab2(k,id){id=id||S.me;if(!_AB2){_AB2={};queueMicrotask(()
    Recipe = [cards in the craft (target included), BB fee] per level step. Common/Uncommon ingredients: any card of the same rarity, level
    and collection; Rare and up: copies of the target at the same level. All used copies leave the collection (plain ids go back to the pack
    supply), one copy of the target one level up is added, and the fee is burned (prefs.craftSpent, in the ledger) — one prefs write. */
-const CRAFT=[[[3,50],[3,50],[2,50],[2,50],[2,100],[2,800]],[[3,150],[3,150],[2,500],[2,2800]],[[4,700],[3,6500]],[[3,12000]],[[3,12000]]];
+const CRAFT=[[[3,50],[3,50],[2,50],[2,50],[2,100],[2,800]],[[3,150],[3,150],[2,500],[2,2800]],[[4,700],[3,6500],[2,25000]],[[3,12000],[2,40000]],[[3,12000]]];
 const cfSt=()=>S.cf||(S.cf={r:null,L:null,slots:[],ask:0});
 const cfAny=r=>false;/* owner, Oct 23: every rarity needs copies of the same card (was: Common/Uncommon could mix cards) */
 const cfBal=()=>Math.floor(ledger().balOf(S.me));
@@ -6599,6 +6599,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:134,d:"Oct 26",t:[["🏆","Every Grail card now pays 1,000 BB a day"],["🔨","Card Crafting: Rares can now go to LV 4 and Super Rares to LV 3, with bigger dividends and stronger abilities"]]},
  {v:133,d:"Oct 25",t:[["💜","Every Super Rare card now has 2 more copies in the packs"]]},
  {v:132,d:"Oct 25",t:[["🏆","Tournament ties: with 3 or more players, a tie for first splits the pot evenly. With just 2 players, a tie gives both their entry back"]]},
  {v:131,d:"Oct 25",t:[["🏆","Tournaments are now 3 tries a day. Tries don't win or lose BB; the pot is paid at the midnight reset"]]},
