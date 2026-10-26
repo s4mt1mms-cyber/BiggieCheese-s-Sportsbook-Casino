@@ -5564,7 +5564,7 @@ let _FLC=null;const flCards=()=>_FLC||(_FLC=FL_ADD.map(([k,r,name,o])=>{o=o||{};
 /* ===== ChudBootyCheeks (cb, owner Oct 26): code-defined like FL_ADD. Art = public/cards/cb/<slug>.webp (620 px), ids "cb-<slug>" (never rename).
    Print runs CB_LIM (Fantasyland's + 1 Dragon); Super Rares get SR_EXTRA on top like every set. Poop-brown frame (.cbc), porta-potty logo (LOGO.cb).
    img:false = placeholder face. Faces blurred: Chad Baby (mv, the baby), Light Bearers + Tasting Flight (bystanders). */
-const CB_IMGV=1,CB_LIM=[Infinity,100,25,7,3,2,1];
+const CB_IMGV=2,CB_LIM=[Infinity,100,25,7,3,2,1];
 const CB_ADD=[
   ["united-we-sit",0,"United We Sit",{img:false}],["wraparound-warrior",0,"Wraparound Warrior"],["porch-rave",0,"Porch Rave"],["late-night-sip",0,"Late Night Sip"],
   ["safari-squad",0,"Safari Squad"],["rage-baiter",0,"Rage Baiter",{img:false}],["ball-knowledge-required",0,"Ball Knowledge Required",{img:false}],["campfire-coma",0,"Campfire Coma"],
@@ -5572,7 +5572,7 @@ const CB_ADD=[
   ["crumb-catcher",0,"Crumb Catcher"],["after-hours",0,"After Hours"],["suit-and-smoke",0,"Suit & Smoke"],["durag-diplomacy",0,"Durag Diplomacy"],
   ["suspicious-floof",0,"Suspicious Floof"],["light-bearers",0,"Light Bearers"],["good-boy-up-close",0,"Good Boy, Up Close"],["shift-crew",0,"Shift Crew"],
   ["new-friend",1,"New Friend"],["beer-lovers",1,"Beer Lovers"],["fermented-faithful",1,"Fermented & Faithful"],["boutonniere-boys",1,"Boutonniere Boys"],
-  ["caught-mid-bite",1,"Caught Mid-Bite"],["low-profile",1,"Low Profile"],["couch-council",1,"Couch Council"],["high-school-drip",1,"High School Drip",{desc:"Part of the ChudBootyCheeks collection. Pulling it gets messy."}],
+  ["caught-mid-bite",1,"Caught Mid-Bite"],["low-profile",1,"Low Profile"],["couch-council",1,"Couch Council"],["high-school-drip",1,"The High School Shitter",{desc:"Part of the ChudBootyCheeks collection. Pulling it gets messy."}],
   ["parking-lot-pavlov",1,"Parking Lot Pavlov"],["gun-show",1,"Gun Show"],
   ["knights-of-the-pint",2,"Knights of the Pint"],["grammy-hammy",2,"Grammy Hammy"],["noggatron",2,"Noggatron"],["cody-maverick",2,"Cody Maverick"],
   ["on-the-big-screen",2,"On the Big Screen"],["dark-knights",2,"The Dark Knights"],["chris-from-tinder",2,"Chris from Tinder"],["tasting-flight",2,"Tasting Flight"],
@@ -6008,7 +6008,7 @@ function viewPacks(){if(!S.me)return `<div class="empty">Sign in to collect card
         <div class="pkinfo"><div class="pkg"><span class="stlbl">Guaranteed</span> ${g}</div>
         <div class="pkodds">${[3,4,5,6].map(r=>`<span style="color:${CR[r].c}">${CR[r].n.split(" ")[0]} ${pkChance(p,r)>0?fmtPct(pkChance(p,r)):"✕"}</span>`).join("")}</div>
         <button type="button" class="btn" data-pkbuy="${p.id}" ${(bal<pkPrice(p)*pq&&!pkFree(p))||blk?"disabled":""}>${blk?"Sold out":pkFree(p)?`🎁 Open free (${pkFreeN(p)} left)`:`Open${pq>1?" "+pq+"×":""} · ${(pkPrice(p)*pq).toLocaleString()} BB${pkPrice(p)<p.price?` <s class="muted">${(p.price*pq).toLocaleString()}</s>`:""}`}</button></div></div>`}).join("")}</div>
-      <p class="small muted">Odds shown are the chance of at least one card of that rarity or better in the pack.</p>${S.canEdit&&pkSt().set==="cb"?`<button type="button" class="btn ghost small" data-cbtest>🧪 Test pack (admin, free): High School Drip + Lunch?</button>`:""}`}
+      <p class="small muted">Odds shown are the chance of at least one card of that rarity or better in the pack.</p>${S.canEdit&&pkSt().set==="cb"?`<button type="button" class="btn ghost small" data-cbtest>🧪 Test pack (admin, free): The High School Shitter + Lunch?</button>`:""}`}
   if(st.tab==="coll"){const sets=Object.keys(CSETS).filter(setOpen);const cs_=st.cset&&sets.includes(st.cset)?st.cset:sets[0];const who=st.who&&S.prefs[st.who]?st.who:S.me,mine=who===S.me;const cat=cs_==="lm"||cs_==="fl"?[...cardsCat(cs_),...curseCards()]:cardsCat(cs_);const have=cat.filter(c=>cardCountAll(c.id,who)>0).length;const isPm=cs_==="pm";const tiers=isPm?[8,7]:(cat.some(c=>c.abil==="curse")?["curse",6,5,4,3,2,1,0]:[6,5,4,3,2,1,0]);const inT=(c,r)=>r==="curse"?c.abil==="curse":c.r===r&&c.abil!=="curse";
     const head=(r,txt)=>`<div class="crhead" style="--rc:${(r==="curse"?CR_CURSE:CR[r]).c}"><span class="crdot"></span><b>${esc((r==="curse"?CR_CURSE:CR[r]).n)}</b><span class="small muted">${txt}</span></div>`;
     const lvTiles=c=>{const cs=myCards(who),ks=Object.keys(cs).filter(k=>(k===c.id||k.startsWith(c.id+"@"))&&Number(cs[k])>0).sort((a,b)=>lvOf(b)-lvOf(a));return ks.map(k=>cardHtml(cardById(k),{count:Number(cs[k]),click:true,small:true,who:mine?null:who})).join("")};
@@ -6646,6 +6646,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:136,d:"Oct 26",t:[["💩","High School Drip has been renamed The High School Shitter. Still don't pull it"]]},
  {v:135,d:"Oct 26",t:[["💩","New collection: ChudBootyCheeks, 50 new cards including a Dragon"],["🌌","Multiverse gets 3 new Super Rares: Shock & Awe, Don't Jump In and Chad Baby"],["⚡","Lots of new card abilities. Check the back of each card"],["🎓","Whatever you do, don't pull High School Drip"]]},
  {v:134,d:"Oct 26",t:[["🏆","Every Grail card now pays 1,000 BB a day"],["🔨","Card Crafting: Rares can now go to LV 4 and Super Rares to LV 3, with bigger dividends and stronger abilities"]]},
  {v:133,d:"Oct 25",t:[["💜","Every Super Rare card now has 2 more copies in the packs"]]},
