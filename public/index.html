@@ -1199,8 +1199,8 @@ body.tbjon{overflow:hidden}
 .tbjtag{font:900 13px Barlow,sans-serif;letter-spacing:.18em;color:#f5c542}
 .tbjbal{display:flex;flex-direction:column;align-items:center}.tbjbal b{font:900 44px Barlow,sans-serif;line-height:1.05;color:#ffe9a8;text-shadow:0 2px 10px #000a}.tbjbal small{opacity:.8}
 .tbjinfo{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;font-size:14px}.tbjinfo b{color:#ffe9a8}
-.tbjfelt{flex:1;display:flex;flex-direction:column;justify-content:center;padding:14px 0}
-#tbjOv .tbj{gap:14px;align-items:center;text-align:center}#tbjOv .tbjrow{flex-direction:column;gap:6px}#tbjOv .tbjrow .stlbl{min-width:0;color:#ffd9a0}
+
+#tbjOv .felt.tbjfelt{background:radial-gradient(ellipse at 50% 40%,#b81d27,#6a0b11 75%);border-color:#f5c542;min-height:300px;width:100%;margin-top:12px}#tbjOv .betbox{width:100%;margin-top:10px}#tbjOv .felt.tbjfelt,#tbjOv .betbox{box-sizing:border-box;max-width:100%}#tbjOv{overflow-x:hidden}#tbjOv .tbj{gap:14px;align-items:center;text-align:center}#tbjOv .tbjrow{flex-direction:column;gap:6px}#tbjOv .tbjrow .stlbl{min-width:0;color:#ffd9a0}
 #tbjOv .tbjk{width:58px;height:82px;font-size:24px;border-radius:8px}#tbjOv .tbjk i{font-size:22px}
 #tbjOv .row{justify-content:center}#tbjOv .btn{min-width:96px}#tbjOv .chips{justify-content:center}
 #tbjOv .pos{color:#9dffb0}#tbjOv .neg{color:#ffb3b3}
@@ -6670,6 +6670,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:140,d:"Oct 26",t:[["♠️","Tournament blackjack now deals and flips cards like the real table, with chips and Add/Remove betting"]]},
  {v:139,d:"Oct 26",t:[["⚡","Every card ability now shows on the games it works in (Slots, roulette, High-Low, Flappy and more)"],["🔒","Ability cards that only turn on at Level 2 now show up greyed out, so you know to craft them"]]},
  {v:138,d:"Oct 26",t:[["♠️","The Blackjack Tournament now has its own red table with your tournament stack up top"],["💪","Card Crafting shows your ability cards: what they do now, what the next level adds, and how close you are"]]},
  {v:137,d:"Oct 26",t:[["♠️","New Daily Blackjack Tournament: 5,000 BB to enter, everyone starts with 5,000 chips, biggest stack at midnight wins the pot. Go broke and you're out. Find it on the Blackjack page"]]},
@@ -7524,7 +7525,7 @@ const tbjMe=()=>tourMine("bj");
 async function tbjSave(e,up){Object.assign(e,up);try{await db.doc("bank/"+e.id).update(up)}catch(_){toast("That hand didn't save. Check your connection.")}}
 async function tbjDeal(){const e=tbjMe();if(!e||e.h||S._tbjBusy||e.day!==divDay())return;const chips=Number(e.chips)||0,bet=Math.floor(Number(S.tbjBet)||0);
   if(!(bet>=10))return toast("Minimum bet is 10 chips.");if(bet>chips)return toast("You don't have that many chips.");S._tbjBusy=true;
-  const h={p:[tbjCard(),tbjCard()],d:[tbjCard(),tbjCard()],bet,dbl:false};
+  const h={p:[tbjCard(),tbjCard()],d:[tbjCard(),tbjCard()],bet,dbl:false,at:Date.now()};
   try{await tbjSave(e,{h,chips:chips-bet,best:chips-bet,bestAt:Date.now(),hands:(Number(e.hands)||0)+1});if(isBJ(h.p)||isBJ(h.d))await tbjEnd(e)}finally{S._tbjBusy=false;tourRef()}}
 async function tbjAct(a){const e=tbjMe();if(!e||!e.h||S._tbjBusy)return;S._tbjBusy=true;const h={...e.h,p:e.h.p.slice(),d:e.h.d.slice()};
   try{if(a==="hit"){h.p.push(tbjCard());await tbjSave(e,{h});if(handVal(h.p).t>=21)await tbjEnd(e)}
@@ -7535,7 +7536,7 @@ async function tbjEnd(e){const h={...e.h,d:e.h.d.slice()},pv=handVal(h.p).t,pbj=
   if(pv>21){msg="Bust"}else if(pbj&&!dbj){ret=Math.floor(h.bet*2.5);msg="Blackjack!"}else if(dbj&&!pbj){msg="Dealer blackjack"}else if(pbj&&dbj){ret=h.bet;msg="Push"}
   else if(dv>21){ret=h.bet*2;msg="Dealer busts, you win"}else if(pv>dv){ret=h.bet*2;msg="You win"}else if(pv<dv){msg="Dealer wins"}else{ret=h.bet;msg="Push"}
   const chips=(Number(e.chips)||0)+ret;S.tbjLast={p:h.p,d:h.d,msg,net:ret-h.bet};
-  await tbjSave(e,{h:null,chips,best:chips,bestAt:Date.now(),last:{p:h.p,d:h.d,msg,net:ret-h.bet}});if(!chips)toast("💀 Out of chips. You're done for today.")}
+  await tbjSave(e,{h:null,chips,best:chips,bestAt:Date.now(),last:{p:h.p,d:h.d,msg,net:ret-h.bet,bet:h.bet,dbl:!!h.dbl,at:h.at||0}});if(!chips)toast("💀 Out of chips. You're done for today.")}
 /* full-screen red tournament table (owner Oct 26): opens on entry or from the Blackjack page; header = tournament stack, rank, pot, time left */
 function tbjOpen(){if($("#tbjOv")||!tbjMe())return;const o=document.createElement("div");o.id="tbjOv";document.body.appendChild(o);document.body.classList.add("tbjon");tbjDraw()}
 function tbjClose(){const o=$("#tbjOv");if(o)o.remove();document.body.classList.remove("tbjon");render()}
@@ -7543,24 +7544,42 @@ function tbjDraw(){const o=$("#tbjOv"),e=tbjMe();if(!o)return;if(!e)return tbjCl
   const x=`<div class="tbjtop"><button type="button" class="tbjx" data-tbjclose aria-label="Leave the table">✕</button><div class="tbjtag">🏆 TOURNAMENT HANDS</div>
     <div class="tbjbal"><span class="stlbl">Tournament stack</span><b class="num">${(chips+inPlay).toLocaleString()}</b><small>${inPlay?`${inPlay.toLocaleString()} in play · `:""}chips, not BB · no card boosts</small></div>
     <div class="tbjinfo"><span>Rank <b>${rk||"–"}</b>/${E.length}</span><span>Pot <b>${E.length<2?"—":pot.toLocaleString()+" BB"}</b></span><span>Ends in <b>${bkCd(divLeft())}</b></span></div></div>
-    <div class="tbjfelt">${tbjHtml(e)}</div>
+    %FELT%
     <div class="tbjlb">${E.slice(0,6).map((t,i)=>`<span class="${t.from===S.me?"me":""}">${i+1}. ${esc(nm(t.from))} <b>${(Number(t.best)||0).toLocaleString()}</b></span>`).join("")}</div>`;
-  if(o._x!==x){o._x=x;o.innerHTML=x}}
+  const sig=x+"|"+stableStr({c:e.chips,h:e.h,l:e.last,b:S.tbjBet,m:S.tbjMode});if(o._x===sig)return;o._x=sig;o.innerHTML=x.replace("%FELT%",tbjHtml(e))}
 setInterval(()=>{if($("#tbjOv"))tbjDraw()},30000);
-document.addEventListener("click",e=>{if(e.target.closest("[data-tbjopen]"))tbjOpen();else if(e.target.closest("[data-tbjclose]"))tbjClose()});
+document.addEventListener("click",e=>{const md=e.target.closest("[data-tbjmode]");if(md){S.tbjMode=md.dataset.tbjmode;return tbjDraw()}if(e.target.closest("[data-tbjopen]"))tbjOpen();else if(e.target.closest("[data-tbjclose]"))tbjClose()});
 const tbjCards=(cs,hide)=>`<div class="tbjc">${cs.map((c,i)=>hide&&i===1?`<span class="tbjk back"></span>`:`<span class="tbjk${"♥♦".includes(cSuit(c))?" red":""}">${cRank(c)}<i>${cSuit(c)}</i></span>`).join("")}</div>`;
+/* the hand on the felt, animated like the real table (card3d: deal-in, hole card flip, dealer draws one by one); S.tbjA = what's already on screen */
+function tbjRound(key,P,D,done){const A=S.tbjA||{},NOW=Date.now();let fresh=key!==A.key,replay=false;if(!fresh&&A.t0&&NOW-A.t0<A.win){fresh=true;replay=true}
+  const OFF=replay?A.off-(NOW-A.t0)/1000:0,order=fresh?{p0:OFF,d0:OFF+.18,p1:OFF+.36,d1:OFF+.54}:{},pSeen=fresh?0:(A.p||0),dSeen=fresh?0:(A.d||0),flipNow=done&&(fresh||!A.flipped);
+  let k=0;const pc=P.map((c,i)=>{if(fresh&&i<2)return card3d(c,{deal:true,delay:i?order.p1:order.p0});const isNew=i>=pSeen,d=isNew?OFF+.05+(k++)*.25:0;return card3d(c,{deal:isNew,delay:d})}).join("");
+  let t=fresh?OFF+.7:OFF+(k?.05+k*.25:0);const flipAt=flipNow?t:0;if(flipNow)t=flipAt+.55;
+  const dc=D.map((c,i)=>{if(i===1){if(!done)return card3d(c,{hidden:true,deal:fresh,delay:order.d1||0});if(flipNow)return card3d(c,{flip:true,deal:fresh,delay:fresh?order.d1:0,flipDelay:flipAt});return card3d(c)}
+    if(i===0)return card3d(c,{deal:fresh,delay:order.d0||0});const isNew=i>=dSeen,d=isNew?t:0;if(isNew)t+=.4;return card3d(c,{deal:isNew,delay:d})}).join("");
+  const end=Math.max(t,fresh?OFF+.8:OFF+.35),still=!fresh&&A.key===key&&A.flipped&&done;
+  S.tbjA={key,p:P.length,d:D.length,flipped:done,t0:replay?A.t0:(fresh?NOW:0),off:replay?A.off:OFF,win:replay?A.win:(fresh?(OFF+1.1)*1000:0)};
+  return {pc,dc,end:still?0:end,still}}
 function tbjHtml(e){const chips=Number(e.chips)||0,h=e.h,L=e.last,live=e.day===divDay();
   if(!live)return `<p class="small muted">This tournament is over.</p>`;
-  if(h){const pv=handVal(h.p).t;return `<div class="tbj"><div class="tbjrow"><span class="stlbl">Dealer</span>${tbjCards(h.d,true)}</div><div class="tbjrow"><span class="stlbl">You · ${pv}</span>${tbjCards(h.p)}</div>
-    <p class="small">Bet <b class="num">${h.bet.toLocaleString()}</b> · Stack <b class="num">${chips.toLocaleString()}</b></p><div class="row"><button type="button" class="btn" data-tbj="hit">Hit</button><button type="button" class="btn" data-tbj="stand">Stand</button>${h.p.length===2&&chips>=h.bet?`<button type="button" class="btn ghost" data-tbj="dbl">Double</button>`:""}</div></div>`}
-  if(chips<=0)return `<p class="small">💀 Out of chips: you finish with 0 today.</p>`;
-  const bet=Math.min(chips,Math.max(0,Math.floor(S.tbjBet==null?Math.min(500,chips):Number(S.tbjBet)||0)));
-  return `<div class="tbj">${L?`<div class="tbjrow"><span class="stlbl">Dealer · ${handVal(L.d).t}</span>${tbjCards(L.d)}</div><div class="tbjrow"><span class="stlbl">You · ${handVal(L.p).t}</span>${tbjCards(L.p)}</div><p class="small ${L.net>0?"pos":L.net<0?"neg":""}">${esc(L.msg)} · ${L.net>0?"+":""}${L.net.toLocaleString()} chips</p>`:""}
-    <p class="small">Stack <b class="num">${chips.toLocaleString()}</b> chips · Bet <b class="num">${bet.toLocaleString()}</b></p>
-    <div class="chips">${[100,500,1000,5000].map(v=>`<button type="button" class="chip" data-tbjbet="${v}">+${v>=1000?v/1000+"k":v}</button>`).join("")}<button type="button" class="chip" data-tbjbet="all">ALL IN</button><button type="button" class="chip" data-tbjbet="clear">Clear</button></div>
-    <button type="button" class="btn" data-tbj="deal" ${bet>=10?"":"disabled"}>Deal ${bet.toLocaleString()}</button></div>`}
+  const bet=Math.min(chips,Math.max(0,Math.floor(S.tbjBet==null?Math.min(500,chips):Number(S.tbjBet)||0))),R_=h||L;let felt,end=0;
+  if(R_){const done=!h,r=tbjRound(String(R_.at||stableStr(R_.p)+stableStr(R_.d)),R_.p,R_.d,done),pv=handVal(R_.p),dv=handVal(R_.d),fd=`fadein" style="animation-delay:${r.end}s`;end=r.end;
+    felt=`<div class="bjrow"><div class="eyebrow">Dealer${done?` · <span class="${fd}">${dv.t}</span>`:""}</div><div class="cards">${r.dc}</div></div>
+      <div class="bjrow"><div class="phand"><div class="cards">${r.pc}</div><div class="eyebrow">You · ${pv.t}${pv.soft&&pv.t<21?" soft":""}${R_.bet?` · ${(Number(R_.bet)||0).toLocaleString()} chips`:""}${R_.dbl?" · doubled":""}</div></div></div>`;
+    if(h)felt+=`<div class="bjacts"><button type="button" class="btn" data-tbj="hit">Hit</button><button type="button" class="btn" data-tbj="stand">Stand</button>${h.p.length===2&&chips>=h.bet?`<button type="button" class="btn ghost" data-tbj="dbl">Double</button>`:""}</div>`;
+    else felt+=`<div class="bjresult ${fd} ${L.net>0?"pos":L.net<0?"neg":""}">${esc(L.msg)}${L.net?` <span>${L.net>0?"+":"−"}${Math.abs(L.net).toLocaleString()} chips</span>`:""}</div>`;
+    if(r.still)felt=felt.replace(/\bfadein\b/g,"")}
+  else{felt=`<div class="cards"><div class="pc"><div class="face back"></div></div><div class="pc"><div class="face back"></div></div></div><div class="bjempty">Set your bet below, then deal.</div>`;S.tbjA={}}
+  if(!h&&chips>0)felt+=`<div class="bjacts${end?" fadein":""}" style="animation-delay:${end}s"><button type="button" class="btn deal" data-tbj="deal" ${bet>=10?"":"disabled"}>Deal · ${bet.toLocaleString()} chips</button></div>`;
+  if(!h&&chips<=0)felt+=`<div class="bjempty">💀 Out of chips: you finish with 0 today.</div>`;
+  const lock=!!h||chips<=0;
+  return `<section class="felt tbjfelt">${felt}</section>
+    <div class="betbox${lock?" locked":""}"><div class="betline"><span class="eyebrow">Bet</span><span class="betamt num">${bet.toLocaleString()} chips</span></div>
+    <div class="seg bjmode" role="group" aria-label="Chip mode"><button type="button" data-tbjmode="add" aria-pressed="${S.tbjMode!=="sub"}">+ Add</button><button type="button" data-tbjmode="sub" aria-pressed="${S.tbjMode==="sub"}">− Remove</button></div>
+    <div class="chips">${bjChips(chips).map(v=>`<button type="button" class="chipbtn c${v}" data-tbjbet="${v}" ${lock?"disabled":""}>${v>=1000?(v/1000)+"K":v}</button>`).join("")}</div>
+    <div class="bjacts"><button type="button" class="btn allin" data-tbjbet="all" ${lock?"disabled":""}>All in</button><button type="button" class="btn ghost" data-tbjbet="clear" ${lock?"disabled":""}>Clear bet</button></div></div>`}
 document.addEventListener("click",e=>{const b=e.target.closest("[data-tbj],[data-tbjbet]");if(!b)return;if(S.readOnly)return toast("View only. Ask the commish for access.");
-  if(b.dataset.tbjbet){const m=tbjMe(),c=Number(m&&m.chips)||0,v=b.dataset.tbjbet;S.tbjBet=v==="all"?c:v==="clear"?0:Math.min(c,(Number(S.tbjBet)||0)+Number(v));return tourRef()}
+  if(b.dataset.tbjbet){const m=tbjMe(),c=Number(m&&m.chips)||0,v=b.dataset.tbjbet;const cur=S.tbjBet==null?Math.min(500,c):Number(S.tbjBet)||0;S.tbjBet=v==="all"?c:v==="clear"?0:Math.max(0,Math.min(c,cur+(S.tbjMode==="sub"?-1:1)*Number(v)));return tourRef()}
   const a=b.dataset.tbj;if(a==="deal")tbjDeal();else tbjAct(a)});
 async function tourHl(g){const h=S.thl;if(!h||!h.on||h.busy)return;const nx=hlDraw(),ok=g==="hi"?nx.r>h.card.r:nx.r<h.card.r;h.busy=true;
   if(ok){h.n++;h.card=nx;h.busy=false;await tourScore("hl",h.n,h.day);try{haptic()}catch(_){}}
