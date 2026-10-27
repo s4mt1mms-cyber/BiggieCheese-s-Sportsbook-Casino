@@ -934,7 +934,7 @@ body.pkquake{animation:pkquake .12s linear 34}@keyframes pkquake{25%{transform:t
 .wkrgrid b{font-size:16px;font-weight:800}.wkrnet{font-weight:700}.wkrnet b{font-size:18px}
 .wkrecap .pos,.wkrecap .num.pos{color:#5cff72!important}.wkrecap .neg,.wkrecap .num.neg{color:#ff6262!important}
 .wkrecap.big .wkrgrid b{font-size:18px}.recapbox{gap:12px}
-.actbar{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}.actchip{display:inline-block;font-size:12.5px;line-height:1.25;padding:5px 10px;border-radius:999px;border:1px solid #2d6b3a;background:rgba(40,120,60,.18);color:#cfeed6}.actchip b{color:#7dffa1}.actchip.bad{border-color:#7a2a2a;background:rgba(150,40,40,.2);color:#f3cfcf}.actchip.bad b{color:#ff8a8a}
+.actbar{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}.actchip{display:inline-block;font-size:12.5px;line-height:1.25;padding:5px 10px;border-radius:999px;border:1px solid #2d6b3a;background:rgba(40,120,60,.18);color:#cfeed6}.actchip b{color:#7dffa1}.actchip.off,.actrow.off{opacity:.55;filter:grayscale(.6)}.actchip.bad{border-color:#7a2a2a;background:rgba(150,40,40,.2);color:#f3cfcf}.actchip.bad b{color:#ff8a8a}
 .actlist{display:grid;gap:6px;margin:10px 0}.actrow{display:grid;grid-template-columns:28px 1fr;gap:8px;align-items:center;text-align:left;padding:9px 12px;border-radius:12px;border:1px solid #2d6b3a;background:rgba(40,120,60,.12);color:inherit;font:inherit;cursor:pointer}.actrow small{display:block;color:var(--muted);font-size:12.5px}.actrow .actic{font-size:20px;text-align:center}.actrow.bad{border-color:#7a2a2a;background:rgba(150,40,40,.14)}
 .autabs{margin:10px 0 14px}
 /* profile popup: compact on phones so it fits */
@@ -5627,13 +5627,13 @@ const hasAb=(k,id)=>!!abOf(id||S.me)[k];
 /* Active cards: every card a player holds that is doing something right now (abilities, boosts, special dividends).
    g = the games where it matters, so each game page can show only its own chips (actBar). bad = it costs you. */
 function activeCards(id){id=id||S.me;const cs=myCards(id),out=[],seen=new Set(),me=id===S.me;
-  const add=(cid,ic,t,g,bad)=>{if(seen.has(cid+t))return;seen.add(cid+t);const c=cardById(cid);out.push({cid,ic,name:c?c.name:cid,t,g:g||[],bad:!!bad})};
+  const add=(cid,ic,t,g,bad,off)=>{if(seen.has(cid+t))return;seen.add(cid+t);const c=cardById(cid);out.push({cid,ic,name:c?c.name:cid,t,g:g||[],bad:!!bad,off:!!off})},offK={};
   for(const k in cs){if(!(Number(cs[k])>0))continue;const c=cardById(k);if(!c)continue;
     if(c.abil==="curse")add(k,"⛪","Cursed: 10% of your winnings burn",["all"],true);
     else if(c.abil==="dean")add(k,"🎲",`+${(CR_EDGE*100).toFixed(2).replace(/0$/,"")}% edge at craps`,["cr"]);
     else if(c.abil==="slop")add(k,"🎡",me?`${slopLeft()} of ${SLOP_DAY} roulette respins left today`:`${SLOP_DAY} roulette respins a day`,["rl"]);
     else if(c.abil==="shrex")add(k,"🟢","Blackjacks pay 3× your bet + swamp glow",["bj"]);
-    else if(c.abil==="hilo")add(k,"🔥","High-Low: double multipliers after 6 right in a row",["hl"]);
+    else if(c.abil==="hilo")add(k,"🔥",`High-Low: ${HL_CHR_AFTER+1}+ right in a row pays your cash-out ×${HL_CHR_X}`,["hl"]);
     else if(c.abil==="hof")add(k,"🏦","Borrow 10,000 BB from the House (Bank)",["bank"]);
     else if(c.abil==="bers")add(k,"🪓",me?`${bersLeft()} of ${BERS_DAY} rat-hunt auto-kills left today`:`${BERS_DAY} rat-hunt auto-kills a day`,["bj"]);
     if(c.div!=null&&c.abil!=="curse")add(k,"💸",`Pays ${cardDiv(c).toLocaleString()} BB a day`,["div"]);
@@ -5643,12 +5643,14 @@ function activeCards(id){id=id||S.me;const cs=myCards(id),out=[],seen=new Set(),
     if(k===FP_BOOST_CARD)add(k,"⚡",me?(fpBoostLeft()>0?"5× Flappy run recharging":`${FP_BOOST_DAY-fpBoostUsed()} of ${FP_BOOST_DAY} 5× Flappy runs left today`):`${FP_BOOST_DAY} 5× Flappy run a day`,["fp"]);
     if(c.r===6)add(k,"🐉",`Dragon: ${cardDiv(c).toLocaleString()} BB a day + Dragon Glow`,["div"]);
     /* level abilities from the card database (Oct 23); a player's top level is what counts (ab2), so show it once per card */
-    {const A=ab2Of(c);if(A){const v=ab2(A.k,id);if(v>0&&!seen.has("ab2:"+A.k)){seen.add("ab2:"+A.k);add(k,"⚡",A.t(v),AB2_G[A.k]||[])}}}}
+    {const A=ab2Of(c);if(A){const v=ab2(A.k,id);if(v>0&&!seen.has("ab2:"+A.k)){seen.add("ab2:"+A.k);add(k,"⚡",A.t(v),AB2_G[A.k]||[])}else if(!(v>0)&&!offK[A.k])offK[A.k]=k}}}
+  /* owned ability cards still at LV 1 (Common–Super Rare abilities start at LV 2): shown dimmed so players know why nothing happens */
+  for(const ak in offK){const k=offK[ak],c=cardById(k),A=ab2Of(c);if(!A||seen.has("ab2:"+ak))continue;const v2=ab2Val(c,2);add(k,"🔒",`Turns on at LV 2 (craft it): ${v2==null?"":A.t(v2)}`,AB2_G[ak]||[],false,true)}
   return out}
 function actBar(game){if(!S.me)return "";const a=activeCards(S.me).filter(x=>x.g.includes(game)||x.g.includes("all"));if(!a.length)return "";
-  return `<div class="actbar">${a.map(x=>`<span class="actchip${x.bad?" bad":""}" title="${esc(x.name)}">${x.ic} <b>${esc(x.name)}</b> · ${esc(x.t)}</span>`).join("")}</div>`}
+  return `<div class="actbar">${a.map(x=>`<span class="actchip${x.bad?" bad":""}${x.off?" off":""}" title="${esc(x.name)}">${x.ic} <b>${esc(x.name)}</b> · ${esc(x.t)}</span>`).join("")}</div>`}
 function actListHtml(id){const a=activeCards(id);if(!a.length)return "";const mine=id===S.me;
-  return `<div class="actlist"><div class="stlbl">⚡ ${mine?"Your active cards":"Active cards"}</div>${a.map(x=>`<button type="button" class="actrow${x.bad?" bad":""}" data-cardview="${esc(x.cid)}"${mine?"":` data-cardwho="${esc(id)}"`}><span class="actic">${x.ic}</span><span><b>${esc(x.name)}</b><small>${esc(x.t)}</small></span></button>`).join("")}</div>`}
+  return `<div class="actlist"><div class="stlbl">⚡ ${mine?"Your active cards":"Active cards"}</div>${a.map(x=>`<button type="button" class="actrow${x.bad?" bad":""}${x.off?" off":""}" data-cardview="${esc(x.cid)}"${mine?"":` data-cardwho="${esc(id)}"`}><span class="actic">${x.ic}</span><span><b>${esc(x.name)}</b><small>${esc(x.t)}</small></span></button>`).join("")}</div>`}
 /* placeholder face for a card with no art yet: rarity colors, the name, "Art coming soon" */
 const PH_C={};
 function cardPh(c){if(PH_C[c.id])return PH_C[c.id];const R=crOf(c)||CR[0];const X=t=>String(t).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
@@ -6217,7 +6219,7 @@ const AB2={
   "cb:bitcointozero":{k:"btc",v:[1],t:()=>`Once a day, if your balance hits zero the House sends a ${(10000).toLocaleString()} BB stimulus check`},
   "fl:thevailgrail":{k:"vail",v:[2],t:v=>`All card packs are ${pctTxt(v)} off`}};
 /* the AB2 entry for a card (any level key), or null */
-const AB2_G={shock:["bj","rl","cr","hl"],dwillie:["bj","rl","hl"],thanos:["bj"],caked:["bj"],darth:["bj"],rookie:["bj"],gooner:["rl"],rinker:["fp"],vontrap:["div"],shine:["div"],luke:["bank"],shabbat:["bank"],logan:["sb"],crew:["sb"],bucket:["mp"],crndd:["mp"],vail:["packs"],paradise:["packs"],diva:["shop"]};
+const AB2_G={shock:["bj","rl","cr","hl","sl","mp"],giga:["bj","rl","cr","hl","sl"],chad:["rl"],summer:["rl"],swole:["fp"],cody:["fp"],unitedsit:["hl"],floof:["hl"],gun:["sl"],bigscreen:["sl"],caleb:["bj"],ballk:["sb"],rotunda:["sb"],crab:["wheel"],newfriend:["bank"],chris:["bank"],btc:["bank"],dwillie:["bj","rl","hl"],thanos:["bj"],caked:["bj"],darth:["bj"],rookie:["bj"],gooner:["rl"],rinker:["fp"],vontrap:["div"],shine:["div"],luke:["bank"],shabbat:["bank"],logan:["sb"],crew:["sb"],bucket:["mp"],crndd:["mp"],vail:["packs"],paradise:["packs"],diva:["shop"]};
 const ab2Of=c=>c?AB2[cardSet(c.id)+":"+nmKey(c.name)]||null:null;
 /* value of a card's level ability at level lv; null = not active at that level */
 function ab2Val(c,lv){const A=ab2Of(c);if(!A)return null;lv=lv||1;if(lv<2&&c.r<=3)return null;const i=Math.min(lv,A.v.length)-1;return A.v[i]}
@@ -6668,6 +6670,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:139,d:"Oct 26",t:[["⚡","Every card ability now shows on the games it works in (Slots, roulette, High-Low, Flappy and more)"],["🔒","Ability cards that only turn on at Level 2 now show up greyed out, so you know to craft them"]]},
  {v:138,d:"Oct 26",t:[["♠️","The Blackjack Tournament now has its own red table with your tournament stack up top"],["💪","Card Crafting shows your ability cards: what they do now, what the next level adds, and how close you are"]]},
  {v:137,d:"Oct 26",t:[["♠️","New Daily Blackjack Tournament: 5,000 BB to enter, everyone starts with 5,000 chips, biggest stack at midnight wins the pot. Go broke and you're out. Find it on the Blackjack page"]]},
  {v:136,d:"Oct 26",t:[["💩","High School Drip has been renamed The High School Shitter. Still don't pull it"]]},

@@ -296,7 +296,7 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
   `md` level, cached; tap for the name), bots their name. RR: HTML `#rrTags` moved by `rrTagsTick` (replaced the canvas sprites);
   Hold'em: inside `thTags`.
 - **Active cards** (`activeCards(id)`): every held card doing something (abilities, Joe Camel/Dragon dividends, Peter/Debby/Claire,
-  Vector boost). Collection shows the list (`actListHtml`); each game page shows its own chips (`actBar(game)`: cr, rl, bj, hl, fp; the
+  Vector boost). Collection shows the list (`actListHtml`); `AB2_G` maps each AB2 key to its games (keep it complete when adding abilities); owned Common–SR ability cards still at LV 1 show as dimmed 🔒 "Turns on at LV 2" chips (`off`); each game page shows its own chips (`actBar(game)`: cr, rl, bj, hl, fp; the
   curse shows everywhere). Add new abilities there too.
 - **Presence**: "● N online" pill, green avatar rings — from existing prefs stamps (no extra writes).
 - **Admin tab**: invite codes, data import, card tools (per-card Preview + Add/Change image; a live preview of a card being added), previews.
