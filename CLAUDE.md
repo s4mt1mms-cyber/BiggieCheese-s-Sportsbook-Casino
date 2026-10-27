@@ -388,7 +388,7 @@ player's own client to prefs (`rrNet`/`thNet`).
   Projections use each team's BEST lineup from its roster (`best_fill`; starters whose game started are locked at actual; taxi/IR out),
   not the lineup they set — closes the bench-everyone-then-bet-yourself exploit (Oct 23). Tests: `python3 -m unittest test_scoreboard`.
 - `job-futures.yml` Tuesdays 2:45 AM ET — playoff/title odds simulation → `meta/futures`.
-- `job-grade.yml` manual — grades finished games from Sleeper.
+- `job-grade.yml` — grades finished league games from Sleeper (bets + parlays then pay automatically): on its own every Tuesday from the 12:01 AM ET reset (04:01/05:01 UTC) with retries through Wednesday; `nfl_week_final` holds a week until every NFL game of it is over. Manual run still works.
 - `job-mpflag.yml` manual — live-tables server switch.
 - `job-econ.yml` manual, read-only — dumps prefs/bets/games/bank/market/loans/adjust/offers/plat/meta/nfl/nba/profiles as a 1-day private artifact
   (`gh run download <id> -n econ`; load into the emulator with tools/migrate/import.js, then read `ledger()`/`divCalc` in the app). Never commit it.

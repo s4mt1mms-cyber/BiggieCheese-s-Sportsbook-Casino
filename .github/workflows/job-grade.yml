@@ -2,6 +2,13 @@ name: Grade finished games (manual)
 
 on:
   workflow_dispatch: {}
+  # owner Oct 27: settle league matchups on their own at the Tuesday 12:01 AM ET reset (04:01 UTC in EDT, 05:01 UTC in EST),
+  # then retry through Tuesday/Wednesday in case Monday night runs late (grade.py waits until every NFL game of the week is over)
+  schedule:
+    - cron: "1 4 * * 2"
+    - cron: "1 5 * * 2"
+    - cron: "15 6-23/2 * * 2"
+    - cron: "15 */4 * * 3"
 
 concurrency:
   group: job-grade

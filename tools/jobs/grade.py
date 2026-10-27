@@ -35,6 +35,16 @@ def current_week_done(week):
     return all(e["status"]["type"]["state"] == "post" and e.get("date", "")[:10] >= tue for e in ev)
 
 
+def nfl_week_final(week):
+    """True once every NFL game of that regular-season week is over (so Sleeper's points are final, incl. Monday night)."""
+    try:
+        espn = get_json(f"https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week={week}")
+    except Exception:
+        return False
+    ev = espn.get("events") or []
+    return bool(ev) and all(e["status"]["type"]["state"] == "post" for e in ev)
+
+
 def decide_prop(desc, team, pts, opp):
     d = (desc or "").lower(); p = pts.get(team)
     if p is None: return None
@@ -59,6 +69,10 @@ def main():
     docs = [(d.id, d.to_dict()) for d in fs.collection("games").stream()]
     open_weeks = sorted({g.get("week") for _, g in docs if not g.get("final") and isinstance(g.get("week"), int)})
     weeks = [w for w in open_weeks if w < C] + ([C] if C in open_weeks and current_week_done(C) else [])
+    # runs on its own every Tuesday from the 12:01 AM ET reset (owner Oct 27): never grade a week whose NFL games aren't all over yet
+    held = [w for w in weeks if w <= 18 and not nfl_week_final(w)]
+    if held: print("Waiting for NFL games to finish:", held)
+    weeks = [w for w in weeks if w not in held]
     if not weeks:
         print("Nothing to grade yet."); return
     graded, needs = [], []
