@@ -3,7 +3,7 @@ uploaded as a short-lived private Actions artifact for an offline economy analys
 import json, os
 from common import db
 fs = db(); out = "export"; n = 0
-for coll in ["prefs", "bets", "games", "bank", "market", "loans", "adjust", "offers", "plat", "meta", "nfl", "nba", "profiles"]:
+for coll in ["prefs", "bets", "games", "bank", "market", "loans", "adjust", "offers", "plat", "meta", "nfl", "nba", "nhl", "profiles"]:
     os.makedirs(f"{out}/{coll}", exist_ok=True)
     for d in fs.collection(coll).stream():
         with open(f"{out}/{coll}/{d.id}.json", "w") as f: json.dump(d.to_dict(), f, default=str); n += 1
