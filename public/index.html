@@ -6670,6 +6670,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:141,d:"Oct 26",t:[["⚡","Tournament blackjack responds instantly now"],["🏆","Blackjack Tournament winner now also keeps whatever their stack finishes over 5,000 (finish at 6,000 and win = pot + 1,000 BB)"]]},
  {v:140,d:"Oct 26",t:[["♠️","Tournament blackjack now deals and flips cards like the real table, with chips and Add/Remove betting"]]},
  {v:139,d:"Oct 26",t:[["⚡","Every card ability now shows on the games it works in (Slots, roulette, High-Low, Flappy and more)"],["🔒","Ability cards that only turn on at Level 2 now show up greyed out, so you know to craft them"]]},
  {v:138,d:"Oct 26",t:[["♠️","The Blackjack Tournament now has its own red table with your tournament stack up top"],["💪","Card Crafting shows your ability cards: what they do now, what the next level adds, and how close you are"]]},
@@ -7493,8 +7494,11 @@ async function tourSettle(){if(!S.ready||!S.ld||!S.ld.bank||tourSettle.busy)retu
       else if(tied.length>1&&E.length===2){E.forEach(t=>pays[t.from]=Math.floor(Number(t.amt))||0);note=`${N} tournament tie · entry refunded · ${day}`}
       else if(tied.length>1){const each=Math.floor(tourPot(g,day)/tied.length);tied.forEach(t=>pays[t.from]=each);note=`${N} tournament · split ${tied.length} ways · ${day}`}
       else{pays[w.from]=tourPot(g,day);note=`${N} tournament win · ${day}`}
-      const refund=E.length<2||(tied.length>1&&E.length===2),first=Object.keys(pays)[0];
-      await ref.set({kind:"tourpay",pays,to:first,from:"house",amt:pays[first],...(refund?{refund:true}:{}),...(tied.length>1&&!refund?{split:tied.length}:{}),g,day,n:E.length,best:top,at:Date.now(),note})}
+      const refund=E.length<2||(tied.length>1&&E.length===2);
+      /* owner, Oct 26: Blackjack winner(s) also keep whatever their stack finished over the 5,000 start, paid by the house (not on refunds) */
+      let xs=0;if(g==="bj"&&!refund){xs=Math.max(0,top-TBJ_START);if(xs>0){for(const id in pays)pays[id]+=xs;note+=` · +${xs.toLocaleString()} over ${TBJ_START.toLocaleString()}`}}
+      const first=Object.keys(pays)[0];
+      await ref.set({kind:"tourpay",pays,to:first,from:"house",amt:pays[first],...(refund?{refund:true}:{}),...(tied.length>1&&!refund?{split:tied.length}:{}),...(xs?{xs}:{}),g,day,n:E.length,best:top,at:Date.now(),note})}
     /* my own wins: popup + chat once */
     const q=S.prefs[S.me]||{},seen=q.tourWon||{};for(const t of S.bank||[])if(t.kind==="tourpay"&&(t.pays?Number(t.pays[S.me])>0:t.to===S.me)&&!seen[t.id]){const mine=t.pays?Math.floor(Number(t.pays[S.me]))||0:Math.floor(Number(t.amt))||0;await db.doc("prefs/"+S.me).update({tourWon:{[t.id]:1}});q.tourWon={...(q.tourWon||{}),[t.id]:1};
       if(t.refund){toast(t.n>1?`The ${TOUR[t.g]?TOUR[t.g].n:""} tournament ended in a tie, so your ${mine.toLocaleString()} BB came back.`:`Nobody else entered the ${TOUR[t.g]?TOUR[t.g].n:""} tournament, so your ${mine.toLocaleString()} BB came back.`);continue}
@@ -7509,8 +7513,8 @@ function tourHtml(g){const T=TOUR[g],day=divDay(),E=tourRank(tourEntries(g,day))
   else if(g==="fp")act=left>0?`<button type="button" class="btn${FP&&FP.tourArm?" armed":""}" data-tour="arm:fp">${FP&&FP.tourRun?"🏆 Tournament run live":FP&&FP.tourArm?"🏆 Armed · flap to start":`Play a tournament run (${left} left)`}</button>`:`<span class="small muted">All ${TOUR_TRIES} tries used. Good luck!</span>`;
   else{const h=S.thl;if(h&&h.on)act=`<div class="thl"><div class="thlc">${hlCard(h.card)}</div><div class="thls"><span class="stlbl">Streak</span><b class="num">${h.n}</b></div><div class="hlbtns"><button type="button" class="btn hlg" data-tour="hl:hi" ${h.card.r>=13||h.busy?"disabled":""}>▲ Higher</button><button type="button" class="btn hlg" data-tour="hl:lo" ${h.card.r<=1||h.busy?"disabled":""}>▼ Lower</button></div></div>`;
     else act=(h&&h.last!=null?`<p class="small">Last try: streak <b class="num">${h.last}</b></p>`:"")+(left>0?`<button type="button" class="btn" data-tour="hlgo">Start a try (${left} left)</button>`:`<span class="small muted">All ${TOUR_TRIES} tries used. Good luck!</span>`)}
-  return `<section class="card tourc"><h3>🏆 Daily ${T.n} Tournament</h3><p class="small muted">${g==="bj"?`${T.fee.toLocaleString()} BB to enter · everyone starts with ${TBJ_START.toLocaleString()} tournament chips · biggest stack at the end wins the pot. Hit 0 and you're out. Chips aren't BB.`:`${T.fee.toLocaleString()} BB to enter · ${TOUR_TRIES} tries · highest ${T.what} wins the pot${g==="hl"?" (ties end the streak)":""}. Tries are free once you're in.`} The pot is paid to the winner at the midnight reset, in <b>${bkCd(divLeft())}</b>.</p>
-    <div class="tourpot"><span><span class="stlbl">Winner gets</span> <b class="num pos">${E.length<2?"—":pot.toLocaleString()+" BB"}</b></span><span class="small muted">${E.length} player${E.length===1?"":"s"}${E.length<2?" · needs 2+ (a solo entry gets its BB back)":""}</span>${me?`<span class="small">Your ${g==="bj"?"stack":"best"} <b class="num">${(Number(g==="bj"?me.chips:me.best)||0).toLocaleString()}</b></span>`:""}</div>
+  return `<section class="card tourc"><h3>🏆 Daily ${T.n} Tournament</h3><p class="small muted">${g==="bj"?`${T.fee.toLocaleString()} BB to enter · everyone starts with ${TBJ_START.toLocaleString()} tournament chips · biggest stack at the end wins the pot <b>plus whatever they finish over ${TBJ_START.toLocaleString()}</b> (finish at 6,000 and win = pot + 1,000 BB). Everyone else gets nothing. Hit 0 and you're out. Chips aren't BB.`:`${T.fee.toLocaleString()} BB to enter · ${TOUR_TRIES} tries · highest ${T.what} wins the pot${g==="hl"?" (ties end the streak)":""}. Tries are free once you're in.`} The pot is paid to the winner at the midnight reset, in <b>${bkCd(divLeft())}</b>.</p>
+    <div class="tourpot"><span><span class="stlbl">Winner gets</span> <b class="num pos">${E.length<2?"—":pot.toLocaleString()+" BB"}</b>${g==="bj"&&E.length>1?`<small class="muted"> + their chips over ${TBJ_START.toLocaleString()}</small>`:""}</span><span class="small muted">${E.length} player${E.length===1?"":"s"}${E.length<2?" · needs 2+ (a solo entry gets its BB back)":""}</span>${me?`<span class="small">Your ${g==="bj"?"stack":"best"} <b class="num">${(Number(g==="bj"?me.chips:me.best)||0).toLocaleString()}</b></span>`:""}</div>
     <div class="touract">${act}</div>
     ${E.length?`<div class="tourlb">${E.slice(0,10).map((t,i)=>`<div class="tourrow${t.from===S.me?" me":""}"><span class="num">${i+1}</span>${pic(t.from)}<span class="tn">${esc(nm(t.from))}</span><b class="num">${(Number(t.best)||0).toLocaleString()}</b><small class="muted">${t.g==="bj"?(t.h?"in a hand":(Number(t.chips)||0)<=0?"out":`${Number(t.hands)||0} hands`):`${Math.max(0,TOUR_TRIES-(Number(t.tries)||0))} left`}</small></div>`).join("")}</div>`:""}
     ${yd&&!yd.refund?`<p class="small muted">Last winner: ${yd.pays?Object.keys(yd.pays).map(id=>esc(nm(id))).join(" & "):esc(nm(yd.to))} · ${T.what} ${yd.best} · +${(Number(yd.amt)||0).toLocaleString()} BB${yd.split?" each":""} (${esc(yd.day)})</p>`:""}</section>`}
@@ -7522,28 +7526,29 @@ function tourHtml(g){const T=TOUR[g],day=divDay(),E=tourRank(tourEntries(g,day))
 const TBJ_START=5000;
 const tbjCard=()=>RANKS[rnd(13)]+SUITS[rnd(4)];
 const tbjMe=()=>tourMine("bj");
-async function tbjSave(e,up){Object.assign(e,up);try{await db.doc("bank/"+e.id).update(up)}catch(_){toast("That hand didn't save. Check your connection.")}}
-async function tbjDeal(){const e=tbjMe();if(!e||e.h||S._tbjBusy||e.day!==divDay())return;const chips=Number(e.chips)||0,bet=Math.floor(Number(S.tbjBet)||0);
+/* instant play (owner Oct 26 "laggy"): the table updates locally right away; writes go out in order in the background */
+function tbjSave(e,up){Object.assign(e,up);/* Firestore applies the write to the local cache at once and keeps them in order */return db.doc("bank/"+e.id).update(up).catch(()=>toast("That hand didn't save. Check your connection."))}
+async function tbjDeal(){const e=tbjMe();if(!e||e.h||S._tbjBusy||e.day!==divDay())return;const chips=Number(e.chips)||0,bet=Math.min(chips,Math.floor(S.tbjBet==null?Math.min(500,chips):Number(S.tbjBet)||0));
   if(!(bet>=10))return toast("Minimum bet is 10 chips.");if(bet>chips)return toast("You don't have that many chips.");S._tbjBusy=true;
   const h={p:[tbjCard(),tbjCard()],d:[tbjCard(),tbjCard()],bet,dbl:false,at:Date.now()};
-  try{await tbjSave(e,{h,chips:chips-bet,best:chips-bet,bestAt:Date.now(),hands:(Number(e.hands)||0)+1});if(isBJ(h.p)||isBJ(h.d))await tbjEnd(e)}finally{S._tbjBusy=false;tourRef()}}
+  try{tbjSave(e,{h,chips:chips-bet,best:chips-bet,bestAt:Date.now(),hands:(Number(e.hands)||0)+1});if(isBJ(h.p)||isBJ(h.d))tbjEnd(e)}finally{S._tbjBusy=false;tourRef()}}
 async function tbjAct(a){const e=tbjMe();if(!e||!e.h||S._tbjBusy)return;S._tbjBusy=true;const h={...e.h,p:e.h.p.slice(),d:e.h.d.slice()};
-  try{if(a==="hit"){h.p.push(tbjCard());await tbjSave(e,{h});if(handVal(h.p).t>=21)await tbjEnd(e)}
-    else if(a==="dbl"){const chips=Number(e.chips)||0;if(h.p.length!==2||chips<h.bet)return toast("Not enough chips to double.");h.p.push(tbjCard());h.dbl=true;const nb=h.bet*2;h.bet=nb;await tbjSave(e,{h,chips:chips-nb/2,best:chips-nb/2,bestAt:Date.now()});await tbjEnd(e)}
-    else if(a==="stand")await tbjEnd(e)}finally{S._tbjBusy=false;tourRef()}}
+  try{if(a==="hit"){h.p.push(tbjCard());tbjSave(e,{h});if(handVal(h.p).t>=21)tbjEnd(e)}
+    else if(a==="dbl"){const chips=Number(e.chips)||0;if(h.p.length!==2||chips<h.bet)return toast("Not enough chips to double.");h.p.push(tbjCard());h.dbl=true;const nb=h.bet*2;h.bet=nb;tbjSave(e,{h,chips:chips-nb/2,best:chips-nb/2,bestAt:Date.now()});tbjEnd(e)}
+    else if(a==="stand")tbjEnd(e)}finally{S._tbjBusy=false;tourRef()}}
 async function tbjEnd(e){const h={...e.h,d:e.h.d.slice()},pv=handVal(h.p).t,pbj=isBJ(h.p)&&!h.dbl,dbj=isBJ(h.d);
   if(pv<=21&&!pbj)while(handVal(h.d).t<17)h.d.push(tbjCard());const dv=handVal(h.d).t;let ret=0,msg;
   if(pv>21){msg="Bust"}else if(pbj&&!dbj){ret=Math.floor(h.bet*2.5);msg="Blackjack!"}else if(dbj&&!pbj){msg="Dealer blackjack"}else if(pbj&&dbj){ret=h.bet;msg="Push"}
   else if(dv>21){ret=h.bet*2;msg="Dealer busts, you win"}else if(pv>dv){ret=h.bet*2;msg="You win"}else if(pv<dv){msg="Dealer wins"}else{ret=h.bet;msg="Push"}
   const chips=(Number(e.chips)||0)+ret;S.tbjLast={p:h.p,d:h.d,msg,net:ret-h.bet};
-  await tbjSave(e,{h:null,chips,best:chips,bestAt:Date.now(),last:{p:h.p,d:h.d,msg,net:ret-h.bet,bet:h.bet,dbl:!!h.dbl,at:h.at||0}});if(!chips)toast("💀 Out of chips. You're done for today.")}
+  tbjSave(e,{h:null,chips,best:chips,bestAt:Date.now(),last:{p:h.p,d:h.d,msg,net:ret-h.bet,bet:h.bet,dbl:!!h.dbl,at:h.at||0}});if(!chips)toast("💀 Out of chips. You're done for today.")}
 /* full-screen red tournament table (owner Oct 26): opens on entry or from the Blackjack page; header = tournament stack, rank, pot, time left */
 function tbjOpen(){if($("#tbjOv")||!tbjMe())return;const o=document.createElement("div");o.id="tbjOv";document.body.appendChild(o);document.body.classList.add("tbjon");tbjDraw()}
 function tbjClose(){const o=$("#tbjOv");if(o)o.remove();document.body.classList.remove("tbjon");render()}
 function tbjDraw(){const o=$("#tbjOv"),e=tbjMe();if(!o)return;if(!e)return tbjClose();const day=divDay(),E=tourRank(tourEntries("bj",day)),rk=E.findIndex(t=>t.from===S.me)+1,pot=tourPot("bj",day),chips=Number(e.chips)||0,inPlay=e.h?Number(e.h.bet)||0:0;
   const x=`<div class="tbjtop"><button type="button" class="tbjx" data-tbjclose aria-label="Leave the table">✕</button><div class="tbjtag">🏆 TOURNAMENT HANDS</div>
     <div class="tbjbal"><span class="stlbl">Tournament stack</span><b class="num">${(chips+inPlay).toLocaleString()}</b><small>${inPlay?`${inPlay.toLocaleString()} in play · `:""}chips, not BB · no card boosts</small></div>
-    <div class="tbjinfo"><span>Rank <b>${rk||"–"}</b>/${E.length}</span><span>Pot <b>${E.length<2?"—":pot.toLocaleString()+" BB"}</b></span><span>Ends in <b>${bkCd(divLeft())}</b></span></div></div>
+    <div class="tbjinfo"><span>Rank <b>${rk||"–"}</b>/${E.length}</span><span>Pot <b>${E.length<2?"—":pot.toLocaleString()+" BB"}</b>${E.length>1?` + ${Math.max(0,(Number(E[0].best)||0)-TBJ_START).toLocaleString()} over`:""}</span><span>Ends in <b>${bkCd(divLeft())}</b></span></div></div>
     %FELT%
     <div class="tbjlb">${E.slice(0,6).map((t,i)=>`<span class="${t.from===S.me?"me":""}">${i+1}. ${esc(nm(t.from))} <b>${(Number(t.best)||0).toLocaleString()}</b></span>`).join("")}</div>`;
   const sig=x+"|"+stableStr({c:e.chips,h:e.h,l:e.last,b:S.tbjBet,m:S.tbjMode});if(o._x===sig)return;o._x=sig;o.innerHTML=x.replace("%FELT%",tbjHtml(e))}
