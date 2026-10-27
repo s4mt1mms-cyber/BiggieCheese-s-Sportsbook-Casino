@@ -3588,7 +3588,9 @@ function viewRoulette(){if(!S.me)return `<div class="empty">Sign in to play.</di
   <p class="small muted bjfoot" id="rlFoot"></p><div id="rlLB"></div></div>`}
 function rlLiveHtml(){const ids=Object.keys(S.prefs).filter(id=>id!==S.me&&rlIsLive(id)).sort((a,b)=>lvAt(S.prefs[b],"rl",S.prefs[b].rlSeq)-lvAt(S.prefs[a],"rl",S.prefs[a].rlSeq));
   return `<section class="card bjlive"><h3>Live tables</h3>${ids.length?`<div class="livelist">${ids.map(id=>`<button type="button" class="livechip${S.rlWatch===id?" on":""}" data-rlwatch="${esc(id)}">${pic(id)}<span><span class="eyebrow"><span class="livedot"></span>Live</span><b>${esc(nm(id))}</b></span><span class="watchtxt">Watch</span></button>`).join("")}</div>`:`<p class="small muted">Nobody else is spinning right now. Anyone who spun in the last 3 minutes shows up here.</p>`}</section>`}
-function rlRefresh(){const st=rlState(),who=rlWho(),watching=who!==S.me,q=S.prefs[who]||{};
+/* redraw a game's ability strip in place (counters like King Slop's respins change without a full render) */
+function actRefresh(game,sel){const w=$(sel);if(!w)return;const el=w.querySelector(":scope>.actbar"),x=actBar(game);if(el){if(!x)el.remove();else if(el.outerHTML!==x)el.outerHTML=x}else if(x)w.insertAdjacentHTML("afterbegin",x)}
+function rlRefresh(){const st=rlState(),who=rlWho(),watching=who!==S.me,q=S.prefs[who]||{};if(!watching)actRefresh("rl",".rlwrap");
   /* no spoilers: yours waits for the ball (myBalShow); someone you're watching keeps the old number until their ball lands */const b=$("#rlBal");if(b&&!(watching&&st.spinning))b.textContent=(watching?Math.round(ledger().balOf(who)):myBalShow()).toLocaleString()+" BB";
   /* watching: animate their new spins as they come in */
   if(watching){const L=q.rlLast;if(L&&Number(L.at)>(S._rlSeenAt||0)){const first=S._rlSeenAt==null;S._rlSeenAt=Number(L.at);if(!first&&!st.spinning)rlAnimate(L.n,L.delta,(Number(L.at)>>>3))}}
@@ -6670,6 +6672,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:142,d:"Oct 27",t:[["🎡","Fixed: King Slop's respin counter on the roulette page now counts down as you use them"]]},
  {v:141,d:"Oct 26",t:[["⚡","Tournament blackjack responds instantly now"],["🃏","Tournament blackjack now plays exactly like the normal table: 2-deck shoe, splits, shuffles and all"],["🏆","Blackjack Tournament winner now also keeps whatever their stack finishes over 5,000 (finish at 6,000 and win = pot + 1,000 BB)"]]},
  {v:140,d:"Oct 26",t:[["♠️","Tournament blackjack now deals and flips cards like the real table, with chips and Add/Remove betting"]]},
  {v:139,d:"Oct 26",t:[["⚡","Every card ability now shows on the games it works in (Slots, roulette, High-Low, Flappy and more)"],["🔒","Ability cards that only turn on at Level 2 now show up greyed out, so you know to craft them"]]},
