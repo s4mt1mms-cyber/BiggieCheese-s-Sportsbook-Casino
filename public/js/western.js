@@ -677,7 +677,18 @@ body.wwon{overflow:hidden}
   }
 
   /* ---------------- player ---------------- */
-  function spawnPlayer() { G.p = { x: -52, y: 0, z: 0, vy: 0, ground: true }; G.yaw = -Math.PI / 2; G.pitch = 0; G.ammo = 6; G.reloading = 0; G.aimToggle = false; G.aimHeld = false; }
+  /* spawn points all over town [x, z, facing]; pickSpawn(others) = never within 15 m of anyone or in their line of sight,
+     farthest from everyone (with a little randomness), never the same spot twice in a row (PvP will pass the other players in) */
+  const SPAWNS = [[-56, 0, -Math.PI / 2], [-56, -4, -Math.PI / 2], [48, 0, Math.PI / 2], [46, 4, Math.PI / 2], [-40, -14, Math.PI], [-37.5, 14, 0], [-12.5, -14, Math.PI], [9, -14, Math.PI],
+    [19.5, 14, 0], [5.5, 14, 0], [-46, 22, Math.PI], [-24, 20, 0], [-58, -12, -Math.PI / 2], [-58, 16, -Math.PI / 2], [60, -20, Math.PI / 2], [60, 22, Math.PI / 2], [0, -30, Math.PI], [30, 30, 0], [-30, -32, Math.PI]];
+  function pickSpawn(others) {
+    others = others || []; const sees = (a, b) => { if (!G.cols) return true; const T = THREE, o = new T.Vector3(a[0], 1.6, a[1]), d = new T.Vector3(b[0] - a[0], 0, b[1] - a[1]), L = d.length(); d.normalize();
+      for (const c of G.cols) { if (c.y1 < 1.6 || c.y0 > 1.6) continue; const r = rayBox(o, d, c); if (r && r.t < L) return false; } return true; };
+    let best = null, bs = -1; SPAWNS.forEach((sp, i) => { if (i === G.lastSpawn && SPAWNS.length > 1) return;
+      const dmin = others.length ? Math.min(...others.map(o => Math.hypot(o[0] - sp[0], o[1] - sp[1]))) : 99;
+      if (others.length && (dmin < 15 || others.some(o => sees(o, sp)))) return; const sc = dmin + Math.random() * 12; if (sc > bs) { bs = sc; best = i; } });
+    if (best == null) best = Math.floor(Math.random() * SPAWNS.length); G.lastSpawn = best; return SPAWNS[best]; }
+  function spawnPlayer() { const sp = G.started ? pickSpawn([]) : SPAWNS[0]; G.p = { x: sp[0], y: 0, z: sp[1], vy: 0, ground: true }; G.yaw = sp[2]; G.pitch = 0; G.ammo = 6; G.reloading = 0; G.aimToggle = false; G.aimHeld = false; }
   function groundAt(x, z, feet, r) {
     let g = 0; for (const c of G.cols) { if (c.y1 > feet + .48) continue; if (x + r * .3 < c.x0 || x - r * .3 > c.x1 || z + r * .3 < c.z0 || z - r * .3 > c.z1) continue; if (c.y1 > g) g = c.y1; } return g;
   }
