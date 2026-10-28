@@ -333,7 +333,7 @@ body.wwon{overflow:hidden}
     R.outputEncoding = T.sRGBEncoding; R.toneMapping = T.ACESFilmicToneMapping; R.toneMappingExposure = 1.05;
     const SH = !TOUCH; R.shadowMap.enabled = SH; R.shadowMap.type = T.PCFSoftShadowMap;
     const sc = new T.Scene(), cam = new T.PerspectiveCamera(G.set.fov, gw / gh, .05, 900); sc.add(cam);
-    Object.assign(G, { R, scene: sc, cam, cols: [], shoot: [], dyn: [], decals: [], parts: [], doors: [], bottles: [], weeds: [], fovNow: G.set.fov, adsK: 0 });
+    Object.assign(G, { R, scene: sc, cam, cols: [], ladders: [], shoot: [], dyn: [], decals: [], parts: [], doors: [], bottles: [], weeds: [], fovNow: G.set.fov, adsK: 0 });
     const FOG = new T.Color(0xe9c294); sc.fog = new T.Fog(FOG, 90, 460); sc.background = FOG;
 
     /* ---- textures ---- */
@@ -418,7 +418,7 @@ body.wwon{overflow:hidden}
         lbox(w, h, t, wall, 0, 0, -d + t / 2); lbox(t, h, d, wall, -w / 2 + t / 2, 0, -d / 2); lbox(t, h, d, wall, w / 2 - t / 2, 0, -d / 2);
         lbox(side, h, t, wall, -w / 2 + side / 2, 0, -t / 2); lbox(side, h, t, wall, w / 2 - side / 2, 0, -t / 2); lbox(dw, h - 2.9, t, wall, 0, 2.9, -t / 2);
         lbox(w - .1, fl, d - .1, wood("floor", "#6a4528"), 0, 0, -d / 2, true, "wood");
-        const ceil = put(box(w, .15, d), wood("ceil", "#3d2817"), 0, h - .08, -d / 2, 0, grp); /* ceiling */
+        lbox(w, .15, d, wood("ceil", "#3d2817"), 0, h - .15, -d / 2, true); /* ceiling = the roof you can stand on */
         /* inside walls a bit darker so the room reads as shade */
         const inW = M({ map: plank(o.inCol || "#5a3a22", [1, 1]), color: 0x9a8a7a });
         [[w - .5, h - fl, .02, 0, -d + t + .02], [.02, h - fl, d - .5, -w / 2 + t + .02, -d / 2], [.02, h - fl, d - .5, w / 2 - t - .02, -d / 2]].forEach(([a, b, c, lx, lz]) => put(box(a, b, c), inW, lx, fl + b / 2, lz, 0, grp, { ns: 1 }));
@@ -445,6 +445,12 @@ body.wwon{overflow:hidden}
       const pd = 2.6; lbox(w, .3, pd, MT.deck, 0, 0, pd / 2, true, "wood");
       if (!o.noRoof) { const np = Math.max(2, Math.round(w / 4)); for (let i = 0; i < np; i++) { const lx = -w / 2 + .25 + i * (w - .5) / (np - 1); lbox(.22, 3.0, .22, MT.post, lx, .3, pd - .15, true); }
         const pr = put(box(w + .4, .14, pd + .4), MT.roof, 0, 3.35, pd / 2, 0, grp); pr.rotation.x = .08; pr.updateMatrixWorld(true); }
+      put(box(w - .05, .05, d - .05), MT.roof, 0, h + .025, -d / 2, 0, grp);
+      /* ladder up the back wall to the roof (high ground) */
+      if (o.ladder) { const lx = (w / 2 - 1.3) * (o.ladder < 0 ? -1 : 1), top = h + .9, lz = -d - .12;
+        [-.28, .28].forEach(sx => put(box(.07, top, .07), MT.post, lx + sx, top / 2, lz, 0, grp));
+        for (let y = .3; y < top; y += .32) put(box(.6, .05, .05), MT.post, lx, y, lz, 0, grp);
+        const a = L(lx - .45, lz - .75), b = L(lx + .45, lz + .12); G.ladders.push({ x0: Math.min(a[0], b[0]), x1: Math.max(a[0], b[0]), z0: Math.min(a[1], b[1]), z1: Math.max(a[1], b[1]), top: h + .08 }); }
       if (o.extra) o.extra(grp, lbox, L);
       return grp;
     }
@@ -476,21 +482,21 @@ body.wwon{overflow:hidden}
 
     const ZN = -9.6, ZS = 9.6;
     const north = [
-      { x: -46, w: 10, d: 10, h: 4.6, name: "GENERAL STORE", col: "#a8865c", sbg: "#2a3a1c" },
+      { x: -46, w: 10, d: 10, h: 4.6, ladder: 1, name: "GENERAL STORE", col: "#a8865c", sbg: "#2a3a1c" },
       { x: -34.5, w: 9, d: 10, h: 5, name: "BANK", col: "#7a3b28", brick: 1, sbg: "#1a1a2a", sfg: "#e8c86a" },
       { x: -21, w: 14, d: 14, h: 7.6, name: "THE RUSTY SPUR", col: "#8a5a34", enter: 1, balcony: 1, hf: 9.6, sbg: "#5a1a10", interior: saloonInside("RUSTY SPUR") },
-      { x: -8, w: 8, d: 9, h: 4.4, name: "SHERIFF", col: "#6e7884", sbg: "#2a2a2a", sfg: "#f3d38a" },
-      { x: 3, w: 10, d: 11, h: 7.4, name: "GRAND HOTEL", col: "#6f8a6a", balcony: 1, sbg: "#1d3320" },
+      { x: -8, w: 8, d: 9, h: 4.4, ladder: -1, name: "SHERIFF", col: "#6e7884", sbg: "#2a2a2a", sfg: "#f3d38a" },
+      { x: 3, w: 10, d: 11, h: 7.4, ladder: 1, name: "GRAND HOTEL", col: "#6f8a6a", balcony: 1, sbg: "#1d3320" },
       { x: 14.5, w: 9, d: 9, h: 4.5, name: "BARBER", col: "#b3a48a", sbg: "#5a1a1a" },
-      { x: 27, w: 12, d: 11, h: 5, name: "BLACKSMITH", col: "#5e4a3a", sbg: "#1a1410" },
+      { x: 27, w: 12, d: 11, h: 5, ladder: -1, name: "BLACKSMITH", col: "#5e4a3a", sbg: "#1a1410" },
       { x: 42, w: 10, d: 10, h: 4.8, name: "UNDERTAKER", col: "#4a4040", sbg: "#101010", sfg: "#cfc6b8" }];
     const south = [
       { x: -45, w: 11, d: 12, h: 6, name: "LIVERY STABLE", col: "#8a2a20", sbg: "#3a1408", noRoof: 1 },
-      { x: -31, w: 10, d: 10, h: 4.6, name: "POST OFFICE", col: "#8f9aa0", sbg: "#1a2a3a" },
+      { x: -31, w: 10, d: 10, h: 4.6, ladder: 1, name: "POST OFFICE", col: "#8f9aa0", sbg: "#1a2a3a" },
       { x: -17, w: 8, d: 9, h: 4.4, name: "ASSAY OFFICE", col: "#b08a56", sbg: "#3a2414" },
-      { x: -3, w: 14, d: 14, h: 7.6, name: "GOLDEN NUGGET", col: "#9a6a2a", enter: 1, balcony: 1, hf: 9.8, sbg: "#3a2408", sfg: "#ffd24a", inCol: "#4e2e1a", interior: saloonInside("GOLDEN NUGGET") },
+      { x: -3, w: 14, d: 14, h: 7.6, ladder: -1, name: "GOLDEN NUGGET", col: "#9a6a2a", enter: 1, balcony: 1, hf: 9.8, sbg: "#3a2408", sfg: "#ffd24a", inCol: "#4e2e1a", interior: saloonInside("GOLDEN NUGGET") },
       { x: 12, w: 9, d: 10, h: 4.6, name: "DRUGS & SUNDRIES", col: "#a87a6a", sbg: "#2a1a3a" },
-      { x: 25, w: 10, d: 10, h: 4.6, name: "TELEGRAPH", col: "#9a9070", sbg: "#2a2414" },
+      { x: 25, w: 10, d: 10, h: 4.6, ladder: 1, name: "TELEGRAPH", col: "#9a9070", sbg: "#2a2414" },
       { x: 40, w: 12, d: 11, h: 5, name: "JAIL", col: "#7a7064", brick: 1, sbg: "#1a1a1a" }];
     north.forEach(o => building(Object.assign({ zf: ZN, rot: 0 }, o)));
     south.forEach(o => building(Object.assign({ zf: ZS, rot: Math.PI }, o)));
@@ -680,7 +686,7 @@ body.wwon{overflow:hidden}
   /* spawn points all over town [x, z, facing]; pickSpawn(others) = never within 15 m of anyone or in their line of sight,
      farthest from everyone (with a little randomness), never the same spot twice in a row (PvP will pass the other players in) */
   const SPAWNS = [[-56, 0, -Math.PI / 2], [-56, -4, -Math.PI / 2], [48, 0, Math.PI / 2], [46, 4, Math.PI / 2], [-40, -14, Math.PI], [-37.5, 14, 0], [-12.5, -14, Math.PI], [9, -14, Math.PI],
-    [19.5, 14, 0], [5.5, 14, 0], [-46, 22, Math.PI], [-24, 20, 0], [-58, -12, -Math.PI / 2], [-58, 16, -Math.PI / 2], [60, -20, Math.PI / 2], [60, 22, Math.PI / 2], [0, -30, Math.PI], [30, 30, 0], [-30, -32, Math.PI]];
+    [19.5, 14, 0], [5.5, 14, 0], [-54, 27, Math.PI], [-24, 20, 0], [-58, -12, -Math.PI / 2], [-58, 16, -Math.PI / 2], [60, -20, Math.PI / 2], [60, 22, Math.PI / 2], [0, -30, Math.PI], [30, 30, 0], [-30, -32, Math.PI]];
   function pickSpawn(others) {
     others = others || []; const sees = (a, b) => { if (!G.cols) return true; const T = THREE, o = new T.Vector3(a[0], 1.6, a[1]), d = new T.Vector3(b[0] - a[0], 0, b[1] - a[1]), L = d.length(); d.normalize();
       for (const c of G.cols) { if (c.y1 < 1.6 || c.y0 > 1.6) continue; const r = rayBox(o, d, c); if (r && r.t < L) return false; } return true; };
@@ -711,6 +717,12 @@ body.wwon{overflow:hidden}
     const vx = (-sy * fz + cy * fx) * sp, vz = (-cy * fz - sy * fx) * sp;
     p.vx = (p.vx || 0) + (vx - (p.vx || 0)) * Math.min(1, dt * 12); p.vz = (p.vz || 0) + (vz - (p.vz || 0)) * Math.min(1, dt * 12);
     p.x += p.vx * dt; p.z += p.vz * dt; collide(p, .32);
+    const lad = (G.ladders || []).find(l => p.x > l.x0 && p.x < l.x1 && p.z > l.z0 && p.z < l.z1 && p.y < l.top);
+    if (lad && (fz > .2 || (G.onLad && fz < -.2))) {
+      const prev = p.y; p.y = Math.max(0, Math.min(lad.top, p.y + (fz > 0 ? 2.8 : -2.8) * dt)); p.vy = 0; p.ground = false; G.onLad = true;
+      if (Math.floor(prev / .32) !== Math.floor(p.y / .32)) SFX.step(true); G.jumpQ = false; G.moving = 0; return;
+    }
+    G.onLad = !!lad && G.onLad;
     const g = groundAt(p.x, p.z, p.y, .32);
     if (G.jumpQ && p.ground) { p.vy = 5.2; p.ground = false; } G.jumpQ = false;
     p.vy -= 16 * dt; p.y += p.vy * dt; if (p.y <= g) { if (!p.ground && p.vy < -4) SFX.step(g > .1); p.y = g; p.vy = 0; p.ground = true; } else if (p.y > g + .05) p.ground = false;
@@ -808,5 +820,5 @@ body.wwon{overflow:hidden}
   }
   /* practice bottles on the fence between runs */
   function chalPractice() { if (!G || !G.chal || G.chal.on) return; G.bottles.filter(b => b.kind === "prac" && b.alive).forEach(b => { b.alive = false; b.g.parent && b.g.parent.remove(b.g); }); G.chal.spots.slice(0, 6).forEach(s => spawnBottle(s, "prac")); }
-  window.WW = { open, close, _g: () => G };
+  window.WW = { open, close, _g: () => G, spawns: SPAWNS };
 })();
