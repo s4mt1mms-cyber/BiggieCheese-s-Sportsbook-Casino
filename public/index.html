@@ -2753,6 +2753,8 @@ function emPrevBuild(cv,id){const T=THREE,E=EM_BY[id]||SK_PREV[id];const R=new T
 window.WWAPI={loadThree:()=>rrLoad(),rrChairParts:(...a)=>rrChairParts(...a),prefs:()=>S.prefs,me:()=>S.me,nm:id=>nm(id),
   myBest:()=>{const q=S.prefs[S.me]||{};return q.wwBest&&Number(q.wwBest.t)||0},
   saveBest:t=>{if(!S.me||S.readOnly)return;const v={t:Math.round(t),at:Date.now()},q=S.prefs[S.me]=S.prefs[S.me]||{};q.wwBest=v;return db.doc("prefs/"+S.me).update({wwBest:v}).catch(()=>{})},
+  stats:()=>{const q=S.prefs[S.me]||{};return q.wwStats||{}},
+  saveStats:o=>{if(!S.me||S.readOnly)return;const q=S.prefs[S.me]=S.prefs[S.me]||{};q.wwStats=o;return db.doc("prefs/"+S.me).update({wwStats:o}).catch(()=>{})},
   closed:()=>{try{render()}catch(_){}}};
 function wwOpen(){if(!S.me)return toast("Sign in to play.");if(!S.canEdit)return;/* admin-only while the owner tests it (Oct 28) */if(S.tab==="rr"||S.tab==="th"){S.tab="home";render()}
   const go=()=>{try{window.WW.open()}catch(e){console.error(e);toast("Couldn't start the game.")}};if(window.WW)return go();

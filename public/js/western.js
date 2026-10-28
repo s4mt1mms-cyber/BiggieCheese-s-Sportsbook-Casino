@@ -47,7 +47,7 @@ body.wwon{overflow:hidden}
 .wwtip.on{opacity:1}
 .wwbtn{position:absolute;pointer-events:auto;border-radius:50%;border:2px solid rgba(255,230,170,.55);background:rgba(30,18,8,.42);color:#ffe9b8;font:800 13px Barlow;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1}
 .wwbtn.on{background:rgba(245,197,66,.45);border-color:#ffd76a}
-#wwPause{position:absolute;pointer-events:auto;top:max(10px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));width:44px;height:44px;border-radius:12px;border:2px solid rgba(255,230,170,.5);background:rgba(30,18,8,.5);color:#fff;font:800 16px Barlow}
+#wwPause{position:absolute;pointer-events:auto;top:max(10px,env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right));width:44px;height:44px;border-radius:12px;border:2px solid rgba(255,230,170,.5);background:rgba(30,18,8,.5);color:#fff;font:800 16px Barlow}
 .wwstick{position:absolute;width:120px;height:120px;margin:-60px 0 0 -60px;border-radius:50%;border:2px solid rgba(255,255,255,.35);background:rgba(0,0,0,.18);display:none}
 .wwstick i{position:absolute;left:50%;top:50%;width:52px;height:52px;margin:-26px 0 0 -26px;border-radius:50%;background:rgba(255,230,170,.5)}
 .wwflash{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 55%,rgba(160,0,0,.55));opacity:0;transition:opacity .4s}
@@ -69,6 +69,22 @@ body.wwon{overflow:hidden}
 .wwlb{margin:10px auto 0;max-width:340px;text-align:left;font:600 14px Barlow;color:#f3e2c4}
 .wwlb div{display:flex;justify-content:space-between;padding:3px 6px;border-bottom:1px dashed rgba(200,150,62,.35)}
 .wwlb div.me{color:#ffd76a}
+.wwfeed{position:absolute;top:max(10px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));width:min(46%,340px);display:flex;flex-direction:column;gap:4px;pointer-events:none}
+.wwfeed div{background:rgba(10,6,2,.55);border-left:3px solid #ffd76a;border-radius:6px;padding:4px 9px;font:700 13px Barlow;color:#fff;text-shadow:0 1px 2px #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:transform .35s,opacity .35s,max-height .35s,margin .35s,padding .35s;max-height:30px}
+.wwfeed div b{color:#ffd76a}.wwfeed div .hs{color:#ff6b5a}.wwfeed div.me{border-left-color:#5cff72}
+.wwfeed div.out{opacity:0;transform:translateY(-14px);max-height:0;padding-top:0;padding-bottom:0;margin-top:-4px}
+.wwtr{position:absolute;top:max(10px,env(safe-area-inset-top));right:calc(max(12px,env(safe-area-inset-right)) + 54px);display:flex;gap:6px;pointer-events:none}
+.wwtr .wwchip{padding:6px 10px;font-size:13px}.wwlive i{display:inline-block;width:8px;height:8px;border-radius:50%;background:#ff3b30;margin-right:5px;box-shadow:0 0 6px #ff3b30;animation:wwpulse 1.4s infinite}
+@keyframes wwpulse{50%{opacity:.35}}
+.wwbb.up b{color:#5cff72}.wwbb.dn b{color:#ff6b5a}
+.wwmm{display:grid;gap:9px;max-width:330px;margin:14px auto 0}
+.wwmm button{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left}
+.wwmm button small{font:600 12px Barlow;opacity:.8}
+.wwmm button.soon{opacity:.7}
+.wwst{width:100%;border-collapse:collapse;margin-top:8px;font:600 14px Barlow;color:#f3e2c4}
+.wwst th{font:800 12px Barlow;letter-spacing:.08em;color:#ffd76a;text-align:right;padding:4px 6px}.wwst th:first-child{text-align:left}
+.wwst td{padding:5px 6px;border-bottom:1px dashed rgba(200,150,62,.3);text-align:right}.wwst td:first-child{text-align:left;color:#e8d4a8}
+.wwst .pos{color:#5cff72}.wwst .neg{color:#ff6b5a}
 .wwkeys{font:600 12.5px Barlow;color:#d9c39a;margin-top:8px}
 .wwload{font:600 15px Barlow;color:#ffe9b8;margin-top:10px}
 `;
@@ -84,7 +100,8 @@ body.wwon{overflow:hidden}
     ov.innerHTML = `<div id="wwRot"><canvas id="wwCv"></canvas><div class="wwhud" id="wwHud"></div><div id="wwUi"></div></div>`;
     document.body.appendChild(ov); document.body.classList.add("wwon");
     G = { ov, rot: ov.querySelector("#wwRot"), cv: ov.querySelector("#wwCv"), hud: ov.querySelector("#wwHud"), ui: ov.querySelector("#wwUi"),
-      state: "menu", set: SET(), keys: {}, touches: {}, raf: 0, ready: false, t: 0, chalPractice: () => chalPractice() };
+      state: "menu", set: SET(), keys: {}, touches: {}, raf: 0, ready: false, t: 0, chalPractice: () => chalPractice(),
+      ses: { kills: 0, deaths: 0, bb: 0, matches: 0, shots: 0, hits: 0, bottles: 0, time: 0, best: 0 }, sesD: {}, server: { up: false, n: 0 } };
     layout(); window.addEventListener("resize", layout); window.addEventListener("orientationchange", () => setTimeout(layout, 250));
     if (window.visualViewport) visualViewport.addEventListener("resize", layout);
     bindInput();
@@ -108,7 +125,7 @@ body.wwon{overflow:hidden}
     try { if (document.pointerLockElement) document.exitPointerLock(); } catch (_) {}
     try { if (document.fullscreenElement) document.exitFullscreen(); } catch (_) {}
     try { if (G.ac) G.ac.close(); } catch (_) {}
-    unbindInput();
+    saveStats(); unbindInput();
     window.removeEventListener("resize", layout); window.removeEventListener("popstate", onPop); document.removeEventListener("visibilitychange", onVis);
     if (window.visualViewport) visualViewport.removeEventListener("resize", layout);
     if (G.R) { G.scene.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) [].concat(o.material).forEach(m => { if (m.map) m.map.dispose(); m.dispose() }) }); G.R.dispose(); try { G.R.forceContextLoss() } catch (_) {} }
@@ -142,14 +159,40 @@ body.wwon{overflow:hidden}
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   function keysHtml() { return TOUCH ? `<div class="wwkeys">Left thumb: walk · Right thumb: look · FIRE · AIM to aim down the sights · ⏸ to pause</div>`
     : `<div class="wwkeys">WASD move · Mouse look · Click shoot · Right-click aim · R reload · Space jump · Shift run · Esc pause</div>`; }
+  /* main menu: Join game (the live server; opens with PvP), Free roam, Settings, Stats, Back to casino */
   function showMenu(loading) {
-    G.state = "menu";
+    G.state = "menu"; G.mode = null;
+    const live = G.server && G.server.up, n = live ? G.server.n || 0 : 0;
     G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard"><h1>Biggie Gulch</h1>
-      <p>An old western town. Walk the street, push through the saloon doors, ring the church bell. Beat the clock in the <b>bottle challenge</b> behind the livery stable.</p>
-      <p style="opacity:.75">Free roam for now · PvP shootouts are coming</p>
-      <h2 style="font-size:19px;margin-top:10px">Bottle challenge · best times</h2>${lbHtml()}
-      ${loading ? `<div class="wwload">Saddling up…</div>` : `<div class="wwrow"><button class="pri" data-ww="play">Ride in</button><button data-ww="settings">Settings</button><button class="dang" data-ww="exit">Back to casino</button></div>`}
+      <p style="opacity:.8;margin-bottom:0">An old western town. Shootouts for BiggieBucks.</p>
+      ${loading ? `<div class="wwload">Saddling up…</div>` : `<div class="wwmm">
+        <button class="pri${live ? "" : " soon"}" data-ww="join"><span>🔫 Join game</span><small>${live ? `● ${n} in match` : "Live server opening soon"}</small></button>
+        <button data-ww="play"><span>🌵 Free roam</span><small>Solo · bottle challenge</small></button>
+        <button data-ww="settings"><span>⚙️ Settings</span><small>Sensitivity, aim, FOV</small></button>
+        <button data-ww="stats"><span>📊 Stats</span><small>All time · this session</small></button>
+        <button class="dang" data-ww="exit"><span>🎰 Back to casino</span><small></small></button></div>`}
       ${keysHtml()}</div></div>`;
+  }
+  /* stats: this session (since you opened Biggie Gulch) and all time (prefs.wwStats + what this session hasn't saved yet) */
+  const ST_KEYS = [["kills", "Kills"], ["deaths", "Deaths"], ["kd", "K/D"], ["bb", "BB won / lost"], ["matches", "Matches"], ["shots", "Shots fired"], ["acc", "Accuracy"], ["bottles", "Bottles broken"], ["best", "Best bottle time"], ["time", "Time played"]];
+  function stFmt(k, o) {
+    if (k === "kd") return o.deaths ? (o.kills / o.deaths).toFixed(2) : (o.kills || 0).toFixed(2);
+    if (k === "acc") return o.shots ? Math.round(o.hits / o.shots * 100) + "%" : "–";
+    if (k === "bb") { const v = Math.round(o.bb || 0); return `<span class="${v > 0 ? "pos" : v < 0 ? "neg" : ""}">${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v).toLocaleString()}</span>`; }
+    if (k === "best") return o.best ? (o.best / 1000).toFixed(2) + "s" : "–";
+    if (k === "time") { const m = Math.floor((o.time || 0) / 60); return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`; }
+    return Math.round(o[k] || 0).toLocaleString();
+  }
+  function allTime() { const b = (API().stats && API().stats()) || {}, d = G.sesD, o = {};
+    ["kills", "deaths", "bb", "matches", "shots", "hits", "bottles", "time"].forEach(k => o[k] = (Number(b[k]) || 0) + (d[k] || 0));
+    o.best = (API().myBest && API().myBest()) || 0; return o; }
+  function showStats() {
+    const from = G.state; G.state = "stats"; G.statsFrom = from === "stats" ? G.statsFrom : from;
+    const ses = Object.assign({}, G.ses, { best: G.ses.best || 0 }), all = allTime();
+    G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard"><h2>Stats</h2><table class="wwst"><tr><th></th><th>This session</th><th>All time</th></tr>
+      ${ST_KEYS.map(([k, n]) => `<tr><td>${n}</td><td>${stFmt(k, ses)}</td><td>${stFmt(k, all)}</td></tr>`).join("")}</table>
+      <p style="opacity:.7;font-size:12.5px">Kills, deaths and BB start counting when the live server opens.</p>
+      <div class="wwrow"><button class="pri" data-ww="statsdone">Done</button></div></div></div>`;
   }
   function pause() {
     if (!G || G.state !== "play") return;
@@ -157,7 +200,9 @@ body.wwon{overflow:hidden}
     try { if (document.pointerLockElement) document.exitPointerLock(); } catch (_) {}
     G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard"><h2>Paused</h2>
       <div class="wwrow"><button class="pri" data-ww="resume">Resume</button><button data-ww="settings">Settings</button></div>
-      <div class="wwrow"><button data-ww="respawn">Back to the street</button><button class="dang" data-ww="exit">Exit to casino</button></div>${keysHtml()}</div></div>`;
+      <div class="wwrow"><button data-ww="stats">Stats</button><button data-ww="respawn">Back to the street</button></div>
+      <div class="wwrow"><button data-ww="menu">Main menu</button><button class="dang" data-ww="exit">Exit to casino</button></div>${keysHtml()}</div></div>`;
+    saveStats();
   }
   function showSettings() {
     const s = G.set, from = G.state;
@@ -184,6 +229,7 @@ body.wwon{overflow:hidden}
     if (!TOUCH) { try { G.cv.requestPointerLock(); } catch (_) {} }
     try { const el = document.documentElement; if (!document.fullscreenElement && el.requestFullscreen) el.requestFullscreen({ navigationUI: "hide" }).then(() => { try { screen.orientation && screen.orientation.lock && screen.orientation.lock("landscape").catch(() => {}) } catch (_) {} }).catch(() => {}); } catch (_) {}
     if (!G.started) { G.started = true; banner("Biggie Gulch", "Population: you"); }
+    G.mode = G.mode || "roam"; setLive(1); setBB(G.ses.bb);
     placeButtons();
   }
 
@@ -197,6 +243,10 @@ body.wwon{overflow:hidden}
       else if (a === "setdone") { const f = G.setFrom; if (f === "menu") showMenu(false); else { G.state = "play"; pause(); } }
       else if (a === "setreset") { G.set = Object.assign({}, SET0); LSset("ww-set", G.set); showSettings(); if (G.master) G.master.gain.value = G.set.sound * .9; }
       else if (a === "exit") close();
+      else if (a === "join") { if (G.server && G.server.up) joinGame(); else { const b2 = G.ui.querySelector("[data-ww=join] small"); if (b2) b2.textContent = "Not open yet · try Free roam"; } }
+      else if (a === "stats") showStats();
+      else if (a === "statsdone") { if (G.statsFrom === "menu") showMenu(false); else { G.state = "play"; pause(); } }
+      else if (a === "menu") { saveStats(); showMenu(false); }
       else if (a === "respawn") { spawnPlayer(); play(); }
     };
     H_.input = e => { const t = e.target.closest("[data-wwset]"); if (!t || !G) return; setVal(t.dataset.wwset, t.type === "checkbox" ? t.checked : t.value); };
@@ -273,6 +323,8 @@ body.wwon{overflow:hidden}
       G.hud.insertAdjacentHTML("beforeend", `<button id="wwPause" aria-label="Pause">❚❚</button>
         <div class="wwx" id="wwX"><i></i><i></i><i></i><i></i></div><div class="wwdot" id="wwDot"></div><div class="wwhit" id="wwHit"><i style="transform:rotate(45deg)"></i><i style="transform:rotate(135deg)"></i><i style="transform:rotate(225deg)"></i><i style="transform:rotate(315deg)"></i></div>
         <div class="wwtop"><span class="wwchip" id="wwChal" style="display:none"></span></div>
+        <div class="wwfeed" id="wwFeed"></div>
+        <div class="wwtr"><span class="wwchip wwlive" id="wwLive"><i></i><b>1</b> live</span><span class="wwchip wwbb" id="wwBB"><b>+0</b> BB</span></div>
         <div class="wwammo" id="wwAmmo"></div><div class="wwmsg" id="wwMsg"></div><div class="wwtip" id="wwTip"></div>
         <div class="wwstick" id="wwStick"><i></i></div>
         ${TOUCH ? `<div class="wwbtn" data-b="fire" id="wwBF">FIRE</div><div class="wwbtn" data-b="aim" id="wwBA">AIM</div><div class="wwbtn" data-b="reload" id="wwBR">↻</div><div class="wwbtn" data-b="jump" id="wwBJ">JUMP</div>` : ""}`);
@@ -669,6 +721,7 @@ body.wwon{overflow:hidden}
   function chalDone() {
     const C = G.chal, t = performance.now() - C.t0; C.on = false; SFX.ding();
     const best = !C.best || t < C.best; banner((t / 1000).toFixed(2) + "s", best ? "New best time!" : `Your best: ${(C.best / 1000).toFixed(2)}s`);
+    if (!G.ses.best || t < G.ses.best) G.ses.best = Math.round(t);
     if (best) { C.best = t; try { API().saveBest && API().saveBest(Math.round(t)); } catch (_) {} setTimeout(drawLB, 1500); }
     setTimeout(() => G && G.chalPractice(), 2500);
   }
@@ -736,7 +789,7 @@ body.wwon{overflow:hidden}
   function fire() {
     if (G.state !== "play") return; const now = performance.now();
     if (G.reloading) return; if (now - G.lastShot < 260) return; if (G.ammo <= 0) { SFX.click(); reload(); return; }
-    G.lastShot = now; G.ammo--; drawAmmo(); G.recoil = 1; G.flashT = .05; SFX.shot();
+    G.lastShot = now; G.ammo--; drawAmmo(); G.recoil = 1; G.flashT = .05; SFX.shot(); sesAdd("shots", 1);
     const T = THREE, cam = G.cam, dir = new T.Vector3(0, 0, -1).applyQuaternion(cam.quaternion);
     const spread = G.adsK > .5 ? .0015 : (.006 + Math.min(1, G.moving / 6) * .02 + (G.p.ground ? 0 : .03));
     dir.x += (Math.random() - .5) * spread; dir.y += (Math.random() - .5) * spread; dir.z += (Math.random() - .5) * spread; dir.normalize();
@@ -748,7 +801,8 @@ body.wwon{overflow:hidden}
     for (const c of G.cols) { const r = rayBox(o, dir, c); if (r && r.t < best.t) best = { t: r.t, kind: "wall", c, n: r.n }; }
     if (dir.y < 0) { const t = -o.y / dir.y; if (t < best.t) best = { t, kind: "ground", n: new T.Vector3(0, 1, 0) }; }
     const hp = o.clone().addScaledVector(dir, best.t);
-    if (best.kind === "bottle") { breakBottle(best.b, dir); hitMark(); }
+    if (["bottle", "bell", "gong", "weed"].includes(best.kind)) sesAdd("hits", 1);
+    if (best.kind === "bottle") { breakBottle(best.b, dir); hitMark(); sesAdd("bottles", 1); }
     else if (best.kind === "bell") { SFX.bell(); G.bell.v += 3; hitMark(); }
     else if (best.kind === "gong") { SFX.metal(); G.gong.v += 4; hitMark(); chalStart(); }
     else if (best.kind === "weed") { best.w.vy = 4; best.w.vx *= -1.2; puff(hp, .6); hitMark(); }
@@ -770,13 +824,34 @@ body.wwon{overflow:hidden}
   let bannerT = 0;
   function banner(a, b) { const m = G.hud.querySelector("#wwMsg"); if (!m) return; m.innerHTML = esc(a) + (b ? `<small>${esc(b)}</small>` : ""); m.classList.add("on"); clearTimeout(bannerT); bannerT = setTimeout(() => m.classList.remove("on"), 2600); }
 
+  /* ---------------- HUD: kill feed (max 4 lines, oldest slides up and fades), live count, BB up/down ---------------- */
+  function feed(html, mine) {
+    const f = G && G.hud.querySelector("#wwFeed"); if (!f) return; const d = document.createElement("div"); d.innerHTML = html; if (mine) d.className = "me"; f.appendChild(d);
+    const drop = el => { if (!el || el.classList.contains("out")) return; el.classList.add("out"); setTimeout(() => el.remove(), 380); };
+    const live = [...f.children].filter(x => !x.classList.contains("out")); if (live.length > 4) drop(live[0]);
+    setTimeout(() => drop(d), 6500);
+  }
+  /* PvP will call this for every kill: killer/victim names, headshot flag, BB moved */
+  function killFeed(killer, victim, hs, bb, mine) { feed(`<b>${esc(killer)}</b> 🔫 ${esc(victim)}${hs ? ` <span class="hs">✸ headshot</span>` : ""}${bb ? ` · ${Math.round(bb).toLocaleString()} BB` : ""}`, mine); }
+  function setLive(n) { const e = G && G.hud.querySelector("#wwLive b"); if (e) e.textContent = n; }
+  function setBB(v) { const e = G && G.hud.querySelector("#wwBB"); if (!e) return; v = Math.round(v || 0); e.className = "wwchip wwbb" + (v > 0 ? " up" : v < 0 ? " dn" : ""); e.innerHTML = `<b>${v > 0 ? "+" : v < 0 ? "−" : "+"}${Math.abs(v).toLocaleString()}</b> BB`; }
+  function sesAdd(k, v) { G.ses[k] = (G.ses[k] || 0) + v; G.sesD[k] = (G.sesD[k] || 0) + v; if (k === "bb") setBB(G.ses.bb); }
+  /* all-time stats: prefs.wwStats, written in one small update on pause / menu / exit / every minute (only what changed) */
+  function saveStats() {
+    if (!G || !G.sesD) return; const d = G.sesD; if (!Object.keys(d).some(k => d[k])) return;
+    const b = (API().stats && API().stats()) || {}, o = Object.assign({}, b);
+    for (const k in d) o[k] = Math.round(((Number(b[k]) || 0) + d[k]) * 100) / 100;
+    G.sesD = {}; try { API().saveStats && API().saveStats(o); } catch (_) {}
+  }
+  function joinGame() { /* the live match server arrives with PvP */ }
+
   /* ---------------- loop ---------------- */
   function loop(now) {
     if (!G) return; G.raf = requestAnimationFrame(loop);
     const dt = Math.min(.05, (now - G.last) / 1000); G.last = now; G.t += dt;
     const T = THREE, cam = G.cam, play = G.state === "play";
     if (play) {
-      stepPlayer(dt);
+      stepPlayer(dt); G.ses.time += dt; G.sesD.time = (G.sesD.time || 0) + dt; if (G.t - (G.lastSave || 0) > 60) { G.lastSave = G.t; saveStats(); }
       if (G.fireHeld && TOUCH === false) { /* revolver: one shot per click */ }
       if (G.reloading) { G.reloading -= dt; if (G.reloading <= 0) { G.reloading = 0; G.ammo = 6; drawAmmo(); } }
     }
@@ -820,5 +895,5 @@ body.wwon{overflow:hidden}
   }
   /* practice bottles on the fence between runs */
   function chalPractice() { if (!G || !G.chal || G.chal.on) return; G.bottles.filter(b => b.kind === "prac" && b.alive).forEach(b => { b.alive = false; b.g.parent && b.g.parent.remove(b.g); }); G.chal.spots.slice(0, 6).forEach(s => spawnBottle(s, "prac")); }
-  window.WW = { open, close, _g: () => G, spawns: SPAWNS };
+  window.WW = { open, close, _g: () => G, spawns: SPAWNS, killFeed: (...a) => G && killFeed(...a), setLive: n => G && setLive(n) };
 })();
