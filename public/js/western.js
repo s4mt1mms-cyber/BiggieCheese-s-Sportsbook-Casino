@@ -11,8 +11,16 @@
   let G = null;
 
   /* ---------------- settings ---------------- */
-  const SET0 = { sens: 1, ads: 0.6, invert: false, fov: 75, sound: 1 };
-  const SET = () => Object.assign({}, SET0, LS("ww-set", {}));
+  /* control mapping: computer actions → key codes or "Mouse0/1/2…"; phone: drag the buttons anywhere (pos = fractions of the screen), size, left-handed, AIM tap or hold */
+  const ACTS = [["fwd", "Move forward", "KeyW"], ["back", "Move back", "KeyS"], ["left", "Move left", "KeyA"], ["right", "Move right", "KeyD"], ["fire", "Fire", "Mouse0"], ["aim", "Aim down sights", "Mouse2"],
+    ["reload", "Reload", "KeyR"], ["jump", "Jump", "Space"], ["run", "Run", "ShiftLeft"], ["pause", "Pause", "KeyP"]];
+  const KEYS0 = Object.fromEntries(ACTS.map(a => [a[0], a[2]]));
+  const SET0 = { sens: 1, ads: 0.6, invert: false, fov: 75, sound: 1, keys: KEYS0, btn: 1, lefty: false, aimHold: false, pos: {} };
+  const SET = () => { const s = Object.assign({}, SET0, LS("ww-set", {})); s.keys = Object.assign({}, KEYS0, s.keys || {}); s.pos = s.pos || {}; return s; };
+  const keyName = c => { if (!c) return "–"; if (c.startsWith("Mouse")) return ["Left click", "Middle click", "Right click", "Mouse 4", "Mouse 5"][+c.slice(5)] || "Mouse " + c.slice(5);
+    if (c.startsWith("Key")) return c.slice(3); if (c.startsWith("Digit")) return c.slice(5); if (c.startsWith("Arrow")) return c.slice(5) + " arrow";
+    return { Space: "Space", ShiftLeft: "Left Shift", ShiftRight: "Right Shift", ControlLeft: "Left Ctrl", ControlRight: "Right Ctrl", AltLeft: "Left Alt", AltRight: "Right Alt", Tab: "Tab", Enter: "Enter", CapsLock: "Caps Lock", Backquote: "`" }[c] || c; };
+  const actOf = c => { const k = G.set.keys; for (const a in k) if (k[a] === c) return a; return null; };
 
   /* ---------------- styles ---------------- */
   const CSS = `
@@ -112,6 +120,14 @@ body.wwon{overflow:hidden}
 .wwst th{font:800 12px Barlow;letter-spacing:.08em;color:#ffd76a;text-align:right;padding:4px 6px}.wwst th:first-child{text-align:left}
 .wwst td{padding:5px 6px;border-bottom:1px dashed rgba(200,150,62,.3);text-align:right}.wwst td:first-child{text-align:left;color:#e8d4a8}
 .wwst .pos{color:#5cff72}.wwst .neg{color:#ff6b5a}
+.wwmap{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;margin-top:6px}
+.wwbind{display:flex!important;justify-content:space-between;align-items:center;gap:8px;min-width:0!important;padding:8px 12px!important;font:700 14px Barlow!important;text-align:left}
+.wwbind b{font:800 13px Barlow;color:#ffd76a;background:rgba(0,0,0,.35);border:1px solid rgba(200,150,62,.5);border-radius:6px;padding:3px 8px;white-space:nowrap}
+.wwbind.cap{border-color:#ffd76a!important;box-shadow:0 0 0 2px rgba(255,215,106,.35)}.wwbind.cap b{color:#fff;animation:wwpulse 1s infinite}
+.wwlay{position:absolute;inset:0;background:rgba(10,6,2,.45);pointer-events:none}
+.wwlaybar{position:absolute;left:50%;top:max(12px,env(safe-area-inset-top));transform:translateX(-50%);display:flex;gap:10px;align-items:center;pointer-events:auto;background:rgba(30,18,8,.9);border:2px solid #c8963e;border-radius:12px;padding:8px 10px 8px 14px;font:700 14px Barlow;color:#ffe9b8;white-space:nowrap}
+.wwlaybar button{font:800 14px Barlow;padding:8px 14px;border-radius:10px;border:2px solid #c8963e;background:#5a3418;color:#ffe9b8}.wwlaybar button.pri{background:linear-gradient(#f5c542,#c8901e);color:#2a1606}
+.wwhud.edit .wwbtn{z-index:5;border-style:dashed;border-color:#ffd76a;background:rgba(245,197,66,.25)}.wwhud.edit{z-index:4}
 .wwkeys{font:600 12.5px Barlow;color:#d9c39a;margin-top:8px}
 .wwload{font:600 15px Barlow;color:#ffe9b8;margin-top:10px}
 `;
@@ -127,7 +143,7 @@ body.wwon{overflow:hidden}
     ov.innerHTML = `<div id="wwRot"><canvas id="wwCv"></canvas><div class="wwhud" id="wwHud"></div><div id="wwUi"></div></div>`;
     document.body.appendChild(ov); document.body.classList.add("wwon");
     G = { ov, rot: ov.querySelector("#wwRot"), cv: ov.querySelector("#wwCv"), hud: ov.querySelector("#wwHud"), ui: ov.querySelector("#wwUi"),
-      state: "menu", set: SET(), keys: {}, touches: {}, raf: 0, ready: false, t: 0, chalPractice: () => chalPractice(),
+      state: "menu", set: SET(), keys: {}, act: {}, touches: {}, raf: 0, ready: false, t: 0, chalPractice: () => chalPractice(),
       ses: { kills: 0, deaths: 0, bb: 0, matches: 0, shots: 0, hits: 0, bottles: 0, time: 0, best: 0 }, sesD: {}, server: { up: false, n: 0 } };
     layout(); window.addEventListener("resize", layout); window.addEventListener("orientationchange", () => setTimeout(layout, 250));
     if (window.visualViewport) visualViewport.addEventListener("resize", layout);
@@ -186,7 +202,7 @@ body.wwon{overflow:hidden}
   }
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   function keysHtml() { return TOUCH ? `<div class="wwkeys">Left thumb: walk · Right thumb: look · FIRE · AIM to aim down the sights · ⏸ to pause</div>`
-    : `<div class="wwkeys">WASD move · Mouse look · Click shoot · Right-click aim · R reload · Space jump · Shift run · Esc pause</div>`; }
+    : `<div class="wwkeys">${["fwd", "left", "back", "right"].map(a => keyName(G.set.keys[a])).join("")} move · Mouse look · ${keyName(G.set.keys.fire)} shoot · ${keyName(G.set.keys.aim)} aim · ${keyName(G.set.keys.reload)} reload · ${keyName(G.set.keys.jump)} jump · ${keyName(G.set.keys.run)} run · Esc pause</div>`; }
   /* main menu: Join game (the live server; opens with PvP), Free roam, Settings, Stats, Back to casino */
   const STAR = `<svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="wwSg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe9a8"/><stop offset="1" stop-color="#c8901e"/></linearGradient></defs>
     <path d="M32 3l7.6 15.8 17.4 2.4-12.6 12.2 3 17.2L32 42.4 16.6 50.6l3-17.2L7 21.2l17.4-2.4z" fill="url(#wwSg)" stroke="#5a2e0c" stroke-width="2.2" stroke-linejoin="round"/>
@@ -227,7 +243,7 @@ body.wwon{overflow:hidden}
   }
   function pause() {
     if (!G || G.state !== "play") return;
-    G.state = "pause"; G.fireHeld = false; G.aimHeld = false; G.keys = {}; G.touches = {}; hideSticks();
+    G.state = "pause"; G.fireHeld = false; G.aimHeld = false; G.keys = {}; G.act = {}; G.touches = {}; hideSticks();
     try { if (document.pointerLockElement) document.exitPointerLock(); } catch (_) {}
     G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwpz"><h2>Paused</h2><div class="wwgrid">
       <button class="pri" data-ww="resume">Resume</button><button data-ww="settings">Settings</button>
@@ -245,13 +261,36 @@ body.wwon{overflow:hidden}
       <label>Sound <span class="v" id="wwVv">${Math.round(s.sound * 100)}%</span><input type="range" min="0" max="1" step="0.05" value="${s.sound}" data-wwset="sound"></label>
       <label class="ck">Invert look up/down <input type="checkbox" data-wwset="invert" ${s.invert ? "checked" : ""}></label>
       <p style="text-align:left;opacity:.75;margin:0">Aim-in sensitivity is a multiplier on your look sensitivity while you aim down the sights.</p>
-      </div><div class="wwrow"><button data-ww="setreset">Defaults</button><button class="pri" data-ww="setdone">Done</button></div></div></div>`;
+      </div><div class="wwrow"><button data-ww="controls">Controls</button><button data-ww="setreset">Defaults</button><button class="pri" data-ww="setdone">Done</button></div></div></div>`;
+  }
+  function showControls() {
+    G.state = "settings"; const s = G.set;
+    const pc = `<div class="wwmap">${ACTS.map(([a, n]) => `<button class="wwbind${G.capturing === a ? " cap" : ""}" data-wwbind="${a}"><span>${n}</span><b>${G.capturing === a ? "Press a key…" : esc(keyName(s.keys[a]))}</b></button>`).join("")}</div>
+      <p style="opacity:.7;font-size:12.5px;margin:6px 0 0">Click an action, then press a key or mouse button. Esc cancels. Arrow keys always move too; Esc always pauses.</p>`;
+    const ph = `<div class="wwset">
+      <label>Button size <span class="v" id="wwBv">${Math.round(s.btn * 100)}%</span><input type="range" min="0.7" max="1.5" step="0.05" value="${s.btn}" data-wwset="btn"></label>
+      <label class="ck">Left-handed (fire on the left, walk on the right) <input type="checkbox" data-wwset="lefty" ${s.lefty ? "checked" : ""}></label>
+      <label class="ck">Hold AIM instead of tapping it on/off <input type="checkbox" data-wwset="aimHold" ${s.aimHold ? "checked" : ""}></label></div>
+      <div class="wwrow"><button data-ww="layout">Move buttons</button></div>`;
+    G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwsc"><h2>Controls</h2>${TOUCH ? ph : pc}
+      <div class="wwrow"><button data-ww="ctlreset">Default controls</button><button class="pri" data-ww="ctldone">Done</button></div></div></div>`;
+  }
+  /* phone: drag FIRE / AIM / reload / JUMP anywhere; saved as fractions of the screen so it works on any phone */
+  function showLayout() {
+    G.state = "layout"; G.ui.innerHTML = `<div class="wwlay"><div class="wwlaybar"><span>Drag the buttons where you want them</span><button data-ww="layreset">Reset</button><button class="pri" data-ww="laydone">Done</button></div></div>`;
+    G.hud.classList.add("edit"); placeButtons();
+  }
+  function bindTo(code) {
+    const a = G.capturing; if (!a) return; const k = G.set.keys, old = k[a], other = actOf(code);
+    if (other && other !== a) k[other] = old; /* swap so nothing is left with two actions on one key */
+    k[a] = code; G.capturing = null; G.capJust = performance.now(); LSset("ww-set", G.set); showControls();
   }
   function setVal(k, v) {
     const s = G.set; s[k] = k === "invert" ? !!v : Number(v); LSset("ww-set", s);
-    const lab = { sens: ["#wwSv", x => x.toFixed(2) + "×"], ads: ["#wwAv", x => x.toFixed(2) + "×"], fov: ["#wwFv", x => x + "°"], sound: ["#wwVv", x => Math.round(x * 100) + "%"] }[k];
+    const lab = { btn: ["#wwBv", x => Math.round(x * 100) + "%"], sens: ["#wwSv", x => x.toFixed(2) + "×"], ads: ["#wwAv", x => x.toFixed(2) + "×"], fov: ["#wwFv", x => x + "°"], sound: ["#wwVv", x => Math.round(x * 100) + "%"] }[k];
     if (lab) { const e = G.ui.querySelector(lab[0]); if (e) e.textContent = lab[1](s[k]); }
     if (G.master) G.master.gain.value = s.sound * 0.9;
+    if (k === "btn" || k === "lefty") placeButtons();
   }
   function play() {
     if (!G.ready) return;
@@ -268,11 +307,18 @@ body.wwon{overflow:hidden}
   const H_ = {};
   function bindInput() {
     H_.click = e => {
+      const bb = e.target.closest("[data-wwbind]"); if (bb && G) { if (!G.capturing && performance.now() - (G.capJust || 0) > 400) { G.capturing = bb.dataset.wwbind; showControls(); } return; }
       const b = e.target.closest("[data-ww]"); if (!b || !G) return; const a = b.dataset.ww;
       if (a === "play" || a === "resume") play();
       else if (a === "settings") showSettings();
       else if (a === "setdone") { const f = G.setFrom; if (f === "menu") showMenu(false); else { G.state = "play"; pause(); } }
-      else if (a === "setreset") { G.set = Object.assign({}, SET0); LSset("ww-set", G.set); showSettings(); if (G.master) G.master.gain.value = G.set.sound * .9; }
+      else if (a === "controls") { G.capturing = null; showControls(); }
+      else if (a === "ctldone") { G.capturing = null; showSettings(); }
+      else if (a === "ctlreset") { G.set.keys = Object.assign({}, KEYS0); G.set.btn = 1; G.set.lefty = false; G.set.aimHold = false; G.set.pos = {}; G.capturing = null; LSset("ww-set", G.set); placeButtons(); showControls(); }
+      else if (a === "layout") showLayout();
+      else if (a === "layreset") { G.set.pos = {}; LSset("ww-set", G.set); placeButtons(); }
+      else if (a === "laydone") { G.hud.classList.remove("edit"); LSset("ww-set", G.set); showControls(); }
+      else if (a === "setreset") { G.set = Object.assign({}, SET0, { keys: Object.assign({}, KEYS0), pos: {} }); LSset("ww-set", G.set); placeButtons(); showSettings(); if (G.master) G.master.gain.value = G.set.sound * .9; }
       else if (a === "exit") close();
       else if (a === "join") { if (G.server && G.server.up) joinGame(); else { const b2 = G.ui.querySelector("[data-ww=join] small"); if (b2) b2.textContent = "Not open yet · try Free roam"; } }
       else if (a === "stats") showStats();
@@ -286,21 +332,26 @@ body.wwon{overflow:hidden}
     H_.kd = e => {
       if (!G) return; if (e.target && e.target.closest && e.target.closest("input,textarea")) return;
       e.stopPropagation(); const k = e.code;
-      if (k === "Escape" || k === "KeyP") { if (G.state === "play") { e.preventDefault(); pause(); } return; }
+      if (G.capturing) { e.preventDefault(); if (k === "Escape") { G.capturing = null; showControls(); } else bindTo(k); return; }
+      const act = actOf(k);
+      if (k === "Escape" || act === "pause") { if (G.state === "play") { e.preventDefault(); pause(); } return; }
       if (G.state !== "play") return;
-      G.keys[k] = true; if (k === "KeyR") reload(); if (k === "Space") { e.preventDefault(); G.jumpQ = true; }
+      G.keys[k] = true; if (act) { e.preventDefault(); G.act[act] = true; }
+      if (act === "reload") reload(); if (act === "jump") G.jumpQ = true; if (act === "fire" && !e.repeat) fire(); if (act === "aim") G.aimHeld = true;
       if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Tab"].includes(k)) e.preventDefault();
     };
-    H_.ku = e => { if (!G) return; e.stopPropagation(); G.keys[e.code] = false; };
+    H_.ku = e => { if (!G) return; e.stopPropagation(); G.keys[e.code] = false; const act = actOf(e.code); if (act) { G.act[act] = false; if (act === "aim") G.aimHeld = false; } };
     window.addEventListener("keydown", H_.kd, true); window.addEventListener("keyup", H_.ku, true);
     H_.mm = e => { if (!G || G.state !== "play" || document.pointerLockElement !== G.cv) return; look(e.movementX, e.movementY, 0.0022); };
     H_.md = e => {
       if (!G || TOUCH) return;
+      if (G.capturing) { e.preventDefault(); bindTo("Mouse" + e.button); return; }
       if (G.state === "play" && document.pointerLockElement !== G.cv && e.target === G.cv) { try { G.cv.requestPointerLock(); } catch (_) {} return; }
       if (G.state !== "play") return;
-      if (e.button === 0) { G.fireHeld = true; fire(); } if (e.button === 2) G.aimHeld = true;
+      const act = actOf("Mouse" + e.button); if (!act) return; G.act[act] = true;
+      if (act === "fire") { G.fireHeld = true; fire(); } else if (act === "aim") G.aimHeld = true; else if (act === "reload") reload(); else if (act === "jump") G.jumpQ = true; else if (act === "pause") pause();
     };
-    H_.mu = e => { if (!G) return; if (e.button === 0) G.fireHeld = false; if (e.button === 2) G.aimHeld = false; };
+    H_.mu = e => { if (!G) return; const act = actOf("Mouse" + e.button); if (!act) return; G.act[act] = false; if (act === "fire") G.fireHeld = false; if (act === "aim") G.aimHeld = false; };
     H_.ctx = e => { if (G) e.preventDefault(); };
     H_.plc = () => { if (!G || TOUCH) return; if (document.pointerLockElement !== G.cv && G.state === "play") pause(); };
     H_.fsc = () => { if (G && !document.fullscreenElement && G.state === "play" && !TOUCH) pause(); };
@@ -308,20 +359,25 @@ body.wwon{overflow:hidden}
     G.ov.addEventListener("contextmenu", H_.ctx); document.addEventListener("pointerlockchange", H_.plc); document.addEventListener("fullscreenchange", H_.fsc);
     /* touch: left half = joystick (appears under the thumb), right half = look; buttons fire/aim/reload/jump */
     H_.ts = e => {
-      if (!G) return; if (e.target.closest(".wwpanel,#wwPause")) return; e.preventDefault(); if (G.state !== "play") return;
+      if (!G) return; if (e.target.closest(".wwpanel,#wwPause,.wwlaybar")) return; e.preventDefault();
+      if (G.state === "layout") { for (const t of e.changedTouches) { const el = document.elementFromPoint(t.clientX, t.clientY), b = el && el.closest && el.closest(".wwbtn"); if (!b) continue; const p = gpt(t.clientX, t.clientY), r = b.getBoundingClientRect(), c = gpt(r.left + r.width / 2, r.top + r.height / 2); G.touches[t.identifier] = { kind: "drag", b, ox: c.x - p.x, oy: c.y - p.y }; b.classList.add("on"); } return; }
+      if (G.state !== "play") return;
       for (const t of e.changedTouches) {
         const p = gpt(t.clientX, t.clientY), btn = e.target.closest && document.elementFromPoint(t.clientX, t.clientY);
         const b = btn && btn.closest && btn.closest(".wwbtn");
         if (b) { const a = b.dataset.b; G.touches[t.identifier] = { kind: a, x: p.x, y: p.y, b };
           b.classList.add("on");
-          if (a === "fire") { G.fireHeld = true; fire(); } else if (a === "aim") { G.aimToggle = !G.aimToggle; } else if (a === "reload") reload(); else if (a === "jump") G.jumpQ = true;
+          if (a === "fire") { G.fireHeld = true; fire(); } else if (a === "aim") { if (G.set.aimHold) G.aimHeld = true; else G.aimToggle = !G.aimToggle; } else if (a === "reload") reload(); else if (a === "jump") G.jumpQ = true;
           continue; }
-        if (p.x < G.gw * 0.42) { if (Object.values(G.touches).some(q => q.kind === "stick")) continue; G.touches[t.identifier] = { kind: "stick", x0: p.x, y0: p.y, x: p.x, y: p.y }; showStick(p.x, p.y); }
+        if (G.set.lefty ? p.x > G.gw * 0.58 : p.x < G.gw * 0.42) { if (Object.values(G.touches).some(q => q.kind === "stick")) continue; G.touches[t.identifier] = { kind: "stick", x0: p.x, y0: p.y, x: p.x, y: p.y }; showStick(p.x, p.y); }
         else G.touches[t.identifier] = { kind: "look", x: p.x, y: p.y };
       }
     };
     H_.tm = e => {
-      if (!G) return; if (e.target.closest(".wwpanel")) return; e.preventDefault(); if (G.state !== "play") return;
+      if (!G) return; if (e.target.closest(".wwpanel")) return; e.preventDefault();
+      if (G.state === "layout") { for (const t of e.changedTouches) { const q = G.touches[t.identifier]; if (!q || q.kind !== "drag") continue; const p = gpt(t.clientX, t.clientY);
+        G.set.pos[q.b.dataset.b] = [Math.max(.04, Math.min(.96, (p.x + q.ox) / G.gw)), Math.max(.06, Math.min(.94, (p.y + q.oy) / G.gh))]; placeButtons(); } return; }
+      if (G.state !== "play") return;
       for (const t of e.changedTouches) {
         const q = G.touches[t.identifier]; if (!q) continue; const p = gpt(t.clientX, t.clientY);
         if (q.kind === "stick") { q.x = p.x; q.y = p.y; moveStick(q); }
@@ -330,7 +386,7 @@ body.wwon{overflow:hidden}
     };
     H_.te = e => {
       if (!G) return;
-      for (const t of e.changedTouches) { const q = G.touches[t.identifier]; if (!q) continue; if (q.b) q.b.classList.remove("on"); if (q.kind === "fire") G.fireHeld = false; if (q.kind === "stick") hideSticks(); delete G.touches[t.identifier]; }
+      for (const t of e.changedTouches) { const q = G.touches[t.identifier]; if (!q) continue; if (q.b) q.b.classList.remove("on"); if (q.kind === "fire") G.fireHeld = false; if (q.kind === "aim" && G.set.aimHold) G.aimHeld = false; if (q.kind === "stick") hideSticks(); delete G.touches[t.identifier]; }
       if (G.aimBtn) G.aimBtn.classList.toggle("on", !!G.aimToggle);
     };
     G.ov.addEventListener("touchstart", H_.ts, { passive: false }); G.ov.addEventListener("touchmove", H_.tm, { passive: false });
@@ -365,8 +421,8 @@ body.wwon{overflow:hidden}
       drawAmmo();
     }
     if (TOUCH) {
-      const gw = G.gw, gh = G.gh, r = Math.max(30, Math.min(48, gh * 0.11)), pad = 22;
-      const put = (id, cx, cy, rr) => Object.assign(G.hud.querySelector(id).style, { width: rr * 2 + "px", height: rr * 2 + "px", left: (cx - rr) + "px", top: (cy - rr) + "px", fontSize: Math.round(rr * .36) + "px" });
+      const gw = G.gw, gh = G.gh, r = Math.max(30, Math.min(48, gh * 0.11)) * (G.set.btn || 1), pad = 22, L = !!G.set.lefty, POS = G.set.pos || {};
+      const put = (id, cx, cy, rr) => { const el = G.hud.querySelector(id), sp = POS[el.dataset.b]; if (sp) { cx = sp[0] * gw; cy = sp[1] * gh; } else if (L) cx = gw - cx; Object.assign(el.style, { width: rr * 2 + "px", height: rr * 2 + "px", left: (cx - rr) + "px", top: (cy - rr) + "px", fontSize: Math.round(rr * .36) + "px" }); };
       const fx = gw - pad - r * 1.35 - 24, fy = gh - pad - r * 1.35 - 6;
       put("#wwBF", fx, fy, r * 1.35); put("#wwBA", fx - r * 2.7, fy + r * .15, r * .95); put("#wwBR", fx + r * .35, fy - r * 2.55, r * .8); put("#wwBJ", fx - r * 2.5, fy - r * 2.1, r * .8);
       const am = G.hud.querySelector("#wwAmmo"); am.style.right = "auto"; am.style.left = "50%"; am.style.transform = "translateX(-50%)";
@@ -794,7 +850,7 @@ body.wwon{overflow:hidden}
   }
   function stepPlayer(dt) {
     const p = G.p, k = G.keys; let fx = 0, fz = 0, run = false;
-    if (k.KeyW || k.ArrowUp) fz += 1; if (k.KeyS || k.ArrowDown) fz -= 1; if (k.KeyA || k.ArrowLeft) fx -= 1; if (k.KeyD || k.ArrowRight) fx += 1; if (k.ShiftLeft || k.ShiftRight) run = true;
+    const A = G.act; if (A.fwd || k.ArrowUp) fz += 1; if (A.back || k.ArrowDown) fz -= 1; if (A.left || k.ArrowLeft) fx -= 1; if (A.right || k.ArrowRight) fx += 1; if (A.run) run = true;
     const st = Object.values(G.touches).find(q => q.kind === "stick"); if (st && st.mx != null) { fx += st.mx; fz -= st.my; if (Math.hypot(st.mx, st.my) > .92) run = true; }
     const ads = G.adsK > .5, len = Math.hypot(fx, fz); if (len > 1) { fx /= len; fz /= len; }
     const sp = ads ? 2.6 : run ? 7.6 : 4.6, sy = Math.sin(G.yaw), cy = Math.cos(G.yaw);
