@@ -140,6 +140,8 @@ async function boot() {
   const provider = new authMod.GoogleAuthProvider();
   provider.setCustomParameters({ prompt: "select_account" });
 
+  /* a fresh sign-in token for our own servers (Biggietown match server verifies it) */
+  window.SB_TOKEN = () => (auth.currentUser ? auth.currentUser.getIdToken() : Promise.resolve(null));
   window.SB_SIGNOUT = async () => {
     try { await authMod.signOut(auth); } catch (_) {}
     location.reload();

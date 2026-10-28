@@ -240,13 +240,25 @@ service cloud.firestore {
         isAdmin()
         || (!adminOnly(coll) && !playerOwned(coll))
         || (playerOwned(coll) && isSelf(docId))
-      ) && (coll != 'bets' || isAdmin() || nflBetOk());
+      ) && (coll != 'bets' || isAdmin() || nflBetOk())
+        && (coll != 'bank' || isAdmin() || wwBankOk());
 
       // Players never delete their own prefs/profile; admins can.
       allow delete: if (member() || isAdmin()) && !special(coll) && (
         isAdmin()
         || (!adminOnly(coll) && !playerOwned(coll))
-      );
+      ) && (coll != 'bank' || isAdmin() || !(resource.data.get('kind', '') in ['wwbuy', 'wwout']));
+    }
+
+    // Biggietown (Oct 28): a player may create their own buy-in (kind "wwbuy", from them to the house, a table's buy-in, unused);
+    // nobody but the match server (admin SDK) may change a buy-in or write a payout ("wwout").
+    function wwBankOk() {
+      let k = request.resource.data.get('kind', '');
+      return k != 'wwout'
+        && (resource == null || !(resource.data.get('kind', '') in ['wwbuy', 'wwout']))
+        && (k != 'wwbuy' || (resource == null
+            && request.resource.data.from == myPlayerId() && request.resource.data.to == 'house'
+            && request.resource.data.amt in [1000, 5000, 10000] && request.resource.data.used == false));
     }
 
     // NFL / NBA / NHL bets vs the House (gameId "nfl:{season}_{week}:{espnId}:{mkt}" or "nba:{YYYYMMDD}:{espnId}:{mkt}", also as parlay legs).

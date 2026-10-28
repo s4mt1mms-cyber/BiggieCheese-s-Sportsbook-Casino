@@ -2755,6 +2755,14 @@ window.WWAPI={loadThree:()=>rrLoad(),rrChairParts:(...a)=>rrChairParts(...a),pre
   saveBest:t=>{if(!S.me||S.readOnly)return;const v={t:Math.round(t),at:Date.now()},q=S.prefs[S.me]=S.prefs[S.me]||{};q.wwBest=v;return db.doc("prefs/"+S.me).update({wwBest:v}).catch(()=>{})},
   stats:()=>{const q=S.prefs[S.me]||{};return q.wwStats||{}},
   saveStats:o=>{if(!S.me||S.readOnly)return;const q=S.prefs[S.me]=S.prefs[S.me]||{};q.wwStats=o;return db.doc("prefs/"+S.me).update({wwStats:o}).catch(()=>{})},
+  /* PvP: the live match server (Cloud Run), your equipped skin + owned emotes, the 3D character builders, balance + buy-in */
+  server:"https://biggietown-302676867929.us-central1.run.app",token:()=>window.SB_TOKEN?window.SB_TOKEN():Promise.resolve(null),
+  balance:()=>Math.floor(ledger().balOf(S.me)),
+  buyIn:async amt=>{if(!S.me||S.readOnly)throw new Error("view only");const at=Date.now(),id="wwin_"+S.me.replace(/[^A-Za-z0-9_]/g,"")+"_"+at;
+    await db.doc("bank/"+id).set({kind:"wwbuy",from:S.me,to:"house",amt,at,used:false,note:"Biggietown buy-in"});return id},
+  mySkin:()=>skinOf(S.me),skinSpec:k=>{const x=k&&SKIN_BY[k];return x?{k:x.kind||x.id,hv:x.hv,c:x.c}:null},animals:()=>RL_ANIMALS,
+  myEmotes:()=>EMOTES.filter(e=>(S.prefs[S.me]||{}).emotes&&(S.prefs[S.me]||{}).emotes[e.id]).map(e=>({id:e.id,n:e.n,len:e.len})),emote:id=>EM_BY[id]||null,
+  rrAnimal:(...a)=>rrAnimal(...a),emApply:(...a)=>emApply(...a),emLerp:(...a)=>emLerp(...a),emLDance:(...a)=>emLDance(...a),rrSolveArm:(...a)=>rrSolveArm(...a),
   closed:()=>{try{render()}catch(_){}}};
 function wwOpen(){if(!S.me)return toast("Sign in to play.");if(!S.canEdit)return;/* admin-only while the owner tests it (Oct 28) */if(S.tab==="rr"||S.tab==="th"){S.tab="home";render()}
   const go=()=>{try{window.WW.open()}catch(e){console.error(e);toast("Couldn't start the game.")}};if(window.WW)return go();

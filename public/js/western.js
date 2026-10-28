@@ -13,7 +13,7 @@
   /* ---------------- settings ---------------- */
   /* control mapping: computer actions → key codes or "Mouse0/1/2…"; phone: drag the buttons anywhere (pos = fractions of the screen), size, left-handed, AIM tap or hold */
   const ACTS = [["fwd", "Move forward", "KeyW"], ["back", "Move back", "KeyS"], ["left", "Move left", "KeyA"], ["right", "Move right", "KeyD"], ["fire", "Fire", "Mouse0"], ["aim", "Aim down sights", "Mouse2"],
-    ["reload", "Reload", "KeyR"], ["jump", "Jump", "Space"], ["run", "Run", "ShiftLeft"], ["pause", "Pause", "KeyP"]];
+    ["reload", "Reload", "KeyR"], ["jump", "Jump", "Space"], ["run", "Run", "ShiftLeft"], ["cash", "Cash out (hold, at the bank)", "KeyE"], ["emote", "Emotes", "KeyB"], ["pause", "Pause", "KeyP"]];
   const KEYS0 = Object.fromEntries(ACTS.map(a => [a[0], a[2]]));
   const SET0 = { sens: 1, ads: 0.6, invert: false, fov: 75, sound: 1, keys: KEYS0, btn: 1, lefty: false, aimHold: false, pos: {} };
   const SET = () => { const s = Object.assign({}, SET0, LS("ww-set", {})); s.keys = Object.assign({}, KEYS0, s.keys || {}); s.pos = s.pos || {}; return s; };
@@ -128,6 +128,28 @@ body.wwon{overflow:hidden}
 .wwlaybar{position:absolute;left:50%;top:max(12px,env(safe-area-inset-top));transform:translateX(-50%);display:flex;gap:10px;align-items:center;pointer-events:auto;background:rgba(30,18,8,.9);border:2px solid #c8963e;border-radius:12px;padding:8px 10px 8px 14px;font:700 14px Barlow;color:#ffe9b8;white-space:nowrap}
 .wwlaybar button{font:800 14px Barlow;padding:8px 14px;border-radius:10px;border:2px solid #c8963e;background:#5a3418;color:#ffe9b8}.wwlaybar button.pri{background:linear-gradient(#f5c542,#c8901e);color:#2a1606}
 .wwhud.edit .wwbtn{z-index:5;border-style:dashed;border-color:#ffd76a;background:rgba(245,197,66,.25)}.wwhud.edit{z-index:4}
+.wwtiers{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+.wwtiers button{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0!important;padding:12px 8px!important}
+.wwtiers button b{font:400 22px Rye,Georgia,serif;color:#ffe29a}.wwtiers button small{font:700 11px Barlow;letter-spacing:.1em;text-transform:uppercase;opacity:.8}
+.wwtiers button.off{opacity:.45}
+.wwtag{position:absolute;left:0;top:0;display:flex;flex-direction:column;align-items:center;gap:1px;pointer-events:none;transform-origin:50% 100%;text-shadow:0 1px 2px #000,0 0 4px #000}
+.wwtag b{font:800 13px Barlow;color:#fff;white-space:nowrap}.wwtag span{font:800 12px Barlow;color:#ffd76a}.wwtag i{font:700 10px Barlow;font-style:normal;color:#9fd8ff;letter-spacing:.06em;text-transform:uppercase}
+.wwhp{position:absolute;left:max(16px,env(safe-area-inset-left));bottom:max(16px,env(safe-area-inset-bottom));width:180px;height:14px;border-radius:8px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.3);overflow:hidden;display:none}
+.wwhp i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(#7dff8c,#2fa84a);transition:width .2s}.wwhp.low i{background:linear-gradient(#ff8a7a,#c0281c)}
+.wwhp span{position:absolute;right:6px;top:-1px;font:800 11px Barlow;text-shadow:0 1px 2px #000}
+.wwhud.pvp .wwhp{display:block}
+#wwRot.short .wwhp{bottom:auto;top:max(58px,calc(env(safe-area-inset-top) + 50px));left:50%;transform:translateX(-50%);width:150px}
+.wwdmg{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 50%,rgba(170,0,0,.6));opacity:0;transition:opacity .35s;pointer-events:none}
+.wwdir{position:absolute;left:50%;top:50%;width:180px;height:180px;opacity:0;transition:opacity .4s;pointer-events:none}
+.wwdir i{position:absolute;left:50%;top:0;width:0;height:0;margin-left:-14px;border-left:14px solid transparent;border-right:14px solid transparent;border-bottom:22px solid rgba(255,60,40,.85);filter:drop-shadow(0 0 4px #000)}
+.wwhit.hs i{background:#ff5a4a}
+.wwcashbar{position:absolute;left:50%;top:60%;transform:translateX(-50%);width:220px;height:22px;border-radius:11px;background:rgba(0,0,0,.55);border:2px solid #ffd76a;overflow:hidden}
+.wwcashbar i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(#ffe29a,#c8901e)}.wwcashbar span{position:absolute;inset:0;text-align:center;font:800 12px/18px Barlow;color:#fff;text-shadow:0 1px 2px #000}
+.wwcashk{position:absolute;left:50%;top:70%;transform:translateX(-50%)}
+.wwcashb{font-size:12px!important;background:rgba(245,197,66,.4)!important;border-color:#ffd76a!important}
+.wwemo{position:absolute;right:max(16px,env(safe-area-inset-right));top:max(60px,calc(env(safe-area-inset-top) + 52px));display:none;flex-direction:column;gap:6px;pointer-events:auto;background:rgba(20,12,6,.85);border:2px solid #c8963e;border-radius:12px;padding:8px;max-height:60%;overflow:auto}
+.wwemo.on{display:flex}.wwemo button{font:800 14px Barlow;padding:8px 14px;border-radius:9px;border:1px solid #c8963e;background:#5a3418;color:#ffe9b8;text-align:left}
+.wwemo span{font:600 13px Barlow;color:#e8d4a8;padding:4px 6px}
 .wwkeys{font:600 12.5px Barlow;color:#d9c39a;margin-top:8px}
 .wwload{font:600 15px Barlow;color:#ffe9b8;margin-top:10px}
 `;
@@ -168,7 +190,7 @@ body.wwon{overflow:hidden}
     try { if (document.pointerLockElement) document.exitPointerLock(); } catch (_) {}
     try { if (document.fullscreenElement) document.exitFullscreen(); } catch (_) {}
     try { if (G.ac) G.ac.close(); } catch (_) {}
-    saveStats(); unbindInput();
+    saveStats(); unbindInput(); if (G.net) { G.net.leaving = true; clearInterval(G.net.pingT); try { G.net.ws && G.net.ws.close(); } catch (_) {} }
     window.removeEventListener("resize", layout); window.removeEventListener("popstate", onPop); document.removeEventListener("visibilitychange", onVis);
     if (window.visualViewport) visualViewport.removeEventListener("resize", layout);
     if (G.R) { G.scene.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) [].concat(o.material).forEach(m => { if (m.map) m.map.dispose(); m.dispose() }) }); G.R.dispose(); try { G.R.forceContextLoss() } catch (_) {} }
@@ -210,11 +232,12 @@ body.wwon{overflow:hidden}
     <circle cx="32" cy="29" r="7" fill="none" stroke="#5a2e0c" stroke-width="2"/></svg>`;
   function showMenu(loading) {
     G.state = "menu"; G.mode = null;
+    if (!loading && Date.now() - (G.srvAt || 0) > 8000) { G.srvAt = Date.now(); srvStatus(); }
     const live = G.server && G.server.up, n = live ? G.server.n || 0 : 0, best = (API().myBest && API().myBest()) || 0;
     G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwmain"><div class="wwbrand">${STAR}<h1>Biggietown</h1><p>Shootouts for BiggieBucks</p>
         <div class="wwbest"><span>Your best bottle run</span><b>${best ? (best / 1000).toFixed(2) + "s" : "Not yet"}</b></div></div>
       ${loading ? `<div class="wwload">Saddling up…</div>` : `<div class="wwmm">
-        <button class="pri${live ? "" : " soon"}" data-ww="join"><span>Join game</span><small>${live ? `${n} in match` : "Server opening soon"}</small></button>
+        <button class="pri${live ? "" : " soon"}" data-ww="join"><span>Join game</span><small>${live ? `${n} in town` : G.server && G.server.checked ? "Server offline" : "Checking server…"}</small></button>
         <button data-ww="play"><span>Free roam</span><small>Solo · bottle challenge</small></button>
         <button data-ww="settings"><span>Settings</span><small>Sensitivity · aim · FOV</small></button>
         <button data-ww="stats"><span>Stats</span><small>All time · session</small></button>
@@ -245,10 +268,11 @@ body.wwon{overflow:hidden}
     if (!G || G.state !== "play") return;
     G.state = "pause"; G.fireHeld = false; G.aimHeld = false; G.keys = {}; G.act = {}; G.touches = {}; hideSticks();
     try { if (document.pointerLockElement) document.exitPointerLock(); } catch (_) {}
-    G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwpz"><h2>Paused</h2><div class="wwgrid">
+    const pvp = G.mode === "pvp";
+    G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwpz"><h2>Paused</h2>${pvp ? `<p style="margin:0;color:#ffd0a0">You're still in the match. Others can see and shoot you.</p>` : ""}<div class="wwgrid">
       <button class="pri" data-ww="resume">Resume</button><button data-ww="settings">Settings</button>
-      <button data-ww="stats">Stats</button><button data-ww="respawn">Respawn</button>
-      <button data-ww="menu">Main menu</button><button class="dang" data-ww="exit">Exit to casino</button></div>${keysHtml()}</div></div>`;
+      ${pvp ? `<button data-ww="stats">Stats</button><button class="dang" data-ww="leave">Leave match</button>` : `<button data-ww="stats">Stats</button><button data-ww="respawn">Respawn</button>
+      <button data-ww="menu">Main menu</button><button class="dang" data-ww="exit">Exit to casino</button>`}</div>${keysHtml()}</div></div>`;
     saveStats();
   }
   function showSettings() {
@@ -299,7 +323,7 @@ body.wwon{overflow:hidden}
     if (!TOUCH) { try { G.cv.requestPointerLock(); } catch (_) {} }
     try { const el = document.documentElement; if (!document.fullscreenElement && el.requestFullscreen) el.requestFullscreen({ navigationUI: "hide" }).then(() => { try { screen.orientation && screen.orientation.lock && screen.orientation.lock("landscape").catch(() => {}) } catch (_) {} }).catch(() => {}); } catch (_) {}
     if (!G.started) { G.started = true; banner("Biggietown", "Population: you"); }
-    G.mode = G.mode || "roam"; setLive(1); setBB(G.ses.bb);
+    if (G.mode !== "pvp") { G.mode = "roam"; setLive(1); setBB(G.ses.bb); }
     placeButtons();
   }
 
@@ -307,6 +331,8 @@ body.wwon{overflow:hidden}
   const H_ = {};
   function bindInput() {
     H_.click = e => {
+      const tb = e.target.closest("[data-wwtier]"); if (tb && G) { joinTier(Number(tb.dataset.wwtier)); return; }
+      const eb = e.target.closest("[data-wwemo]"); if (eb && G) { playEmote(eb.dataset.wwemo); return; }
       const bb = e.target.closest("[data-wwbind]"); if (bb && G) { if (!G.capturing && performance.now() - (G.capJust || 0) > 400) { G.capturing = bb.dataset.wwbind; showControls(); } return; }
       const b = e.target.closest("[data-ww]"); if (!b || !G) return; const a = b.dataset.ww;
       if (a === "play" || a === "resume") play();
@@ -320,7 +346,8 @@ body.wwon{overflow:hidden}
       else if (a === "laydone") { G.hud.classList.remove("edit"); LSset("ww-set", G.set); showControls(); }
       else if (a === "setreset") { G.set = Object.assign({}, SET0, { keys: Object.assign({}, KEYS0), pos: {} }); LSset("ww-set", G.set); placeButtons(); showSettings(); if (G.master) G.master.gain.value = G.set.sound * .9; }
       else if (a === "exit") close();
-      else if (a === "join") { if (G.server && G.server.up) joinGame(); else { const b2 = G.ui.querySelector("[data-ww=join] small"); if (b2) b2.textContent = "Not open yet · try Free roam"; } }
+      else if (a === "join") { if (G.server && G.server.up) showTiers(); else { const b2 = G.ui.querySelector("[data-ww=join] small"); if (b2) b2.textContent = "Server offline · try again soon"; srvStatus(); } }
+      else if (a === "leave") leaveMatch();
       else if (a === "stats") showStats();
       else if (a === "statsdone") { if (G.statsFrom === "menu") showMenu(false); else { G.state = "play"; pause(); } }
       else if (a === "menu") { saveStats(); showMenu(false); }
@@ -338,9 +365,10 @@ body.wwon{overflow:hidden}
       if (G.state !== "play") return;
       G.keys[k] = true; if (act) { e.preventDefault(); G.act[act] = true; }
       if (act === "reload") reload(); if (act === "jump") G.jumpQ = true; if (act === "fire" && !e.repeat) fire(); if (act === "aim") G.aimHeld = true;
+      if (act === "cash" && !e.repeat) cashPress(true); if (act === "emote" && !e.repeat) emoteMenu();
       if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Tab"].includes(k)) e.preventDefault();
     };
-    H_.ku = e => { if (!G) return; e.stopPropagation(); G.keys[e.code] = false; const act = actOf(e.code); if (act) { G.act[act] = false; if (act === "aim") G.aimHeld = false; } };
+    H_.ku = e => { if (!G) return; e.stopPropagation(); G.keys[e.code] = false; const act = actOf(e.code); if (act) { G.act[act] = false; if (act === "aim") G.aimHeld = false; if (act === "cash") cashPress(false); } };
     window.addEventListener("keydown", H_.kd, true); window.addEventListener("keyup", H_.ku, true);
     H_.mm = e => { if (!G || G.state !== "play" || document.pointerLockElement !== G.cv) return; look(e.movementX, e.movementY, 0.0022); };
     H_.md = e => {
@@ -359,7 +387,7 @@ body.wwon{overflow:hidden}
     G.ov.addEventListener("contextmenu", H_.ctx); document.addEventListener("pointerlockchange", H_.plc); document.addEventListener("fullscreenchange", H_.fsc);
     /* touch: left half = joystick (appears under the thumb), right half = look; buttons fire/aim/reload/jump */
     H_.ts = e => {
-      if (!G) return; if (e.target.closest(".wwpanel,#wwPause,.wwlaybar")) return; e.preventDefault();
+      if (!G) return; if (e.target.closest(".wwpanel,#wwPause,.wwlaybar,#wwEmo")) return; e.preventDefault();
       if (G.state === "layout") { for (const t of e.changedTouches) { const el = document.elementFromPoint(t.clientX, t.clientY), b = el && el.closest && el.closest(".wwbtn"); if (!b) continue; const p = gpt(t.clientX, t.clientY), r = b.getBoundingClientRect(), c = gpt(r.left + r.width / 2, r.top + r.height / 2); G.touches[t.identifier] = { kind: "drag", b, ox: c.x - p.x, oy: c.y - p.y }; b.classList.add("on"); } return; }
       if (G.state !== "play") return;
       for (const t of e.changedTouches) {
@@ -367,7 +395,7 @@ body.wwon{overflow:hidden}
         const b = btn && btn.closest && btn.closest(".wwbtn");
         if (b) { const a = b.dataset.b; G.touches[t.identifier] = { kind: a, x: p.x, y: p.y, b };
           b.classList.add("on");
-          if (a === "fire") { G.fireHeld = true; fire(); } else if (a === "aim") { if (G.set.aimHold) G.aimHeld = true; else G.aimToggle = !G.aimToggle; } else if (a === "reload") reload(); else if (a === "jump") G.jumpQ = true;
+          if (a === "fire") { G.fireHeld = true; fire(); } else if (a === "aim") { if (G.set.aimHold) G.aimHeld = true; else G.aimToggle = !G.aimToggle; } else if (a === "reload") reload(); else if (a === "jump") G.jumpQ = true; else if (a === "cash") cashPress(true); else if (a === "emote") emoteMenu();
           continue; }
         if (G.set.lefty ? p.x > G.gw * 0.58 : p.x < G.gw * 0.42) { if (Object.values(G.touches).some(q => q.kind === "stick")) continue; G.touches[t.identifier] = { kind: "stick", x0: p.x, y0: p.y, x: p.x, y: p.y }; showStick(p.x, p.y); }
         else G.touches[t.identifier] = { kind: "look", x: p.x, y: p.y };
@@ -386,7 +414,7 @@ body.wwon{overflow:hidden}
     };
     H_.te = e => {
       if (!G) return;
-      for (const t of e.changedTouches) { const q = G.touches[t.identifier]; if (!q) continue; if (q.b) q.b.classList.remove("on"); if (q.kind === "fire") G.fireHeld = false; if (q.kind === "aim" && G.set.aimHold) G.aimHeld = false; if (q.kind === "stick") hideSticks(); delete G.touches[t.identifier]; }
+      for (const t of e.changedTouches) { const q = G.touches[t.identifier]; if (!q) continue; if (q.b) q.b.classList.remove("on"); if (q.kind === "fire") G.fireHeld = false; if (q.kind === "aim" && G.set.aimHold) G.aimHeld = false; if (q.kind === "cash") cashPress(false); if (q.kind === "stick") hideSticks(); delete G.touches[t.identifier]; }
       if (G.aimBtn) G.aimBtn.classList.toggle("on", !!G.aimToggle);
     };
     G.ov.addEventListener("touchstart", H_.ts, { passive: false }); G.ov.addEventListener("touchmove", H_.tm, { passive: false });
@@ -414,7 +442,12 @@ body.wwon{overflow:hidden}
         <div class="wwtr"><span class="wwchip wwlive" id="wwLive"><i></i><b>1</b> live</span><span class="wwchip wwbb" id="wwBB"><b>+0</b> BB</span></div>
         <div class="wwammo" id="wwAmmo"></div><div class="wwmsg" id="wwMsg"></div><div class="wwtip" id="wwTip"></div>
         <div class="wwstick" id="wwStick"><i></i></div>
-        ${TOUCH ? `<div class="wwbtn" data-b="fire" id="wwBF">FIRE</div><div class="wwbtn" data-b="aim" id="wwBA">AIM</div><div class="wwbtn" data-b="reload" id="wwBR">↻</div><div class="wwbtn" data-b="jump" id="wwBJ">JUMP</div>` : ""}`);
+        <div class="wwdmg" id="wwDmg"></div><div class="wwdir" id="wwDir"><i></i></div>
+        <div class="wwhp" id="wwHp"><i></i><span>100</span></div>
+        <div class="wwcashbar" id="wwCashBar" style="display:none"><i></i><span></span></div>
+        <div class="wwemo" id="wwEmo"></div>
+        ${TOUCH ? "" : `<div class="wwchip wwcashk" id="wwCash" style="display:none">Hold <b>${esc(keyName(G.set.keys.cash))}</b> to cash out · <b>${esc(keyName(G.set.keys.emote))}</b> emotes</div>`}
+        ${TOUCH ? `<div class="wwbtn" data-b="fire" id="wwBF">FIRE</div><div class="wwbtn" data-b="aim" id="wwBA">AIM</div><div class="wwbtn" data-b="reload" id="wwBR">↻</div><div class="wwbtn" data-b="jump" id="wwBJ">JUMP</div><div class="wwbtn" data-b="emote" id="wwBE">EMOTE</div><div class="wwbtn wwcashb" data-b="cash" id="wwCash" style="display:none">HOLD TO<br>CASH OUT</div>` : ""}`);
       el = G.hud.querySelector("#wwPause"); el.addEventListener("click", e => { e.stopPropagation(); pause(); });
       el.addEventListener("touchstart", e => { e.stopPropagation(); e.preventDefault(); pause(); }, { passive: false });
       G.aimBtn = G.hud.querySelector("#wwBA");
@@ -425,6 +458,7 @@ body.wwon{overflow:hidden}
       const put = (id, cx, cy, rr) => { const el = G.hud.querySelector(id), sp = POS[el.dataset.b]; if (sp) { cx = sp[0] * gw; cy = sp[1] * gh; } else if (L) cx = gw - cx; Object.assign(el.style, { width: rr * 2 + "px", height: rr * 2 + "px", left: (cx - rr) + "px", top: (cy - rr) + "px", fontSize: Math.round(rr * .36) + "px" }); };
       const fx = gw - pad - r * 1.35 - 24, fy = gh - pad - r * 1.35 - 6;
       put("#wwBF", fx, fy, r * 1.35); put("#wwBA", fx - r * 2.7, fy + r * .15, r * .95); put("#wwBR", fx + r * .35, fy - r * 2.55, r * .8); put("#wwBJ", fx - r * 2.5, fy - r * 2.1, r * .8);
+      put("#wwBE", fx - r * 4.6, fy + r * .35, r * .7); put("#wwCash", gw / 2, gh * .62, r * 1.1);
       const am = G.hud.querySelector("#wwAmmo"); am.style.right = "auto"; am.style.left = "50%"; am.style.transform = "translateX(-50%)";
     }
   }
@@ -446,9 +480,9 @@ body.wwon{overflow:hidden}
     } catch (_) {}
   }
   function nz(t, dur, f, q, vol, type) { const ac = G.ac; const s = ac.createBufferSource(); s.buffer = G.noise; const fl = ac.createBiquadFilter(); fl.type = type || "bandpass"; fl.frequency.value = f; fl.Q.value = q;
-    const g = ac.createGain(); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0008, t + dur); s.connect(fl); fl.connect(g); g.connect(G.master); s.start(t, Math.random() * .5); s.stop(t + dur + .02); }
+    const g = ac.createGain(); g.gain.setValueAtTime(vol * (G.vmul || 1), t); g.gain.exponentialRampToValueAtTime(.0008, t + dur); s.connect(fl); fl.connect(g); g.connect(G.master); s.start(t, Math.random() * .5); s.stop(t + dur + .02); }
   function tone(t, f0, f1, dur, vol, type) { const ac = G.ac, o = ac.createOscillator(), g = ac.createGain(); o.type = type || "sine"; o.frequency.setValueAtTime(f0, t); if (f1) o.frequency.exponentialRampToValueAtTime(f1, t + dur);
-    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0008, t + dur); o.connect(g); g.connect(G.master); o.start(t); o.stop(t + dur + .02); }
+    g.gain.setValueAtTime(vol * (G.vmul || 1), t); g.gain.exponentialRampToValueAtTime(.0008, t + dur); o.connect(g); g.connect(G.master); o.start(t); o.stop(t + dur + .02); }
   const SFX = {
     shot() { if (!G.ac) return; const t = G.ac.currentTime; nz(t, .42, 900, .6, .9, "lowpass"); nz(t, .12, 2600, .8, .5); tone(t, 140, 40, .25, .7, "triangle"); nz(t + .06, 1.1, 500, .4, .12, "lowpass"); },
     click() { if (!G.ac) return; const t = G.ac.currentTime; tone(t, 1800, 900, .03, .25, "square"); },
@@ -872,7 +906,7 @@ body.wwon{overflow:hidden}
   }
 
   /* ---------------- shooting ---------------- */
-  function reload() { if (G.reloading || G.ammo >= 6) return; G.reloading = 1.7; SFX.reload(); }
+  function reload() { if (G.reloading || G.ammo >= 6) return; G.reloading = 1.7; SFX.reload(); if (G.mode === "pvp") nsend({ t: "rl" }); }
   function fire() {
     if (G.state !== "play") return; const now = performance.now();
     if (G.reloading) return; if (now - G.lastShot < 260) return; if (G.ammo <= 0) { SFX.click(); reload(); return; }
@@ -881,7 +915,10 @@ body.wwon{overflow:hidden}
     const spread = G.adsK > .5 ? .0015 : (.006 + Math.min(1, G.moving / 6) * .02 + (G.p.ground ? 0 : .03));
     dir.x += (Math.random() - .5) * spread; dir.y += (Math.random() - .5) * spread; dir.z += (Math.random() - .5) * spread; dir.normalize();
     const o = new T.Vector3(); cam.getWorldPosition(o);
+    if (G.mode === "pvp") { nsend({ t: "shot", d: [dir.x, dir.y, dir.z] }); G.prot = 0; }
     let best = { t: 300, kind: "none" };
+    if (G.mode === "pvp" && G.net) for (const R of G.net.pl.values()) { if (!R.alive || !R.root || R.dying) continue; const p = R.root.position;
+      for (const [y, r] of [[1.68, .22], [1.2, .42], [.6, .4]]) { const t = raySphere(o, dir, { x: p.x, y: p.y + y, z: p.z }, r); if (t != null && t < best.t) best = { t, kind: "player" }; } }
     for (const s of G.shoot) { const t = raySphere(o, dir, s.c, s.r); if (t != null && t < best.t) best = { t, kind: s.kind, s }; }
     for (const b of G.bottles) { if (!b.alive) continue; const t = raySphere(o, dir, b.c, b.r); if (t != null && t < best.t) best = { t, kind: "bottle", b }; }
     for (const w of G.weeds) { const t = raySphere(o, dir, w.g.position, .45); if (t != null && t < best.t) best = { t, kind: "weed", w }; }
@@ -891,7 +928,7 @@ body.wwon{overflow:hidden}
     if (["bottle", "bell", "gong", "weed"].includes(best.kind)) sesAdd("hits", 1);
     if (best.kind === "bottle") { breakBottle(best.b, dir); hitMark(); sesAdd("bottles", 1); }
     else if (best.kind === "bell") { SFX.bell(); G.bell.v += 3; hitMark(); }
-    else if (best.kind === "gong") { SFX.metal(); G.gong.v += 4; hitMark(); chalStart(); }
+    else if (best.kind === "gong") { SFX.metal(); G.gong.v += 4; hitMark(); if (G.mode !== "pvp") chalStart(); }
     else if (best.kind === "weed") { best.w.vy = 4; best.w.vx *= -1.2; puff(hp, .6); hitMark(); }
     else if (best.kind === "wall") { puff(hp, .35); hole(hp, best.n); (SFX[best.c.mat] || SFX.wood)(); }
     else if (best.kind === "ground") { puff(hp, .5); SFX.dirt(); }
@@ -903,7 +940,7 @@ body.wwon{overflow:hidden}
       let a = (lo - od) / dd, b = (hi - od) / dd, s = -1; if (a > b) { [a, b] = [b, a]; s = 1; } if (a > t0) { t0 = a; n = [k, s]; } if (b < t1) t1 = b; if (t0 > t1) return null; }
     if (!n) return null; const N = new THREE.Vector3(); N[n[0]] = n[1]; return { t: t0, n: N };
   }
-  function hitMark() { const h = G.hud.querySelector("#wwHit"); h.classList.remove("on"); void h.offsetWidth; h.classList.add("on"); }
+  function hitMark(hs) { const h = G.hud.querySelector("#wwHit"); h.classList.remove("on"); h.classList.toggle("hs", !!hs); void h.offsetWidth; h.classList.add("on"); }
   function puff(p, s) { const T = THREE; for (let i = 0; i < 3; i++) { const sp = new T.Sprite(new T.SpriteMaterial({ map: G.puffTex, transparent: true, depthWrite: false, opacity: .8 })); sp.position.copy(p); sp.scale.setScalar(s * .5); G.scene.add(sp);
     G.parts.push({ o: sp, v: new T.Vector3((Math.random() - .5) * .8, Math.random() * .8 + .3, (Math.random() - .5) * .8), life: .9, grow: s * 1.4, g: 0 }); } }
   function hole(p, n) { const T = THREE, m = new T.Mesh(new T.PlaneGeometry(.09, .09), G.holeMat); m.position.copy(p).addScaledVector(n, .01); m.lookAt(p.clone().add(n)); G.scene.add(m); G.decals.push(m); if (G.decals.length > 40) { const o = G.decals.shift(); G.scene.remove(o); o.geometry.dispose(); } }
@@ -930,7 +967,242 @@ body.wwon{overflow:hidden}
     for (const k in d) o[k] = Math.round(((Number(b[k]) || 0) + d[k]) * 100) / 100;
     G.sesD = {}; try { API().saveStats && API().saveStats(o); } catch (_) {}
   }
-  function joinGame() { /* the live match server arrives with PvP */ }
+
+
+  /* =====================================================================================================
+     PvP (Oct 28): the live match server (server/index.js on Cloud Run) decides hits, kills and money.
+     This page: picks a table (1k / 5k / 10k buy-in), writes the buy-in, sends its own movement 20×/s and its shots,
+     draws everyone else as the skin they have equipped (interpolated 110 ms behind), plus emotes, name tags, tracers,
+     health, the cash-out at the bank, the kill feed and the BB tracker. One hitbox for everyone lives on the server;
+     every character is scaled so its head sits where that hitbox's head is.
+     ===================================================================================================== */
+  const NETV = 1, INTERP = 110;
+  async function srvStatus() {
+    try { const r = await fetch(API().server + "/status", { cache: "no-store" }); const j = await r.json(); G.server = { up: !!j.up, checked: true, rooms: j.rooms || [], n: (j.rooms || []).reduce((a, x) => a + x.n, 0) }; }
+    catch (_) { G.server = { up: false, checked: true, n: 0, rooms: [] }; }
+    if (G && G.state === "menu" && G.ready) showMenu(false);
+  }
+  function showTiers(msg) {
+    G.state = "menu"; const bal = API().balance ? API().balance() : 0, rooms = (G.server && G.server.rooms) || [];
+    const tiers = [1000, 5000, 10000];
+    G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwsc"><h2>Join game</h2>
+      <p style="margin:0 0 6px">Kill someone and take their stack. If they had no kills yet you take all of it, if they had one or more you take half. Cash out by holding still at the <b>bank</b> for 5 seconds. Quitting mid-fight counts as dying.</p>
+      <div class="wwtiers">${tiers.map(t => { const n = (rooms.find(r => r.tier === t) || {}).n || 0; return `<button class="${bal < t ? "off" : ""}" data-wwtier="${t}" ${bal < t ? "disabled" : ""}><b>${t.toLocaleString()} BB</b><small>${n} in match</small></button>`; }).join("")}</div>
+      <p style="opacity:.75;margin:6px 0 0">Your balance: <b>${bal.toLocaleString()} BB</b>${msg ? ` · <span style="color:#ffb3a0">${esc(msg)}</span>` : ""}</p>
+      <div class="wwrow"><button data-ww="menu">Back</button></div></div></div>`;
+  }
+  function netMsg(t) { const e = G.ui.querySelector(".wwnetmsg"); if (e) e.textContent = t; }
+  function showBusy(t) { G.state = "menu"; G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwpz"><h2>Biggietown</h2><p class="wwnetmsg">${esc(t)}</p></div></div>`; }
+  /* connect (or reuse the connection) and sign in with the app's token */
+  function netOpen() {
+    return new Promise((res, rej) => {
+      const N = G.net; if (N && N.ws && N.ws.readyState === 1 && N.authed) return res(N);
+      const ws = new WebSocket(API().server.replace(/^http/, "ws") + "/ws"); const net = G.net = Object.assign(G.net || {}, { ws, authed: false, pl: N && N.pl || new Map(), off: 0, rtt: 120 });
+      let done = false; const to = setTimeout(() => { if (!done) { done = true; rej(new Error("The server didn't answer.")); try { ws.close(); } catch (_) {} } }, 9000);
+      ws.onopen = async () => { const tok = await API().token(); ws.send(JSON.stringify({ t: "hello", tok, v: NETV })); };
+      ws.onmessage = ev => { let m; try { m = JSON.parse(ev.data); } catch (_) { return; }
+        if (m.t === "auth") { if (done) return; done = true; clearTimeout(to); if (!m.ok) { rej(new Error(m.why || "Not allowed.")); return; } net.authed = true; net.pid = m.pid; net.name = m.name; net.active = m.active; net.activeTier = m.tier; res(net); return; }
+        onNet(m); };
+      ws.onclose = () => { if (!done) { done = true; clearTimeout(to); rej(new Error("Couldn't reach the server.")); } onNetClose(ws); };
+      ws.onerror = () => {};
+    });
+  }
+  const nsend = m => { const ws = G.net && G.net.ws; if (ws && ws.readyState === 1) ws.send(JSON.stringify(m)); };
+  async function joinTier(tier) {
+    showBusy("Connecting…");
+    try {
+      const net = await netOpen();
+      if (net.active) { showBusy("Back into your match…"); nsend({ t: "join", buy: null }); return; }
+      if ((API().balance ? API().balance() : 0) < tier) return showTiers("Not enough BB for that table.");
+      showBusy(`Paying the ${tier.toLocaleString()} BB buy-in…`);
+      const id = await API().buyIn(tier); net.buyId = id; net.tierWant = tier; nsend({ t: "join", buy: id });
+    } catch (e) { showTiers(e.message || "Couldn't join."); }
+  }
+  function onNetClose(ws) {
+    const net = G && G.net; if (!net || net.ws !== ws) return; net.authed = false;
+    if (G.mode === "pvp" && !net.leaving) { /* dropped: reconnect and resume (the server keeps the run for 10 s) */
+      banner("Reconnecting…", ""); let tries = 0; const again = () => { if (!G || G.mode !== "pvp") return; tries++;
+        netOpen().then(n => { if (n.active) nsend({ t: "join", buy: null }); else pvpEnd(); }).catch(() => { if (tries < 4) setTimeout(again, 1500); else { banner("Lost the connection", "You'll be paid out if your run ended"); pvpEnd(); } }); };
+      setTimeout(again, 600);
+    }
+  }
+  function onNet(m) {
+    const N = G.net, T = THREE;
+    switch (m.t) {
+      case "welcome": {
+        N.n = m.n; N.tier = m.tier; N.stack = m.stack; N.bank = m.bank; N.kills = m.kills || 0; N.hp = m.hp; N.leaving = false; N.active = false;
+        for (const R of N.pl.values()) rmRemote(R); N.pl.clear(); (m.players || []).forEach(addRemote);
+        G.mode = "pvp"; G.chal && G.chal.on && (G.chal.on = false);
+        const s = m.spawn; G.p = { x: s[0], y: s[1], z: s[2], vy: 0, ground: true }; G.yaw = s[3]; G.pitch = 0; G.ammo = 6; G.reloading = 0; drawAmmo();
+        G.prot = performance.now() + (m.prot || 0); N.startStack = m.tier; setBB(N.stack - N.tier);
+        if (!N.pingT) N.pingT = setInterval(() => nsend({ t: "ping", c: Date.now(), rtt: N.rtt }), 2000);
+        nsend({ t: "ping", c: Date.now() }); hudPvp(true); play(); banner("Draw!", `${m.tier.toLocaleString()} BB table · cash out at the bank`); return;
+      }
+      case "err": showTiers(m.why); return;
+      case "pong": { const r = Date.now() - m.c; N.rtt = N.rtt ? N.rtt * .7 + r * .3 : r; N.off = m.s + r / 2 - Date.now(); return; }
+      case "add": addRemote(m); return;
+      case "rm": { const R = N.pl.get(m.n); if (R) { R.gone = true; if (!R.dying) rmRemote(R), N.pl.delete(m.n); } return; }
+      case "s": {
+        const seen = new Set();
+        for (const e of m.p) { const [n, x, y, z, yaw, pitch, fl, stack] = e; if (n === N.n) { if (stack !== N.stack) { N.stack = stack; setBB(stack - N.tier); } continue; }
+          let R = N.pl.get(n); if (!R) R = addRemote({ n, name: "…", skin: null, stack });
+          R.stack = stack; R.flags = fl; R.snaps.push([m.ts, x, y, z, yaw, pitch]); if (R.snaps.length > 40) R.snaps.shift(); R.alive = true; seen.add(n); }
+        for (const R of N.pl.values()) if (!seen.has(R.n) && !R.dying) R.alive = false;
+        setLive(m.live); N.hp = m.hp; drawHp(); N.cash = m.cash || 0;
+        if (m.ammo >= 0 && !G.reloading && m.ammo !== G.ammo) { G.ammo = m.ammo; drawAmmo(); }
+        return;
+      }
+      case "stack": N.stack = m.stack; setBB(m.stack - N.tier); return;
+      case "pos": G.p.x = m.x; G.p.y = m.y; G.p.z = m.z; return;
+      case "fx": { const R = N.pl.get(m.n); if (!R || !R.root) return; const from = R.root.position.clone().add(new T.Vector3(0, 1.45, 0)); tracer(from, new T.Vector3(...m.e));
+        const d = from.distanceTo(G.cam.position); G.vmul = Math.max(.08, Math.min(1, 9 / (d + 4))); SFX.shot(); G.vmul = 1; if (R.u) R.flashT = .06; return; }
+      case "hit": { N.hp = m.hp; drawHp(); dmgFx(m.from); return; }
+      case "hc": { if (m.prot) { banner("", "Spawn protected"); return; } hitMark(m.hs); if (m.kill) SFX.ding(); sesAdd("hits", 1); return; }
+      case "kill": { const mine = m.kn === N.n || m.vn === N.n; killFeed(m.k, m.v, m.hs, m.amt, mine); if (m.kn === N.n) { N.kills++; sesAdd("kills", 1); banner(m.hs ? "Headshot" : "Got 'em", `+${m.amt.toLocaleString()} BB`); }
+        const R = N.pl.get(m.vn); if (R) R.dying = performance.now(); return; }
+      case "dead": { G.mode = "dead"; sesAdd("deaths", 1); hudPvp(false); G.state = "menu";
+        G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwpz"><h2>Shot down</h2><p>${m.by ? `<b>${esc(m.by)}</b> got you and took <b>${m.took.toLocaleString()} BB</b>.` : "You're out."}</p><p>You walk out with <b>${m.keep.toLocaleString()} BB</b>.</p><p class="wwnetmsg" style="opacity:.7">Paying out…</p></div></div>`; return; }
+      case "out": { const net = m.amt - (m.buy || N.tier || 0); sesAdd("bb", net); sesAdd("matches", 1); saveStats(); pvpEnd(true);
+        const why = m.reason === "cash" ? "Cashed out" : m.reason === "dead" ? "Walked out" : "Left the match";
+        G.state = "menu"; G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwpz"><h2>${why}</h2>
+          <p style="font:400 30px Rye,Georgia,serif;color:${net >= 0 ? "#9dffb0" : "#ffb3a0"};margin:4px 0">${net >= 0 ? "+" : "−"}${Math.abs(net).toLocaleString()} BB</p>
+          <p>${m.amt.toLocaleString()} BB paid to your balance · ${m.kills || 0} kill${m.kills === 1 ? "" : "s"}</p>
+          <div class="wwgrid"><button class="pri" data-wwtier="${m.buy || N.tier}">Buy back in</button><button data-ww="menu">Main menu</button></div></div></div>`; return; }
+      case "cash": { if (!m.on && m.why === "hit") banner("", "Cash out cancelled: you got hit"); G.cashing = !!m.on; return; }
+      case "emo": { if (m.n === N.n) { startOwnEmote(m.id); return; } const R = N.pl.get(m.n); if (R) R.emo = { id: m.id, t0: performance.now() }; return; }
+    }
+  }
+  function pvpEnd(keepConn) {
+    const N = G.net; G.mode = "lobby"; hudPvp(false); G.cashing = false; if (N) { for (const R of N.pl.values()) rmRemote(R); N.pl.clear(); }
+    setLive(1); setBB(G.ses.bb); stopOwnEmote(); if (!keepConn && N && N.ws) { N.leaving = true; try { N.ws.close(); } catch (_) {} }
+  }
+  /* leave from the pause menu: the server keeps your body 10 s (or counts it as a death if you were hit in the last 10 s) */
+  function leaveMatch() { const N = G.net; if (N) N.leaving = true; try { N && N.ws && N.ws.close(); } catch (_) {} pvpEnd(true);
+    G.state = "menu"; G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwpz"><h2>Left the match</h2><p>If nobody shoots you in the next 10 seconds, your stack is paid out to your balance where you stood.</p>
+      <div class="wwgrid"><button class="pri" data-ww="menu">Main menu</button><button class="dang" data-ww="exit">Exit to casino</button></div></div></div>`; }
+
+  /* ---- remote players: their equipped skin (or an animal), standing, walking, aiming, emoting ---- */
+  const ANIM_K = ["bear", "cat", "rat", "fox"];
+  function addRemote(m) {
+    const N = G.net; let R = N.pl.get(m.n);
+    if (R) { const skinChanged = R.skin !== m.skin && m.name !== "…"; R.name = m.name || R.name; R.stack = m.stack; if (skinChanged) { rmRemote(R); R.root = null; R.skin = m.skin; } }
+    else { R = { n: m.n, name: m.name, skin: m.skin, stack: m.stack, snaps: [], ph: Math.random() * 6, speed: 0, alive: false }; N.pl.set(m.n, R); }
+    if (!R.root) mkBody(R);
+    return R;
+  }
+  function mkBody(R) {
+    const T = THREE, root = new T.Group(); G.scene.add(root); const chair = new T.Group(); root.add(chair);
+    const A = API().animals ? API().animals() : {}, k = ANIM_K[R.n % 4], spec = (API().skinSpec && API().skinSpec(R.skin)) || { k, c: (A[k] || {}).c || 0x6e4424 };
+    const M = (c, o) => new T.MeshStandardMaterial(Object.assign({ color: c, roughness: .75 }, o || {}));
+    const add = (geo, mat, x, y, z, par) => { const m = new T.Mesh(geo, mat); m.position.set(x || 0, y || 0, z || 0); (par || root).add(m); return m; };
+    const body = API().rrAnimal(T, spec, add, M, chair), u = body.userData;
+    u.em = { id: "ww", t0: 0, cp: chair.position.clone(), bp: body.position.clone(), br: body.rotation.clone(), hr: u.head.rotation.clone() };
+    /* a revolver in the right hand (the hand's -y points along the forearm) */
+    const gun = new T.Group(), gm = M(0x3a3a42, { metalness: .8, roughness: .35 }); gun.add(add(new T.BoxGeometry(.035, .05, .16), gm, 0, -.08, -.02, gun)); const br = add(new T.CylinderGeometry(.012, .012, .2, 8), gm, 0, -.17, -.02, gun);
+    add(new T.BoxGeometry(.03, .09, .05), M(0x6a3a1a), 0, -.02, .04, gun); u.armR.hand.add(gun); R.gun = gun;
+    const fl = new T.Sprite(new T.SpriteMaterial({ map: G.flash.material.map, blending: T.AdditiveBlending, transparent: true, depthWrite: false })); fl.scale.set(.35, .35, 1); fl.position.set(0, -.3, -.02); fl.visible = false; gun.add(fl); R.fl = fl;
+    /* a soft shadow blob under them */
+    const sh = new T.Mesh(new T.CircleGeometry(.45, 16), new T.MeshBasicMaterial({ color: 0, transparent: true, opacity: .28, depthWrite: false })); sh.rotation.x = -Math.PI / 2; sh.position.y = .02; root.add(sh);
+    root.visible = false; Object.assign(R, { root, chair, body, u, sp: { chair, body, a: 0 }, scaled: false });
+    const tag = document.createElement("div"); tag.className = "wwtag"; G.hud.appendChild(tag); R.tag = tag;
+  }
+  function rmRemote(R) {
+    if (R.root) { R.root.traverse(o => { if (o.geometry && !o.isSkinnedMesh) o.geometry.dispose(); }); G.scene.remove(R.root); }
+    if (R.tag) R.tag.remove(); R.root = null; R.tag = null;
+  }
+  function interp(R, rt) {
+    const s = R.snaps; if (!s.length) return null; if (rt <= s[0][0]) return s[0]; const L = s[s.length - 1]; if (rt >= L[0]) return L;
+    for (let i = s.length - 1; i > 0; i--) { const a = s[i - 1], b = s[i]; if (rt >= a[0]) { const k = (rt - a[0]) / Math.max(1, b[0] - a[0]); let dy = b[4] - a[4]; while (dy > Math.PI) dy -= Math.PI * 2; while (dy < -Math.PI) dy += Math.PI * 2;
+      return [rt, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k, a[3] + (b[3] - a[3]) * k, a[4] + dy * k, a[5] + (b[5] - a[5]) * k]; } }
+    return L;
+  }
+  /* a pose for emApply: standing (rise 1), walk cycle from speed, right arm aiming, or the emote's own pose */
+  function poseFor(R, dt, now) {
+    const P = API().emLerp(API().emLDance(0), 0); P.rise = 1;
+    if (R.emo) { const E = API().emote(R.emo.id), k = (now - R.emo.t0) / 1000; if (!E || k > E.len || R.speed > 1.6) R.emo = null;
+      else { const Q = E.f(k); Object.assign(P, Q); P.rise = 1; P.cb = 0; if (R.gun) R.gun.visible = false; return P; } }
+    if (R.gun) R.gun.visible = true;
+    const w = Math.min(1, R.speed / 4.5); R.ph += dt * Math.min(9, R.speed) * 2.3;
+    P.lh0 = Math.sin(R.ph) * .62 * w; P.lh1 = -Math.sin(R.ph) * .62 * w; P.lk0 = Math.max(0, -Math.sin(R.ph)) * .95 * w; P.lk1 = Math.max(0, Math.sin(R.ph)) * .95 * w; P.y = Math.abs(Math.sin(R.ph)) * .035 * w;
+    P.ral = 1; P.rpx = .1; P.rpy = -.12 + Math.sin(R.pitch || 0) * 1.1; P.rpz = -1;
+    P.lal = .8; P.lpx = -.28; P.lpy = -.95; P.lpz = Math.sin(R.ph) * .35 * w; P.hx = (R.pitch || 0) * .5;
+    return P;
+  }
+  function remotesTick(dt) {
+    const N = G.net; if (!N || !N.pl.size) return; const T = THREE, now = performance.now(), rt = Date.now() + (N.off || 0) - INTERP, sm = r => 1 - Math.exp(-dt * r);
+    const vis = [];
+    for (const R of N.pl.values()) {
+      if (!R.root) continue;
+      if (R.dying) { const k = (now - R.dying) / 1000; R.root.rotation.x = -Math.min(1, k / .45) * Math.PI / 2 * .92; R.root.position.y = -Math.max(0, k - 2) * .6;
+        if (R.tag) R.tag.style.display = "none"; if (k > 3.2) { rmRemote(R); N.pl.delete(R.n); } continue; }
+      if (!R.alive) { R.root.visible = false; if (R.tag) R.tag.style.display = "none"; continue; }
+      const s = interp(R, rt); if (!s) continue;
+      const px = R.root.position.x, pz = R.root.position.z; R.root.position.set(s[1], s[2], s[3]); R.root.rotation.set(0, s[4], 0); R.pitch = s[5];
+      const sp = Math.hypot(s[1] - px, s[3] - pz) / Math.max(.001, dt); R.speed += (Math.min(9, sp) - R.speed) * Math.min(1, dt * 8);
+      R.root.visible = true; API().emApply(T, R.sp, poseFor(R, dt, now)); vis.push(R);
+      if (R.flashT > 0) { R.flashT -= dt; R.fl.visible = true; } else R.fl.visible = false;
+    }
+    G.scene.updateMatrixWorld();
+    for (const R of vis) {
+      if (!R.scaled) { /* one size for everyone: scale the model so its head is where the hitbox's head is (1.68 m) */
+        const hp = new T.Vector3(); R.u.head.getWorldPosition(hp); const hy = (hp.y - R.root.position.y) / (R.root.scale.y || 1);
+        if (hy > .3) { R.root.scale.setScalar(Math.max(.5, Math.min(2, 1.68 / hy))); R.scaled = true; R.root.updateMatrixWorld(true); } }
+      API().rrSolveArm(T, R.body, R.u.armL, sm); API().rrSolveArm(T, R.body, R.u.armR, sm);
+    }
+    /* name tags: name + stack, hidden behind walls (checked a few times a second) */
+    const cam = G.cam, W = G.gw, H = G.gh, chk = now - (G.tagChk || 0) > 220; if (chk) G.tagChk = now;
+    for (const R of vis) {
+      const v = R.root.position.clone(); v.y += 2.15; const d = v.distanceTo(cam.position); const sp = v.clone().project(cam);
+      if (chk) { const o = cam.position, dir = v.clone().sub(o).normalize(); R.occl = G.cols.some(c => { const r = rayBox(o, dir, c); return r && r.t < d - .5; }); }
+      const on = sp.z < 1 && Math.abs(sp.x) < 1.1 && Math.abs(sp.y) < 1.1 && !R.occl && d < 70;
+      R.tag.style.display = on ? "" : "none"; if (!on) continue;
+      const f = R.flags || 0, st = (f & 1) ? "Protected" : (f & 2) ? "Cashing out" : (f & 4) ? "Disconnected" : "";
+      const html = `<b>${esc(R.name)}</b><span>${Math.round(R.stack || 0).toLocaleString()} BB</span>${st ? `<i>${st}</i>` : ""}`; if (R.tag._h !== html) { R.tag._h = html; R.tag.innerHTML = html; }
+      R.tag.style.transform = `translate(${((sp.x + 1) / 2 * W).toFixed(1)}px,${((1 - sp.y) / 2 * H).toFixed(1)}px) translate(-50%,-100%) scale(${Math.max(.6, Math.min(1, 14 / d)).toFixed(2)})`;
+    }
+  }
+  function tracer(a, b) { const T = THREE, g = new T.BufferGeometry().setFromPoints([a, b]), l = new T.Line(g, new T.LineBasicMaterial({ color: 0xffe0a0, transparent: true, opacity: .8 })); G.scene.add(l);
+    G.parts.push({ o: l, v: new T.Vector3(), life: .09, g: 0, line: true }); }
+
+  /* ---- your own emote: the camera swings out behind you and you see your own character dance ---- */
+  function startOwnEmote(id) {
+    const E = API().emote(id); if (!E) return; if (!G.me) { const R = { n: G.net ? G.net.n : 0, name: "", skin: API().mySkin ? API().mySkin() : null, snaps: [], ph: 0, speed: 0 }; mkBody(R); if (R.tag) R.tag.remove(); R.tag = null; G.me = R; }
+    G.me.emo = { id, t0: performance.now() }; G.me.root.visible = true; G.ownEmo = { id, t0: performance.now(), len: E.len };
+  }
+  function stopOwnEmote() { if (G.ownEmo) G.ownEmo = null; if (G.me && G.me.root) G.me.root.visible = false; }
+  function ownEmoteTick(dt) {
+    const O = G.ownEmo, R = G.me; if (!O || !R || !R.root) return false; const k = (performance.now() - O.t0) / 1000;
+    if (k > O.len || G.moving > 1.2) { stopOwnEmote(); return false; }
+    const T = THREE; R.root.position.set(G.p.x, G.p.y, G.p.z); R.root.rotation.set(0, G.yaw, 0); R.speed = 0; R.emo = { id: O.id, t0: O.t0 };
+    API().emApply(T, R.sp, poseFor(R, dt, performance.now())); G.scene.updateMatrixWorld();
+    if (!R.scaled) { const hp = new T.Vector3(); R.u.head.getWorldPosition(hp); const hy = hp.y - R.root.position.y; if (hy > .3) { R.root.scale.setScalar(Math.max(.5, Math.min(2, 1.68 / hy))); R.scaled = true; } }
+    const sm = r => 1 - Math.exp(-dt * r); API().rrSolveArm(T, R.body, R.u.armL, sm); API().rrSolveArm(T, R.body, R.u.armR, sm);
+    /* camera: behind and above, looking at you */
+    const back = 3.4, cx = G.p.x + Math.sin(G.yaw) * back, cz = G.p.z + Math.cos(G.yaw) * back; G.cam.position.set(cx, G.p.y + 2.1, cz); G.cam.lookAt(G.p.x, G.p.y + 1.2, G.p.z);
+    return true;
+  }
+  function emoteMenu() {
+    const list = API().myEmotes ? API().myEmotes() : [], el = G.hud.querySelector("#wwEmo"); if (!el) return;
+    if (el.classList.contains("on")) { el.classList.remove("on"); return; }
+    el.innerHTML = list.length ? list.map(e => `<button data-wwemo="${e.id}">${esc(e.n)}</button>`).join("") : `<span>No emotes yet · get them in the Aura Shop</span>`; el.classList.add("on");
+  }
+  function playEmote(id) { const el = G.hud.querySelector("#wwEmo"); if (el) el.classList.remove("on"); if (G.mode === "pvp") nsend({ t: "emo", id }); else startOwnEmote(id); }
+
+  /* ---- PvP HUD bits: health, cash-out, damage direction ---- */
+  function hudPvp(on) { G.hud.classList.toggle("pvp", !!on); drawHp(); }
+  function drawHp() { const e = G.hud.querySelector("#wwHp"); if (!e || !G.net) return; const hp = Math.max(0, Math.min(100, G.net.hp == null ? 100 : G.net.hp)); e.firstChild.style.width = hp + "%"; e.classList.toggle("low", hp <= 34); e.lastChild.textContent = Math.ceil(hp); }
+  function dmgFx(from) {
+    const f = G.hud.querySelector("#wwDmg"); if (f) { f.style.opacity = 1; clearTimeout(G.dmgT); G.dmgT = setTimeout(() => f.style.opacity = 0, 350); }
+    if (from) { const a = Math.atan2(from[0] - G.p.x, from[1] - G.p.z), rel = a - Math.atan2(-Math.sin(G.yaw), -Math.cos(G.yaw)), ind = G.hud.querySelector("#wwDir");
+      if (ind) { ind.style.transform = `translate(-50%,-50%) rotate(${(-rel * 180 / Math.PI).toFixed(0)}deg)`; ind.style.opacity = 1; clearTimeout(G.dirT); G.dirT = setTimeout(() => ind.style.opacity = 0, 900); } }
+  }
+  const inBank = () => { const B = G.net && G.net.bank; return B && G.p.x > B.x0 && G.p.x < B.x1 && G.p.z > B.z0 && G.p.z < B.z1; };
+  function cashTick() {
+    const b = G.hud.querySelector("#wwCash"), bar = G.hud.querySelector("#wwCashBar"); if (!b) return; const can = G.mode === "pvp" && inBank();
+    b.style.display = can ? "" : "none"; if (!can && G.cashHeld) { G.cashHeld = false; nsend({ t: "cash", on: false }); }
+    const pr = G.mode === "pvp" ? G.net.cash || 0 : 0; bar.style.display = pr > 0 ? "" : "none"; if (pr > 0) { bar.firstChild.style.width = (pr * 100).toFixed(0) + "%"; bar.lastChild.textContent = `Cashing out ${((1 - pr) * 5).toFixed(1)}s`; }
+  }
+  function cashPress(on) { if (G.mode !== "pvp") return; if (on && !inBank()) return; G.cashHeld = on; nsend({ t: "cash", on }); }
 
   /* ---------------- loop ---------------- */
   function loop(now) {
@@ -973,11 +1245,15 @@ body.wwon{overflow:hidden}
     for (let i = G.parts.length - 1; i >= 0; i--) { const q = G.parts[i]; q.life -= dt; q.v.y -= 9.8 * q.g * dt; q.o.position.addScaledVector(q.v, dt);
       if (q.rot) { q.o.rotation.x += q.rot.x * dt; q.o.rotation.y += q.rot.y * dt; if (q.o.position.y < .02) { q.o.position.y = .02; q.v.set(0, 0, 0); q.rot = null; } }
       if (q.grow) { q.o.scale.setScalar(q.o.scale.x + q.grow * dt); q.o.material.opacity = Math.max(0, q.life) * .8; }
-      if (q.life <= 0) { G.scene.remove(q.o); if (q.grow) q.o.material.dispose(); else q.o.geometry.dispose(); G.parts.splice(i, 1); } }
+      if (q.life <= 0) { G.scene.remove(q.o); if (q.grow || q.line) q.o.material.dispose(); if (!q.grow) q.o.geometry.dispose(); G.parts.splice(i, 1); } }
     /* challenge timer chip + tip near the gong */
     const chip = G.hud.querySelector("#wwChal");
     if (G.chal && G.chal.on) { chip.style.display = ""; chip.innerHTML = `Bottles left <b>${G.chal.left}</b> · <b>${((performance.now() - G.chal.t0) / 1000).toFixed(1)}s</b>`; } else chip.style.display = "none";
     const tip = G.hud.querySelector("#wwTip"); if (tip) { const nearG = play && !G.chal.on && Math.hypot(p.x - G.chalTip[0], p.z - G.chalTip[1]) < 7; tip.textContent = "Shoot the gong to start the bottle challenge"; tip.classList.toggle("on", nearG); }
+    /* PvP: send my movement 20×/s, move everyone else, cash-out, own emote camera */
+    if (G.mode === "pvp" && G.net) { if (now - (G.net.sentAt || 0) > 50) { G.net.sentAt = now; nsend({ t: "in", x: +G.p.x.toFixed(3), y: +G.p.y.toFixed(3), z: +G.p.z.toFixed(3), yaw: +G.yaw.toFixed(4), pitch: +G.pitch.toFixed(4) }); } }
+    if (G.net) remotesTick(dt); cashTick();
+    const emo = ownEmoteTick(dt); G.vm.visible = !emo;
     G.R.autoClear = false; G.R.clear(); G.R.render(G.scene, cam); G.R.clearDepth(); if (G.vc.aspect !== cam.aspect) { G.vc.aspect = cam.aspect; G.vc.updateProjectionMatrix(); } G.R.render(G.vs, G.vc);
   }
   /* practice bottles on the fence between runs */
