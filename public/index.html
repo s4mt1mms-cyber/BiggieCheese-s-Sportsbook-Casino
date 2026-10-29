@@ -458,6 +458,9 @@ header.mast::before,body .mast::before{display:none!important;animation:none!imp
 @keyframes pumpBob{50%{transform:translateY(-1.5px) rotate(-3deg)}}
 @media (prefers-reduced-motion:reduce){.leaf,.leaf svg,.pumpkins .p2{animation:none}}
 body.idlefx *,body.idlefx *::before,body.idlefx *::after{animation-play-state:paused!important}
+/* Oct 29 3:18 AM perf (wheel + shard fill froze on iPhone): the one-pool collection runs ~120 endless card animations; greyed cards don't animate, and the page behind any popup pauses */
+.unown *,.unown *::before,.unown *::after{animation:none!important}
+body:has(> .overlay,> .pkov,> .cfov) main *,body:has(> .overlay,> .pkov,> .cfov) main *::before,body:has(> .overlay,> .pkov,> .cfov) main *::after{animation-play-state:paused!important}
 /* perf (Oct 28): these animated filter/blur/shadow effects repaint every frame; they stay at their resting look */
 @keyframes auIri{0%,100%{filter:hue-rotate(0deg) saturate(1.2) brightness(1.05)}}@keyframes auIriB{0%,100%{filter:blur(calc(var(--s)*.12))}}@keyframes auraPulse{0%,100%{filter:none}}
 /* BiggieTown open: nothing behind it animates */
@@ -6583,11 +6586,13 @@ function v2MktHtml(){const bal=Math.floor(ledger().balOf(S.me)),sh=shardsOf(S.me
   ${open.length?open.map(row).join(""):`<p class="empty small">No shards listed right now.</p>`}
   <form class="shform" data-shform><div class="stlbl">Sell shards</div><div class="row bkform"><label>Rarity<select name="r">${sh.map((n,r)=>`<option value="${r}" ${n?"":"disabled"}>${esc(CR[r].n)} (${n})</option>`).join("")}</select></label><label>How many<input name="n" type="number" min="1" step="1" inputmode="numeric" value="1"></label><label>Price (BB, total)<input name="p" type="number" min="1" step="1" inputmode="numeric" placeholder="e.g. 900"></label><button class="btn" type="submit" ${sh.some(n=>n>0)?"":"disabled"}>List</button></div></form>`}
 /* owner Oct 29 3:05 AM: put the shards you have into a card's copy bar (partial fill allowed, never past what the next upgrade needs). Shards → copies 1:1, no BB. */
+/* refresh an open card view in place (the view is a popup outside render(), so it kept the old bar and a stuck button) */
+function v2ViewRefresh(cid){document.querySelectorAll(".pkov").forEach(ov=>{const u=ov.querySelector(".v2up");if(u&&u.querySelector(`[data-shfill="${CSS.escape(cid)}"],[data-v2up="${CSS.escape(cid)}"]`)){u.outerHTML=v2UpHtml(cid);const f=ov.querySelector(".cff");if(f)f.innerHTML=cardHtml(cardById(cid),{count:cardCount(cid)})}})}
 function v2ShFillN(c,id){const P=v2UpPlan(c,id);return Math.max(0,Math.min(P.sh,P.cost.sh-P.cp))}
 function v2ShFill(cid){if(!S.me||!db)return;if(!(S.prefs[S.me]||{}).cv3)return toast("Cards are resetting. Try again in a moment.");if(S.readOnly)return toast("View only. Ask the commish for access.");const c=cardById(cid);if(!c||!craftable(c)||(c.lv||1)>=LV_MAX[c.r])return;
   const q=S.prefs[S.me]=S.prefs[S.me]||{};if(!(Number((q.cards||{})[cid])>0))return toast("You don't have that card anymore.");const P=v2UpPlan(c,S.me),n=v2ShFillN(c,S.me),b=baseOf(cid);if(!n)return toast("Nothing to fill.");
-  const patch={cp:{[b]:P.cp+n},shards:{[c.r]:P.sh-n}};q.cp={...(q.cp||{}),...patch.cp};q.shards={...(q.shards||{}),...patch.shards};render();toast(`Added ${shTxt(c.r,n)} to ${c.name}'s bar.`);
-  _V2UQ=_V2UQ.then(()=>db.doc("prefs/"+S.me).update(patch)).catch(e=>{console.warn("shfill",e);db.doc("prefs/"+S.me).get().then(f=>{const D=f.data()||{};Object.assign(q,{cp:D.cp||{},shards:D.shards||{}});render()}).catch(()=>{});toast("That didn't save (connection?). Nothing was used. Try again.")})}
+  const patch={cp:{[b]:P.cp+n},shards:{[c.r]:P.sh-n}};q.cp={...(q.cp||{}),...patch.cp};q.shards={...(q.shards||{}),...patch.shards};v2ViewRefresh(cid);renderSoon();toast(`Added ${shTxt(c.r,n)} to ${c.name}'s bar.`);
+  _V2UQ=_V2UQ.then(()=>db.doc("prefs/"+S.me).update(patch)).catch(e=>{console.warn("shfill",e);db.doc("prefs/"+S.me).get().then(f=>{const D=f.data()||{};Object.assign(q,{cp:D.cp||{},shards:D.shards||{}});v2ViewRefresh(cid);render()}).catch(()=>{});toast("That didn't save (connection?). Nothing was used. Try again.")})}
 document.addEventListener("click",e=>{const t=e.target.closest("[data-v2buy],[data-shbuy],[data-v2up],[data-shbuyl],[data-shcancel],[data-shfill]");if(!t||!S.me)return;
   if(t.dataset.shfill!=null){if(!t.dataset.arm){t.dataset.arm=1;t.textContent="Tap again to use the shards";return}t.disabled=true;return v2ShFill(t.dataset.shfill)}
   if(t.dataset.v2buy!=null)return v2Buy();if(t.dataset.shbuy!=null){if(!t.dataset.arm){t.dataset.arm=1;const r=Number(t.dataset.shbuy),n=Number(t.dataset.n);t.textContent=`Tap to pay ${(SHARD_PRICE[r]*n).toLocaleString()} BB`;setTimeout(()=>{if(t.isConnected){delete t.dataset.arm;render()}},4000);return}return v2ShBuy(t.dataset.shbuy,t.dataset.n)}
@@ -6971,12 +6976,13 @@ const cfHasAb=k=>{const c=cardById(k);return c&&(ab2Of(c)||c.abil||c.div!=null)?
    marks the spin as used). The ledger treats it like any House payment. The wheel pops up on its own when a spin is ready. */
 /* owner, Oct 24 2:30 PM: 5% "shop item" slice (taken from the 1k slice): a random aura/emote/skin you don't own, odds ∝ 1/price */
 const WHEEL=[{a:0,p:20,c:"#3a3a46",t:"Nothing"},{a:0,p:5,c:"#d63384",t:"Shop item",shop:1},{a:1000,p:29.5,c:"#2f8f5b"},{a:2500,p:18,c:"#2f6fb5"},{a:5000,p:15,c:"#8a4fd0"},{a:10000,p:7,c:"#d0632f"},{a:20000,p:4.5,c:"#c9302c"},{a:50000,p:1,c:"#e8b423"}];/* 50k 0.5% → 1% (owner 6 PM, from the 1k slice) */
-function wheelSlot(t){t=t==null?Date.now():t;const p=Object.fromEntries(new Intl.DateTimeFormat("en-CA",{timeZone:"America/New_York",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",hourCycle:"h23"}).formatToParts(new Date(t)).map(x=>[x.type,x.value]));return `${p.year}-${p.month}-${p.day}${Number(p.hour)<12?"am":"pm"}`}
+const _WHF=()=>_WHF.f||(_WHF.f=new Intl.DateTimeFormat("en-CA",{timeZone:"America/New_York",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",hourCycle:"h23"}));/* one formatter (building one per call was slow on iPhone) */
+function wheelSlot(t){t=t==null?Date.now():t;const p=Object.fromEntries(_WHF().formatToParts(new Date(t)).map(x=>[x.type,x.value]));return `${p.year}-${p.month}-${p.day}${Number(p.hour)<12?"am":"pm"}`}
 /* bonus spins (owner, Oct 24): prefs.whFree = free spins granted (admin fix job); each one used = bank doc wheel_<me>_free<n> */
 const wheelFreeUsed=()=>(S.bank||[]).filter(t=>String(t.id||"").startsWith("wheel_"+S.me+"_free")).length;
 const wheelFreeLeft=()=>Math.max(0,(Number((S.prefs[S.me]||{}).whFree)||0)-wheelFreeUsed());
 /* Crab Impersonator (Card System V2, by level): n spins every 24/n hours (LV 2: 2 every 12 h, LV 5: 3 every 8 h, LV 7: 4 every 6 h); 12 h windows keep the old ids */
-const wheelCrab=()=>{const n=ab2("crab");return n>0?n:1},wheelWin=t=>{const n=wheelCrab();if(n<=2)return wheelSlot(t);const p=Object.fromEntries(new Intl.DateTimeFormat("en-CA",{timeZone:"America/New_York",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",hourCycle:"h23"}).formatToParts(new Date(t==null?Date.now():t)).map(x=>[x.type,x.value])),h=24/n;return `${p.year}-${p.month}-${p.day}w${h}-${Math.floor(Number(p.hour)%24/h)}`};
+const wheelCrab=()=>{const n=ab2("crab");return n>0?n:1},wheelWin=t=>{const n=wheelCrab();if(n<=2)return wheelSlot(t);const p=Object.fromEntries(_WHF().formatToParts(new Date(t==null?Date.now():t)).map(x=>[x.type,x.value])),h=24/n;return `${p.year}-${p.month}-${p.day}w${h}-${Math.floor(Number(p.hour)%24/h)}`};
 const wheelId=()=>{const has=x=>(S.bank||[]).some(t=>t.id===x),sid="wheel_"+S.me+"_"+wheelWin(),n=wheelCrab(),sf=["","_b","_c","_d"];for(let i=0;i<n;i++)if(!has(sid+sf[i]))return sid+sf[i];return wheelFreeLeft()>0?"wheel_"+S.me+"_free"+(wheelFreeUsed()+1):sid};
 const wheelReady=()=>!!S.me&&!!S.ld&&!!S.ld.bank&&!(S.bank||[]).some(t=>t.id===wheelId());
 function wheelNextMs(){const now=Date.now(),s=wheelWin(now);let lo=now,hi=now+13*36e5;for(let i=0;i<40;i++){const m=(lo+hi)/2;if(wheelWin(m)===s)lo=m;else hi=m}return Math.max(0,hi-now)}
@@ -7006,23 +7012,35 @@ function wheelOpen(auto){if(!S.me||$("#whOv"))return;if(auto&&($("#recapOv")||$(
     <div class="row" style="justify-content:center"><button type="button" class="btn" id="whGo" ${ready?"":"hidden"}>Spin!</button><button type="button" class="btn gold" id="whPay" ${ready?"hidden":""}>Spin · ${WHEEL_PAID.toLocaleString()} BB</button><button type="button" class="btn ghost" id="whX">Close</button></div>
     <details class="small muted whodds"><summary>Chances</summary>${WHEEL.map(w=>`<div>${w.shop?"🎁 Random shop item (cheaper items more likely)":w.a?w.a.toLocaleString()+" BB":"Nothing"} · ${w.p}%</div>`).join("")}${(()=>{const P=wheelShopPool(S.me);return P.length?`<div style="margin-top:6px">If you land 🎁: ${P.slice().sort((a,b)=>b.ch-a.ch).map(x=>`${esc(x.n)} ${(x.ch*100).toFixed(1)}%`).join(" · ")}</div>`:""})()}</details></div>`;
   document.body.appendChild(o);S._whShown=wheelId();
-  o.querySelector("#whX").onclick=()=>{if(!S._whSpin)o.remove()};o.querySelector("#whGo").onclick=()=>wheelSpin(o);o.querySelector("#whPay").onclick=()=>wheelSpin(o,true)}
-async function wheelSpin(o,paid){if(S._whSpin||(!paid&&!wheelReady()))return;if(S.readOnly)return toast("View only. Ask the commish for access.");if(paid&&Math.floor(ledger().balOf(S.me))<WHEEL_PAID)return toast(`You need ${WHEEL_PAID.toLocaleString()} BB to spin.`);S._whSpin=true;const go=o.querySelector("#whGo"),pay=o.querySelector("#whPay");go.disabled=true;pay.disabled=true;
-  const slot=wheelSlot(),at0=Date.now(),id=paid?`wheel_${S.me}_paid${at0}`:wheelId(),ref=db.doc("bank/"+id);let k;
-  try{if((await ref.get()).exists){toast("You already spun this one.");S._whSpin=false;o.remove();return}
-    k=wheelPick();const w=WHEEL[k];var item=w.shop?wheelShopPick(S.me):null;const amt=w.shop&&!item?WHEEL_SHOP_FALLBACK:w.a;
-    const nt=(paid?"Paid spin":"Daily spin")+(item?" · "+item.n:paid?" · won "+amt.toLocaleString():"");
-    await ref.set({...(paid?(amt>=WHEEL_PAID?{from:"house",to:S.me,amt:amt-WHEEL_PAID}:{from:S.me,to:"house",amt:WHEEL_PAID-amt}):{from:"house",to:S.me,amt}),k,kind:"wheel",note:nt,slot,at:at0,...(paid?{paid:true,prize:amt,cost:WHEEL_PAID}:{}),...(item?{item:{kind:item.kind,id:item.id}}:{})});
+  o.querySelector("#whX").onclick=()=>o.remove();o.querySelector("#whGo").onclick=()=>wheelSpin(o);o.querySelector("#whPay").onclick=()=>wheelSpin(o,true)}
+/* owner Oct 29 3:14 AM "the wheel freezes": the spin used to wait for a server read AND the write's acknowledgement before the wheel moved, with
+   Close locked, so a slow/stuck connection (or a busy admin page queueing migration writes) left a frozen popup. Now the wheel spins at once while the
+   prize saves in the background; the result shows when the save lands (or "still saving" after 20 s), and Close always works. */
+async function wheelSpin(o,paid){if(S._whSpin||(!paid&&!wheelReady()))return;if(S.readOnly)return toast("View only. Ask the commish for access.");if(paid&&Math.floor(ledger().balOf(S.me))<WHEEL_PAID)return toast(`You need ${WHEEL_PAID.toLocaleString()} BB to spin.`);
+  const slot=wheelSlot(),at0=Date.now(),id=paid?`wheel_${S.me}_paid${at0}`:wheelId(),ref=db.doc("bank/"+id);if((S.bank||[]).some(t=>t.id===id)){toast("You already spun this one.");o.remove();return}
+  S._whSpin=true;const go=o.querySelector("#whGo"),pay=o.querySelector("#whPay");go.disabled=true;pay.disabled=true;
+  const k=wheelPick(),w=WHEEL[k],item=w.shop?wheelShopPick(S.me):null,amt=w.shop&&!item?WHEEL_SHOP_FALLBACK:w.a;
+  const nt=(paid?"Paid spin":"Daily spin")+(item?" · "+item.n:paid?" · won "+amt.toLocaleString():"");
+  const doc={...(paid?(amt>=WHEEL_PAID?{from:"house",to:S.me,amt:amt-WHEEL_PAID}:{from:S.me,to:"house",amt:WHEEL_PAID-amt}):{from:"house",to:S.me,amt}),k,kind:"wheel",note:nt,slot,at:at0,...(paid?{paid:true,prize:amt,cost:WHEEL_PAID}:{}),...(item?{item:{kind:item.kind,id:item.id}}:{})};
+  const wait=ms=>new Promise(r=>setTimeout(r,ms));
+  const save=(async()=>{if(!paid){const ex=await Promise.race([ref.get().then(d=>d.exists,()=>false),wait(5000).then(()=>false)]);if(ex){const er=new Error("dup");er.dup=1;throw er}}
+    await ref.set(doc);
     if(item){const q=S.prefs[S.me]||{},f=item.kind==="aura"?"auras":item.kind==="emote"?"emotes":"skins",up={[f]:{[item.id]:true}};if(item.kind==="aura"&&!auraOf(S.me))up.aura=item.id;
       await db.doc("prefs/"+S.me).update(up);q[f]={...(q[f]||{}),[item.id]:true};if(up.aura)q.aura=up.aura}
-    {const pr=paid?amt-WHEEL_PAID:amt;if(pr>0){const tp=tiAdd({},pr);if(tp.tiWin!=null)db.doc("prefs/"+S.me).update(tp).catch(()=>{})}}}
-  catch(e){S._whSpin=false;go.disabled=false;pay.disabled=false;return toast("The spin didn't go through. Try again.")}
+    {const pr=paid?amt-WHEEL_PAID:amt;if(pr>0){const tp=tiAdd({},pr);if(tp.tiWin!=null)db.doc("prefs/"+S.me).update(tp).catch(()=>{})}}})();
+  save.catch(()=>{});
   const seg=360/WHEEL_LAY.length,pk=WHEEL_LAY.map((x,i)=>x===k?i:-1).filter(i=>i>=0),u=new Uint32Array(2);crypto.getRandomValues(u);const pi=pk[u[1]%pk.length],off=(u[0]/4294967296-.5)*seg*.7,b0=o._rot||0,end=b0-(b0%360)+360*6-(pi*seg+seg/2)+off;o._rot=end;
   const wh=o.querySelector("#whWheel"),calm=pkCalm();wh.style.transition=calm?"none":"transform 4.6s cubic-bezier(.12,.75,.12,1)";wh.style.transform=`rotate(${end}deg)`;
   let tick=0;const tk=calm?0:setInterval(()=>{try{cfSfx("clang")}catch(_){}if(++tick>14)clearInterval(tk)},280);
-  setTimeout(()=>{clearInterval(tk);const w=WHEEL[k],r=o.querySelector("#whRes");S._whSpin=false;
+  setTimeout(async()=>{clearInterval(tk);const r=o.querySelector("#whRes"),X=o.querySelector("#whX");let res=true;r.innerHTML=`<div class="small muted">Saving your spin…</div>`;
+    try{await Promise.race([save,wait(20000).then(()=>{const er=new Error("slow");er.slow=1;throw er})])}catch(er){res=er}
+    S._whSpin=false;
+    if(res!==true){if(res.slow){r.innerHTML=`<div class="small muted">Still saving (slow connection). Your spin counts as soon as it goes through.</div>`;go.hidden=true;pay.hidden=true;X.textContent="Close";
+        save.then(()=>{toast(`🎡 Daily Spin saved: ${item?item.n:amt?"+"+amt.toLocaleString()+" BB":"nothing this time"}`);renderSoon()},()=>toast("The spin didn't go through. Nothing was paid or charged."));return}
+      r.innerHTML=res.dup?`<div class="small muted">You already spun this one.</div>`:`<div class="small neg">The spin didn't go through. Nothing was paid or charged. Try again.</div>`;
+      go.disabled=false;pay.disabled=false;if(res.dup){go.hidden=true;pay.hidden=false}return}
     r.innerHTML=w.shop?(item?`<div class="whwin">🎁 ${esc(item.n)}!</div><div class="small muted">It's yours. Find it in the Aura Shop.</div>`:`<div class="whwin num">🎁 +${WHEEL_SHOP_FALLBACK.toLocaleString()} BB</div><div class="small muted">You already own everything in the shop, so here's BB instead.</div>`):w.a?`<div class="whwin num">+${w.a.toLocaleString()} BB</div>`:`<div class="whlose">Nothing this time 😬</div>`;
-    go.hidden=true;pay.hidden=false;pay.disabled=false;pay.textContent=`Spin again · ${WHEEL_PAID.toLocaleString()} BB`;o.querySelector("#whX").textContent="Nice";try{cfSfx(w.a>=20000||item?"max":w.a?"burst":"rise");haptic()}catch(_){}
+    go.hidden=true;pay.hidden=false;pay.disabled=false;pay.textContent=`Spin again · ${WHEEL_PAID.toLocaleString()} BB`;X.textContent="Nice";try{cfSfx(w.a>=20000||item?"max":w.a?"burst":"rise");haptic()}catch(_){}
     if(w.a>=20000)try{db.collection("chat").add({type:"bet",kind:"bank",uid:S.me,poster:S.me,at:Date.now(),text:`🎡 ${nm(S.me)} hit ${w.a.toLocaleString()} BB on the Daily Spin!`})}catch(_){}
     if(item)try{db.collection("chat").add({type:"bet",kind:"shop",uid:S.me,poster:S.me,at:Date.now(),text:`🎡 ${nm(S.me)} won the ${item.n} on the Daily Spin!`})}catch(_){}
     renderSoon()},calm?300:4800)}
@@ -7368,6 +7386,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:174,d:"Oct 29",t:[["🎡","Fixed the Daily Spin freezing when you tap Spin"],["💎","Fixed putting shards into a card's bar looking stuck, and made the collection smoother"]]},
  {v:173,d:"Oct 29",t:[["🐉","Dragon cards now pay 15,000 BB a day"]]},
  {v:172,d:"Oct 29",t:[["💸","Elite card dividends are 3× higher (192 to 1,200 BB a day) and Grail dividends 6× higher (960 to 2,400 BB a day)"]]},
  {v:171,d:"Oct 29",t:[["💎","Open a card and tap \"Put shards into the bar\" to fill its upgrade bar with the shards you have, even if you don't have enough for the whole upgrade yet"]]},
