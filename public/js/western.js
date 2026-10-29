@@ -450,7 +450,7 @@ body.wwon{overflow:hidden}
   function look(dx, dy, k) {
     const s = G.set, ads = G.adsK > 0.5 ? s.ads : 1, m = k * s.sens * ads * (G.fovNow / 75);
     /* driving: look around the car (free look; eases back behind the car after a couple of seconds) */
-    if (G.car && G.car.mine) { G.dYaw = (G.dYaw || 0) - dx * m; G.dPitch = Math.max(-.5, Math.min(.9, (G.dPitch || 0) - dy * m * (s.invert ? -1 : 1))); G.dLookAt = performance.now(); return; }
+    if (G.car && G.car.mine) { G.dYaw = (G.dYaw || 0) + dx * m; G.dPitch = Math.max(-.5, Math.min(.9, (G.dPitch || 0) + dy * m * (s.invert ? -1 : 1))); /* owner Oct 28: driving look inverted vs on foot */ G.dLookAt = performance.now(); return; }
     G.yaw -= dx * m; G.pitch -= dy * m * (s.invert ? -1 : 1); G.pitch = Math.max(-1.45, Math.min(1.45, G.pitch));
   }
   function placeButtons() {
@@ -1336,7 +1336,7 @@ body.wwon{overflow:hidden}
   function fixGlass(i) { const w = G.wins[i]; if (!w || (!w.broken && !w.crack)) return; unCrack(w); w.broken = 0; G.winMesh.setMatrixAt(i, w.mtx); G.winMesh.instanceMatrix.needsUpdate = true; }
   function glassTick() { const now = Date.now(); if (G.mode === "pvp") return; for (const w of G.wins) if ((w.broken && now - w.broken > GLASS_BACK) || (w.crack && now - w.crackAt > GLASS_BACK)) fixGlass(w.i); }
   /* the bell: very loud for everyone in town, wherever they are */
-  function ringBell() { G.bell.v += 4; G.vmul = 2.6; SFX.bell(); G.vmul = 1; G.shake = .5; banner("DONG", "The church bell rings"); }
+  function ringBell() { banner("DONG", "The church bell rings"); for (let k = 0; k < 3; k++) setTimeout(() => { if (!G || !G.bell) return; G.bell.v += 4; G.vmul = 2.6; SFX.bell(); G.vmul = 1; G.shake = .5; }, k * 1100); } /* rings 3 times (owner Oct 28) */
   function setDoor(i, open, mine) { const d = G.doors[i]; if (!d || d.open === open) return; d.open = open; SFX.door(); if (mine && G.mode === "pvp") nsend({ t: "door", i, open }); }
 
   /* ---- the car: a red jalopy, 300 HP, drive it, run people over, shoot it until it blows ---- */
