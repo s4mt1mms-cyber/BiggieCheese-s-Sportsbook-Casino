@@ -150,6 +150,12 @@ body.wwon{overflow:hidden}
 .wwemo{position:absolute;right:max(16px,env(safe-area-inset-right));top:max(60px,calc(env(safe-area-inset-top) + 52px));display:none;flex-direction:column;gap:6px;pointer-events:auto;background:rgba(20,12,6,.85);border:2px solid #c8963e;border-radius:12px;padding:8px;max-height:60%;overflow:auto}
 .wwemo.on{display:flex}.wwemo button{font:800 14px Barlow;padding:8px 14px;border-radius:9px;border:1px solid #c8963e;background:#5a3418;color:#ffe9b8;text-align:left}
 .wwemo span{font:600 13px Barlow;color:#e8d4a8;padding:4px 6px}
+.wwbuy{margin:8px 0 2px;padding:10px 12px;border:1px solid rgba(200,150,62,.5);border-radius:12px;background:rgba(0,0,0,.25)}
+.wwbuyv{display:flex;align-items:baseline;gap:10px}.wwbuyv span{font:700 11px Barlow;letter-spacing:.14em;text-transform:uppercase;color:#c8a46a}
+.wwbuyv b{font:400 28px Rye,Georgia,serif;color:#ffe29a}.wwbuyv small{margin-left:auto;font:700 11px Barlow;letter-spacing:.1em;text-transform:uppercase;opacity:.75}
+.wwbuy input[type=range]{width:100%;accent-color:#f5c542;height:30px;margin:4px 0}
+.wwbuyq{display:flex;gap:6px;flex-wrap:wrap}.wwbuyq button{flex:1;min-width:0!important;padding:6px 4px!important;font:800 13px Barlow!important}
+#wwRot.short .wwbuyv b{font-size:24px}#wwRot.short .wwbuy{padding:6px 10px;margin:4px 0}
 .wwkeys{font:600 12.5px Barlow;color:#d9c39a;margin-top:8px}
 .wwload{font:600 15px Barlow;color:#ffe9b8;margin-top:10px}
 `;
@@ -978,18 +984,26 @@ body.wwon{overflow:hidden}
      ===================================================================================================== */
   const NETV = 1, INTERP = 110;
   async function srvStatus() {
-    try { const r = await fetch(API().server + "/status", { cache: "no-store" }); const j = await r.json(); G.server = { up: !!j.up, checked: true, rooms: j.rooms || [], n: (j.rooms || []).reduce((a, x) => a + x.n, 0) }; }
+    try { const r = await fetch(API().server + "/status", { cache: "no-store" }); const j = await r.json(); G.server = { up: !!j.up, checked: true, n: j.n != null ? j.n : (j.rooms || []).reduce((a, x) => a + x.n, 0) }; }
     catch (_) { G.server = { up: false, checked: true, n: 0, rooms: [] }; }
     if (G && G.state === "menu" && G.ready) showMenu(false);
   }
+  /* buy-in slider (owner Oct 28): any amount from 100 to 10,000 BB, everyone plays in the same town */
+  const BUY_MIN = 100, BUY_MAX = 10000;
   function showTiers(msg) {
-    G.state = "menu"; const bal = API().balance ? API().balance() : 0, rooms = (G.server && G.server.rooms) || [];
-    const tiers = [1000, 5000, 10000];
+    G.state = "menu"; const bal = API().balance ? API().balance() : 0, n = (G.server && G.server.n) || 0, top = Math.min(BUY_MAX, Math.floor(bal / 100) * 100);
+    if (top < BUY_MIN) { G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwpz"><h2>Join game</h2><p>You need at least ${BUY_MIN} BB to buy in. Your balance: <b>${bal.toLocaleString()} BB</b>.</p><div class="wwrow"><button data-ww="menu">Back</button></div></div></div>`; return; }
+    const v = Math.max(BUY_MIN, Math.min(top, G.buyAmt || Math.min(1000, top)));
     G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwsc"><h2>Join game</h2>
-      <p style="margin:0 0 6px">Kill someone and take their stack. If they had no kills yet you take all of it, if they had one or more you take half. Cash out by holding still at the <b>bank</b> for 5 seconds. Quitting mid-fight counts as dying.</p>
-      <div class="wwtiers">${tiers.map(t => { const n = (rooms.find(r => r.tier === t) || {}).n || 0; return `<button class="${bal < t ? "off" : ""}" data-wwtier="${t}" ${bal < t ? "disabled" : ""}><b>${t.toLocaleString()} BB</b><small>${n} in match</small></button>`; }).join("")}</div>
-      <p style="opacity:.75;margin:6px 0 0">Your balance: <b>${bal.toLocaleString()} BB</b>${msg ? ` · <span style="color:#ffb3a0">${esc(msg)}</span>` : ""}</p>
-      <div class="wwrow"><button data-ww="menu">Back</button></div></div></div>`;
+      <p style="margin:0 0 4px">Kill someone and take their stack: all of it if they had no kills yet, half if they had one or more. Cash out by holding still at the <b>bank</b> for 5 seconds. Quitting mid-fight counts as dying.</p>
+      <div class="wwbuy"><div class="wwbuyv"><span>Buy-in</span><b id="wwBuyV">${v.toLocaleString()} BB</b><small>${n} in town</small></div>
+        <input type="range" id="wwBuy" min="${BUY_MIN}" max="${top}" step="100" value="${v}">
+        <div class="wwbuyq">${[100, 500, 1000, 2500, 5000, 10000].filter(x => x <= top).map(x => `<button data-wwbq="${x}">${x >= 1000 ? x / 1000 + "K" : x}</button>`).join("")}</div></div>
+      <p style="opacity:.75;margin:4px 0 0">Balance <b>${bal.toLocaleString()} BB</b>${msg ? ` · <span style="color:#ffb3a0">${esc(msg)}</span>` : ""}</p>
+      <div class="wwrow"><button data-ww="menu">Back</button><button class="pri" id="wwBuyGo" data-wwtier="${v}">Buy in · ${v.toLocaleString()} BB</button></div></div></div>`;
+    const r = G.ui.querySelector("#wwBuy"), upd = x => { x = Math.max(BUY_MIN, Math.min(top, Math.round(x / 100) * 100)); G.buyAmt = x; r.value = x;
+      G.ui.querySelector("#wwBuyV").textContent = x.toLocaleString() + " BB"; const g = G.ui.querySelector("#wwBuyGo"); g.dataset.wwtier = x; g.textContent = `Buy in · ${x.toLocaleString()} BB`; };
+    r.addEventListener("input", () => upd(+r.value)); G.ui.querySelectorAll("[data-wwbq]").forEach(b => b.addEventListener("click", e => { e.stopPropagation(); upd(+b.dataset.wwbq); }));
   }
   function netMsg(t) { const e = G.ui.querySelector(".wwnetmsg"); if (e) e.textContent = t; }
   function showBusy(t) { G.state = "menu"; G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwpz"><h2>BiggieTown</h2><p class="wwnetmsg">${esc(t)}</p></div></div>`; }
@@ -1013,7 +1027,8 @@ body.wwon{overflow:hidden}
     try {
       const net = await netOpen();
       if (net.active) { showBusy("Back into your match…"); nsend({ t: "join", buy: null }); return; }
-      if ((API().balance ? API().balance() : 0) < tier) return showTiers("Not enough BB for that table.");
+      tier = Math.round(tier); if (!(tier >= BUY_MIN && tier <= BUY_MAX)) return showTiers("Pick 100 to 10,000 BB.");
+      if ((API().balance ? API().balance() : 0) < tier) return showTiers("Not enough BB for that buy-in.");
       showBusy(`Paying the ${tier.toLocaleString()} BB buy-in…`);
       const id = await API().buyIn(tier); net.buyId = id; net.tierWant = tier; nsend({ t: "join", buy: id });
     } catch (e) { showTiers(e.message || "Couldn't join."); }
@@ -1036,7 +1051,7 @@ body.wwon{overflow:hidden}
         const s = m.spawn; G.p = { x: s[0], y: s[1], z: s[2], vy: 0, ground: true }; G.yaw = s[3]; G.pitch = 0; G.ammo = 6; G.reloading = 0; drawAmmo();
         G.prot = performance.now() + (m.prot || 0); N.startStack = m.tier; setBB(N.stack - N.tier);
         if (!N.pingT) N.pingT = setInterval(() => nsend({ t: "ping", c: Date.now(), rtt: N.rtt }), 2000);
-        nsend({ t: "ping", c: Date.now() }); hudPvp(true); play(); banner("Draw!", `${m.tier.toLocaleString()} BB table · cash out at the bank`); return;
+        nsend({ t: "ping", c: Date.now() }); hudPvp(true); play(); banner("Draw!", `${m.tier.toLocaleString()} BB buy-in · cash out at the bank`); return;
       }
       case "err": showTiers(m.why); return;
       case "pong": { const r = Date.now() - m.c; N.rtt = N.rtt ? N.rtt * .7 + r * .3 : r; N.off = m.s + r / 2 - Date.now(); return; }

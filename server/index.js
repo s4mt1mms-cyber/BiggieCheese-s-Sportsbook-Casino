@@ -20,7 +20,8 @@ const COLS = MAP.cols.map(([x0, x1, y0, y1, z0, z1]) => ({ x0, x1, y0, y1, z0, z
 const OWNER = "s4mt1mms@gmail.com";
 
 /* ---- rules of the match ---- */
-const TIERS = [1000, 5000, 10000];
+const BUY_MIN = 100, BUY_MAX = 10000;   /* owner Oct 28: any buy-in on a slider, everyone in one town */
+const okBuy = a => Number.isInteger(a) && a >= BUY_MIN && a <= BUY_MAX;
 const HOUSE_CUT = 0;            // share of each kill's BB that goes to the house (0 until the owner decides)
 const HP = 100, BODY = 34, HEAD = 100, FAR = 40, FAR_BODY = 25;
 const FIRE_MS = 230, MAG = 6, RELOAD_MS = 1600;
@@ -72,8 +73,8 @@ function sees(a, b) {
   d.x /= L; d.y /= L; d.z /= L; return wallT(o, d, L) >= L - 0.01;
 }
 
-/* ---- rooms: one per buy-in tier ---- */
-const rooms = new Map(TIERS.map(t => [t, { tier: t, players: new Map() }]));
+/* ---- one shared town (p.tier = that player's own buy-in) ---- */
+const ROOM = { players: new Map() }, rooms = new Map([[0, ROOM]]);
 const byPid = new Map();   // pid -> player record (one run at a time per player)
 let nextN = 1;
 
@@ -96,7 +97,7 @@ function broadcast(room, m, except) { for (const p of room.players.values()) if 
 /* the run is over: write the payout once, take the player out of the room */
 async function endRun(p, reason) {
   if (p.ended) return; p.ended = true;
-  const room = rooms.get(p.tier); room.players.delete(p.pid); if (byPid.get(p.pid) === p) byPid.delete(p.pid);
+  const room = ROOM; room.players.delete(p.pid); if (byPid.get(p.pid) === p) byPid.delete(p.pid);
   broadcast(room, { t: "rm", n: p.n });
   const amt = Math.max(0, Math.floor(p.stack));
   try {
@@ -108,7 +109,7 @@ async function endRun(p, reason) {
 }
 
 function kill(v, k, head) {
-  const room = rooms.get(v.tier); v.alive = false; v.hp = 0;
+  const room = ROOM; v.alive = false; v.hp = 0;
   const take = v.kills > 0 ? Math.floor(v.stack / 2) : Math.floor(v.stack);
   v.stack -= take; const cut = Math.floor(take * HOUSE_CUT);
   if (k && k !== v) { k.stack += take - cut; k.kills++; send(k.ws, { t: "stack", stack: k.stack }); }
@@ -121,7 +122,7 @@ function kill(v, k, head) {
 const srv = http.createServer((req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   if (req.url.startsWith("/status")) { res.setHeader("Content-Type", "application/json");
-    res.end(JSON.stringify({ up: true, v: MAP.v, rooms: TIERS.map(t => ({ tier: t, n: [...rooms.get(t).players.values()].filter(p => !p.dc).length })) })); return; }
+    res.end(JSON.stringify({ up: true, v: MAP.v, n: [...ROOM.players.values()].filter(p => !p.dc).length, min: BUY_MIN, max: BUY_MAX })); return; }
   res.end("BiggieTown server");
 });
 const wss = new WebSocketServer({ server: srv, maxPayload: 8192 });
@@ -154,7 +155,7 @@ async function handle(c, m) {
       c.pid = pid; c.name = pr.team || prof.name || "Stranger"; c.skin = pr.skin && pr.skins && pr.skins[pr.skin] ? pr.skin : null;
       c.emotes = new Set(Object.keys(pr.emotes || {}).filter(k => pr.emotes[k]));
       const act = byPid.get(pid);
-      return send(c.ws, { t: "auth", ok: true, pid, name: c.name, active: !!act, tier: act ? act.tier : null, tiers: TIERS });
+      return send(c.ws, { t: "auth", ok: true, pid, name: c.name, active: !!act, tier: act ? act.tier : null, min: BUY_MIN, max: BUY_MAX });
     }
     /* {t:"join", buy:<bank doc id> | null to resume} -> {t:"welcome", n, tier, stack, players, spawn} */
     case "join": {
@@ -167,7 +168,7 @@ async function handle(c, m) {
         const id = String(m.buy || ""); if (!/^wwin_[A-Za-z0-9_]+$/.test(id)) return send(c.ws, { t: "err", why: "No buy-in." });
         const ref = db.doc("bank/" + id); let tier = 0;
         try { await db.runTransaction(async tx => { const d = await tx.get(ref); const b = d.exists && d.data();
-          if (!b || b.kind !== "wwbuy" || b.from !== c.pid || b.to !== "house" || b.used || !TIERS.includes(b.amt) || now() - (b.at || 0) > 600000) throw new Error("bad buy-in");
+          if (!b || b.kind !== "wwbuy" || b.from !== c.pid || b.to !== "house" || b.used || !okBuy(b.amt) || now() - (b.at || 0) > 600000) throw new Error("bad buy-in");
           tier = b.amt; tx.update(ref, { used: true, usedAt: now() }); }); }
         catch (e) { return send(c.ws, { t: "err", why: "That buy-in couldn't be used." }); }
         P = { conn: c, ws: c.ws, pid: c.pid, name: c.name, skin: c.skin, n: nextN++, tier, buyId: id, stack: tier, kills: 0, x: 0, y: 0, z: 0, yaw: 0, pitch: 0,
@@ -175,7 +176,7 @@ async function handle(c, m) {
         byPid.set(c.pid, P); c.player = P;
         P.emotes = c.emotes || new Set(); P.lastEmo = 0;
       }
-      const room = rooms.get(P.tier);
+      const room = ROOM;
       if (!room.players.has(P.pid)) { room.players.set(P.pid, P); broadcast(room, { t: "add", ...info(P) }, P); }
       if (!P.alive) { const sp = pickSpawn(room, P); Object.assign(P, { x: sp[0], y: 0, z: sp[1], yaw: sp[2], alive: true, hp: HP, prot: now() + PROT_MS, ammo: MAG, hist: [[now(), sp[0], 0, sp[1]]] }); }
       return send(c.ws, { t: "welcome", n: P.n, tier: P.tier, stack: P.stack, kills: P.kills, hp: P.hp, spawn: [P.x, P.y, P.z, P.yaw], prot: Math.max(0, P.prot - now()),
@@ -184,7 +185,7 @@ async function handle(c, m) {
     /* {t:"emo", id}: play an emote you own (from the shop); everyone in the match sees it. 8 s cooldown */
     case "emo": {
       if (!p || !p.alive) return; const id = String(m.id || ""), t = now(); if (!(p.emotes && p.emotes.has(id)) || t - p.lastEmo < 8000) return;
-      p.lastEmo = t; broadcast(rooms.get(p.tier), { t: "emo", n: p.n, id }); return;
+      p.lastEmo = t; broadcast(ROOM, { t: "emo", n: p.n, id }); return;
     }
     case "ping": { send(c.ws, { t: "pong", c: m.c, s: now() }); if (m.rtt > 0) c.rtt = Math.min(1000, m.rtt); return; }
     /* {t:"in", x,y,z,yaw,pitch} ~20/s: the player's own movement, checked for speed and bounds */
@@ -206,7 +207,7 @@ async function handle(c, m) {
       if (t - p.lastShot < FIRE_MS || p.ammo <= 0) return; p.lastShot = t; p.ammo--; p.prot = 0;
       let d = Array.isArray(m.d) ? { x: +m.d[0], y: +m.d[1], z: +m.d[2] } : null; if (!d || ![d.x, d.y, d.z].every(Number.isFinite)) return;
       const L = Math.hypot(d.x, d.y, d.z); if (L < 0.5) return; d.x /= L; d.y /= L; d.z /= L;
-      const o = { x: p.x, y: p.y + EYE, z: p.z }, room = rooms.get(p.tier), rw = t - Math.min(MAX_REWIND, c.rtt / 2 + 100);
+      const o = { x: p.x, y: p.y + EYE, z: p.z }, room = ROOM, rw = t - Math.min(MAX_REWIND, c.rtt / 2 + 100);
       let best = wallT(o, d, 120), hit = null;
       for (const q of room.players.values()) { if (q === p || !q.alive) continue; const at = posAt(q, rw), h = hitTest(o, d, at); if (h && h.t < best) { best = h.t; hit = { q, head: h.head }; } }
       broadcast(room, { t: "fx", n: p.n, e: [o.x + d.x * best, o.y + d.y * best, o.z + d.z * best] }, p);

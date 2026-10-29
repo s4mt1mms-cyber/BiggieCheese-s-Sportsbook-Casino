@@ -2758,7 +2758,7 @@ window.WWAPI={loadThree:()=>rrLoad(),rrChairParts:(...a)=>rrChairParts(...a),pre
   /* PvP: the live match server (Cloud Run), your equipped skin + owned emotes, the 3D character builders, balance + buy-in */
   server:"https://biggietown-302676867929.us-central1.run.app",token:()=>window.SB_TOKEN?window.SB_TOKEN():Promise.resolve(null),
   balance:()=>Math.floor(ledger().balOf(S.me)),
-  buyIn:async amt=>{if(!S.me||S.readOnly)throw new Error("view only");const at=Date.now(),id="wwin_"+S.me.replace(/[^A-Za-z0-9_]/g,"")+"_"+at;
+  buyIn:async amt=>{if(!S.me||S.readOnly)throw new Error("view only");amt=Math.round(Number(amt));if(!(amt>=100&&amt<=10000))throw new Error("Pick 100 to 10,000 BB.");const at=Date.now(),id="wwin_"+S.me.replace(/[^A-Za-z0-9_]/g,"")+"_"+at;
     await db.doc("bank/"+id).set({kind:"wwbuy",from:S.me,to:"house",amt,at,used:false,note:"BiggieTown buy-in"});return id},
   mySkin:()=>skinOf(S.me),skinSpec:k=>{const x=k&&SKIN_BY[k];return x?{k:x.kind||x.id,hv:x.hv,c:x.c}:null},animals:()=>RL_ANIMALS,
   myEmotes:()=>EMOTES.filter(e=>(S.prefs[S.me]||{}).emotes&&(S.prefs[S.me]||{}).emotes[e.id]).map(e=>({id:e.id,n:e.n,len:e.len})),emote:id=>EM_BY[id]||null,

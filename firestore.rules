@@ -250,7 +250,7 @@ service cloud.firestore {
       ) && (coll != 'bank' || isAdmin() || !(resource.data.get('kind', '') in ['wwbuy', 'wwout']));
     }
 
-    // Biggietown (Oct 28): a player may create their own buy-in (kind "wwbuy", from them to the house, a table's buy-in, unused);
+    // BiggieTown (Oct 28): a player may create their own buy-in (kind "wwbuy", from them to the house, 100–10,000 BB, unused);
     // nobody but the match server (admin SDK) may change a buy-in or write a payout ("wwout").
     function wwBankOk() {
       let k = request.resource.data.get('kind', '');
@@ -258,7 +258,8 @@ service cloud.firestore {
         && (resource == null || !(resource.data.get('kind', '') in ['wwbuy', 'wwout']))
         && (k != 'wwbuy' || (resource == null
             && request.resource.data.from == myPlayerId() && request.resource.data.to == 'house'
-            && request.resource.data.amt in [1000, 5000, 10000] && request.resource.data.used == false));
+            && request.resource.data.amt is int && request.resource.data.amt >= 100 && request.resource.data.amt <= 10000
+            && request.resource.data.used == false));
     }
 
     // NFL / NBA / NHL bets vs the House (gameId "nfl:{season}_{week}:{espnId}:{mkt}" or "nba:{YYYYMMDD}:{espnId}:{mkt}", also as parlay legs).
