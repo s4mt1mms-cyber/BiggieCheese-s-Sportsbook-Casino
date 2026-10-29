@@ -309,8 +309,11 @@ async function handle(c, m) {
       if (!p || !p.alive || p.inCar) return; const t = now(), dt = Math.max(0.03, Math.min(1, (t - (p.lastIn || t - 50)) / 1000)); p.lastIn = t;
       const x = +m.x, y = +m.y, z = +m.z; if (![x, y, z].every(Number.isFinite)) return;
       const B = MAP.bounds, dh = Math.hypot(x - p.x, z - p.z), dv = Math.abs(y - p.y);
-      if (dh > 10.5 * dt + 0.6 || dv > 10 * dt + 0.9 || x < B.x0 - 1 || x > B.x1 + 1 || z < B.z0 - 1 || z > B.z1 + 1 || y < -0.5 || y > 12) { send(c.ws, { t: "pos", x: p.x, y: p.y, z: p.z }); return; }
-      p.x = x; p.y = y; p.z = z; p.yaw = +m.yaw || 0; p.pitch = Math.max(-1.6, Math.min(1.6, +m.pitch || 0)); p.moving = dh / dt; p.cr = m.cr ? 1 : 0;
+      /* speed check as a budget (perf/lag, Oct 28): unused allowance carries over ~0.25 s, so packets that arrive bunched after a hiccup
+         aren't mistaken for speeding (that snapped laggy players back). The top speed allowed over time is unchanged. */
+      p.mb = Math.min(2.6, (p.mb == null ? 1 : p.mb) + 10.5 * dt);
+      if (dh > p.mb + 0.6 || dv > 12 * dt + 1.2 || x < B.x0 - 1 || x > B.x1 + 1 || z < B.z0 - 1 || z > B.z1 + 1 || y < -0.5 || y > 12) { send(c.ws, { t: "pos", x: p.x, y: p.y, z: p.z }); return; }
+      p.mb = Math.max(0, p.mb - dh); p.x = x; p.y = y; p.z = z; p.yaw = +m.yaw || 0; p.pitch = Math.max(-1.6, Math.min(1.6, +m.pitch || 0)); p.moving = dh / dt; p.cr = m.cr ? 1 : 0;
       p.hist.push([t, x, y, z, p.cr]); while (p.hist.length && t - p.hist[0][0] > 1000) p.hist.shift();
       if (p.cash0 && !inBank(p)) { p.cash0 = 0; send(c.ws, { t: "cash", on: false }); }
       return;
