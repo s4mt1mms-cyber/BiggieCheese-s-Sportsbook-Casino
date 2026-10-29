@@ -106,7 +106,7 @@ body.wwon{overflow:hidden}
 .wwtr .wwchip{padding:6px 10px;font-size:13px}.wwlive i{display:inline-block;width:8px;height:8px;border-radius:50%;background:#ff3b30;margin-right:5px;box-shadow:0 0 6px #ff3b30;animation:wwpulse 1.4s infinite}
 @keyframes wwpulse{50%{opacity:.35}}
 .wwbb.up b{color:#5cff72}.wwbb.dn b{color:#ff6b5a}
-.wwpanel{backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+.wwpanel{}
 .wwmain{width:min(860px,100%);display:grid;grid-template-columns:1fr 1.1fr;gap:22px;align-items:center;text-align:left;padding:22px 26px;
   background:radial-gradient(ellipse at 20% 0%,rgba(255,200,110,.16),transparent 60%),linear-gradient(#3b2414,#1f1209)}
 .wwbrand{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
@@ -469,7 +469,7 @@ body.wwon{overflow:hidden}
     H_.te = e => {
       if (!G) return;
       for (const t of e.changedTouches) { const q = G.touches[t.identifier]; if (!q) continue; if (q.b) q.b.classList.remove("on"); if (q.kind === "fire") G.fireHeld = false; if (q.kind === "aim" && G.set.aimHold) G.aimHeld = false; if (q.kind === "cash") cashPress(false); if (q.kind === "jump") G.act.jump = false; if (q.kind === "stick") hideSticks(); delete G.touches[t.identifier]; }
-      if (G.aimBtn) G.aimBtn.classList.toggle("on", !!G.aimToggle);
+      if (G.aimBtn && G.aimBtn._t !== !!G.aimToggle) { G.aimBtn._t = !!G.aimToggle; G.aimBtn.classList.toggle("on", !!G.aimToggle); }
     };
     G.ov.addEventListener("touchstart", H_.ts, { passive: false }); G.ov.addEventListener("touchmove", H_.tm, { passive: false });
     G.ov.addEventListener("touchend", H_.te); G.ov.addEventListener("touchcancel", H_.te);
@@ -564,7 +564,7 @@ body.wwon{overflow:hidden}
     const T = THREE, gw = G.gw, gh = G.gh;
     const HI = !!G.set.hiGfx; G.hi = HI; /* owner Oct 28: light graphics by default; "High graphics" in Settings brings back shadows/AA/PBR */
     const R = new T.WebGLRenderer({ canvas: G.cv, antialias: HI && !TOUCH, powerPreference: "high-performance" });
-    R.setPixelRatio(Math.min(HI ? (TOUCH ? 1.5 : 1.25) : (TOUCH ? 1.25 : 1), window.devicePixelRatio || 1)); R.setSize(gw, gh, false);
+    R.setPixelRatio(Math.min(HI ? (TOUCH ? 1.5 : 1.25) : (TOUCH ? 1.25 : .9), window.devicePixelRatio || 1)); R.setSize(gw, gh, false);
     R.outputEncoding = T.sRGBEncoding; R.toneMapping = T.ACESFilmicToneMapping; R.toneMappingExposure = 1.05;
     const SH = !TOUCH && HI; R.shadowMap.enabled = SH; R.shadowMap.type = T.PCFShadowMap; R.shadowMap.autoUpdate = false; R.shadowMap.needsUpdate = true; /* shadows re-drawn every 3rd frame (perf) */
     const sc = new T.Scene(), cam = new T.PerspectiveCamera(G.set.fov, gw / gh, .05, G.set.hiGfx ? 900 : 470); /* light mode: nothing past the fog is drawn */ sc.add(cam);
@@ -615,7 +615,7 @@ body.wwon{overflow:hidden}
     /* ---- sky, sun, light ---- */
     { const geo = new T.SphereGeometry(800, 32, 16), col = [], p = geo.attributes.position, c1 = new T.Color(0x3f7fc6), c2 = new T.Color(0xf6d6a6), c3 = new T.Color(0xffc78a);
       for (let i = 0; i < p.count; i++) { const y = p.getY(i) / 800, c = y > 0 ? c2.clone().lerp(c1, Math.pow(Math.min(1, y * 2.2), .7)) : c3; col.push(c.r, c.g, c.b); }
-      geo.setAttribute("color", new T.Float32BufferAttribute(col, 3)); const sky = new T.Mesh(geo, new T.MeshBasicMaterial({ vertexColors: true, side: T.BackSide, fog: false, depthWrite: false })); sc.add(sky); G.sky = sky;
+      geo.setAttribute("color", new T.Float32BufferAttribute(col, 3)); const sky = new T.Mesh(geo, new T.MeshBasicMaterial({ vertexColors: true, side: T.BackSide, fog: false, depthWrite: false })); sc.add(sky); G.sky = sky; if (!G.set.hiGfx) sky.scale.setScalar(.55); /* inside the shorter light-mode view distance */
       const sun = new T.Sprite(new T.SpriteMaterial({ map: cvT(128, 128, (g, w) => { const r = g.createRadialGradient(64, 64, 0, 64, 64, 64); r.addColorStop(0, "rgba(255,250,230,1)"); r.addColorStop(.25, "rgba(255,236,190,.9)"); r.addColorStop(1, "rgba(255,200,120,0)"); g.fillStyle = r; g.fillRect(0, 0, w, w); }), fog: false, depthWrite: false, transparent: true }));
       sun.scale.set(140, 140, 1); sun.position.set(-420, 260, -300); sky.add(sun); }
     sc.add(new T.HemisphereLight(0xcfe0ff, 0xa06a3c, .62));
@@ -943,7 +943,7 @@ body.wwon{overflow:hidden}
     /* ---- batch static meshes per material ---- */
     batch(T, sc, statics);
     /* ---- every window pane: one instanced mesh, each pane can be shot out (G.wins[i].box = its world box) ---- */
-    { const N = G.winSpecs.length, im = new T.InstancedMesh(new T.BoxGeometry(1, 1, 1), M({ color: 0xffffff, roughness: .12, metalness: .55, transparent: true, opacity: .88 }), N), m4 = new T.Matrix4(), col = new T.Color();
+    { const N = G.winSpecs.length, im = new T.InstancedMesh(new T.BoxGeometry(1, 1, 1), M(G.hi ? { color: 0xffffff, roughness: .12, metalness: .55, transparent: true, opacity: .88 } : { color: 0xffffff }), N), m4 = new T.Matrix4(), col = new T.Color();
       G.winSpecs.forEach((w, i) => { const mtx = new T.Matrix4().multiplyMatrices(w.g.matrixWorld, m4.compose(new T.Vector3(w.lx, w.ly, w.lz), new T.Quaternion(), new T.Vector3(w.wd ? w.ww : w.ww, w.wh, w.wd || .06)));
         im.setMatrixAt(i, mtx); im.setColorAt(i, col.set(w.col || 0x2a3a48)); const b = new T.Box3(new T.Vector3(-.5, -.5, -.5), new T.Vector3(.5, .5, .5)).applyMatrix4(mtx);
         const W = { i, mtx, broken: 0, col: w.col || 0x2a3a48, box: { x0: b.min.x, x1: b.max.x, y0: b.min.y, y1: b.max.y, z0: b.min.z, z1: b.max.z }, c: b.getCenter(new T.Vector3()) }; G.wins.push(W);
@@ -1011,6 +1011,7 @@ body.wwon{overflow:hidden}
       const m = new T.Mesh(geo, mat); m.castShadow = cs; m.receiveShadow = true; m.matrixAutoUpdate = false; sc.add(m);
     }
     kill.forEach(o => { o.parent && o.parent.remove(o); o.geometry.dispose(); });
+    sc.traverse(o => { if (o.isMesh && o.userData.st) { o.updateMatrixWorld(true); o.matrixAutoUpdate = false; } }); /* perf: static matrices are never recomputed */
   }
 
   /* ---------------- bottles + the challenge ---------------- */
@@ -1506,7 +1507,7 @@ body.wwon{overflow:hidden}
       R.root.visible = true; API().emApply(T, R.sp, poseFor(R, dt, now)); vis.push(R);
       if (R.flashT > 0) { R.flashT -= dt; R.fl.visible = true; } else R.fl.visible = false;
     }
-    G.scene.updateMatrixWorld();
+    for (const R of vis) R.root.updateMatrixWorld(true); /* perf: was the whole scene every frame */
     for (const R of vis) {
       fitModel(R, now);
       API().rrSolveArm(T, R.body, R.u.armL, sm); API().rrSolveArm(T, R.body, R.u.armR, sm);
@@ -1536,7 +1537,7 @@ body.wwon{overflow:hidden}
     const O = G.ownEmo, R = G.me; if (!O || !R || !R.root) return false; const k = (performance.now() - O.t0) / 1000;
     if (k > O.len || G.moving > 1.2) { stopOwnEmote(); return false; }
     const T = THREE; R.root.position.set(G.p.x, G.p.y, G.p.z); R.root.rotation.set(0, G.yaw, 0); R.speed = 0; R.emo = { id: O.id, t0: O.t0 };
-    API().emApply(T, R.sp, poseFor(R, dt, performance.now())); G.scene.updateMatrixWorld();
+    API().emApply(T, R.sp, poseFor(R, dt, performance.now())); R.root.updateMatrixWorld(true);
     if (!R.scaled) { const hp = new T.Vector3(); R.u.head.getWorldPosition(hp); const hy = hp.y - R.root.position.y; if (hy > .3) { R.root.scale.setScalar(Math.max(.5, Math.min(2, 1.68 / hy))); R.scaled = true; } }
     const sm = r => 1 - Math.exp(-dt * r); API().rrSolveArm(T, R.body, R.u.armL, sm); API().rrSolveArm(T, R.body, R.u.armR, sm);
     /* camera: behind and above, looking at you */
@@ -1749,8 +1750,9 @@ body.wwon{overflow:hidden}
     if (u.k === "exit") carExit(); else if (u.k === "car") carEnter(); else if (u.k === "door") setDoor(u.i, !G.doors[u.i].open, true);
     else if (u.k === "bell") { if (performance.now() - (G.bellAt || 0) < 3000) return; G.bellAt = performance.now(); if (G.mode === "pvp") nsend({ t: "bell" }); else ringBell(); }
   }
-  function useTick() { const jb = G.hud.querySelector("#wwBJ"); if (jb) { const t = G.car && G.car.mine ? "DRIFT" : "JUMP"; if (jb.textContent !== t) jb.textContent = t; }
-    const u = G.state === "play" ? useTarget() : null, el = G.hud.querySelector("#wwUse"); if (!el) return; const lab = u ? u.label : "";
+  function hq(id) { const c = G.hqc || (G.hqc = {}); let e = c[id]; if (!e || !e.isConnected) e = c[id] = G.hud.querySelector(id); return e; } /* cached HUD lookups (perf) */
+  function useTick() { const jb = hq("#wwBJ"); if (jb) { const t = G.car && G.car.mine ? "DRIFT" : "JUMP"; if (jb.textContent !== t) jb.textContent = t; }
+    const u = G.state === "play" ? useTarget() : null, el = hq("#wwUse"); if (!el) return; const lab = u ? u.label : "";
     if (el._l !== lab) { el._l = lab; el.style.display = u ? "" : "none"; el.innerHTML = TOUCH ? esc(lab).toUpperCase() : `<b>${esc(keyName(G.set.keys.use))}</b> ${esc(lab)}`; } }
 
   /* materials: physically based in high graphics, cheap Lambert (per-vertex light) in the default light mode */
@@ -1764,7 +1766,7 @@ body.wwon{overflow:hidden}
     if (!G.hi && G.state === "play" && G.R) { const D = G.dres || (G.dres = { pr: G.R.getPixelRatio(), max: G.R.getPixelRatio(), sum: 0, n: 0, t: now, good: 0 });
       if (ft > 0 && ft < 200) { D.sum += ft; D.n++; }
       if (now - D.t > 1500 && D.n > 10) { const avg = D.sum / D.n; D.sum = 0; D.n = 0; D.t = now;
-        if (avg > 25 && D.pr > .56) { D.pr = Math.max(.55, D.pr - .12); G.R.setPixelRatio(D.pr); G.R.setSize(G.gw, G.gh, false); D.good = 0; }
+        if (avg > 25 && D.pr > .51) { D.pr = Math.max(.5, D.pr - .12); G.R.setPixelRatio(D.pr); G.R.setSize(G.gw, G.gh, false); D.good = 0; }
         else if (avg < 19 && D.pr < D.max) { if (++D.good >= 4) { D.pr = Math.min(D.max, D.pr + .08); G.R.setPixelRatio(D.pr); G.R.setSize(G.gw, G.gh, false); D.good = 0; } } else D.good = 0; } }
     if (G.set.fps) { G.fpsN = (G.fpsN || 0) + 1; if (now - (G.fpsT || 0) > 500) { const f = Math.round(G.fpsN * 1000 / (now - (G.fpsT || now - 500))); G.fpsN = 0; G.fpsT = now;
         let e = G.hud && G.hud.querySelector("#wwFps"); if (!e && G.hud) { e = document.createElement("div"); e.id = "wwFps"; e.style.cssText = "position:absolute;left:50%;bottom:max(6px,env(safe-area-inset-bottom));transform:translateX(-50%);font:700 11px Barlow;color:#fff;background:rgba(0,0,0,.45);padding:2px 8px;border-radius:6px;pointer-events:none;z-index:5"; G.hud.appendChild(e); }
@@ -1784,10 +1786,10 @@ body.wwon{overflow:hidden}
     /* sniper zoom: the rifle comes up to your eye, then the scope blooms in while the view pushes in to 5× (accuracy is already perfect the instant you aim) */
     const zk = SN ? Math.max(0, Math.min(1, (G.adsK - .3) / .6)) : 0, ze = zk * zk * (3 - 2 * zk);
     const fov = SN ? G.set.fov / (1 + 4 * ze) : G.set.fov + (G.set.fov * .58 - G.set.fov) * G.adsK;
-    { const sc = G.hud.querySelector("#wwScope"); if (sc) { const o = SN ? Math.max(0, Math.min(1, (G.adsK - .35) / .3)) : 0; if (sc._o !== o) { sc._o = o; sc.style.opacity = o; sc.style.transform = `scale(${(1.25 - .25 * o).toFixed(3)})`; } }
-      const xx = G.hud.querySelector("#wwX"); if (xx) xx.classList.toggle("nox", SN); } if (Math.abs(fov - G.fovNow) > .01) { G.fovNow = fov; cam.fov = fov; cam.updateProjectionMatrix(); }
-    const x = G.hud.querySelector("#wwX"); if (x) x.classList.toggle("ads", G.adsK > .5); const dot = G.hud.querySelector("#wwDot"); if (dot) dot.classList.toggle("on", G.adsK > .6 && !SN);
-    if (G.aimBtn) G.aimBtn.classList.toggle("on", !!G.aimToggle);
+    { const sc = hq("#wwScope"); if (sc) { const o = SN ? Math.max(0, Math.min(1, (G.adsK - .35) / .3)) : 0; if (sc._o !== o) { sc._o = o; sc.style.opacity = o; sc.style.transform = `scale(${(1.25 - .25 * o).toFixed(3)})`; } }
+      const xx = hq("#wwX"); if (xx && xx._sn !== SN) { xx._sn = SN; xx.classList.toggle("nox", SN); } } if (Math.abs(fov - G.fovNow) > .01) { G.fovNow = fov; cam.fov = fov; cam.updateProjectionMatrix(); }
+    { const x = hq("#wwX"), a1 = G.adsK > .5; if (x && x._a !== a1) { x._a = a1; x.classList.toggle("ads", a1); } const dot = hq("#wwDot"), d1 = G.adsK > .6 && !SN; if (dot && dot._d !== d1) { dot._d = d1; dot.classList.toggle("on", d1); } }
+    if (G.aimBtn && G.aimBtn._t !== !!G.aimToggle) { G.aimBtn._t = !!G.aimToggle; G.aimBtn.classList.toggle("on", !!G.aimToggle); }
     aimAssist(dt);
     /* camera */
     const p = G.p, bobA = G.p.ground ? Math.min(1, G.moving / 5) : 0, bob = Math.sin(G.bob * 2) * .035 * bobA * (1 - G.adsK * .8);
