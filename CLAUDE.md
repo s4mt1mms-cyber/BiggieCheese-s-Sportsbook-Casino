@@ -108,7 +108,7 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
 Everything below about rarity packs, print runs/supply, crafting, quick-selling pool cards and trading pool cards is HISTORY for Multiverse /
 Fantasyland / ChudBootyCheeks. League Moments (`lm`) still works the old way (its own rarity packs, supply, quick-sell, market). Platinum Mysterio cards are kept as they were (owner Oct 29: not credited, still trade/quick-sell; no new packs).
 - **Pool** `POOL=["mv","fl","cb"]`, `inPool(id)`, `v2Pool()` (cards by rarity; the curse separate). `cardOld(k)` = pool card (doesn't trade, was credited).
-- **One pack** `V2_PACK` (5 cards, 10,000 BB since Oct 29 1:37 AM (owner; brief said 2,500), Vail discount via `v2Price`), `v2Buy`/`v2Buy1`/`v2Open`: each card rolls `V2_ODDS` (+ `V2_CURSE` 0.1%) then a
+- **One pack** `V2_PACK` (5 cards, 10,000 BB since Oct 29 1:37 AM (owner; brief said 2,500), Vail discount via `v2Price`), `v2Buy`/`v2Buy1`/`v2Open`: each card rolls `V2_ODDS` (Elite .386 / Grail .105 since Oct 29 1:48 AM, owner: half the brief's; Common took the difference) (+ `V2_CURSE` 0.1%) then a
   uniform card of that rarity; reads the SAVED prefs first. Not owned → key added at LV 1; owned → +1 shard `prefs.shards{r:n}` (curse dupes: no shard).
   `prefs.v2pity` cards since the last Dragon, `V2_PITY` 35,000 forces one. `prefs.freeV2` free packs (Paradise every N packs `paraN`, Rotunda
   floor(odds/2 × level mult)). Lunch? and the curse trigger on EVERY pull (dupes too); Dragon bounty only for a new Dragon. Pull log `pulls` (pack "v2").
