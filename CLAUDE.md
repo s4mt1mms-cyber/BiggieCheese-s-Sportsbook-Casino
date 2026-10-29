@@ -133,6 +133,8 @@ Fantasyland / ChudBootyCheeks. League Moments (`lm`) still works the old way (it
   SR purple cracked orb, Elite red 4-point star, Grail yellow trillion, Dragon pink burst; `live` = idle motion per rarity). Duplicate pulls show three
   crystals popping out of the card (`.shfx`, `shPop`). Rules: `freshWrite()` also requires the `v3.` wv prefix (pre-V2 tabs can't write).
 - Collection tabs (owner Oct 29): League Moments · Platinum Mysterio · Multiverse (`cset` "v2" = the whole pool, default); labels `CNM` in viewPacks.
+- Upgrade glow (owner Oct 29): `lvGlow(c)` on pool cards with max > 1: (lv−1)/(max−1) ≥ .5 silver `lvg-s`, ≥ .75 gold `lvg-g`, max neon red `lvg-m` + red MAX badge `.lvb.mxr`.
+  Collection sorts higher levels first within a rarity. Pack opening reads the live prefs copy (no server read first); upgrade animation 3 hits.
 - Tests: scratch `dmr/cv2test.cjs` (old app vs new app: every offline player's balance moves by exactly the expected credit).
 
 ## Features (where to look)
