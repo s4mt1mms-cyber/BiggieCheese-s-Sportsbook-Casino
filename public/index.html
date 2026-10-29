@@ -458,9 +458,10 @@ header.mast::before,body .mast::before{display:none!important;animation:none!imp
 @keyframes pumpBob{50%{transform:translateY(-1.5px) rotate(-3deg)}}
 @media (prefers-reduced-motion:reduce){.leaf,.leaf svg,.pumpkins .p2{animation:none}}
 body.idlefx *,body.idlefx *::before,body.idlefx *::after{animation-play-state:paused!important}
-/* Oct 29 3:18 AM perf (wheel + shard fill froze on iPhone): the one-pool collection runs ~120 endless card animations; greyed cards don't animate, and the page behind any popup pauses */
+/* Oct 29 3:18 AM perf (wheel + shard fill froze on iPhone): the one-pool collection runs ~120 endless card animations; greyed cards don't animate, and the page behind a card view / pack opening / Daily Spin / news popup pauses */
 .unown *,.unown *::before,.unown *::after{animation:none!important}
-body:has(> .overlay,> .pkov,> .cfov) main *,body:has(> .overlay,> .pkov,> .cfov) main *::before,body:has(> .overlay,> .pkov,> .cfov) main *::after{animation-play-state:paused!important}
+/* (fixed Oct 29 9 AM: the first version also matched the always-present hidden .overlay popups, which paused EVERY animation in the app) */
+body:has(> .pkov,> #whOv,> #newsOv) main *,body:has(> .pkov,> #whOv,> #newsOv) main *::before,body:has(> .pkov,> #whOv,> #newsOv) main *::after{animation-play-state:paused!important}
 /* perf (Oct 28): these animated filter/blur/shadow effects repaint every frame; they stay at their resting look */
 @keyframes auIri{0%,100%{filter:hue-rotate(0deg) saturate(1.2) brightness(1.05)}}@keyframes auIriB{0%,100%{filter:blur(calc(var(--s)*.12))}}@keyframes auraPulse{0%,100%{filter:none}}
 /* BiggieTown open: nothing behind it animates */
@@ -6399,7 +6400,7 @@ let _AB2=null;function ab2(k,id){id=id||S.me;if(!_AB2){_AB2={};queueMicrotask(()
 const V2_ODDS=[63.357,22.317,9.830,3.897,.386,.105,.009]/* owner Oct 29 1:48 AM: Elite + Grail halved (were .772/.210), the difference went to Common */,V2_CURSE=.1,V2_WILD=.02,V2_PITY=35000,V2_DRAGON_DIV=15000/* owner Oct 29 3:13 AM (was 3,000) */,V2_X3={"mv-joe-camel":3,"mv-art-65":3};
 const TIER_DIV=[2,3,4,6,10,16,25,40,64,100,160,250,400],TIER_UP=[0,0,50,70,120,180,300,450,750,1200,1800,3000,4500,7500];/* TIER_UP[t] = BB to upgrade INTO tier t */
 const SHARD_PRICE=[1500,4000,10000,25000,150000,1000000];/* owner Oct 29 2:51 AM: Elite 150,000, Grail 1,000,000 *//* owner Oct 29 2:31 AM: shards are wildcards now (was 600/1,600/3,700/9,200/46,000/172,000) *//* owner Oct 29 2:12 AM: a pack's expected shards (3.17 C, 1.12 U, .49 R, .195 SR, .019 E, .005 G) priced at the brief's rarity ratios add up to the 10,000 pack price; the store sells them 10% below that *//* owner Oct 29 1:55 AM: ≈1.25× what a shard costs through 10,000 BB packs (was 1,000/2,800/6,500/16,000/80,000/300,000) */
-const V2_PACK={id:"v2",r:5,name:"BiggieCheese Pack",setName:"All collections",price:10000/* owner Oct 29 1:37 AM: 10,000 (brief: 2,500) */,n:5};
+const V2_PACK={id:"v2",r:5,name:"BiggieCheese Pack",setName:"All collections",price:7500/* owner Oct 29 8:54 AM: 7,500 (was 10,000 since 1:37 AM; brief: 2,500) */,n:5};
 const v2Tier=c=>Math.min(13,(c.lv||1)+2*c.r);
 function v2Div(c){if(!c||c.abil==="curse")return 0;if(c.r===6)return V2_DRAGON_DIV;return TIER_DIV[v2Tier(c)-1]*(V2_RDIV[c.r]||1)*(V2_X3[baseOf(c.id)]||1)}
 const V2_RDIV={4:3,5:6};/* owner Oct 29 3:08 AM: Elite dividends ×3 (192–1,200), Grail ×6 (960–2,400), roughly in line with how rare they are; Dragon 15,000 since 3:13 AM */
@@ -7401,6 +7402,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:175,d:"Oct 29",t:[["🃏","The BiggieCheese Pack now costs 7,500 BB"],["🎰","Fixed: casino games felt laggy and the slots win lines stopped showing. Both are back to normal"]]},
  {v:174,d:"Oct 29",t:[["🎡","Fixed the Daily Spin freezing when you tap Spin"],["💎","Fixed putting shards into a card's bar looking stuck, and made the collection smoother"]]},
  {v:173,d:"Oct 29",t:[["🐉","Dragon cards now pay 15,000 BB a day"]]},
  {v:172,d:"Oct 29",t:[["💸","Elite card dividends are 3× higher (192 to 1,200 BB a day) and Grail dividends 6× higher (960 to 2,400 BB a day)"]]},
@@ -7608,7 +7610,7 @@ function v2IntroHtml(){const RC=i=>`<b style="color:${CR[i].c}">${esc(CR[i].n)}<
     <li><b>Platinum Mysterio</b> cards were retired and cashed in at 3× their quick-sell value. Peter Griffin, Claire and the Evil Witch stay.</li>
     <li>Your skins, auras, emotes and Cheese Farm were not touched.</li></ul></section>
   <section><h3>🎴 One pack: the BiggieCheese Pack</h3>
-    <p><b>10,000 BB</b> for 5 cards (open 1, 3, 5 or 10 at a time in <b>Shop → Packs</b>). Every Multiverse, Fantasyland and ChudBootyCheeks card is in it, and no card ever sells out. Each card rolls its rarity on its own:</p>
+    <p><b>${f(V2_PACK.price)} BB</b> for 5 cards (open 1, 3, 5 or 10 at a time in <b>Shop → Packs</b>). Every Multiverse, Fantasyland and ChudBootyCheeks card is in it, and no card ever sells out. Each card rolls its rarity on its own:</p>
     <table><tr><th>Rarity</th><th class="n">Chance</th><th class="n">Max LV</th><th class="n">Dividend / day</th></tr>${rows}</table>
     <p class="small muted">Dividend runs from LV 1 to max level. Joe Camel and Debbie pay 3×. The Jimmy Scroggins curse still hides in the pack (${V2_CURSE}%), and pulling a new Dragon still collects the Dragon bounty.</p></section>
   <section><h3>🃏 Copies</h3>
