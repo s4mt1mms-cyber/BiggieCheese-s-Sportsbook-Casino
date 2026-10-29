@@ -15,7 +15,7 @@
   const ACTS = [["fwd", "Move forward", "KeyW"], ["back", "Move back", "KeyS"], ["left", "Move left", "KeyA"], ["right", "Move right", "KeyD"], ["fire", "Fire", "Mouse0"], ["aim", "Aim down sights", "Mouse2"],
     ["reload", "Reload", "KeyR"], ["jump", "Jump", "Space"], ["run", "Run", "ShiftLeft"], ["use", "Use · doors · car · bell", "KeyF"], ["emote", "Emotes", "KeyB"], ["crouch", "Crouch", "KeyC"], ["swap", "Switch gun (revolver / sniper)", "KeyQ"], ["view", "First / third person", "KeyV"], ["pause", "Pause", "KeyP"]];
   const KEYS0 = Object.fromEntries(ACTS.map(a => [a[0], a[2]]));
-  const SET0 = { sens: 1, ads: 0.6, invert: false, tp: false, crToggle: false, fov: 75, sound: 1, keys: KEYS0, btn: 1, lefty: false, aimHold: false, pos: {} };
+  const SET0 = { sens: 1, ads: 0.6, invert: false, tp: false, crToggle: false, aa: true, fov: 75, sound: 1, keys: KEYS0, btn: 1, lefty: false, aimHold: false, pos: {} };
   const SET = () => { const s = Object.assign({}, SET0, LS("ww-set", {})); s.keys = Object.assign({}, KEYS0, s.keys || {}); s.pos = s.pos || {}; return s; };
   const keyName = c => { if (!c) return "–"; if (c.startsWith("Mouse")) return ["Left click", "Middle click", "Right click", "Mouse 4", "Mouse 5"][+c.slice(5)] || "Mouse " + c.slice(5);
     if (c.startsWith("Key")) return c.slice(3); if (c.startsWith("Digit")) return c.slice(5); if (c.startsWith("Arrow")) return c.slice(5) + " arrow";
@@ -321,6 +321,7 @@ body.wwon{overflow:hidden}
       <label>Sound <span class="v" id="wwVv">${Math.round(s.sound * 100)}%</span><input type="range" min="0" max="1" step="0.05" value="${s.sound}" data-wwset="sound"></label>
       <label class="ck">Invert look up/down <input type="checkbox" data-wwset="invert" ${s.invert ? "checked" : ""}></label>
       <label class="ck">Toggle crouch (tap instead of hold) <input type="checkbox" data-wwset="crToggle" ${s.crToggle ? "checked" : ""}></label>
+      ${TOUCH ? `<label class="ck">Aim assist <input type="checkbox" data-wwset="aa" ${s.aa !== false ? "checked" : ""}></label>` : ""}
       <label class="ck">Third-person camera <input type="checkbox" data-wwset="tp" ${s.tp ? "checked" : ""}></label>
       <p style="text-align:left;opacity:.75;margin:0">Aim-in sensitivity is a multiplier on your look sensitivity while you aim down the sights.</p>
       </div><div class="wwrow"><button data-ww="controls">Controls</button><button data-ww="setreset">Defaults</button><button class="pri" data-ww="setdone">Done</button></div></div></div>`;
@@ -355,7 +356,7 @@ body.wwon{overflow:hidden}
     k[a] = code; G.capturing = null; G.capJust = performance.now(); LSset("ww-set", G.set); showControls();
   }
   function setVal(k, v) {
-    const s = G.set; s[k] = k === "invert" || k === "tp" || k === "crToggle" ? !!v : Number(v); LSset("ww-set", s);
+    const s = G.set; s[k] = k === "invert" || k === "tp" || k === "crToggle" || k === "aa" ? !!v : Number(v); LSset("ww-set", s);
     const lab = { btn: ["#wwBv", x => Math.round(x * 100) + "%"], sens: ["#wwSv", x => x.toFixed(2) + "×"], ads: ["#wwAv", x => x.toFixed(2) + "×"], fov: ["#wwFv", x => x + "°"], sound: ["#wwVv", x => Math.round(x * 100) + "%"] }[k];
     if (lab) { const e = G.ui.querySelector(lab[0]); if (e) e.textContent = lab[1](s[k]); }
     if (G.master) G.master.gain.value = s.sound * 0.9;
@@ -479,7 +480,8 @@ body.wwon{overflow:hidden}
     document.removeEventListener("gesturestart", H_.gest);
   }
   function look(dx, dy, k) {
-    const s = G.set, ads = G.adsK > 0.5 ? s.ads : 1, m = k * s.sens * ads * (G.fovNow / 75) * (G.wpn === "sn" && G.adsK > .5 ? 1.6 : 1);
+    const s = G.set, ads = G.adsK > 0.5 ? s.ads : 1, m = k * s.sens * ads * (G.fovNow / 75) * (G.wpn === "sn" && G.adsK > .5 ? 1.6 : 1) * (TOUCH && G.aa && G.aa.near ? .65 : 1); /* phone aim assist: a bit of drag on a target */
+    G.lookAt = performance.now();
     /* driving: look around the car (free look; eases back behind the car after a couple of seconds) */
     if (G.car && G.car.mine) { if (G.carLook == null) G.carLook = G.car.yaw; G.carLook -= dx * m; /* owner Oct 28: you steer by looking */ G.dPitch = Math.max(-.5, Math.min(.9, (G.dPitch || 0) + dy * m * (s.invert ? -1 : 1))); /* owner Oct 28: driving look inverted vs on foot */ G.dLookAt = performance.now(); return; }
     G.yaw -= dx * m; G.pitch -= dy * m * (s.invert ? -1 : 1); G.pitch = Math.max(-1.45, Math.min(1.45, G.pitch));
@@ -1179,6 +1181,24 @@ body.wwon{overflow:hidden}
     if (best.kind === "bell" && G.mode === "pvp") nsend({ t: "bell" });
   }
   function raySphere(o, d, c, r) { const ox = o.x - c.x, oy = o.y - c.y, oz = o.z - c.z, b = ox * d.x + oy * d.y + oz * d.z, cc = ox * ox + oy * oy + oz * oz - r * r, h = b * b - cc; if (h < 0) return null; const t = -b - Math.sqrt(h); return t > 0 ? t : null; }
+  /* phone aim assist (owner Oct 28): only on touch, only in PvP. When an enemy you can see is close to the crosshair, look sensitivity drops
+     a little (friction) and, while you're turning or moving, the aim drifts gently toward their chest. Never snaps, never through walls. */
+  function aimAssist(dt) {
+    const A = G.aa || (G.aa = { near: false, t: null, chk: 0 }); A.near = false;
+    if (!TOUCH || G.set.aa === false || G.mode !== "pvp" || !G.net || G.state !== "play" || G.dead || (G.car && G.car.mine) || !G.p) return;
+    const T = THREE, now = performance.now(), eye = new T.Vector3(G.p.x, G.p.y + 1.62 - .57 * (G.crK || 0), G.p.z), sn = G.wpn === "sn" && G.adsK > .5;
+    const cone = (sn ? 1.2 : G.adsK > .5 ? 3.2 : 4.5) * Math.PI / 180; let best = null;
+    for (const R of G.net.pl.values()) { if (!R.alive || !R.root || !R.root.visible || R.dying || ((R.flags || 0) & 1)) continue;
+      const q = R.root.position, cy = ((R.flags || 0) & 32) ? .75 : 1.2, dx = q.x - eye.x, dy = q.y + cy - eye.y, dz = q.z - eye.z, d = Math.hypot(dx, dy, dz); if (d < 1 || d > 70) continue;
+      const ty = Math.atan2(-dx, -dz), tp = Math.atan2(dy, Math.hypot(dx, dz)); let ey = ty - G.yaw; ey = Math.atan2(Math.sin(ey), Math.cos(ey)); const ep = tp - G.pitch, e = Math.hypot(ey, ep);
+      if (e < cone && (!best || e < best.e)) best = { R, ey, ep, e, d, dir: new T.Vector3(dx / d, dy / d, dz / d) }; }
+    if (!best) { A.t = null; return; }
+    if (A.t !== best.R || now - A.chk > 150) { A.chk = now; A.t = best.R; A.vis = true; /* line of sight, a few times a second */
+      for (const c of G.cols) { if ((c.dr && c.dr.open) || c.gw || c.y1 < Math.min(eye.y, eye.y + best.dir.y * best.d) - .1) continue; const r = rayBox(eye, best.dir, c); if (r && r.t < best.d - .5) { A.vis = false; break; } } }
+    if (!A.vis) return; A.near = true;
+    const active = now - (G.lookAt || 0) < 160 || (G.moving || 0) > .5; if (!active) return;
+    const k = Math.min(1, dt * (G.adsK > .5 ? 2.2 : 1.6)) * (1 - best.e / cone); G.yaw += best.ey * k; G.pitch = Math.max(-1.45, Math.min(1.45, G.pitch + best.ep * k * .6));
+  }
   function rayBox(o, d, c) {
     let t0 = 0, t1 = 1e9, n = null; const ax = [["x", c.x0, c.x1], ["y", c.y0, c.y1], ["z", c.z0, c.z1]];
     for (const [k, lo, hi] of ax) { const od = o[k], dd = d[k]; if (Math.abs(dd) < 1e-9) { if (od < lo || od > hi) return null; continue; }
@@ -1746,6 +1766,7 @@ body.wwon{overflow:hidden}
       const xx = G.hud.querySelector("#wwX"); if (xx) xx.classList.toggle("nox", SN); } if (Math.abs(fov - G.fovNow) > .01) { G.fovNow = fov; cam.fov = fov; cam.updateProjectionMatrix(); }
     const x = G.hud.querySelector("#wwX"); if (x) x.classList.toggle("ads", G.adsK > .5); const dot = G.hud.querySelector("#wwDot"); if (dot) dot.classList.toggle("on", G.adsK > .6 && !SN);
     if (G.aimBtn) G.aimBtn.classList.toggle("on", !!G.aimToggle);
+    aimAssist(dt);
     /* camera */
     const p = G.p, bobA = G.p.ground ? Math.min(1, G.moving / 5) : 0, bob = Math.sin(G.bob * 2) * .035 * bobA * (1 - G.adsK * .8);
     cam.position.set(p.x, p.y + 1.62 - .57 * (G.crK || 0) + bob, p.z); cam.rotation.set(0, 0, 0); cam.rotation.order = "YXZ"; cam.rotation.y = G.yaw; cam.rotation.x = G.pitch + G.recoil * .035;
