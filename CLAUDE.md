@@ -111,7 +111,9 @@ needs `V2_SH[L-1]` copies + `TIER_UP` BB; shards are WILDCARDS that cover missin
 player (trade / seized collateral, `v2Recv`) moves value as copies: new → LV 1 + floor(invested/2) copies; duplicate → max(1, floor((1+invested)/2)) copies.
 Beta reset #2 (`cv3One`/`cv3Run`, prefs.cv3 {amt,from,to}, bank `cv3_<id>`): pool cards, copies and shards wiped and every balance set to exactly
 `CV3_BAL` 2,000,000 (owner 2:22 AM, instead of refunds); runs after the Platinum payout lands. Admin card gifts: prefs.cardGift {id,cid,n} via job-fix
-(`drew10`: #CTESPN 10× Drew · PBA Chrome Auto) → `cardGiftCheck` adds them after cv3. wv prefix v4 (rules accept v3|v4 during the switch, then v4 only).
+(`drew10`: #CTESPN 10× Drew · PBA Chrome Auto) → `cardGiftCheck` adds them after cv3. wv prefix v4 (rules accept v4 only).
+**League Moments removed** (owner Oct 29 2:33 AM, no payout): `setOpen("lm")` false, not in shop/collection/guide; `lmxOne`/`lmxRun` (prefs.lmx) take every LM card out (collection, old listings/offers/loans via `cv2Items(id,isLm)`, open trades) after cv3.
+All per-player migrations (cv2, pmx, cv3, lmx, upr) run on the player's own page, or on the ADMIN's page for players who are offline — so someone who never opens the app is only migrated while the owner's admin account has the app open.
 Everything below about rarity packs, print runs/supply, crafting, quick-selling pool cards and trading pool cards is HISTORY for Multiverse /
 Fantasyland / ChudBootyCheeks. League Moments (`lm`) still works the old way (its own rarity packs, supply, quick-sell, market). Platinum Mysterio cards are kept as they were (owner Oct 29: not credited, still trade/quick-sell; no new packs).
 - **Pool** `POOL=["mv","fl","cb"]`, `inPool(id)`, `v2Pool()` (cards by rarity; the curse separate). `cardOld(k)` = pool card (doesn't trade, was credited).
