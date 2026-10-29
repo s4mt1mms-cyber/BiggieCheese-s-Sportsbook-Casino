@@ -275,7 +275,7 @@ Fantasyland / ChudBootyCheeks. League Moments (`lm`) still works the old way (it
   "Offers on your cards" on the Marketplace.
 - **DMs** (`dm*`): League | Direct switch in the chat panel; inbox, threads, unread (`un`/`read` on the thread doc),
   DM banner. Reactions like league chat (hold/double-tap; `r_<playerId>` on the msg; rules let each player change only their own `r_` field). Listens to my thread list + the open thread's newest 50 only.
-- **Showcase** (`sc*`): `prefs.showcase` = up to 3 card ids, shown on top of the collection and on the profile; unowned cards hide.
+- **Showcase** (`sc*`): `prefs.showcase` = up to 3 card ids, shown on top of the collection and on the profile; unowned cards hide. A card can sit in as many slots as copies owned (`scLive` counts per id; owner Oct 29).
 - **Bank** (`bk*`): transfers; loans with optional collateral (seizure all-at-once or one card per interval),
   auto-collection ONLY on payment dates (takes all you have if short), pay in chunks anytime, early payoff =
   max(principal × 1.1 (`BK_PRE`, `bkPreMin`; owner Oct 24: 10% prepayment minimum), principal + interest accrued so far (loan rate & compounding, payments stop accruing when made)) less paid, capped at the rest of the schedule, never below what is overdue.

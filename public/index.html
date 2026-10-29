@@ -7402,6 +7402,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:178,d:"Oct 29",t:[["⭐","Showcase: if you own more than one copy of a card, you can put it in more than one slot"]]},
  {v:177,d:"Oct 29",t:[["🏆","Every scoreboard has been reset: standings, casino leaderboards and the BiggieTown bottle challenge all start fresh. Balances aren't touched"]]},
  {v:176,d:"Oct 29",t:[["🏦","Loans are back to how they worked before: take as many as you like, and payments only come out on the due dates (no more winnings going straight to your loan)"]]},
  {v:175,d:"Oct 29",t:[["🃏","The BiggieCheese Pack now costs 7,500 BB"],["🎰","Fixed: casino games felt laggy and the slots win lines stopped showing. Both are back to normal"]]},
@@ -9640,7 +9641,8 @@ document.addEventListener("click",e=>{const t=e.target.closest("[data-dmgo],[dat
 /* ---------- Showcase: up to 3 favorite cards (from any collection) on top of a player's collection and profile. prefs.showcase = [cid|null x3].
    A card that's no longer owned (sold, traded, burned, in escrow or collateral) just doesn't show. ---------- */
 const scOf=id=>{const a=(S.prefs[id]||{}).showcase;return [0,1,2].map(i=>Array.isArray(a)&&typeof a[i]==="string"&&a[i]?a[i]:null)};
-const scLive=id=>scOf(id).map(cid=>cid&&cardById(cid)&&cardCount(cid,id)>0?cid:null);
+/* owner Oct 29: a card can fill as many slots as you own copies of it (2 Peters = 2 slots); extra slots beyond the copies you still own hide */
+const scLive=id=>{const used={};return scOf(id).map(cid=>{if(!cid||!cardById(cid))return null;used[cid]=(used[cid]||0)+1;return used[cid]<=cardCount(cid,id)?cid:null})};
 /* collection header: what these cards pay every day and what they would quick-sell for */
 function colSumHtml(who){const d=divCalc(who),cs=myCards(who);let qs=0;for(const[cid,v]of Object.entries(cs)){const k=Number(v)||0;if(k>0)qs+=qsVal(cardById(cid))*k}
   return `<div class="colsum"><div><span class="stlbl">Daily dividend</span><b class="num pos">+${d.amt.toLocaleString()} BB</b></div><div><span class="stlbl">Quick-sell value</span><b class="num">${qs.toLocaleString()} BB</b></div></div>`}
@@ -9659,7 +9661,7 @@ function scEdit(slot){if(!S.me||!S.prefs[S.me])return;const st={sl:scLive(S.me),
   const draw=()=>{o.querySelector("[data-scslots]").innerHTML=st.sl.map((cid,i)=>`<div class="scedslot"><button type="button" class="scslot${cid?"":" scadd"}${st.cur===i?" on":""}" data-scs="${i}" aria-label="Slot ${i+1}">${cid?cardHtml(cardById(cid),{small:true}):"<span>+</span>"}</button>
       <div class="scctl"><button type="button" data-scmv="${i}" data-d="-1" ${i===0||!cid?"disabled":""} aria-label="Move left">◀</button><button type="button" data-scx="${i}" ${cid?"":"disabled"} aria-label="Remove">✕</button><button type="button" data-scmv="${i}" data-d="1" ${i===2||!cid?"disabled":""} aria-label="Move right">▶</button></div></div>`).join("");
     const q=st.q.trim().toLowerCase();const pool=ownCards().filter(c=>(st.set==="any"?sets:[st.set]).includes(cardSet(c.id))&&(st.r==="any"||c.r===Number(st.r))&&(!q||c.name.toLowerCase().includes(q))).sort((a,b)=>b.r-a.r||a.name.localeCompare(b.name));
-    o.querySelector("[data-scpool]").innerHTML=pool.length?pool.map(c=>`<button type="button" class="tpk${st.sl.includes(c.id)?" scin":""}" data-scpick="${c.id}">${cardHtml(c,{small:true,count:cardCount(c.id)})}</button>`).join(""):`<p class="small muted">No cards match.</p>`;cimgFill(o)};
+    o.querySelector("[data-scpool]").innerHTML=pool.length?pool.map(c=>`<button type="button" class="tpk${st.sl.filter(x=>x===c.id).length>=cardCount(c.id)?" scin":""}" data-scpick="${c.id}">${cardHtml(c,{small:true,count:cardCount(c.id)})}</button>`).join(""):`<p class="small muted">No cards match.</p>`;cimgFill(o)};
   draw();
   o.addEventListener("input",e=>{if(e.target.matches("[data-scq]")){st.q=e.target.value;draw()}});
   o.addEventListener("change",e=>{if(e.target.matches("[data-scset]")){st.set=e.target.value;draw()}if(e.target.matches("[data-scr]")){st.r=e.target.value;draw()}});
@@ -9667,7 +9669,7 @@ function scEdit(slot){if(!S.me||!S.prefs[S.me])return;const st={sl:scLive(S.me),
     const sl=e.target.closest("[data-scs]");if(sl){st.cur=Number(sl.dataset.scs);draw();return}
     const x=e.target.closest("[data-scx]");if(x){st.sl[Number(x.dataset.scx)]=null;st.cur=Number(x.dataset.scx);draw();return}
     const mv=e.target.closest("[data-scmv]");if(mv){const i=Number(mv.dataset.scmv),j=i+Number(mv.dataset.d);if(j<0||j>2)return;[st.sl[i],st.sl[j]]=[st.sl[j],st.sl[i]];st.cur=j;draw();return}
-    const p=e.target.closest("[data-scpick]");if(p){const cid=p.dataset.scpick,was=st.sl.indexOf(cid);if(was>=0&&was!==st.cur){st.sl[was]=st.sl[st.cur]}st.sl[st.cur]=cid;const nx=st.sl.indexOf(null);if(nx>=0)st.cur=nx;draw();return}
+    const p=e.target.closest("[data-scpick]");if(p){const cid=p.dataset.scpick,others=st.sl.filter((x,i)=>x===cid&&i!==st.cur).length;if(others>=cardCount(cid)){const was=st.sl.findIndex((x,i)=>x===cid&&i!==st.cur);if(was>=0)st.sl[was]=st.sl[st.cur]}st.sl[st.cur]=cid;const nx=st.sl.indexOf(null);if(nx>=0)st.cur=nx;draw();return}
     const sv=e.target.closest("[data-scsave]");if(!sv)return;sv.disabled=true;const val=st.sl.map(c=>c||null);
     try{await db.doc("prefs/"+S.me).update({showcase:val});S.prefs[S.me].showcase=val;toast("Showcase saved.");o.remove();render()}catch(_){sv.disabled=false;toast("Couldn't save. Check your connection.")}})}
 document.addEventListener("click",e=>{const t=e.target.closest("[data-scedit]");if(!t)return;e.preventDefault();scEdit(t.dataset.scedit)});
