@@ -1758,14 +1758,14 @@ body.wwon{overflow:hidden}
   /* ---------------- loop ---------------- */
   function loop(now) {
     if (!G) return; G.raf = requestAnimationFrame(loop);
-    if (now - (G.lastF || 0) < (G.state === "play" ? 15.5 : 48)) return; /* 60 fps cap (120/144 Hz screens otherwise do double the work); menus/pause 20 fps */
+    if (now - (G.lastF || 0) < (G.state === "play" ? 12.5 : 45)) return; /* ~60 fps cap that also works on 144 Hz screens (renders ~72 there, not 48); menus/pause ~20 fps */
     const ft = now - (G.lastF || now); G.lastF = now;
     /* dynamic resolution (light graphics): if frames come slower than ~50 fps, render fewer pixels (down to 55%); climb back when it's smooth */
     if (!G.hi && G.state === "play" && G.R) { const D = G.dres || (G.dres = { pr: G.R.getPixelRatio(), max: G.R.getPixelRatio(), sum: 0, n: 0, t: now, good: 0 });
       if (ft > 0 && ft < 200) { D.sum += ft; D.n++; }
       if (now - D.t > 1500 && D.n > 10) { const avg = D.sum / D.n; D.sum = 0; D.n = 0; D.t = now;
-        if (avg > 20 && D.pr > .56) { D.pr = Math.max(.55, D.pr - .12); G.R.setPixelRatio(D.pr); G.R.setSize(G.gw, G.gh, false); D.good = 0; }
-        else if (avg < 17.5 && D.pr < D.max) { if (++D.good >= 4) { D.pr = Math.min(D.max, D.pr + .08); G.R.setPixelRatio(D.pr); G.R.setSize(G.gw, G.gh, false); D.good = 0; } } else D.good = 0; } }
+        if (avg > 25 && D.pr > .56) { D.pr = Math.max(.55, D.pr - .12); G.R.setPixelRatio(D.pr); G.R.setSize(G.gw, G.gh, false); D.good = 0; }
+        else if (avg < 19 && D.pr < D.max) { if (++D.good >= 4) { D.pr = Math.min(D.max, D.pr + .08); G.R.setPixelRatio(D.pr); G.R.setSize(G.gw, G.gh, false); D.good = 0; } } else D.good = 0; } }
     if (G.set.fps) { G.fpsN = (G.fpsN || 0) + 1; if (now - (G.fpsT || 0) > 500) { const f = Math.round(G.fpsN * 1000 / (now - (G.fpsT || now - 500))); G.fpsN = 0; G.fpsT = now;
         let e = G.hud && G.hud.querySelector("#wwFps"); if (!e && G.hud) { e = document.createElement("div"); e.id = "wwFps"; e.style.cssText = "position:absolute;left:50%;bottom:max(6px,env(safe-area-inset-bottom));transform:translateX(-50%);font:700 11px Barlow;color:#fff;background:rgba(0,0,0,.45);padding:2px 8px;border-radius:6px;pointer-events:none;z-index:5"; G.hud.appendChild(e); }
         if (e) e.textContent = `${f} fps${G.net && G.net.rtt && G.mode === "pvp" ? ` · ${Math.round(G.net.rtt)} ms` : ""}`; } }
