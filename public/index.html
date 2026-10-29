@@ -6140,7 +6140,7 @@ function viewPacks(){if(!S.me)return `<div class="empty">Sign in to collect card
         <div class="pkodds">${[3,4,5,6].map(r=>`<span style="color:${CR[r].c}">${CR[r].n.split(" ")[0]} ${pkChance(p,r)>0?fmtPct(pkChance(p,r)):"✕"}</span>`).join("")}</div>
         <button type="button" class="btn" data-pkbuy="${p.id}" ${(bal<pkPrice(p)*pq&&!pkFree(p))||blk?"disabled":""}>${blk?"Sold out":pkFree(p)?`🎁 Open free (${pkFreeN(p)} left)`:`Open${pq>1?" "+pq+"×":""} · ${(pkPrice(p)*pq).toLocaleString()} BB${pkPrice(p)<p.price?` <s class="muted">${(p.price*pq).toLocaleString()}</s>`:""}`}</button></div></div>`}).join("")}</div>
       <p class="small muted">Odds shown are the chance of at least one card of that rarity or better in the pack.</p>${S.canEdit&&pkSt().set==="cb"?`<button type="button" class="btn ghost small" data-cbtest>🧪 Test pack (admin, free): The High School Shitter + Lunch?</button>`:""}`}
-  if(st.tab==="coll"){/* owner Oct 29: three collections: League Moments, Platinum Mysterio, Multiverse (= the whole BiggieCheese Pack pool) */const sets=["lm",...(setOpen("pm")?["pm"]:[]),"v2"],CNM={lm:"League Moments",pm:"💠 Platinum Mysterio",v2:"Multiverse"};const cs_=st.cset&&sets.includes(st.cset)?st.cset:"v2";const who=st.who&&S.prefs[st.who]?st.who:S.me,mine=who===S.me;const cat=cs_==="v2"?v2Pool().all:cardsCat(cs_).filter(c=>cardSet(c.id)===cs_);const have=cat.filter(c=>cardCountAll(c.id,who)>0).length;const isPm=cs_==="pm";const tiers=isPm?[8,7]:(cat.some(c=>c.abil==="curse")?["curse",6,5,4,3,2,1,0]:[6,5,4,3,2,1,0]);const inT=(c,r)=>r==="curse"?c.abil==="curse":c.r===r&&c.abil!=="curse";
+  if(st.tab==="coll"){/* owner Oct 29: three collections: League Moments, Platinum Mysterio, Multiverse (= the whole BiggieCheese Pack pool) */const sets=["lm",...(setOpen("pm")?["pm"]:[]),"v2"],CNM={lm:"League Moments",pm:"💠 Platinum Mysterio",v2:"Multiverse"};const cs_=st.cset&&sets.includes(st.cset)?st.cset:"v2";const who=st.who&&S.prefs[st.who]?st.who:S.me,mine=who===S.me;const cat=cs_==="v2"?v2Pool().all:cardsCat(cs_).filter(c=>cardSet(c.id)===cs_&&!(cs_==="pm"&&c.r===7));/* Platinum cards retired Oct 29 */const have=cat.filter(c=>cardCountAll(c.id,who)>0).length;const isPm=cs_==="pm";const tiers=isPm?[8,7]:(cat.some(c=>c.abil==="curse")?["curse",6,5,4,3,2,1,0]:[6,5,4,3,2,1,0]);const inT=(c,r)=>r==="curse"?c.abil==="curse":c.r===r&&c.abil!=="curse";
     const head=(r,txt)=>`<div class="crhead" style="--rc:${(r==="curse"?CR_CURSE:CR[r]).c}"><span class="crdot"></span><b>${esc((r==="curse"?CR_CURSE:CR[r]).n)}</b><span class="small muted">${txt}</span></div>`;
     const lvTiles=c=>{const cs=myCards(who),ks=Object.keys(cs).filter(k=>(k===c.id||k.startsWith(c.id+"@"))&&Number(cs[k])>0).sort((a,b)=>lvOf(b)-lvOf(a));return ks.map(k=>cardHtml(cardById(k),{count:Number(cs[k]),click:true,small:true,who:mine?null:who})).join("")};
     const got=tiers.map(r=>{const cs=cat.filter(c=>inT(c,r)&&cardCountAll(c.id,who)>0).sort((a,b)=>topLv(b.id,who)-topLv(a.id,who));/* owner Oct 29: higher levels first within a rarity *//* owner Oct 29: every card shows; the ones not owned are greyed out at the end of their rarity (Platinum mystery cards stay hidden) */if(!cs.length)return "";return head(r,isPm?`${cs.length} owned`:`${cs.length}/${cat.filter(c=>inT(c,r)).length}`)+`<div class="cgrid">${cs.map(lvTiles).join("")}</div>`}).join("");
@@ -6751,7 +6751,7 @@ function gdAbLines(c){const A=ab2Of(c);if(A){const M=craftable(c)?LV_MAX[c.r]:1,
   return null}
 function gdCensus(id){const out=[];for(const m of members()){const cs=myCards(m);let n=0,top=0;for(const k in cs){if(baseOf(k)!==id)continue;const x=Number(cs[k])||0;if(x>0){n+=x;top=Math.max(top,lvOf(k))}}if(n)out.push({m,n,top})}return out.sort((a,b)=>b.top-a.top||b.n-a.n)}
 function viewGuide(){if(!S.me)return `<div class="empty">Sign in to see the guidebook.</div>`;const st=gdSt(),sets=[["v2","Multiverse"],["lm","League Moments"],...(setOpen("pm")?[["pm","💠 Platinum Mysterio"]]:[])];
-  let cat=st.set==="v2"?v2Pool().all.slice():cardsCat(st.set).filter(c=>cardSet(c.id)===st.set&&(st.set!=="pm"||pmSeen(c.id)));
+  let cat=st.set==="v2"?v2Pool().all.slice():cardsCat(st.set).filter(c=>cardSet(c.id)===st.set&&(st.set!=="pm"||(pmSeen(c.id)&&c.r!==7)));
   const q=st.q.trim().toLowerCase();cat=cat.filter(c=>(st.r==="any"||(st.r==="curse"?c.abil==="curse":c.r===Number(st.r)&&c.abil!=="curse"))&&(!q||c.name.toLowerCase().includes(q)||(gdAbLines(c)||{lines:[]}).lines.some(l=>l[1].toLowerCase().includes(q)))&&(!st.ab||gdAbLines(c)));
   cat.sort((a,b)=>(b.abil==="curse")-(a.abil==="curse")||b.r-a.r||a.name.localeCompare(b.name));
   const nAb=cat.filter(c=>gdAbLines(c)).length;
@@ -6781,14 +6781,14 @@ document.addEventListener("change",e=>{if(e.target.matches("[data-gdr]")){gdSt()
    offers declined so their other cards go back, loan collateral/requests trimmed), then cv2.vd = true. League Moments cards, skins, auras,
    emotes, Flappy levels, free LM packs: untouched. The player's own page does it (UI waits behind #cv2Ov); the admin's page does offline players. */
 const CV2_V=1,CV2_X=3;
-function cv2Items(id){const out=[];/* [{p:doc path, cids:[old cards credited to id]}] */
+function cv2Items(id,P){P=P||cardOld;const out=[];/* [{p:doc path, cids:[old cards credited to id]}] */
   for(const l of S.market||[]){if(isShL(l))continue;
-    if(l.status==="open"&&l.seller===id&&cardOld(l.cid))out.push({p:"market/"+l.id,cids:[l.cid]});
-    else if(l.seller===id&&!l.claimed&&(l.status==="traded"||(l.status==="sold"&&l.offerId&&l.ofDone))){const g=(Array.isArray(l.gotCids)&&l.gotCids.length?l.gotCids:[l.gotCid]).filter(x=>x&&cardOld(x));if(g.length)out.push({p:"market/"+l.id,cids:g})}
-    if(l.buyer===id&&l.offerId&&l.ofDone&&l.bClaimed===false&&cardOld(l.cid))out.push({p:"market/"+l.id,cids:[l.cid],b:1})}
-  for(const o of S.offers||[]){if(o.esc&&!o.returned&&o.from===id){const g=(o.cards||[]).filter(cardOld);if(g.length)out.push({p:"offers/"+o.id,cids:g})}
-    if(o.sEsc&&!o.sReturned&&!o.done&&o.to===id&&cardOld(o.cid))out.push({p:"offers/"+o.id,cids:[o.cid],s:1})}
-  for(const l of S.loans||[]){const col=Array.isArray(l.collateral)?l.collateral:[],g=col.filter(cardOld);if(!g.length)continue;
+    if(l.status==="open"&&l.seller===id&&P(l.cid))out.push({p:"market/"+l.id,cids:[l.cid]});
+    else if(l.seller===id&&!l.claimed&&(l.status==="traded"||(l.status==="sold"&&l.offerId&&l.ofDone))){const g=(Array.isArray(l.gotCids)&&l.gotCids.length?l.gotCids:[l.gotCid]).filter(x=>x&&P(x));if(g.length)out.push({p:"market/"+l.id,cids:g})}
+    if(l.buyer===id&&l.offerId&&l.ofDone&&l.bClaimed===false&&P(l.cid))out.push({p:"market/"+l.id,cids:[l.cid],b:1})}
+  for(const o of S.offers||[]){if(o.esc&&!o.returned&&o.from===id){const g=(o.cards||[]).filter(P);if(g.length)out.push({p:"offers/"+o.id,cids:g})}
+    if(o.sEsc&&!o.sReturned&&!o.done&&o.to===id&&P(o.cid))out.push({p:"offers/"+o.id,cids:[o.cid],s:1})}
+  for(const l of S.loans||[]){const col=Array.isArray(l.collateral)?l.collateral:[],g=col.filter(P);if(!g.length)continue;
     const to=l.status==="defaulted"?(l.collateralClaimed?null:l.lender):(l.borrower&&!l.collateralBackClaimed&&!l.collateralClaimed?l.borrower:null);if(to===id)out.push({p:"loans/"+l.id,cids:g})}
   return out}
 function cv2Patch(id){const q=S.prefs[id]||{},cs=q.cards||{},ch={};let amt=0,n=0;
@@ -6796,19 +6796,35 @@ function cv2Patch(id){const q=S.prefs[id]||{},cs=q.cards||{},ch={};let amt=0,n=0
   const it=cv2Items(id);for(const x of it)for(const g of x.cids){amt+=qsOld(cardById(g));n++}
   return{cards:ch,cv2:{v:CV2_V,at:Date.now(),amt:amt*CV2_X,n,docs:it.map(x=>x.p),vd:!it.length}}}
 const cv2Loaded=()=>S.ready&&S.ld.bank&&S.ld.market&&S.ld.loans&&S.ld.adjust&&S.ld.at&&Date.now()-S.ld.at>4000&&v2Ready()&&!!S.offers;
-async function cv2Strip(id,p){const ref=db.doc(p),s=await ref.get();if(!s.exists)return;const d=s.data()||{},u={};
-  if(p.startsWith("market/")){if(d.status==="open"&&d.seller===id&&cardOld(d.cid)){u.status="cancelled";u.endAt=Date.now();u.offerId=null;u.cv2=true}
-    if(d.seller===id&&!d.claimed&&(d.status==="traded"||d.status==="sold")){const g=(Array.isArray(d.gotCids)&&d.gotCids.length?d.gotCids:[d.gotCid]).filter(Boolean);const k=g.filter(x=>!cardOld(x));if(k.length!==g.length){u.gotCids=k;u.gotCid=k[0]||null;if(!k.length)u.claimed=true}}
-    if(d.buyer===id&&d.bClaimed===false&&cardOld(d.cid))u.bClaimed=true}
-  else if(p.startsWith("offers/")){if(d.esc&&!d.returned&&d.from===id){const k=(d.cards||[]).filter(x=>!cardOld(x));if(k.length!==(d.cards||[]).length)u.cards=k;if(d.status==="pending"){u.status="declined";u.why="Cards switched to the new system.";u.decidedAt=Date.now()}}
-    if(d.sEsc&&!d.sReturned&&d.to===id&&cardOld(d.cid)){u.sReturned=true;u.sEsc=false;if(d.status==="pending"){u.status="declined";u.why="Cards switched to the new system.";u.decidedAt=Date.now()}}}
-  else if(p.startsWith("loans/")){const col=d.collateral||[],k=col.filter(x=>!cardOld(x));if(k.length!==col.length){u.collateral=k;u.seized=(d.seized||[]).filter(x=>!cardOld(x));u.cv2Coll=col.filter(cardOld);if(d.req&&d.status==="open"&&!k.length){u.status="cancelled";u.endAt=Date.now()}}}
+async function cv2Strip(id,p,P){P=P||cardOld;const ref=db.doc(p),s=await ref.get();if(!s.exists)return;const d=s.data()||{},u={};
+  if(p.startsWith("market/")){if(d.status==="open"&&d.seller===id&&P(d.cid)){u.status="cancelled";u.endAt=Date.now();u.offerId=null;u.cv2=true}
+    if(d.seller===id&&!d.claimed&&(d.status==="traded"||d.status==="sold")){const g=(Array.isArray(d.gotCids)&&d.gotCids.length?d.gotCids:[d.gotCid]).filter(Boolean);const k=g.filter(x=>!P(x));if(k.length!==g.length){u.gotCids=k;u.gotCid=k[0]||null;if(!k.length)u.claimed=true}}
+    if(d.buyer===id&&d.bClaimed===false&&P(d.cid))u.bClaimed=true}
+  else if(p.startsWith("offers/")){if(d.esc&&!d.returned&&d.from===id){const k=(d.cards||[]).filter(x=>!P(x));if(k.length!==(d.cards||[]).length)u.cards=k;if(d.status==="pending"){u.status="declined";u.why="Cards switched to the new system.";u.decidedAt=Date.now()}}
+    if(d.sEsc&&!d.sReturned&&d.to===id&&P(d.cid)){u.sReturned=true;u.sEsc=false;if(d.status==="pending"){u.status="declined";u.why="Cards switched to the new system.";u.decidedAt=Date.now()}}}
+  else if(p.startsWith("loans/")){const col=d.collateral||[],k=col.filter(x=>!P(x));if(k.length!==col.length){u.collateral=k;u.seized=(d.seized||[]).filter(x=>!P(x));u.cv2Coll=col.filter(P);if(d.req&&d.status==="open"&&!k.length){u.status="cancelled";u.endAt=Date.now()}}}
   if(Object.keys(u).length)await ref.update(u)}
 async function cv2One(id){const ref=db.doc("prefs/"+id),f=await ref.get();if(!f.exists)return false;let D=f.data()||{};
   if(!D.cv2){const patch=cv2Patch(id);await ref.update(patch);S.prefs[id]=S.prefs[id]||{};S.prefs[id].cards={...(S.prefs[id].cards||{}),...patch.cards};S.prefs[id].cv2=patch.cv2;D={...D,cv2:patch.cv2}}
   const X=D.cv2;if(X.amt>0&&!(S.bank||[]).some(t=>t.id==="cv2_"+id)){const b=db.doc("bank/cv2_"+id);if(!(await b.get()).exists){const doc={from:"house",to:id,amt:Math.floor(X.amt),kind:"cv2",note:`Card system switch: 3× quick-sell of ${X.n} card${X.n===1?"":"s"}`,at:X.at||Date.now()};await b.set(doc);S.bank=S.bank||[];if(!S.bank.some(t=>t.id==="cv2_"+id))S.bank.push({id:"cv2_"+id,...doc})}}
   if(!X.vd){for(const p of X.docs||[]){try{await cv2Strip(id,p)}catch(e){console.warn("cv2 strip",p,e)}}await ref.update({cv2:{vd:true}});X.vd=true}
   return true}
+/* ===== Platinum Mysterio cleanup (owner, Oct 29 2:08 AM): the Platinum cards (rarity 7) leave the game; the Legendaries (Peter Griffin, Claire,
+   Evil Witch "Debby") stay. Per player once (prefs.pmx): every Platinum copy they hold anywhere (collection, listings, offers, loans, open trades) is
+   credited at CV2_X × its quick-sell value (the same rule as the card switch), the keys go to 0, then bank/pmx_<id> pays it and docs are stripped. */
+const pmGone=k=>cardSet(baseOf(k))==="pm"&&(cardById(baseOf(k))||{}).r===7;
+async function pmxOne(id){const ref=db.doc("prefs/"+id),f=await ref.get();if(!f.exists)return;let D=f.data()||{};
+  if(!D.pmx){const cs=D.cards||{},ch={};let amt=0,n=0;for(const k in cs){if(!pmGone(k))continue;ch[k]=0;const k1=Number(cs[k])||0;if(k1>0){amt+=k1*qsOld(cardById(k));n+=k1}}
+    const it=cv2Items(id,pmGone);for(const x of it)for(const g of x.cids){amt+=qsOld(cardById(g));n++}
+    const tr=(S.trades||[]).filter(t=>t.from===id&&t.status==="open"&&(t.give&&t.give.cards||[]).some(pmGone));for(const t of tr)for(const g of t.give.cards.filter(pmGone)){amt+=qsOld(cardById(g));n++}
+    const X={at:Date.now(),amt:amt*CV2_X,n,docs:[...it.map(x=>x.p),...tr.map(t=>"trades/"+t.id)],vd:false};const p={pmx:X};if(Object.keys(ch).length)p.cards=ch;await ref.update(p);
+    S.prefs[id]=S.prefs[id]||{};if(p.cards)S.prefs[id].cards={...(S.prefs[id].cards||{}),...ch};S.prefs[id].pmx=X;D={...D,pmx:X}}
+  const X=D.pmx;if(X.amt>0&&!(S.bank||[]).some(t=>t.id==="pmx_"+id)){const b=db.doc("bank/pmx_"+id);if(!(await b.get()).exists){const doc={from:"house",to:id,amt:Math.floor(X.amt),kind:"cv2",note:`Platinum cards retired: 3× quick-sell of ${X.n} card${X.n===1?"":"s"}`,at:X.at};await b.set(doc);S.bank=S.bank||[];if(!S.bank.some(t=>t.id==="pmx_"+id))S.bank.push({id:"pmx_"+id,...doc})}}
+  if(!X.vd){for(const p of X.docs||[]){try{if(p.startsWith("trades/")){const r=db.doc(p),t=(await r.get()).data()||{};if(t.status==="open"){const g=trN(t.give);await r.update({give:{...g,cards:g.cards.filter(k=>!pmGone(k))},status:"cancelled",endAt:Date.now()})}}else await cv2Strip(id,p,pmGone)}catch(e){console.warn("pmx strip",p,e)}}await ref.update({pmx:{vd:true}});X.vd=true}
+  if(id===S.me&&X.amt>0&&X.n)setTimeout(()=>toast(`💠 Platinum cards were retired: +${Math.floor(X.amt).toLocaleString()} BB for your ${X.n} card${X.n===1?"":"s"}`),1500)}
+async function pmxRun(){if(pmxRun.busy||!db||!S.me||!S.ready||S.readOnly||!cv2Loaded())return;pmxRun.busy=true;try{const q=S.prefs[S.me];if(q&&q.cv2&&q.cv2.vd&&(!q.pmx||!q.pmx.vd))await pmxOne(S.me);
+  if(S.canEdit)for(const id of members()){const p=S.prefs[id];if(!p||(p.pmx&&p.pmx.vd)||id===S.me||isOnline(id))continue;try{await pmxOne(id)}catch(e){console.warn("pmx",id,e)}}}catch(e){console.warn("pmx",e)}finally{pmxRun.busy=false}}
+setInterval(pmxRun,5000);
 /* anyone's page: pending offers that point at an old card (a listing's or a direct one) are declined so the offerer's escrow goes back */
 async function cv2OfSweep(){for(const o of S.offers||[]){if(o.status!=="pending"||!cardOld(o.cid||""))continue;if(o.from!==S.me&&o.to!==S.me)continue;try{await ofSetStatus(o.id,"declined","Cards switched to the new system.")}catch(_){}}}
 async function cv2Run(){if(S._cv2Busy||!db||!S.me||!cv2Loaded())return;S._cv2Busy=true;
@@ -7266,6 +7282,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:161,d:"Oct 29",t:[["💠","Platinum Mysterio cards have been retired and cashed in at 3× their quick-sell value. Peter Griffin, Claire and the Evil Witch stay"]]},
  {v:160,d:"Oct 29",t:[["🏦","Loans: put up any amount of shards as collateral, and cards from your collection at any level (higher levels are worth more if they get seized)"],["🃏","Getting a card from another player (a trade or seized collateral): a new one starts at LV 1 and you get back half the shards spent leveling it; a duplicate turns into half its worth in shards"]]},
  {v:159,d:"Oct 29",t:[["📰","New Update log in the menu: every change to the game, all in one place"]]},
  {v:158,d:"Oct 29",t:[["⬆️","Upgrading cards is instant now, no more freezing"]]},

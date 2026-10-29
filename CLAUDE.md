@@ -140,7 +140,10 @@ Fantasyland / ChudBootyCheeks. League Moments (`lm`) still works the old way (it
 - **Trades** (Oct 29, replaced the old market for new deals; old listings/offers still settle and show under "Older listings"): `trades/{id}`, see the
   comment above `trMake`. Offers to a player (exact keys) or listings (want cards = ids, any level) for any mix of BB/shards/cards; maker's give escrowed
   (prefs `trDone[id]` e/t/f/r markers, BB to the house via bank `trE_`), taker's page `trAccept` (status race, one prefs write, bank `trT_/trW_/trW2_`, 5% of
-  BB received burned), maker's page `trTick` claims/returns/expires. Receiving a pool card you already have: keep the higher level, the other → shards = its level.
+  BB received burned), maker's page `trTick` claims/returns/expires. Receiving cards follows `v2Recv` (see below).
+- **Platinum retired** (owner Oct 29 2:08 AM): `pmxOne`/`pmxRun` (prefs.pmx {at,amt,n,docs,vd}, bank `pmx_<id>` kind cv2): every Platinum (r7) copy anywhere credited at 3× `qsOld` (1,497 each) and removed (`pmGone`); Peter / Claire / Debby (r8) stay. `cv2Items`/`cv2Strip` take a predicate.
+- **Loan collateral** (Oct 29): cards at any level (pool cards allowed, `ownCards` pickers, `mkCover(l,pre,true)`) + shards `collSh` {r:n} (`bkShHtml`, `S.bkSh`); `bkGive(cids,mode,sh)` → seized = "xfer", returned = "back".
+- **Receiving rule** (`v2Recv`, trades + seized collateral): new card → LV 1 + floor(invested/2) shards (`v2Inv`); duplicate → max(1, floor((1+invested)/2)) shards; "back" restores your own card.
 - **Update log** (tab `news`, `viewNews`, side menu above Standings): every `NEWS` entry, newest first, searchable.
 - **Card Guidebook** (tab `guide`, `viewGuide`): every card, census of owners, "Ability:" (red) + per-level text.
 - **Upgrade shards** tiered `V2_SH=[1,3,4,7,11,18,29,40,52,65,80,100]` (LV L→L+1 = V2_SH[L-1]); one-time reset `uprRun` (prefs.upr): upgraded pool cards → LV 1,
