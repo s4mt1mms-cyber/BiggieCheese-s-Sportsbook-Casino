@@ -37,9 +37,15 @@ body.wwon{overflow:hidden}
 .wwx.ads{opacity:.0}
 .wwdot{position:absolute;left:50%;top:50%;width:4px;height:4px;margin:-2px 0 0 -2px;border-radius:50%;background:#ff3b30;opacity:0;transition:opacity .15s}
 .wwdot.on{opacity:1}
-.wwscope{position:absolute;inset:0;display:none;pointer-events:none;background:radial-gradient(circle at 50% 50%,transparent 0,transparent min(38vh,38vw),#000 calc(min(38vh,38vw) + 2px))}
-.wwscope.on{display:block}.wwscope i{position:absolute;background:#000}.wwscope i:nth-child(1){left:50%;top:12%;bottom:12%;width:2px;margin-left:-1px}.wwscope i:nth-child(2){top:50%;left:12%;right:12%;height:2px;margin-top:-1px}
-.wwscope b{position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:#ff3b30}
+.wwscope{position:absolute;inset:0;pointer-events:none;opacity:0;--R:min(40vh,40vw);background:radial-gradient(circle at 50% 50%,transparent 0,transparent calc(var(--R) - 1px),#0b0806 calc(var(--R) + 1px))}
+.wwscope .ln{position:absolute;left:50%;top:50%;width:calc(var(--R) * 2);height:calc(var(--R) * 2);transform:translate(-50%,-50%);border-radius:50%;box-shadow:inset 0 0 0 6px #050403,inset 0 0 calc(var(--R) * .35) rgba(0,0,0,.75),inset 0 0 calc(var(--R) * .08) rgba(0,0,0,.9);background:radial-gradient(circle at 38% 34%,rgba(170,210,255,.10),transparent 45%),radial-gradient(circle,rgba(40,70,60,.06),rgba(20,30,20,.12))}
+.wwscope i{position:absolute;left:50%;top:50%;background:#050403}
+.wwscope i.v{width:2px;height:calc(var(--R) * 2);transform:translate(-50%,-50%)}.wwscope i.h{height:2px;width:calc(var(--R) * 2);transform:translate(-50%,-50%)}
+.wwscope i.pt{width:8px;height:calc(var(--R) * .55)}.wwscope i.pl{height:8px;width:calc(var(--R) * .55)}
+.wwscope i.pt.b{transform:translate(-50%,calc(var(--R) * .45))}.wwscope i.pt.t{transform:translate(-50%,calc(var(--R) * -1))}
+.wwscope i.pl.r{transform:translate(calc(var(--R) * .45),-50%)}.wwscope i.pl.l{transform:translate(calc(var(--R) * -1),-50%)}
+.wwscope u{position:absolute;left:50%;top:50%;width:4px;height:4px;border-radius:50%;background:#050403;margin:-2px 0 0 -2px}
+.wwscope b{position:absolute;left:50%;top:50%;width:5px;height:5px;margin:-2.5px 0 0 -2.5px;border-radius:50%;background:#ff3b30;box-shadow:0 0 6px #ff3b30}
 .wwx.nox{opacity:0}.wwbtn.lit{background:rgba(200,150,62,.75)!important}
 .wwhit{position:absolute;left:50%;top:50%;width:26px;height:26px;margin:-13px 0 0 -13px;opacity:0}
 .wwhit.on{animation:wwhit .25s ease-out}
@@ -469,7 +475,7 @@ body.wwon{overflow:hidden}
     let el = G.hud.querySelector("#wwPause");
     if (!el) {
       G.hud.insertAdjacentHTML("beforeend", `<button id="wwPause" aria-label="Pause">❚❚</button>
-        <div class="wwx" id="wwX"><i></i><i></i><i></i><i></i></div><div class="wwdot" id="wwDot"></div><div class="wwscope" id="wwScope"><i></i><i></i><b></b></div><div class="wwhit" id="wwHit"><i style="transform:rotate(45deg)"></i><i style="transform:rotate(135deg)"></i><i style="transform:rotate(225deg)"></i><i style="transform:rotate(315deg)"></i></div>
+        <div class="wwx" id="wwX"><i></i><i></i><i></i><i></i></div><div class="wwdot" id="wwDot"></div><div class="wwscope" id="wwScope"><div class="ln"></div><i class="v"></i><i class="h"></i><i class="pt t"></i><i class="pt b"></i><i class="pl l"></i><i class="pl r"></i><u style="transform:translate(22px,0px)"></u><u style="transform:translate(-22px,0px)"></u><u style="transform:translate(0px,22px)"></u><u style="transform:translate(0px,-22px)"></u><u style="transform:translate(44px,0px)"></u><u style="transform:translate(-44px,0px)"></u><u style="transform:translate(0px,44px)"></u><u style="transform:translate(0px,-44px)"></u><u style="transform:translate(66px,0px)"></u><u style="transform:translate(-66px,0px)"></u><u style="transform:translate(0px,66px)"></u><u style="transform:translate(0px,-66px)"></u><u style="transform:translate(88px,0px)"></u><u style="transform:translate(-88px,0px)"></u><u style="transform:translate(0px,88px)"></u><u style="transform:translate(0px,-88px)"></u><b></b></div><div class="wwhit" id="wwHit"><i style="transform:rotate(45deg)"></i><i style="transform:rotate(135deg)"></i><i style="transform:rotate(225deg)"></i><i style="transform:rotate(315deg)"></i></div>
         <div class="wwtop"><span class="wwchip" id="wwChal" style="display:none"></span></div>
         <div class="wwfeed" id="wwFeed"></div>
         <div class="wwtr"><span class="wwchip wwlive" id="wwLive"><i></i><b>1</b> live</span><span class="wwchip wwbb" id="wwBB"><b>+0</b> BB</span></div>
@@ -1652,9 +1658,12 @@ body.wwon{overflow:hidden}
       if (G.reloading) { G.reloading -= dt; if (G.reloading <= 0) { G.reloading = 0; G.ammo = MAGS[G.wpn]; drawAmmo(); } }
     }
     /* aim down sights */
-    const aiming = play && (G.aimHeld || G.aimToggle) && !G.reloading && !(G.car && G.car.mine), SN = G.wpn === "sn"; G.adsK += ((aiming ? 1 : 0) - G.adsK) * Math.min(1, dt * (SN ? 20 : 12));
-    const fov = SN ? G.set.fov + (G.set.fov / 5 - G.set.fov) * (G.adsK > .35 ? 1 : 0) : G.set.fov + (G.set.fov * .58 - G.set.fov) * G.adsK;
-    { const sc = G.hud.querySelector("#wwScope"); if (sc) sc.classList.toggle("on", SN && G.adsK > .35); const xx = G.hud.querySelector("#wwX"); if (xx) xx.classList.toggle("nox", SN); } if (Math.abs(fov - G.fovNow) > .01) { G.fovNow = fov; cam.fov = fov; cam.updateProjectionMatrix(); }
+    const aiming = play && (G.aimHeld || G.aimToggle) && !G.reloading && !(G.car && G.car.mine), SN = G.wpn === "sn"; G.adsK += ((aiming ? 1 : 0) - G.adsK) * Math.min(1, dt * (SN ? 14 : 12));
+    /* sniper zoom: the rifle comes up to your eye, then the scope blooms in while the view pushes in to 5× (accuracy is already perfect the instant you aim) */
+    const zk = SN ? Math.max(0, Math.min(1, (G.adsK - .3) / .6)) : 0, ze = zk * zk * (3 - 2 * zk);
+    const fov = SN ? G.set.fov / (1 + 4 * ze) : G.set.fov + (G.set.fov * .58 - G.set.fov) * G.adsK;
+    { const sc = G.hud.querySelector("#wwScope"); if (sc) { const o = SN ? Math.max(0, Math.min(1, (G.adsK - .35) / .3)) : 0; if (sc._o !== o) { sc._o = o; sc.style.opacity = o; sc.style.transform = `scale(${(1.25 - .25 * o).toFixed(3)})`; } }
+      const xx = G.hud.querySelector("#wwX"); if (xx) xx.classList.toggle("nox", SN); } if (Math.abs(fov - G.fovNow) > .01) { G.fovNow = fov; cam.fov = fov; cam.updateProjectionMatrix(); }
     const x = G.hud.querySelector("#wwX"); if (x) x.classList.toggle("ads", G.adsK > .5); const dot = G.hud.querySelector("#wwDot"); if (dot) dot.classList.toggle("on", G.adsK > .6 && !SN);
     if (G.aimBtn) G.aimBtn.classList.toggle("on", !!G.aimToggle);
     /* camera */
@@ -1692,7 +1701,7 @@ body.wwon{overflow:hidden}
     if (G.mode === "pvp" && G.net) { if (now - (G.net.sentAt || 0) > 50) { G.net.sentAt = now; nsend({ t: "in", x: +G.p.x.toFixed(3), y: +G.p.y.toFixed(3), z: +G.p.z.toFixed(3), yaw: +G.yaw.toFixed(4), pitch: +G.pitch.toFixed(4), cr: G.crK > .5 ? 1 : 0 }); } }
     if (G.net) remotesTick(dt); cashTick(); carTick(dt); glassTick(); useTick();
     if (G.mode === "pvp" && G.car && G.car.mine) G.net.sentAt = now; /* the car message carries my position */
-    const emo = ownEmoteTick(dt), drv = carCam(), tp = !emo && !drv && tpCam(); G.tpOn = tp; G.vm.visible = !emo && !drv && !tp && !(G.wpn === "sn" && G.adsK > .35);
+    const emo = ownEmoteTick(dt), drv = carCam(), tp = !emo && !drv && tpCam(); G.tpOn = tp; G.vm.visible = !emo && !drv && !tp && !(G.wpn === "sn" && G.adsK > .6);
     selfBody(dt, emo, drv, tp);
     if (G.shake > 0) { G.shake = Math.max(0, G.shake - dt * 1.6); const k = G.shake * .12; cam.position.x += (Math.random() - .5) * k; cam.position.y += (Math.random() - .5) * k; cam.position.z += (Math.random() - .5) * k; }
     G.R.autoClear = false; G.R.clear(); G.R.render(G.scene, cam); G.R.clearDepth(); if (G.vc.aspect !== cam.aspect) { G.vc.aspect = cam.aspect; G.vc.updateProjectionMatrix(); } G.R.render(G.vs, G.vc);
