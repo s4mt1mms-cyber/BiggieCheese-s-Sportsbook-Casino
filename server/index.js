@@ -37,7 +37,7 @@ const EYE = 1.62;
 const BANK = { x0: -38.5, x1: -30.5, z0: -9.8, z1: -6.0 };
 /* doors / glass / bell / the car (owner Oct 28) */
 const doors = new Array(32).fill(false), glass = new Map(); let bellAt = 0;
-const GLASS_BACK = 90000, CAR_HP = 300, CAR_BOOM_R = 6, CAR_RESPAWN = 60000, CAR_SPAWN = [-30, -3, -Math.PI / 2], CAR_MAX = 22;
+const GLASS_BACK = 90000, CAR_HP = 1000, CAR_BOOM_R = 6, CAR_RESPAWN = 60000, CAR_SPAWN = [-30, -3, -Math.PI / 2], CAR_MAX = 22;
 const car = { x: CAR_SPAWN[0], z: CAR_SPAWN[1], yaw: CAR_SPAWN[2], v: 0, hp: CAR_HP, alive: true, driver: null, deadAt: 0, lastHit: null, lastIn: 0 };
 const carArr = () => [+car.x.toFixed(2), +car.z.toFixed(2), +car.yaw.toFixed(3), +car.v.toFixed(2), Math.max(0, Math.round(car.hp)), car.driver ? car.driver.n : 0, car.alive ? 1 : 0];
 /* ray vs the car's box in car space (x ±1, y 0.2..2.6, z ±2.2) */

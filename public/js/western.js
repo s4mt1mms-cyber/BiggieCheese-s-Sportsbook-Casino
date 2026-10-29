@@ -449,6 +449,8 @@ body.wwon{overflow:hidden}
   }
   function look(dx, dy, k) {
     const s = G.set, ads = G.adsK > 0.5 ? s.ads : 1, m = k * s.sens * ads * (G.fovNow / 75);
+    /* driving: look around the car (free look; eases back behind the car after a couple of seconds) */
+    if (G.car && G.car.mine) { G.dYaw = (G.dYaw || 0) - dx * m; G.dPitch = Math.max(-.5, Math.min(.9, (G.dPitch || 0) - dy * m * (s.invert ? -1 : 1))); G.dLookAt = performance.now(); return; }
     G.yaw -= dx * m; G.pitch -= dy * m * (s.invert ? -1 : 1); G.pitch = Math.max(-1.45, Math.min(1.45, G.pitch));
   }
   function placeButtons() {
@@ -1067,7 +1069,7 @@ body.wwon{overflow:hidden}
       <div><b>Damage.</b> Body shot 34 (3 to kill). Past 40 m a body shot does 25. <b>Headshot 100: one shot kills.</b></div>
       <div><b>Same hitbox.</b> Every character is hit the same, whatever skin they wear.</div>
       <div><b>Kills.</b> You take the victim's stack: all of it if they had no kills yet, half if they had one or more. Their run ends.</div>
-      <div><b>The car.</b> 300 HP. Run someone over to kill them. Shoot it to wreck it: everyone inside or within 6 m dies, and whoever wrecked it gets the kills. It comes back after 1 minute.</div>
+      <div><b>The car.</b> 1,000 HP. Run someone over to kill them. Shoot it to wreck it: everyone inside or within 6 m dies, and whoever wrecked it gets the kills. It comes back after 1 minute.</div>
       <div><b>Safety.</b> 3 seconds of spawn protection (ends when you shoot). Cash out by holding still at the bank for 5 seconds. Quitting within 10 seconds of being hit counts as dying.</div>
       </div><div class="wwrow"><button class="pri" data-ww="join">Back to buy-in</button></div></div></div>`;
   }
@@ -1298,7 +1300,7 @@ body.wwon{overflow:hidden}
      Glass, bell, doors, the car (owner Oct 28). In PvP the server keeps doors/glass/bell/car in sync and decides
      every car kill (run-overs, explosions) and the car's health; in free roam it all runs on this page.
      ===================================================================================================== */
-  const GLASS_BACK = 90000, CAR_HP = 300, CAR_BOOM_R = 6, CAR_RESPAWN = 60000, CAR_SPAWN = [-30, -3, -Math.PI / 2];
+  const GLASS_BACK = 90000, CAR_HP = 1000, CAR_BOOM_R = 6, CAR_RESPAWN = 60000, CAR_SPAWN = [-30, -3, -Math.PI / 2];
   function breakGlass(i, dir, mine) {
     const w = G.wins[i]; if (!w || w.broken) return; w.broken = Date.now(); const T = THREE;
     G.winMesh.setMatrixAt(i, new T.Matrix4().makeScale(0, 0, 0)); G.winMesh.instanceMatrix.needsUpdate = true;
@@ -1395,8 +1397,12 @@ body.wwon{overflow:hidden}
     if (G.mode !== "pvp" && !c.alive && Date.now() - c.deadAt > CAR_RESPAWN) carRespawn();
   }
   /* chase camera while you drive */
-  function carCam() { const c = G.car; if (!c || !c.mine) return false; const bx = c.x + Math.sin(c.yaw) * 7.2, bz = c.z + Math.cos(c.yaw) * 7.2;
-    G.cam.position.set(bx, 3.6, bz); G.cam.lookAt(c.x - Math.sin(c.yaw) * 3, 1.3, c.z - Math.cos(c.yaw) * 3); return true; }
+  function carCam() { const c = G.car; if (!c || !c.mine) { G.dYaw = 0; G.dPitch = 0; return false; }
+    const dt = Math.min(.05, (performance.now() - (G.dCamT || performance.now())) / 1000); G.dCamT = performance.now();
+    if (performance.now() - (G.dLookAt || 0) > 2500) { const k = Math.exp(-dt * 2.2); G.dYaw = (G.dYaw || 0) * k; G.dPitch = (G.dPitch || 0) * k; }
+    const yw = c.yaw + (G.dYaw || 0), pt = G.dPitch || 0, dist = 7.2;
+    G.cam.position.set(c.x + Math.sin(yw) * dist * Math.cos(pt), Math.max(1.2, 3.4 + Math.sin(pt) * 6), c.z + Math.cos(yw) * dist * Math.cos(pt));
+    G.cam.lookAt(c.x - Math.sin(yw) * 3, 1.3, c.z - Math.cos(yw) * 3); return true; }
 
   /* ---- USE (F / the USE button): doors, the car, the bell rope — whatever is closest ---- */
   function useTarget() {
