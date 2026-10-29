@@ -124,7 +124,7 @@ function kill(v, k, head, how) {
   const take = v.kills > 0 ? Math.floor(v.stack / 2) : Math.floor(v.stack);
   v.stack -= take; const cut = Math.floor(take * HOUSE_CUT);
   if (k && k !== v) { k.stack += take - cut; k.kills++; send(k.ws, { t: "stack", stack: k.stack }); }
-  broadcast(room, { t: "kill", k: k ? k.name : (how === "boom" ? "The car" : "The desert"), v: v.name, kn: k ? k.n : 0, vn: v.n, hs: !!head, amt: take, how: how || "shot" });
+  broadcast(room, { t: "kill", k: k ? k.name : (how === "boom" ? "The car" : how === "quit" ? "" : "The desert"), v: v.name, kn: k ? k.n : 0, vn: v.n, hs: !!head, amt: take, how: how || "shot" });
   send(v.ws, { t: "dead", by: k ? k.name : null, took: take, keep: v.stack });
   setTimeout(() => endRun(v, "dead"), 1200);
 }
@@ -199,7 +199,7 @@ async function handle(c, m) {
       if (!room.players.has(P.pid)) { room.players.set(P.pid, P); broadcast(room, { t: "add", ...info(P) }, P); }
       if (!P.alive) { const sp = pickSpawn(room, P); Object.assign(P, { x: sp[0], y: 0, z: sp[1], yaw: sp[2], alive: true, hp: HP, prot: now() + PROT_MS, ammo: MAG, hist: [[now(), sp[0], 0, sp[1]]] }); }
       return send(c.ws, { t: "welcome", n: P.n, tier: P.tier, stack: P.stack, kills: P.kills, hp: P.hp, spawn: [P.x, P.y, P.z, P.yaw], prot: Math.max(0, P.prot - now()),
-        players: [...room.players.values()].filter(q => q !== P).map(info), bank: BANK, doors, glass: [...glass.keys()], car: carArr(), rules: { cut: HOUSE_CUT, body: BODY, head: HEAD, prot: PROT_MS, cash: CASH_MS } });
+        players: [...room.players.values()].filter(q => q !== P).map(info), bank: BANK, doors, glass: [...glass].map(([i, g]) => [i, g.s, g.u, g.v]), car: carArr(), rules: { cut: HOUSE_CUT, body: BODY, head: HEAD, prot: PROT_MS, cash: CASH_MS } });
     }
     /* {t:"emo", id}: play an emote you own (from the shop); everyone in the match sees it. 8 s cooldown */
     case "emo": {
@@ -209,7 +209,8 @@ async function handle(c, m) {
     /* doors: {t:"door", i, open} — everyone sees it */
     case "door": { if (!p) return; const i = m.i | 0; if (i < 0 || i >= doors.length) return; doors[i] = !!m.open; broadcast(ROOM, { t: "door", i, open: doors[i] }, p); return; }
     /* a window shot out: {t:"glass", i}; it comes back after 90 s */
-    case "glass": { if (!p) return; const i = m.i | 0; if (i < 0 || i > 999 || glass.has(i)) return; glass.set(i, now()); broadcast(ROOM, { t: "glass", i }, p); return; }
+    case "glass": { if (!p) return; const i = m.i | 0, st = m.s === 1 ? 1 : 2; if (i < 0 || i > 999) return; const g = glass.get(i); if (g && g.s >= st) return;
+      const e = { s: st, u: +m.u || .5, v: +m.v || .5, at: g ? g.at : now() }; glass.set(i, e); broadcast(ROOM, { t: "glass", i, s: st, u: e.u, v: e.v }, p); return; }
     /* the church bell: loud for everyone, 3 s cooldown */
     case "bell": { if (!p || now() - bellAt < 3000) return; bellAt = now(); broadcast(ROOM, { t: "bell" }); return; }
     /* get in / out of the car: {t:"car", on} */
@@ -237,7 +238,7 @@ async function handle(c, m) {
       if (!p || !p.alive || p.inCar) return; const t = now(), dt = Math.max(0.03, Math.min(1, (t - (p.lastIn || t - 50)) / 1000)); p.lastIn = t;
       const x = +m.x, y = +m.y, z = +m.z; if (![x, y, z].every(Number.isFinite)) return;
       const B = MAP.bounds, dh = Math.hypot(x - p.x, z - p.z), dv = Math.abs(y - p.y);
-      if (dh > 8.5 * dt + 0.6 || dv > 9 * dt + 0.8 || x < B.x0 - 1 || x > B.x1 + 1 || z < B.z0 - 1 || z > B.z1 + 1 || y < -0.5 || y > 12) { send(c.ws, { t: "pos", x: p.x, y: p.y, z: p.z }); return; }
+      if (dh > 10.5 * dt + 0.6 || dv > 10 * dt + 0.9 || x < B.x0 - 1 || x > B.x1 + 1 || z < B.z0 - 1 || z > B.z1 + 1 || y < -0.5 || y > 12) { send(c.ws, { t: "pos", x: p.x, y: p.y, z: p.z }); return; }
       p.x = x; p.y = y; p.z = z; p.yaw = +m.yaw || 0; p.pitch = Math.max(-1.6, Math.min(1.6, +m.pitch || 0)); p.moving = dh / dt;
       p.hist.push([t, x, y, z]); while (p.hist.length && t - p.hist[0][0] > 1000) p.hist.shift();
       if (p.cash0 && !inBank(p)) { p.cash0 = 0; send(c.ws, { t: "cash", on: false }); }
@@ -267,7 +268,7 @@ async function handle(c, m) {
       return;
     }
     /* {t:"cash", on}: hold still-ish at the bank for CASH_MS (taking a hit cancels it) */
-    case "cash": {
+    case "cash": { return; /* owner Oct 28: no cashing out, the run ends when you die */
       if (!p || !p.alive) return; if (!m.on) { p.cash0 = 0; return send(c.ws, { t: "cash", on: false }); }
       if (!inBank(p) || p.inCar) return send(c.ws, { t: "cash", on: false, why: "bank" });
       p.cash0 = now(); return send(c.ws, { t: "cash", on: true, ms: CASH_MS });
@@ -277,23 +278,23 @@ async function handle(c, m) {
 
 function onClose(c) {
   const p = c.player; if (!p || p.ended || p.conn !== c) return;
-  if (now() - p.lastHitAt < COMBAT_MS && p.lastHitBy && p.alive) { kill(p, p.lastHitBy.ended ? null : p.lastHitBy, false); return; }  /* quitting mid-fight = dying */
+  if (now() - p.lastHitAt < COMBAT_MS && p.lastHitBy && p.alive) { kill(p, p.lastHitBy.ended ? null : p.lastHitBy, false, "quit"); return; }  /* quitting mid-fight = dying */
   p.dc = now();   /* the body stays (and can be shot) for DC_MS, then the run cashes out */
 }
 
 /* ---- the tick: snapshots, cash-outs, dropped players, reloads, healing ---- */
 setInterval(() => {
   const t = now();
-  for (const [i, at] of glass) if (t - at > GLASS_BACK) { glass.delete(i); broadcast(ROOM, { t: "glassfix", i }); }
+  for (const [i, g] of glass) if (t - g.at > GLASS_BACK) { glass.delete(i); broadcast(ROOM, { t: "glassfix", i }); }
   if (!car.alive && t - car.deadAt > CAR_RESPAWN) Object.assign(car, { x: CAR_SPAWN[0], z: CAR_SPAWN[1], yaw: CAR_SPAWN[2], v: 0, hp: CAR_HP, alive: true, driver: null, lastHit: null });
   if (car.driver && (car.driver.ended || !car.driver.alive || (car.driver.dc && t - car.driver.dc > 1000))) carOut(car.driver);
   for (const room of rooms.values()) {
     if (!room.players.size) continue;
     for (const p of [...room.players.values()]) {
       if (p.ended) continue;
-      if (p.dc && t - p.dc > DC_MS && p.alive) { endRun(p, "left"); continue; }
+      if (p.dc && t - p.dc > DC_MS && p.alive) { const k = p.lastHitBy && !p.lastHitBy.ended && p.lastHitBy.alive && t - p.lastHitAt < 60000 ? p.lastHitBy : null; kill(p, k, false, "quit"); continue; }
       if (p.reloadUntil && t >= p.reloadUntil) { p.reloadUntil = 0; p.ammo = MAG; }
-      if (p.cash0 && t - p.cash0 >= CASH_MS && p.alive) { p.alive = false; endRun(p, "cash"); continue; }
+
       /* slow heal after 6 s without being hit */
       if (p.alive && p.hp < HP && t - p.lastHitAt > 6000) p.hp = Math.min(HP, p.hp + 0.4);
     }

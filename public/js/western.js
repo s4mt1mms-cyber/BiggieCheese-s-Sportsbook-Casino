@@ -13,7 +13,7 @@
   /* ---------------- settings ---------------- */
   /* control mapping: computer actions → key codes or "Mouse0/1/2…"; phone: drag the buttons anywhere (pos = fractions of the screen), size, left-handed, AIM tap or hold */
   const ACTS = [["fwd", "Move forward", "KeyW"], ["back", "Move back", "KeyS"], ["left", "Move left", "KeyA"], ["right", "Move right", "KeyD"], ["fire", "Fire", "Mouse0"], ["aim", "Aim down sights", "Mouse2"],
-    ["reload", "Reload", "KeyR"], ["jump", "Jump", "Space"], ["run", "Run", "ShiftLeft"], ["use", "Use · doors · car · bell", "KeyF"], ["cash", "Cash out (hold, at the bank)", "KeyE"], ["emote", "Emotes", "KeyB"], ["pause", "Pause", "KeyP"]];
+    ["reload", "Reload", "KeyR"], ["jump", "Jump", "Space"], ["run", "Run", "ShiftLeft"], ["use", "Use · doors · car · bell", "KeyF"], ["emote", "Emotes", "KeyB"], ["pause", "Pause", "KeyP"]];
   const KEYS0 = Object.fromEntries(ACTS.map(a => [a[0], a[2]]));
   const SET0 = { sens: 1, ads: 0.6, invert: false, fov: 75, sound: 1, keys: KEYS0, btn: 1, lefty: false, aimHold: false, pos: {} };
   const SET = () => { const s = Object.assign({}, SET0, LS("ww-set", {})); s.keys = Object.assign({}, KEYS0, s.keys || {}); s.pos = s.pos || {}; return s; };
@@ -281,7 +281,7 @@ body.wwon{overflow:hidden}
     G.state = "pause"; G.fireHeld = false; G.aimHeld = false; G.keys = {}; G.act = {}; G.touches = {}; hideSticks();
     try { if (document.pointerLockElement) document.exitPointerLock(); } catch (_) {}
     const pvp = G.mode === "pvp";
-    G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwpz"><h2>Paused</h2>${pvp ? `<p style="margin:0;color:#ffd0a0">You're still in the match. Others can see and shoot you.</p>` : ""}<div class="wwgrid">
+    G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwpz"><h2>Paused</h2>${pvp ? `<p style="margin:0;color:#ffd0a0">You're still in the match. Others can see and shoot you. Leaving counts as dying.</p>` : ""}<div class="wwgrid">
       <button class="pri" data-ww="resume">Resume</button><button data-ww="settings">Settings</button>
       ${pvp ? `<button data-ww="stats">Stats</button><button class="dang" data-ww="leave">Leave match</button>` : `<button data-ww="stats">Stats</button><button data-ww="respawn">Respawn</button>
       <button data-ww="menu">Main menu</button><button class="dang" data-ww="exit">Exit to casino</button>`}</div>${keysHtml()}</div></div>`;
@@ -320,7 +320,7 @@ body.wwon{overflow:hidden}
     const sz = G.ui.querySelector("#wwLaySz"), lab = () => { const n = { fire: "FIRE", aim: "AIM", reload: "Reload", jump: "JUMP", emote: "EMOTE", use: "USE", cash: "Cash out" }[G.laySel] || G.laySel;
       G.ui.querySelector("#wwLayV").textContent = `${n} ${Math.round(((G.set.bsz || {})[G.laySel] || 1) * 100)}%`; G.hud.querySelectorAll(".wwbtn").forEach(b => b.classList.toggle("sel", b.dataset.b === G.laySel)); };
     sz.addEventListener("input", () => { G.set.bsz = G.set.bsz || {}; G.set.bsz[G.laySel] = +sz.value; LSset("ww-set", G.set); placeButtons(); lab(); }); G.layLab = () => { sz.value = (G.set.bsz || {})[G.laySel] || 1; lab(); }; lab();
-    G.hud.querySelectorAll("#wwUse,#wwCash").forEach(b => { b.dataset.show = b.style.display; b.style.display = ""; if (!b.textContent) b.textContent = b.id === "wwUse" ? "USE" : "CASH OUT"; });
+    G.hud.querySelectorAll("#wwUse").forEach(b => { b.style.display = ""; if (!b.textContent) b.textContent = "USE"; });
     G.hud.classList.add("edit"); placeButtons();
   }
   function bindTo(code) {
@@ -415,7 +415,7 @@ body.wwon{overflow:hidden}
         const b = btn && btn.closest && btn.closest(".wwbtn");
         if (b) { const a = b.dataset.b; G.touches[t.identifier] = { kind: a, x: p.x, y: p.y, b };
           b.classList.add("on");
-          if (a === "fire") { G.fireHeld = true; fire(); } else if (a === "aim") { if (G.set.aimHold) G.aimHeld = true; else G.aimToggle = !G.aimToggle; } else if (a === "reload") reload(); else if (a === "jump") G.jumpQ = true; else if (a === "cash") cashPress(true); else if (a === "emote") emoteMenu(); else if (a === "use") doUse();
+          if (a === "fire") { G.fireHeld = true; fire(); } else if (a === "aim") { if (G.set.aimHold) G.aimHeld = true; else G.aimToggle = !G.aimToggle; } else if (a === "reload") reload(); else if (a === "jump") { G.jumpQ = true; G.act.jump = true; } else if (a === "cash") cashPress(true); else if (a === "emote") emoteMenu(); else if (a === "use") doUse();
           continue; }
         if (G.set.lefty ? p.x > G.gw * 0.58 : p.x < G.gw * 0.42) { if (Object.values(G.touches).some(q => q.kind === "stick")) continue; G.touches[t.identifier] = { kind: "stick", x0: p.x, y0: p.y, x: p.x, y: p.y }; showStick(p.x, p.y); }
         else G.touches[t.identifier] = { kind: "look", x: p.x, y: p.y };
@@ -434,7 +434,7 @@ body.wwon{overflow:hidden}
     };
     H_.te = e => {
       if (!G) return;
-      for (const t of e.changedTouches) { const q = G.touches[t.identifier]; if (!q) continue; if (q.b) q.b.classList.remove("on"); if (q.kind === "fire") G.fireHeld = false; if (q.kind === "aim" && G.set.aimHold) G.aimHeld = false; if (q.kind === "cash") cashPress(false); if (q.kind === "stick") hideSticks(); delete G.touches[t.identifier]; }
+      for (const t of e.changedTouches) { const q = G.touches[t.identifier]; if (!q) continue; if (q.b) q.b.classList.remove("on"); if (q.kind === "fire") G.fireHeld = false; if (q.kind === "aim" && G.set.aimHold) G.aimHeld = false; if (q.kind === "cash") cashPress(false); if (q.kind === "jump") G.act.jump = false; if (q.kind === "stick") hideSticks(); delete G.touches[t.identifier]; }
       if (G.aimBtn) G.aimBtn.classList.toggle("on", !!G.aimToggle);
     };
     G.ov.addEventListener("touchstart", H_.ts, { passive: false }); G.ov.addEventListener("touchmove", H_.tm, { passive: false });
@@ -513,6 +513,8 @@ body.wwon{overflow:hidden}
     wood() { if (!G.ac) return; const t = G.ac.currentTime; nz(t, .12, 420, 2, .5); tone(t, 220, 120, .08, .2, "triangle"); },
     dirt() { if (!G.ac) return; const t = G.ac.currentTime; nz(t, .2, 300, .7, .25, "lowpass"); },
     metal() { if (!G.ac) return; const t = G.ac.currentTime; [1, 2.76, 5.4].forEach((m, i) => tone(t, 820 * m, 0, .6 / (i + 1), .18 / (i + 1))); },
+    crack() { if (!G.ac) return; const t = G.ac.currentTime; nz(t, .12, 4200, 1.2, .35, "highpass"); tone(t, 2600, 1900, .08, .1, "triangle"); },
+    screech() { if (!G.ac) return; const t = G.ac.currentTime; nz(t, .3, 1900, 9, .16); },
     glass() { if (!G.ac) return; const t = G.ac.currentTime; nz(t, .35, 5200, .8, .5, "highpass"); for (let i = 0; i < 6; i++) tone(t + Math.random() * .18, 3000 + Math.random() * 3500, 0, .18, .08); },
     bell() { if (!G.ac) return; const t = G.ac.currentTime; [[1, .5], [2.0, .25], [2.4, .2], [3.0, .14], [4.2, .08], [5.4, .05]].forEach(([m, v]) => tone(t, 310 * m, 0, 4.5 / m * 1.4, v)); },
     step(wood) { if (!G.ac) return; const t = G.ac.currentTime; if (wood) { tone(t, 160, 90, .06, .12, "triangle"); nz(t, .05, 800, 1, .06); } else nz(t, .09, 350 + Math.random() * 120, 1.2, .07); },
@@ -946,7 +948,7 @@ body.wwon{overflow:hidden}
     const A = G.act; if (A.fwd || k.ArrowUp) fz += 1; if (A.back || k.ArrowDown) fz -= 1; if (A.left || k.ArrowLeft) fx -= 1; if (A.right || k.ArrowRight) fx += 1; if (A.run) run = true;
     const st = Object.values(G.touches).find(q => q.kind === "stick"); if (st && st.mx != null) { fx += st.mx; fz -= st.my; if (Math.hypot(st.mx, st.my) > .92) run = true; }
     const ads = G.adsK > .5, len = Math.hypot(fx, fz); if (len > 1) { fx /= len; fz /= len; }
-    const sp = ads ? 2.6 : run ? 7.6 : 4.6, sy = Math.sin(G.yaw), cy = Math.cos(G.yaw);
+    const sp = ads ? 3.2 : run ? 9 : 5.6, sy = Math.sin(G.yaw), cy = Math.cos(G.yaw);
     const vx = (-sy * fz + cy * fx) * sp, vz = (-cy * fz - sy * fx) * sp;
     p.vx = (p.vx || 0) + (vx - (p.vx || 0)) * Math.min(1, dt * 12); p.vz = (p.vz || 0) + (vz - (p.vz || 0)) * Math.min(1, dt * 12);
     p.x += p.vx * dt; p.z += p.vz * dt; collide(p, .32);
@@ -957,7 +959,7 @@ body.wwon{overflow:hidden}
     }
     G.onLad = !!lad && G.onLad;
     const g = groundAt(p.x, p.z, p.y, .32);
-    if (G.jumpQ && p.ground) { p.vy = 5.2; p.ground = false; } G.jumpQ = false;
+    if (G.jumpQ && p.ground) { p.vy = 6.37; p.ground = false; } /* 1.5× the old jump height */ G.jumpQ = false;
     p.vy -= 16 * dt; p.y += p.vy * dt; if (p.y <= g) { if (!p.ground && p.vy < -4) SFX.step(g > .1); p.y = g; p.vy = 0; p.ground = true; } else if (p.y > g + .05) p.ground = false;
     if (p.ground && g - p.y > -.5 && g > p.y) p.y = g;
     const moving = Math.hypot(p.vx, p.vz); if (p.ground && moving > .5) { const prev = G.bob; G.bob += dt * moving * 1.9; if (Math.floor(prev / Math.PI) !== Math.floor(G.bob / Math.PI)) SFX.step(g > .1); }
@@ -993,7 +995,7 @@ body.wwon{overflow:hidden}
     else if (best.kind === "weed") { best.w.vy = 4; best.w.vx *= -1.2; puff(hp, .6); hitMark(); }
     else if (best.kind === "wall") { puff(hp, .35); hole(hp, best.n); (SFX[best.c.mat] || SFX.wood)(); }
     else if (best.kind === "ground") { puff(hp, .5); SFX.dirt(); }
-    else if (best.kind === "glass") { breakGlass(best.w.i, dir, true); }
+    else if (best.kind === "glass") { hitGlass(best.w.i, hp, dir); }
     else if (best.kind === "car") { SFX.metal(); puff(hp, .3); if (G.mode !== "pvp") carDamage(34); }
     if (best.kind === "bell" && G.mode === "pvp") nsend({ t: "bell" });
   }
@@ -1020,7 +1022,8 @@ body.wwon{overflow:hidden}
     setTimeout(() => drop(d), 6500);
   }
   /* PvP will call this for every kill: killer/victim names, headshot flag, BB moved */
-  function killFeed(killer, victim, hs, bb, mine, how) { feed(`<b>${esc(killer)}</b> <span style="opacity:.7">${how === "car" ? "ran over" : how === "boom" ? "blew up" : "shot"}</span> ${esc(victim)}${hs ? ` <span class="hs">· headshot</span>` : ""}${bb ? ` · ${Math.round(bb).toLocaleString()} BB` : ""}`, mine); }
+  function killFeed(killer, victim, hs, bb, mine, how) { if (how === "quit" && !killer) return feed(`<b>${esc(victim)}</b> <span style="opacity:.7">left town</span>${bb ? ` · ${Math.round(bb).toLocaleString()} BB gone` : ""}`, mine);
+    feed(`<b>${esc(killer)}</b> <span style="opacity:.7">${how === "car" ? "ran over" : how === "boom" ? "blew up" : how === "quit" ? "got the kill on" : "shot"}</span> ${esc(victim)}${hs ? ` <span class="hs">· headshot</span>` : ""}${bb ? ` · ${Math.round(bb).toLocaleString()} BB` : ""}`, mine); }
   function setLive(n) { const e = G && G.hud.querySelector("#wwLive b"); if (e) e.textContent = n; }
   function setBB(v) { const e = G && G.hud.querySelector("#wwBB"); if (!e) return; v = Math.round(v || 0); e.className = "wwchip wwbb" + (v > 0 ? " up" : v < 0 ? " dn" : ""); e.innerHTML = `<b>${v > 0 ? "+" : v < 0 ? "−" : "+"}${Math.abs(v).toLocaleString()}</b> BB`; }
   function sesAdd(k, v) { G.ses[k] = (G.ses[k] || 0) + v; G.sesD[k] = (G.sesD[k] || 0) + v; if (k === "bb") setBB(G.ses.bb); }
@@ -1053,7 +1056,7 @@ body.wwon{overflow:hidden}
     if (top < BUY_MIN) { G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwpz"><h2>Join game</h2><p>You need at least ${BUY_MIN} BB to buy in. Your balance: <b>${bal.toLocaleString()} BB</b>.</p><div class="wwrow"><button data-ww="menu">Back</button></div></div></div>`; return; }
     const v = Math.max(BUY_MIN, Math.min(top, G.buyAmt || Math.min(1000, top)));
     G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwsc"><h2>Join game</h2>
-      <p style="margin:0 0 4px">Kill someone and take their stack: all of it if they had no kills yet, half if they had one or more. Cash out by holding still at the <b>bank</b> for 5 seconds. Quitting mid-fight counts as dying.</p>
+      <p style="margin:0 0 4px">Kill someone and take their stack: all of it if they had no kills yet, half if they had one or more. <b>No cashing out:</b> your run only ends when you die, and leaving counts as dying.</p>
       <div class="wwbuy"><div class="wwbuyv"><span>Buy-in</span><b id="wwBuyV">${v.toLocaleString()} BB</b><small>${n} in town</small></div>
         <input type="range" id="wwBuy" min="${BUY_MIN}" max="${top}" step="100" value="${v}">
         <div class="wwbuyq">${[100, 500, 1000, 2500, 5000, 10000].filter(x => x <= top).map(x => `<button data-wwbq="${x}">${x >= 1000 ? x / 1000 + "K" : x}</button>`).join("")}</div></div>
@@ -1070,7 +1073,7 @@ body.wwon{overflow:hidden}
       <div><b>Same hitbox.</b> Every character is hit the same, whatever skin they wear.</div>
       <div><b>Kills.</b> You take the victim's stack: all of it if they had no kills yet, half if they had one or more. Their run ends.</div>
       <div><b>The car.</b> 1,000 HP. Run someone over to kill them. Shoot it to wreck it: everyone inside or within 6 m dies, and whoever wrecked it gets the kills. It comes back after 1 minute.</div>
-      <div><b>Safety.</b> 3 seconds of spawn protection (ends when you shoot). Cash out by holding still at the bank for 5 seconds. Quitting within 10 seconds of being hit counts as dying.</div>
+      <div><b>Ending a run.</b> There's no cashing out: your run ends when you die. You walk out with half your stack if you got a kill, nothing if you didn't. Leaving the match counts as dying (the last person who hit you gets the kill). 3 seconds of spawn protection when you spawn.</div>
       </div><div class="wwrow"><button class="pri" data-ww="join">Back to buy-in</button></div></div></div>`;
   }
   function netMsg(t) { const e = G.ui.querySelector(".wwnetmsg"); if (e) e.textContent = t; }
@@ -1117,12 +1120,13 @@ body.wwon{overflow:hidden}
         for (const R of N.pl.values()) rmRemote(R); N.pl.clear(); (m.players || []).forEach(addRemote);
         G.mode = "pvp"; G.chal && G.chal.on && (G.chal.on = false);
         (m.doors || []).forEach((o, i) => { if (G.doors[i]) G.doors[i].open = !!o; });
-        G.wins.forEach(w => fixGlass(w.i)); (m.glass || []).forEach(i => { const w = G.wins[i]; if (w && !w.broken) { w.broken = Date.now(); G.winMesh.setMatrixAt(i, new THREE.Matrix4().makeScale(0, 0, 0)); } }); G.winMesh.instanceMatrix.needsUpdate = true;
+        G.wins.forEach(w => fixGlass(w.i)); (m.glass || []).forEach(e => { const [i, st, u, v] = Array.isArray(e) ? e : [e, 2, .5, .5]; const w = G.wins[i]; if (!w) return;
+          if (st === 1) crackGlass(i, u, v, false); else if (!w.broken) { w.broken = Date.now(); G.winMesh.setMatrixAt(i, new THREE.Matrix4().makeScale(0, 0, 0)); } }); G.winMesh.instanceMatrix.needsUpdate = true;
         if (G.car) { G.car.mine = false; if (m.car) carState(m.car, true); }
         const s = m.spawn; G.p = { x: s[0], y: s[1], z: s[2], vy: 0, ground: true }; G.yaw = s[3]; G.pitch = 0; G.ammo = 6; G.reloading = 0; drawAmmo();
         G.prot = performance.now() + (m.prot || 0); N.startStack = m.tier; setBB(N.stack - N.tier);
         if (!N.pingT) N.pingT = setInterval(() => nsend({ t: "ping", c: Date.now(), rtt: N.rtt }), 2000);
-        nsend({ t: "ping", c: Date.now() }); hudPvp(true); play(); banner("Draw!", `${m.tier.toLocaleString()} BB buy-in · cash out at the bank`); return;
+        nsend({ t: "ping", c: Date.now() }); hudPvp(true); play(); banner("Draw!", `${m.tier.toLocaleString()} BB buy-in · last one standing wins`); return;
       }
       case "err": showTiers(m.why); return;
       case "pong": { const r = Date.now() - m.c; N.rtt = N.rtt ? N.rtt * .7 + r * .3 : r; N.off = m.s + r / 2 - Date.now(); return; }
@@ -1140,7 +1144,7 @@ body.wwon{overflow:hidden}
       }
       case "stack": N.stack = m.stack; setBB(m.stack - N.tier); return;
       case "door": setDoor(m.i, !!m.open, false); return;
-      case "glass": breakGlass(m.i, null, false); return;
+      case "glass": if (m.s === 1) crackGlass(m.i, m.u, m.v, false); else breakGlass(m.i, null, false); return;
       case "glassfix": fixGlass(m.i); return;
       case "bell": ringBell(); return;
       case "boom": carBoom(m.x, m.z, false); return;
@@ -1155,7 +1159,7 @@ body.wwon{overflow:hidden}
       case "dead": { G.mode = "dead"; sesAdd("deaths", 1); hudPvp(false); G.state = "menu";
         G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwpz"><h2>Shot down</h2><p>${m.by ? `<b>${esc(m.by)}</b> got you and took <b>${m.took.toLocaleString()} BB</b>.` : "You're out."}</p><p>You walk out with <b>${m.keep.toLocaleString()} BB</b>.</p><p class="wwnetmsg" style="opacity:.7">Paying out…</p></div></div>`; return; }
       case "out": { const net = m.amt - (m.buy || N.tier || 0); sesAdd("bb", net); sesAdd("matches", 1); saveStats(); pvpEnd(true);
-        const why = m.reason === "cash" ? "Cashed out" : m.reason === "dead" ? "Walked out" : "Left the match";
+        const why = m.reason === "dead" ? "Walked out" : m.reason === "quit" ? "Left the match" : "Match ended";
         G.state = "menu"; G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwpz"><h2>${why}</h2>
           <p style="font:400 30px Rye,Georgia,serif;color:${net >= 0 ? "#9dffb0" : "#ffb3a0"};margin:4px 0">${net >= 0 ? "+" : "−"}${Math.abs(net).toLocaleString()} BB</p>
           <p>${m.amt.toLocaleString()} BB paid to your balance · ${m.kills || 0} kill${m.kills === 1 ? "" : "s"}</p>
@@ -1170,7 +1174,7 @@ body.wwon{overflow:hidden}
   }
   /* leave from the pause menu: the server keeps your body 10 s (or counts it as a death if you were hit in the last 10 s) */
   function leaveMatch() { const N = G.net; if (N) N.leaving = true; try { N && N.ws && N.ws.close(); } catch (_) {} pvpEnd(true);
-    G.state = "menu"; G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwpz"><h2>Left the match</h2><p>If nobody shoots you in the next 10 seconds, your stack is paid out to your balance where you stood.</p>
+    G.state = "menu"; G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwpz"><h2>Left the match</h2><p>Leaving counts as dying: you walk out with half your stack if you got a kill, nothing if you didn't. It shows up in your balance in a few seconds.</p>
       <div class="wwgrid"><button class="pri" data-ww="menu">Main menu</button><button class="dang" data-ww="exit">Exit to casino</button></div></div></div>`; }
 
   /* ---- remote players: their equipped skin (or an animal), standing, walking, aiming, emoting ---- */
@@ -1290,7 +1294,7 @@ body.wwon{overflow:hidden}
   }
   const inBank = () => { const B = G.net && G.net.bank; return B && G.p.x > B.x0 && G.p.x < B.x1 && G.p.z > B.z0 && G.p.z < B.z1; };
   function cashTick() {
-    const b = G.hud.querySelector("#wwCash"), bar = G.hud.querySelector("#wwCashBar"); if (!b) return; const can = G.mode === "pvp" && inBank();
+    const b = G.hud.querySelector("#wwCash"), bar = G.hud.querySelector("#wwCashBar"); if (!b) return; const can = false; /* owner Oct 28: no cashing out */
     b.style.display = can ? "" : "none"; if (!can && G.cashHeld) { G.cashHeld = false; nsend({ t: "cash", on: false }); }
     const pr = G.mode === "pvp" ? G.net.cash || 0 : 0; bar.style.display = pr > 0 ? "" : "none"; if (pr > 0) { bar.firstChild.style.width = (pr * 100).toFixed(0) + "%"; bar.lastChild.textContent = `Cashing out ${((1 - pr) * 5).toFixed(1)}s`; }
   }
@@ -1302,16 +1306,35 @@ body.wwon{overflow:hidden}
      ===================================================================================================== */
   const GLASS_BACK = 90000, CAR_HP = 1000, CAR_BOOM_R = 6, CAR_RESPAWN = 60000, CAR_SPAWN = [-30, -3, -Math.PI / 2];
   function breakGlass(i, dir, mine) {
-    const w = G.wins[i]; if (!w || w.broken) return; w.broken = Date.now(); const T = THREE;
+    const w = G.wins[i]; if (!w || w.broken) return; w.broken = w.crackAt || Date.now(); unCrack(w); const T = THREE;
     G.winMesh.setMatrixAt(i, new T.Matrix4().makeScale(0, 0, 0)); G.winMesh.instanceMatrix.needsUpdate = true;
     const d = w.c.distanceTo(G.cam.position); G.vmul = Math.max(.15, Math.min(1, 10 / (d + 3))); SFX.glass(); G.vmul = 1;
     const mat = new T.MeshStandardMaterial({ color: w.col, roughness: .1, metalness: .5, transparent: true, opacity: .85 });
     for (let k = 0; k < 18; k++) { const sh = new T.Mesh(new T.TetrahedronGeometry(.04 + Math.random() * .05), mat); sh.position.copy(w.c).add(new T.Vector3((Math.random() - .5) * (w.box.x1 - w.box.x0), (Math.random() - .5) * (w.box.y1 - w.box.y0), (Math.random() - .5) * (w.box.z1 - w.box.z0)));
       G.scene.add(sh); G.parts.push({ o: sh, v: new T.Vector3((Math.random() - .5) * 2 + (dir ? dir.x * 2.5 : 0), Math.random() * 1.5, (Math.random() - .5) * 2 + (dir ? dir.z * 2.5 : 0)), life: 2.2, rot: new T.Vector3(Math.random() * 9, Math.random() * 9, 0), g: 1 }); }
-    if (mine) { hitMark(); sesAdd("hits", 1); if (G.mode === "pvp") nsend({ t: "glass", i }); }
+    if (mine) { hitMark(); sesAdd("hits", 1); if (G.mode === "pvp") nsend({ t: "glass", i, s: 2 }); }
   }
-  function fixGlass(i) { const w = G.wins[i]; if (!w || !w.broken) return; w.broken = 0; G.winMesh.setMatrixAt(i, w.mtx); G.winMesh.instanceMatrix.needsUpdate = true; }
-  function glassTick() { const now = Date.now(); if (G.mode === "pvp") return; for (const w of G.wins) if (w.broken && now - w.broken > GLASS_BACK) fixGlass(w.i); }
+  /* first shot: a hole with cracks where you hit it; second shot: the pane shatters */
+  function hitGlass(i, hp, dir) { const w = G.wins[i]; if (!w || w.broken) return; if (!w.crack) { const uv = glassUV(w, hp); crackGlass(i, uv[0], uv[1], true); } else breakGlass(i, dir, true); }
+  function glassUV(w, hp) { const b = w.box, thinZ = (b.z1 - b.z0) < (b.x1 - b.x0); const u = thinZ ? (hp.x - b.x0) / (b.x1 - b.x0) : (hp.z - b.z0) / (b.z1 - b.z0); return [Math.max(.08, Math.min(.92, u)), Math.max(.08, Math.min(.92, (hp.y - b.y0) / (b.y1 - b.y0)))]; }
+  function crackGlass(i, u, v, mine) {
+    const w = G.wins[i]; if (!w || w.broken || w.crack) return; const T = THREE, b = w.box, thinZ = (b.z1 - b.z0) < (b.x1 - b.x0), W = thinZ ? b.x1 - b.x0 : b.z1 - b.z0, H = b.y1 - b.y0;
+    const c = document.createElement("canvas"); c.width = 128; c.height = Math.max(64, Math.round(128 * H / W)); const g = c.getContext("2d"), cx = u * c.width, cy = (1 - v) * c.height, col = new T.Color(w.col);
+    g.fillStyle = `rgba(${col.r * 255 | 0},${col.g * 255 | 0},${col.b * 255 | 0},.78)`; g.fillRect(0, 0, c.width, c.height);
+    g.strokeStyle = "rgba(255,255,255,.85)"; g.lineWidth = 1.2;
+    for (let k = 0; k < 9; k++) { const a = k / 9 * Math.PI * 2 + Math.random() * .5, L = 30 + Math.random() * 80; g.beginPath(); g.moveTo(cx, cy); let x = cx, y = cy; for (let q = 0; q < 4; q++) { x += Math.cos(a + (Math.random() - .5) * .5) * L / 4; y += Math.sin(a + (Math.random() - .5) * .5) * L / 4; g.lineTo(x, y); } g.stroke(); }
+    for (const r of [12, 22]) { g.beginPath(); for (let k = 0; k <= 12; k++) { const a = k / 12 * Math.PI * 2, rr = r * (.8 + Math.random() * .4); g.lineTo(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr); } g.stroke(); }
+    g.globalCompositeOperation = "destination-out"; g.beginPath(); for (let k = 0; k <= 10; k++) { const a = k / 10 * Math.PI * 2, rr = 7 + Math.random() * 4; g.lineTo(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr); } g.fill();
+    const tex = new T.CanvasTexture(c); tex.encoding = T.sRGBEncoding;
+    const m = new T.Mesh(new T.PlaneGeometry(W, H), new T.MeshStandardMaterial({ map: tex, transparent: true, roughness: .12, metalness: .4, side: T.DoubleSide, depthWrite: false }));
+    m.position.copy(w.c); if (!thinZ) m.rotation.y = Math.PI / 2; G.scene.add(m); w.crack = m; w.broken = 0; w.crackAt = Date.now();
+    G.winMesh.setMatrixAt(i, new T.Matrix4().makeScale(0, 0, 0)); G.winMesh.instanceMatrix.needsUpdate = true;
+    const d = w.c.distanceTo(G.cam.position); G.vmul = Math.max(.15, Math.min(1, 10 / (d + 3))); SFX.crack(); G.vmul = 1;
+    if (mine) { hitMark(); sesAdd("hits", 1); if (G.mode === "pvp") nsend({ t: "glass", i, s: 1, u: +u.toFixed(3), v: +v.toFixed(3) }); }
+  }
+  function unCrack(w) { if (w.crack) { G.scene.remove(w.crack); w.crack.material.map.dispose(); w.crack.material.dispose(); w.crack.geometry.dispose(); w.crack = null; } }
+  function fixGlass(i) { const w = G.wins[i]; if (!w || (!w.broken && !w.crack)) return; unCrack(w); w.broken = 0; G.winMesh.setMatrixAt(i, w.mtx); G.winMesh.instanceMatrix.needsUpdate = true; }
+  function glassTick() { const now = Date.now(); if (G.mode === "pvp") return; for (const w of G.wins) if ((w.broken && now - w.broken > GLASS_BACK) || (w.crack && now - w.crackAt > GLASS_BACK)) fixGlass(w.i); }
   /* the bell: very loud for everyone in town, wherever they are */
   function ringBell() { G.bell.v += 4; G.vmul = 2.6; SFX.bell(); G.vmul = 1; G.shake = .5; banner("DONG", "The church bell rings"); }
   function setDoor(i, open, mine) { const d = G.doors[i]; if (!d || d.open === open) return; d.open = open; SFX.door(); if (mine && G.mode === "pvp") nsend({ t: "door", i, open }); }
@@ -1375,19 +1398,26 @@ body.wwon{overflow:hidden}
     if (A.fwd || k.ArrowUp) th += 1; if (A.back || k.ArrowDown) th -= 1; if (A.left || k.ArrowLeft) st -= 1; if (A.right || k.ArrowRight) st += 1;
     const sk = Object.values(G.touches).find(q => q.kind === "stick"); if (sk && sk.mx != null) { th += -sk.my; st += sk.mx; }
     th = Math.max(-1, Math.min(1, th)); st = Math.max(-1, Math.min(1, st));
-    const MAX = 17, REV = 6; if (th > 0) c.v += (c.v < 0 ? 22 : 9) * th * dt; else if (th < 0) c.v += (c.v > 0 ? -22 : -6) * -th * dt; else c.v -= Math.sign(c.v) * Math.min(Math.abs(c.v), 4 * dt);
+    /* drift (owner Oct 28): holding Jump while driving = handbrake: less grip, tighter turns, the car slides, tire smoke */
+    const drift = !!(A.jump || k.Space), MAX = 17, REV = 6; c.vr = c.vr || 0;
+    if (th > 0) c.v += (c.v < 0 ? 22 : 9) * th * dt; else if (th < 0) c.v += (c.v > 0 ? -22 : -6) * -th * dt; else c.v -= Math.sign(c.v) * Math.min(Math.abs(c.v), 4 * dt);
+    if (drift) c.v -= Math.sign(c.v) * Math.min(Math.abs(c.v), 2.2 * dt);
     c.v = Math.max(-REV, Math.min(MAX, c.v));
-    c.yaw -= st * Math.min(1, Math.abs(c.v) / 5) * 1.55 * dt * Math.sign(c.v || 1);
-    const fx = -Math.sin(c.yaw), fz = -Math.cos(c.yaw); let nx = c.x + fx * c.v * dt, nz = c.z + fz * c.v * dt;
+    const yaw0 = c.yaw; c.yaw -= st * Math.min(1, Math.abs(c.v) / 5) * (drift ? 2.6 : 1.55) * dt * Math.sign(c.v || 1);
+    { const dy = c.yaw - yaw0, f = c.v, r = c.vr; c.v = f * Math.cos(dy) - r * Math.sin(dy); c.vr = r * Math.cos(dy) + f * Math.sin(dy); }
+    c.vr *= Math.exp(-dt * (drift ? 1.1 : 9));
+    if (drift && Math.abs(c.vr) > 2.2) { if (performance.now() - (c.smokeAt || 0) > 70) { c.smokeAt = performance.now(); puff(new THREE.Vector3(c.x + Math.sin(c.yaw) * 1.5, .35, c.z + Math.cos(c.yaw) * 1.5), .9); }
+      if (performance.now() - (c.scrAt || 0) > 260) { c.scrAt = performance.now(); SFX.screech(); } }
+    const fx = -Math.sin(c.yaw), fz = -Math.cos(c.yaw), rx = Math.cos(c.yaw), rz = -Math.sin(c.yaw); let nx = c.x + (fx * c.v + rx * c.vr) * dt, nz = c.z + (fz * c.v + rz * c.vr) * dt;
     /* two circles (front + back) against the walls */
     let hit = false; for (const off of [1.3, -1.3]) { const q = { x: nx + fx * off, z: nz + fz * off, y: 0 }, bx = q.x, bz = q.z;
       for (const cc of G.cols) { if (cc.y1 < .7 || (cc.dr && cc.dr.open)) continue; const px = Math.max(cc.x0, Math.min(q.x, cc.x1)), pz = Math.max(cc.z0, Math.min(q.z, cc.z1)), dx = q.x - px, dz = q.z - pz, d2 = dx * dx + dz * dz;
         if (d2 < 1.15 * 1.15) { const d = Math.sqrt(d2) || .001, kk = (1.15 - d) / d; q.x += dx * kk; q.z += dz * kk; hit = true; } }
       nx += q.x - bx; nz += q.z - bz; }
     const B = G.bounds; nx = Math.max(B.x0 + 1, Math.min(B.x1 - 1, nx)); nz = Math.max(B.z0 + 1, Math.min(B.z1 - 1, nz));
-    if (hit && Math.abs(c.v) > 6) { SFX.wood(); G.shake = Math.max(G.shake || 0, .25); } if (hit) c.v *= .55;
+    if (hit && Math.abs(c.v) > 6) { SFX.wood(); G.shake = Math.max(G.shake || 0, .25); } if (hit) { c.v *= .55; c.vr *= .4; }
     c.x = nx; c.z = nz; G.p.x = c.x; G.p.z = c.z; G.p.y = 0; G.moving = Math.abs(c.v); placeCar();
-    if (G.mode === "pvp" && performance.now() - (G.net.carSent || 0) > 50) { G.net.carSent = performance.now(); nsend({ t: "cin", x: +c.x.toFixed(3), z: +c.z.toFixed(3), yaw: +c.yaw.toFixed(4), v: +c.v.toFixed(2) }); }
+    if (G.mode === "pvp" && performance.now() - (G.net.carSent || 0) > 50) { G.net.carSent = performance.now(); nsend({ t: "cin", x: +c.x.toFixed(3), z: +c.z.toFixed(3), yaw: +c.yaw.toFixed(4), v: +(Math.sign(c.v || 1) * Math.hypot(c.v, c.vr)).toFixed(2) }); }
   }
   function carTick(dt) {
     const c = G.car; if (!c) return;
@@ -1418,7 +1448,8 @@ body.wwon{overflow:hidden}
     if (u.k === "exit") carExit(); else if (u.k === "car") carEnter(); else if (u.k === "door") setDoor(u.i, !G.doors[u.i].open, true);
     else if (u.k === "bell") { if (performance.now() - (G.bellAt || 0) < 3000) return; G.bellAt = performance.now(); if (G.mode === "pvp") nsend({ t: "bell" }); else ringBell(); }
   }
-  function useTick() { const u = G.state === "play" ? useTarget() : null, el = G.hud.querySelector("#wwUse"); if (!el) return; const lab = u ? u.label : "";
+  function useTick() { const jb = G.hud.querySelector("#wwBJ"); if (jb) { const t = G.car && G.car.mine ? "DRIFT" : "JUMP"; if (jb.textContent !== t) jb.textContent = t; }
+    const u = G.state === "play" ? useTarget() : null, el = G.hud.querySelector("#wwUse"); if (!el) return; const lab = u ? u.label : "";
     if (el._l !== lab) { el._l = lab; el.style.display = u ? "" : "none"; el.innerHTML = TOUCH ? esc(lab).toUpperCase() : `<b>${esc(keyName(G.set.keys.use))}</b> ${esc(lab)}`; } }
 
   /* ---------------- loop ---------------- */
