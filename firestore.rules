@@ -68,7 +68,7 @@ service cloud.firestore {
       return (resource == null
         ? request.resource.data.keys().hasAll(['wv'])
         : request.resource.data.diff(resource.data).affectedKeys().hasAll(['wv']))
-        && request.resource.data.wv is string && request.resource.data.wv.matches('v[34][.].*');
+        && request.resource.data.wv is string && request.resource.data.wv.matches('v4[.].*');
     }
 
     function isAdmin() {
