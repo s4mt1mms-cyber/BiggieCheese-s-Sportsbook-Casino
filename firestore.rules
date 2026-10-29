@@ -62,10 +62,13 @@ service cloud.firestore {
 
     // Oct 23: current app copies stamp every write with a new random "wv". Tabs still running an older copy
     // (from before the deflation) don't, so their writes are refused instead of spending pre-deflation balances.
+    // Oct 29 (Card System V2): the wv must also carry the "v3." prefix, so tabs still running the pre-V2 app can't write
+    // (they'd keep opening the old rarity packs).
     function freshWrite() {
-      return resource == null
+      return (resource == null
         ? request.resource.data.keys().hasAll(['wv'])
-        : request.resource.data.diff(resource.data).affectedKeys().hasAll(['wv']);
+        : request.resource.data.diff(resource.data).affectedKeys().hasAll(['wv']))
+        && request.resource.data.wv is string && request.resource.data.wv.matches('v3[.].*');
     }
 
     function isAdmin() {

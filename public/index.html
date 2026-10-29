@@ -991,7 +991,19 @@ html.mvlock,html.mvlock body{overflow:hidden!important;overscroll-behavior:none}
 .v2uprow{display:flex;justify-content:space-between;gap:10px;font-size:13px}.v2uprow span{color:var(--muted)}.v2uprow.ab b{font-weight:600;text-align:right;max-width:75%}
 .v2upnx{display:flex;flex-direction:column;gap:2px;padding-top:6px;border-top:1px dashed var(--line)}.v2upbtn{margin-top:4px}
 .pknew{position:absolute;top:8px;right:8px;z-index:5;padding:3px 8px;border-radius:8px;background:#5cff72;color:#062;font-weight:900;font-size:11px;letter-spacing:.1em}
-.pkover.v2sh{border-color:#7fd3ff}.pkover.v2sh b{color:#7fd3ff}
+.pkover.v2sh{border-color:#7fd3ff;overflow:visible}.pkover.v2sh b{color:#7fd3ff}
+.shc{display:inline-grid;place-items:center;width:var(--sz);height:var(--sz);flex:none;vertical-align:middle;filter:drop-shadow(0 2px 3px #0007)}.shc svg{width:100%;height:100%;overflow:visible}
+.shchip{display:inline-flex;align-items:center;gap:4px}
+.shc.live svg{animation:shIdle 4s ease-in-out infinite}.shc.live.tw-spin svg{animation:shSpin 9s linear infinite}.shc.live.tw-bob svg{animation:shBob 2.6s ease-in-out infinite}
+.shc.live.tw-glint svg{animation:shGlint 3s ease-in-out infinite}.shc.live.tw-pulse svg{animation:shPulse 1.8s ease-in-out infinite}.shc.live.tw-flare svg{animation:shFlare 2.4s ease-in-out infinite}
+.shc.live.tw-shine svg{animation:shShine 2.2s ease-in-out infinite}.shc.live.tw-hue svg{animation:shHue 4s linear infinite}
+@keyframes shSpin{to{transform:rotate(360deg)}}@keyframes shBob{50%{transform:translateY(-12%) rotate(-6deg)}}@keyframes shGlint{50%{filter:brightness(1.45) saturate(1.2)}}
+@keyframes shPulse{50%{transform:scale(1.1);filter:brightness(1.25)}}@keyframes shFlare{50%{transform:rotate(45deg) scale(1.08);filter:brightness(1.3)}}
+@keyframes shShine{50%{filter:brightness(1.4) drop-shadow(0 0 6px #ffe066)}}@keyframes shHue{to{filter:hue-rotate(360deg)}}@keyframes shIdle{50%{transform:scale(1.04)}}
+.shfx{position:absolute;left:0;right:0;bottom:100%;height:70px;pointer-events:none}.shfx .shc{position:absolute;left:50%;bottom:0;opacity:0}
+.flip.on .shfx .shc{animation:shPop 1s cubic-bezier(.2,.9,.3,1.2) forwards}.flip.on .shfx .shc:nth-child(1){--dx:-46px;--rt:-25deg}.flip.on .shfx .shc:nth-child(2){--dx:0px;--rt:8deg;animation-delay:.12s;--up:-22px}.flip.on .shfx .shc:nth-child(3){--dx:46px;--rt:28deg;animation-delay:.24s}
+@keyframes shPop{0%{opacity:0;transform:translate(-50%,40px) scale(.15) rotate(0)}55%{opacity:1}100%{opacity:1;transform:translate(calc(-50% + var(--dx)),var(--up,-6px)) scale(1) rotate(var(--rt))}}
+@media (prefers-reduced-motion:reduce){.shc.live svg,.flip.on .shfx .shc{animation:none!important;opacity:1}}
 .setcard.v2set{box-shadow:0 0 0 2px #ffd34d55,0 6px 24px #ffb30033}
 .fpfarm h3{margin-bottom:2px}.fpups{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.fpup{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.03)}.fpuph{display:flex;gap:8px;align-items:center}.fpuph>span:last-child{display:flex;flex-direction:column;line-height:1.15}.fpupic{font-size:24px}.fpupv{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}.fpupv b{font-size:22px;color:#5cff72}.fpupn{font-size:13px;color:var(--gold);font-weight:700}.fppips{display:flex;gap:4px}.fppips i{flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.12)}.fppips i.on{background:var(--gold)}.fpupbtn{min-height:40px;font-size:14px;padding:0 8px}.fpupbtn.ask{background:#5cff72;color:#000}.fpupbtn.short{opacity:.55}.fpmax{text-align:center;font-weight:800;letter-spacing:.12em;color:var(--gold);padding:8px 0}
 #auSpace{position:fixed;inset:0;width:100vw;height:100vh;z-index:-1;pointer-events:none;display:block}
@@ -6409,8 +6421,37 @@ async function shCancel(id){const l=(S.market||[]).find(x=>x.id===id);if(!l||!is
     const s3=await db.doc("market/"+id).get();if(!s3.exists||s3.data().status!=="cancelled")return toast("Those already sold.");const r=Number(l.shard),n=Math.floor(Number(l.qty)||0);
     const D=(await db.doc("prefs/"+S.me).get()).data()||{},have=Math.floor(Number((D.shards||{})[r])||0);await db.doc("prefs/"+S.me).update({shards:{[r]:have+n}});const q=S.prefs[S.me];q.shards={...(q.shards||{}),[r]:have+n};toast("Shards back with you.")}
   catch(e){toast("Couldn't take it down. Try again.")}finally{S._mkBusy=false;render()}}
+/* ---- Shard crystals (owner, Oct 29): one crystal per rarity, each its own color, shape (number of sides), etched artwork and motion.
+   Common light-blue hexagon · Uncommon light-green pentagon (leaf) · Rare dark-blue octagon (inner star) · Super Rare purple cracked orb (glowing seam)
+   · Elite red four-point star (ember core) · Grail yellow trillion (crown) · Dragon pink twelve-point burst (dragon eye). shardSvg(r) = inline SVG. */
+const SH_ART=[
+  {n:6,rot:30,c:["#e6f8ff","#8fdcff","#3a9bd8","#1b5f93"],tw:"spin"},
+  {n:5,rot:-90,c:["#e8fff0","#8dffb5","#2fbf6b","#16743f"],tw:"bob"},
+  {n:8,rot:22.5,c:["#c9d8ff","#4f82ff","#1f4fd1","#0c2577"],tw:"glint"},
+  {n:10,rot:0,orb:1,c:["#f6e2ff","#c27bff","#8a3be0","#4a1590"],tw:"pulse"},
+  {n:4,rot:-90,star:.36,c:["#ffe1da","#ff6a5c","#d91f2a","#7c0912"],tw:"flare"},
+  {n:3,rot:-90,c:["#fffbe0","#ffe066","#f2b705","#9a6500"],tw:"shine"},
+  {n:12,rot:-90,star:.72,c:["#fff0fb","#ff8ae6","#d63cc1","#6e1477"],tw:"hue"}];
+const _SHC={};
+function shardSvg(r,px,cls){r=Math.max(0,Math.min(6,Number(r)||0));const A=SH_ART[r],k=r+"";if(!_SHC[k]){
+  const N=A.star?A.n*2:A.n,P=(rad,i,cx,cy)=>{const a=(A.rot+i*360/N)*Math.PI/180;return [cx+rad*Math.cos(a),cy+rad*Math.sin(a)]};
+  const outer=[],inner=[];for(let i=0;i<N;i++){const rr=A.star&&i%2?46*A.star:46;outer.push(P(A.orb?44:rr,i,50,50));inner.push(P((A.orb?44:rr)*(A.star?.34:.5),i,46,45))}
+  const f=p=>p.map(x=>x.map(v=>v.toFixed(1)).join(",")).join(" ");let g="";
+  for(let i=0;i<N;i++){const j=(i+1)%N,mid=[(outer[i][0]+outer[j][0])/2-50,(outer[i][1]+outer[j][1])/2-50],ang=Math.atan2(mid[1],mid[0]),lit=Math.cos(ang-(-135*Math.PI/180));
+    const col=lit>.55?A.c[1]:lit>-.1?A.c[2]:A.c[3];g+=`<polygon points="${f([outer[i],outer[j],inner[j],inner[i]])}" fill="${col}" stroke="${A.c[0]}" stroke-opacity=".45" stroke-width=".8"/>`}
+  g+=`<polygon points="${f(inner)}" fill="${A.c[1]}" stroke="${A.c[0]}" stroke-opacity=".7" stroke-width=".8"/>`;
+  /* etched artwork, one per rarity */
+  const art=[`<polygon points="${f(inner.map(p=>[46+(p[0]-46)*.55,45+(p[1]-45)*.55]))}" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="1.4"/>`,
+    `<path d="M46 56c-9-4-9-15 0-21 9 6 9 17 0 21zM46 56V38" fill="${A.c[0]}" fill-opacity=".55" stroke="#fff" stroke-opacity=".7" stroke-width="1.2"/>`,
+    `<path d="M46 33l3 9 9 3-9 3-3 9-3-9-9-3 9-3z" fill="#fff" fill-opacity=".75"/>`,
+    `<path d="M22 30l14 12-4 9 16 6 6 13 9 8" fill="none" stroke="#ffb347" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/><path d="M22 30l14 12-4 9 16 6 6 13 9 8" fill="none" stroke="#fff3c4" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>`,
+    `<path d="M46 56c-6-3-7-9-3-14 0 4 3 5 3 5 0-6 4-10 4-13 4 5 6 9 4 15 2-1 3-3 3-5 3 6-2 11-11 12z" fill="#ffd28a" fill-opacity=".9"/>`,
+    `<path d="M36 52l-2-12 7 6 5-9 5 9 7-6-2 12z" fill="#fff6c8" stroke="#9a6500" stroke-width="1.2" stroke-linejoin="round"/>`,
+    `<ellipse cx="46" cy="45" rx="11" ry="7" fill="#ffe36b"/><ellipse cx="46" cy="45" rx="2.4" ry="7" fill="#2a0630"/>`][r];
+  _SHC[k]=`<svg viewBox="0 0 100 100" aria-hidden="true"><g class="shg">${g}${art}<ellipse cx="34" cy="28" rx="9" ry="4" transform="rotate(-35 34 28)" fill="#fff" fill-opacity=".55"/></g></svg>`}
+  return `<span class="shc shc${r} tw-${A.tw}${cls?" "+cls:""}" style="--sz:${px||22}px">${_SHC[k]}</span>`}
 /* ---- V2 screens ---- */
-const v2PullTag=x=>!x?"":x.kind==="shard"?`<div class="pkover v2sh"><b>DUPLICATE</b><span>+1 ${esc(CR[x.r].n)} shard</span></div>`:x.kind==="curse2"?`<div class="pkover"><b>⛪ CURSED AGAIN</b><span>Tithed · no shard</span></div>`:`<div class="pknew">NEW</div>`;
+const v2PullTag=x=>!x?"":x.kind==="shard"?`<div class="pkover v2sh"><div class="shfx">${[0,1,2].map(()=>shardSvg(x.r,40,"live")).join("")}</div><b>DUPLICATE</b><span>+1 ${esc(CR[x.r].n)} shard</span></div>`:x.kind==="curse2"?`<div class="pkover"><b>⛪ CURSED AGAIN</b><span>Tithed · no shard</span></div>`:`<div class="pknew">NEW</div>`;
 function v2Odds(){return [[CR[0],V2_ODDS[0]],[CR[1],V2_ODDS[1]],[CR[2],V2_ODDS[2]],[CR[3],V2_ODDS[3]],[CR_CURSE,V2_CURSE],[CR[4],V2_ODDS[4]],[CR[5],V2_ODDS[5]],[CR[6],V2_ODDS[6]]]}
 const v2Per=p=>{const k=100/(V2_PACK.n*p);return k<=1.05?"every pack":`1 in ${k>=100?Math.round(k).toLocaleString():+k.toFixed(1)} packs`};
 function v2ShopHtml(){const q=S.prefs[S.me]||{},bal=Math.floor(ledger().balOf(S.me)),sh=shardsOf(S.me),fr=Math.max(0,Math.floor(Number(q.freeV2)||0)),qty=fr?1:(Number(S.pk.qty)||1),pr=v2Price(),pity=Math.floor(Number(q.v2pity)||0),P=v2Pool();
@@ -6422,8 +6463,8 @@ function v2ShopHtml(){const q=S.prefs[S.me]||{},bal=Math.floor(ledger().balOf(S.
     <table class="v2odds"><tr><th>Rarity</th><th>Cards</th><th>Per card</th><th>One per</th></tr>${v2Odds().map(([R,p],i)=>`<tr style="color:${R.c}"><td>${esc(R.n)}</td><td>${cnt(i===4?"c":i<4?i:i-1)}</td><td>${p>=1?p.toFixed(3):p.toFixed(3)}%</td><td>${v2Per(p)}</td></tr>`).join("")}</table>
     <p class="small muted">🐉 Dragon pity: ${pity.toLocaleString()} of ${V2_PITY.toLocaleString()} cards since your last Dragon. At ${V2_PITY.toLocaleString()} the next card is a Dragon.</p></div></div>
   <h3>💎 Shard store</h3><p class="small muted">Buy shards to aim at the card you want. Packs are the cheaper way to get them.</p>
-  <div class="shstore">${SHARD_PRICE.map((p,r)=>`<div class="shrow" style="--rc:${CR[r].c}"><span class="shnm"><b>${esc(CR[r].n)}</b><small class="muted">You have ${sh[r].toLocaleString()} · ${p.toLocaleString()} BB each</small></span><span class="shbtns">${[1,5,10].map(n=>`<button type="button" class="btn ghost small" data-shbuy="${r}" data-n="${n}" ${bal<p*n?"disabled":""}>+${n}${n>1?` · ${(p*n).toLocaleString()}`:` · ${p.toLocaleString()}`}</button>`).join("")}</span></div>`).join("")}</div>`}
-function v2ShardBar(who){const sh=shardsOf(who);return `<div class="shbar"><span class="stlbl">💎 ${who===S.me?"Your shards":"Shards"}</span>${sh.map((n,r)=>`<span class="shchip" style="--rc:${CR[r].c}"><b class="num">${n.toLocaleString()}</b> ${esc(CR[r].n)}</span>`).join("")}</div>`}
+  <div class="shstore">${SHARD_PRICE.map((p,r)=>`<div class="shrow" style="--rc:${CR[r].c}">${shardSvg(r,38,"live")}<span class="shnm"><b>${esc(CR[r].n)}</b><small class="muted">You have ${sh[r].toLocaleString()} · ${p.toLocaleString()} BB each</small></span><span class="shbtns">${[1,5,10].map(n=>`<button type="button" class="btn ghost small" data-shbuy="${r}" data-n="${n}" ${bal<p*n?"disabled":""}>+${n}${n>1?` · ${(p*n).toLocaleString()}`:` · ${p.toLocaleString()}`}</button>`).join("")}</span></div>`).join("")}</div>`}
+function v2ShardBar(who){const sh=shardsOf(who);return `<div class="shbar"><span class="stlbl">💎 ${who===S.me?"Your shards":"Shards"}</span>${sh.map((n,r)=>`<span class="shchip" style="--rc:${CR[r].c}">${shardSvg(r,16)}<b class="num">${n.toLocaleString()}</b> ${esc(CR[r].n)}</span>`).join("")}</div>`}
 /* card view: level, dividend, ability now / next, and the Upgrade button (greyed out with what's missing) */
 function v2UpHtml(cid){const c=cardById(cid);if(!c||!inPool(cid))return "";const mine=cardCount(cid)>0,L=c.lv||1,M=craftable(c)?LV_MAX[c.r]:1;
   const ab=ab2Of(c)?abLvTxt(c,L):(c.abil&&CARD_ABIL[c.abil]?abTxt(c,L):"");
@@ -6431,10 +6472,10 @@ function v2UpHtml(cid){const c=cardById(cid);if(!c||!inPool(cid))return "";const
   if(L<M){const n=cardById(lvK(cid,L+1)),cost=v2UpCost(c),nab=ab2Of(c)?abLvTxt(n,L+1):(c.abil&&CARD_ABIL[c.abil]?abTxt(n,L+1):"");
     h+=`<div class="v2upnx"><span class="stlbl">LV ${L+1}${L+1>=M?" (MAX)":""}</span><span class="small">💸 ${cardDiv(n).toLocaleString()} BB/day${nab&&nab!==ab?` · ⚡ ${esc(nab)}`:""}</span></div>`;
     if(mine){const have=shardsOf(S.me)[c.r],bal=Math.floor(ledger().balOf(S.me)),ns=Math.max(0,cost.sh-have),nb=Math.max(0,cost.bb-bal);
-      h+=`<button type="button" class="btn v2upbtn" data-v2up="${esc(cid)}" ${ns||nb?"disabled":""}>⬆️ Upgrade · ${shTxt(c.r,cost.sh)} + ${cost.bb.toLocaleString()} BB</button>${ns||nb?`<p class="small neg">Missing ${[ns?shTxt(c.r,ns):"",nb?nb.toLocaleString()+" BB":""].filter(Boolean).join(" and ")}${ns?` · get shards from packs, the shard store or the Marketplace`:""}</p>`:`<p class="small muted">You have ${shTxt(c.r,have)}.</p>`}`}}
+      h+=`<button type="button" class="btn v2upbtn" data-v2up="${esc(cid)}" ${ns||nb?"disabled":""}>⬆️ Upgrade · ${shardSvg(c.r,18)} ${shTxt(c.r,cost.sh)} + ${cost.bb.toLocaleString()} BB</button>${ns||nb?`<p class="small neg">Missing ${[ns?shTxt(c.r,ns):"",nb?nb.toLocaleString()+" BB":""].filter(Boolean).join(" and ")}${ns?` · get shards from packs, the shard store or the Marketplace`:""}</p>`:`<p class="small muted">You have ${shTxt(c.r,have)}.</p>`}`}}
   return h+`</div>`}
 function v2MktHtml(){const bal=Math.floor(ledger().balOf(S.me)),sh=shardsOf(S.me),open=(S.market||[]).filter(l=>isShL(l)&&l.status==="open").sort((a,b)=>(Number(a.shard)-Number(b.shard))||((a.price/Math.max(1,a.qty))-(b.price/Math.max(1,b.qty))));
-  const row=l=>{const r=Number(l.shard),n=Math.floor(Number(l.qty)||0);return `<div class="shl" style="--rc:${CR[r].c}"><span class="shnm"><b>${esc(shTxt(r,n))}</b><small class="muted">${l.seller===S.me?"Your listing":"From "+esc(nm(l.seller))} · ${Math.round(l.price/Math.max(1,n)).toLocaleString()} BB each</small></span><b class="num">${Number(l.price).toLocaleString()} BB</b>${l.seller===S.me?`<button type="button" class="btn ghost small" data-shcancel="${l.id}">Take down</button>`:`<button type="button" class="btn small" data-shbuyl="${l.id}" ${bal<l.price?"disabled":""}>Buy</button>`}</div>`};
+  const row=l=>{const r=Number(l.shard),n=Math.floor(Number(l.qty)||0);return `<div class="shl" style="--rc:${CR[r].c}">${shardSvg(r,30)}<span class="shnm"><b>${esc(shTxt(r,n))}</b><small class="muted">${l.seller===S.me?"Your listing":"From "+esc(nm(l.seller))} · ${Math.round(l.price/Math.max(1,n)).toLocaleString()} BB each</small></span><b class="num">${Number(l.price).toLocaleString()} BB</b>${l.seller===S.me?`<button type="button" class="btn ghost small" data-shcancel="${l.id}">Take down</button>`:`<button type="button" class="btn small" data-shbuyl="${l.id}" ${bal<l.price?"disabled":""}>Buy</button>`}</div>`};
   return `<h3>💎 Shards</h3><p class="small muted">Cards from the main pack can't be traded, but shards can. Sell your spare shards for BB or buy the ones you need. 5% of every sale is burned.</p>
   ${open.length?open.map(row).join(""):`<p class="empty small">No shards listed right now.</p>`}
   <form class="shform" data-shform><div class="stlbl">Sell shards</div><div class="row bkform"><label>Rarity<select name="r">${sh.map((n,r)=>`<option value="${r}" ${n?"":"disabled"}>${esc(CR[r].n)} (${n})</option>`).join("")}</select></label><label>How many<input name="n" type="number" min="1" step="1" inputmode="numeric" value="1"></label><label>Price (BB, total)<input name="p" type="number" min="1" step="1" inputmode="numeric" placeholder="e.g. 900"></label><button class="btn" type="submit" ${sh.some(n=>n>0)?"":"disabled"}>List</button></div></form>`}
@@ -6937,6 +6978,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:151,d:"Oct 29",t:[["💎","Shards got a makeover: every rarity has its own crystal, and duplicates burst into shards when you open a pack"]]},
  {v:150,d:"Oct 29",t:[["🃏","New card system! One BiggieCheese Pack (2,500 BB) has every Multiverse, Fantasyland and ChudBootyCheeks card, and no card ever sells out"],["💎","Duplicates turn into shards. Tap any card in your collection and hit Upgrade to level it up: higher levels pay bigger dividends and power up abilities"],["💰","Your Multiverse, Fantasyland and ChudBootyCheeks cards were cashed in at 3× their quick-sell value. League Moments and Platinum Mysterio cards, skins, auras and your farm stay as they are"],["🎰","Slots pay out a little more often, and the jackpot grows faster"],["🏦","Loans: one at a time, the payoff never grows, and your winnings go to your loan first until it's paid"]]},
  {v:149,d:"Oct 28",t:[["⚡","Even lighter on your computer: the fall leaves now sit still and a few glow effects no longer flicker"]]},
  {v:148,d:"Oct 28",t:[["⚡","The whole site is lighter on your computer and battery: fewer falling leaves, and the animations rest when you leave the page alone"]]},

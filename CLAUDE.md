@@ -129,6 +129,9 @@ Fantasyland / ChudBootyCheeks. League Moments (`lm`) still works the old way (it
   (borrower's page, 15 s) pays every balance rise above the low-water mark (`BK_SW`, `swBase` on the loan) to the loan (payments `sweep:true`).
 - **Slots**: per-reel strips `SL_WR` (every winning combo ≈2.5% more often, lines 96.35%), jackpot 1% of all-time `slWag` + 0.5% (`SL_JP_ADD`) of `slWag2`
   (wagers since Oct 29) = 1.5% going forward; `node tools/test/slots.test.mjs`.
+- Shard crystals (owner Oct 29): `shardSvg(r,px,cls)` / `SH_ART` (Common light-blue hexagon, Uncommon green pentagon, Rare dark-blue octagon,
+  SR purple cracked orb, Elite red 4-point star, Grail yellow trillion, Dragon pink burst; `live` = idle motion per rarity). Duplicate pulls show three
+  crystals popping out of the card (`.shfx`, `shPop`). Rules: `freshWrite()` also requires the `v3.` wv prefix (pre-V2 tabs can't write).
 - Tests: scratch `dmr/cv2test.cjs` (old app vs new app: every offline player's balance moves by exactly the expected credit).
 
 ## Features (where to look)
