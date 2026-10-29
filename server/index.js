@@ -4,7 +4,7 @@
 //     against ONE hitbox shape for everyone (HB), whatever skin they wear, so nobody gets a smaller target;
 //   - money: the player's page writes the buy-in (bank/<id> kind "wwbuy", from player to house, amt = the table's buy-in);
 //     the server checks it, marks it used, and when the run ends writes ONE payout bank/wwout_<buyId> (house -> player, amt = the stack).
-//     Kills move stacks between players (a victim with 0 kills loses it all, with 1+ kills keeps half), so the server never creates BB.
+//     Each kill adds the killer's own buy-in to their stack (from the house); dying pays out half your stack (owner Oct 28).
 // Protocol: JSON messages, see the comment above each handler. Map (walls, spawns) = map.json exported from the game (tools: server/README).
 import http from "node:http";
 import fs from "node:fs";
@@ -147,10 +147,11 @@ function kill(v, k, head, how) {
     send(v.ws, { t: "dead", by: k ? k.name : null, took: 0, keep: 0, ffa: true, ms: FFA_RESPAWN });
     v.deadAt = now(); if (how !== "quit") setTimeout(() => ffaRespawn(v), 20000); return; /* the player taps Respawn after FFA_RESPAWN; 20 s backstop */
   }
-  const take = v.kills > 0 ? Math.floor(v.stack / 2) : Math.floor(v.stack);
-  v.stack -= take; const cut = Math.floor(take * HOUSE_CUT);
-  if (k && k !== v) { k.stack += take - cut; k.kills++; send(k.ws, { t: "stack", stack: k.stack }); }
-  broadcast(room, { t: "kill", k: k ? k.name : (how === "boom" ? "The car" : how === "quit" ? "" : "The desert"), v: v.name, kn: k ? k.n : 0, vn: v.n, hs: !!head, amt: take, how: how || "shot" });
+  /* owner Oct 28 (2nd rule set): every kill adds YOUR OWN buy-in to your stack (paid by the house, not taken from the victim);
+     when you die you walk out with half your stack. 1 kill = break even. */
+  const gain = k && k !== v ? k.tier : 0; if (gain) { k.stack += gain; k.kills++; send(k.ws, { t: "stack", stack: k.stack }); }
+  const take = Math.ceil(v.stack / 2); v.stack -= take;
+  broadcast(room, { t: "kill", k: k ? k.name : (how === "boom" ? "The car" : how === "quit" ? "" : "The desert"), v: v.name, kn: k ? k.n : 0, vn: v.n, hs: !!head, amt: gain, how: how || "shot" });
   send(v.ws, { t: "dead", by: k ? k.name : null, took: take, keep: v.stack });
   setTimeout(() => endRun(v, "dead"), 1200);
 }

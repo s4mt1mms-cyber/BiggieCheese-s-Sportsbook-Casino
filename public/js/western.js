@@ -1248,7 +1248,7 @@ body.wwon{overflow:hidden}
     if (top < BUY_MIN) { G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwpz"><h2>Join game</h2><p>You need at least ${BUY_MIN} BB to buy in. Your balance: <b>${bal.toLocaleString()} BB</b>.</p><div class="wwrow"><button data-ww="menu">Back</button></div></div></div>`; return; }
     const v = Math.max(BUY_MIN, Math.min(top, G.buyAmt || Math.min(1000, top)));
     G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwsc"><h2>Join game</h2>
-      <p style="margin:0 0 4px">Kill someone and take their stack: all of it if they had no kills yet, half if they had one or more. <b>No cashing out:</b> your run only ends when you die, and leaving counts as dying.</p>
+      <p style="margin:0 0 4px">Every kill adds your buy-in to your stack. When you die you walk out with <b>half your stack</b>, so 1 kill breaks even. <b>No cashing out:</b> your run only ends when you die, and leaving counts as dying.</p>
       <div class="wwbuy"><div class="wwbuyv"><span>Buy-in</span><b id="wwBuyV">${v.toLocaleString()} BB</b><small>${n} in town</small></div>
         <input type="range" id="wwBuy" min="${BUY_MIN}" max="${top}" step="100" value="${v}">
         <div class="wwbuyq">${[100, 500, 1000, 2500, 5000, 10000].filter(x => x <= top).map(x => `<button data-wwbq="${x}">${x >= 1000 ? x / 1000 + "K" : x}</button>`).join("")}</div></div>
@@ -1263,7 +1263,7 @@ body.wwon{overflow:hidden}
     G.state = "menu"; const f = (G.server && G.server.ffa) || {}, n = (G.server && G.server.n) || 0, left = f.end ? Math.max(0, f.end - Date.now()) : 0;
     G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwsc"><h2>Join game</h2><div class="wwmm">
       <button class="pri${f.up ? "" : " soon"}" data-ww="ffa"><span>Free for all</span><small>Free · 5-minute matches · winner gets 1,000 BB · ${f.n || 0} playing${left && f.n ? ` · ${Math.floor(left / 60000)}:${String(Math.floor(left / 1000) % 60).padStart(2, "0")} left` : ""}</small></button>
-      <button data-ww="buyin"><span>Buy-in shootout</span><small>100 – 10,000 BB · take their stack · ${n} in town</small></button></div>
+      <button data-ww="buyin"><span>Buy-in shootout</span><small>100 – 10,000 BB · each kill +your buy-in · ${n} in town</small></button></div>
       <div class="wwrow"><button data-ww="menu">Back</button><button data-ww="rules">Rules</button></div></div></div>`;
   }
   async function joinFfa() {
@@ -1276,10 +1276,10 @@ body.wwon{overflow:hidden}
       <div><b>Health.</b> Everyone has 100 HP (shown over their heads). After 7 seconds without getting hit you heal about 6 HP a second.</div>
       <div><b>Damage.</b> Body shot 34 (3 to kill). Past 40 m a body shot does 25. <b>Headshot 100: one shot kills.</b></div>
       <div><b>Same hitbox.</b> Every character is hit the same, whatever skin they wear: a body cylinder and a head ball, a little bigger than the models.</div>
-      <div><b>Kills.</b> You take the victim's stack: all of it if they had no kills yet, half if they had one or more. Their run ends.</div>
+      <div><b>Kills.</b> Every kill adds your own buy-in to your stack (whatever the other player bought in for). Their run ends.</div>
       <div><b>The car.</b> 500 HP. Getting hit by it hurts more the faster it's going (near full speed kills). You can shoot the driver. Shoot it to wreck it: everyone inside or within 6 m dies, and whoever wrecked it gets the kills. It comes back after 1 minute.</div>
       <div><b>Guns.</b> Revolver: 6 shots, 34 body (25 past 40 m), 100 head. Sniper (switch with the gun key): bolt action, one shot then about 2 seconds to work the bolt, and any hit kills (100 body, 150 head, any range). From the hip the sniper has no crosshair and sprays everywhere; the moment you aim in it zooms 5× and is dead accurate. Crouching shrinks you (head at 1.1 m) and slows you down.</div>
-      <div><b>Ending a run.</b> There's no cashing out: your run ends when you die. You walk out with half your stack if you got a kill, nothing if you didn't. Leaving the match counts as dying (the last person who hit you gets the kill). 3 seconds of spawn protection when you spawn.</div>
+      <div><b>Ending a run.</b> There's no cashing out: your run ends when you die. You walk out with half your stack: no kills = half your buy-in back, 1 kill = break even, 3 kills = double. Leaving the match counts as dying (the last person who hit you gets the kill). 3 seconds of spawn protection when you spawn.</div>
       <div><b>Free for all.</b> Free to play, 5-minute matches, hit Respawn 3 seconds after dying. A kill is 100 points, a headshot kill 150. Most points when the clock runs out wins 1,000 BB, paid only if 2 or more people played in that match.</div>
       </div><div class="wwrow"><button class="pri" data-ww="join">Back</button></div></div></div>`;
     G.ui.querySelector(".wwrules div:last-child").innerHTML = `<b>Free for all.</b> Free to play, 5-minute matches, hit Respawn 3 seconds after dying. Every kill is 100 points, plus 50 more if it was a headshot (150). Most points when the clock runs out wins 1,000 BB, paid only if 2 or more people played in that match. Every player's score is on the board on the right.`;
@@ -1378,7 +1378,7 @@ body.wwon{overflow:hidden}
             <div class="wwgrid"><button class="pri" id="wwRsp" data-ww="respawn" disabled>Respawn in ${Math.ceil(wait / 1000)}</button><button data-ww="leave">Leave match</button></div></div></div>`;
           const tick = () => { const b = G && G.ui.querySelector("#wwRsp"); if (!b) return; const left = wait - (performance.now() - t0); if (left <= 0) { b.disabled = false; b.textContent = "Respawn"; return; } b.textContent = `Respawn in ${Math.ceil(left / 1000)}`; setTimeout(tick, 200); }; tick(); return; }
         G.mode = "dead"; sesAdd("deaths", 1); hudPvp(false); G.state = "menu";
-        G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwpz"><h2>Shot down</h2><p>${m.by ? `<b>${esc(m.by)}</b> got you and took <b>${m.took.toLocaleString()} BB</b>.` : "You're out."}</p><p>You walk out with <b>${m.keep.toLocaleString()} BB</b>.</p><p class="wwnetmsg" style="opacity:.7">Paying out…</p></div></div>`; return; }
+        G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwpz"><h2>Shot down</h2><p>${m.by ? `<b>${esc(m.by)}</b> got you.` : "You're out."}</p><p>You walk out with half your stack: <b>${m.keep.toLocaleString()} BB</b>.</p><p class="wwnetmsg" style="opacity:.7">Paying out…</p></div></div>`; return; }
       case "out": { try { document.exitPointerLock && document.exitPointerLock(); } catch (_) {} if (m.ffa) { saveStats(); pvpEnd(true); showMenu(false); return; }
         const net = m.amt - (m.buy || N.tier || 0); sesAdd("bb", net); sesAdd("matches", 1); saveStats(); pvpEnd(true);
         const why = m.reason === "dead" ? "Walked out" : m.reason === "quit" ? "Left the match" : "Match ended";
@@ -1398,7 +1398,7 @@ body.wwon{overflow:hidden}
   /* leave from the pause menu: the server keeps your body 10 s (or counts it as a death if you were hit in the last 10 s) */
   function leaveMatch() { const N = G.net; if (N) N.leaving = true; const wasFfa = N && N.ffa; try { N && N.ws && N.ws.close(); } catch (_) {} pvpEnd(true);
     if (wasFfa) { saveStats(); showMenu(false); return; }
-    G.state = "menu"; G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwpz"><h2>Left the match</h2><p>Leaving counts as dying: you walk out with half your stack if you got a kill, nothing if you didn't. It shows up in your balance in a few seconds.</p>
+    G.state = "menu"; G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwpz"><h2>Left the match</h2><p>Leaving counts as dying: you walk out with half your stack. It shows up in your balance in a few seconds.</p>
       <div class="wwgrid"><button class="pri" data-ww="menu">Main menu</button><button class="dang" data-ww="exit">Exit to casino</button></div></div></div>`; }
 
   /* ---- remote players: their equipped skin (or an animal), standing, walking, aiming, emoting ---- */
