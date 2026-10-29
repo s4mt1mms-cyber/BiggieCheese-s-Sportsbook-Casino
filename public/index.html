@@ -6419,7 +6419,7 @@ function abLv(k,id){let t=0;const cs=myCards(id||S.me);for(const x in cs){if(!(N
 const abV=(k,id)=>{const L=abLv(k,id);if(!L)return 0;const a=ABV[k]||[];const v=a[Math.min(L,a.length)-1];return v==null?0:v};
 /* one card's rarity roll */
 /* owner Oct 29 2:47 AM: each card pulled comes as 1 copy (70%), 2 (24%), 3 (5%) or 10 (1%) */
-const V2_MULT=[[1,.70],[2,.20],[0,.05],[3,.04],[5,.01]];/* owner Oct 29 2:53 AM: per pull 70% 1 copy · 20% 2 · 5% a shard (0) · 4% 3 · 1% 5; a NEW card on a shard roll just unlocks (×1) */
+const V2_MULT=[[1,.75],[2,.17],[0,.05],[3,.015],[5,.005]];/* owner Oct 29 3:02 AM: per pull 75% 1 copy · 17% 2 · 5% a shard (0) · 1.5% 3 · 0.5% 5; a NEW card on a shard roll just unlocks (×1) */
 function v2Mult(){let x=pkRand();for(const [n,p] of V2_MULT){x-=p;if(x<0)return n}return 1}
 function v2Roll(){let x=pkRand()*(V2_ODDS.reduce((a,b)=>a+b,0)+V2_CURSE);for(let r=0;r<7;r++){x-=V2_ODDS[r];if(x<0)return r}return "curse"}
 /* open one pack against a prefs doc D: [{cid,r,kind:"new"|"shard"|"curse2"}] + the new pity count. Owned = any key of that card in D.cards. */
@@ -6428,7 +6428,7 @@ function v2Open(D){const P=v2Pool(),cs=(D&&D.cards)||{},own=new Set(Object.keys(
     if(r==="curse"){c=P.curse;r=3}
     if(!c){let k=r;while(k>0&&!P.by[k].length)k--;const L=P.by[k];if(!L.length)continue;c=L[Math.floor(pkRand()*L.length)]}
     if(c.r===6)pity=0;
-    const had=own.has(c.id),m=c.abil==="curse"?1:v2Mult(),kind=had?(c.abil==="curse"?"curse2":m===0?"wild":"shard"):"new";/* "shard" = one more copy of the card; "wild" (owner Oct 29 2:25 AM: 2% of duplicates) = a wildcard shard of its rarity instead */if(!had)own.add(c.id);
+    const had=own.has(c.id),m=c.abil==="curse"?1:v2Mult(),kind=had?(c.abil==="curse"?"curse2":m===0?"wild":"shard"):"new";/* "shard" = more copies of the card; "wild" (V2_MULT shard roll, duplicates only) = a wildcard shard of its rarity instead */if(!had)own.add(c.id);
     out.push({cid:c.id,r:c.r,kind,n:Math.max(1,m)})}
   out.sort((a,b)=>a.r-b.r);return{out,pity}}
 async function v2Buy1(lab){let done=null;if(S._pkBusy||!S.me||!db)return;if(S.readOnly)return toast("View only. Ask the commish for access.");if(!v2Ready())return toast("Cards are still loading. Try again in a second.");
@@ -6560,7 +6560,7 @@ function v2Odds(){return [[CR[0],V2_ODDS[0]],[CR[1],V2_ODDS[1]],[CR[2],V2_ODDS[2
 const v2Per=p=>{const k=100/(V2_PACK.n*p);return k<=1.05?"every pack":`1 in ${k>=100?Math.round(k).toLocaleString():+k.toFixed(1)} packs`};
 function v2ShopHtml(){const q=S.prefs[S.me]||{},bal=Math.floor(ledger().balOf(S.me)),sh=shardsOf(S.me),fr=Math.max(0,Math.floor(Number(q.freeV2)||0)),qty=fr?1:(Number(S.pk.qty)||1),pr=v2Price(),pity=Math.floor(Number(q.v2pity)||0),P=v2Pool();
   const cnt=r=>r==="c"?(P.curse?1:0):P.by[r].length;
-  return `<p class="small muted">One pack for everyone, with every Multiverse, Fantasyland and ChudBootyCheeks card in it. No card ever sells out. A card you don't have yet unlocks at LV 1. A card you already have adds a copy to its bar (2% of the time it's a wildcard <b>shard</b> instead). Fill the bar, then open the card in your collection and tap Upgrade.</p>
+  return `<p class="small muted">One pack for everyone, with every Multiverse, Fantasyland and ChudBootyCheeks card in it. No card ever sells out. A card you don't have yet unlocks at LV 1. A card you already have adds copies to its bar: 75% one copy · 17% two · 1.5% three · 0.5% five, and 5% of the time a wildcard <b>shard</b> of its rarity instead. A new card comes with the same extra copies (a shard roll just unlocks it). Fill the bar, then open the card in your collection and tap Upgrade.</p>
   <div class="pkqty"><span class="stlbl">Packs at a time</span><div class="seg">${[1,3,5,10].map(n=>`<button type="button" data-pkqty="${n}" aria-pressed="${(Number(S.pk.qty)||1)===n}">${n}×</button>`).join("")}</div></div>
   <div class="v2pk"><div class="pack" style="--rc:${CR[5].c};--rg:${CR[5].g}"><div class="packart pt5"><i class="crimp t"></i><i class="crimp b"></i><div class="packfoil"><span class="pklogo">${LOGO.brand}</span><span class="pkem">🧀</span><span class="pkset">All collections</span><b>${esc(V2_PACK.name)}</b><span class="pkn">5 cards</span></div></div>
     <div class="pkinfo"><button type="button" class="btn" data-v2buy ${(bal<pr*qty&&!fr)||!v2Ready()?"disabled":""}>${fr?`🎁 Open free (${fr} left)`:`Open${qty>1?" "+qty+"×":""} · ${(pr*qty).toLocaleString()} BB${pr<V2_PACK.price?` <s class="muted">${(V2_PACK.price*qty).toLocaleString()}</s>`:""}`}</button>
@@ -7360,6 +7360,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:170,d:"Oct 29",t:[["🎴","Updated pull odds for every card: 75% one copy, 17% two copies, 1.5% three copies, 0.5% five copies, and a 5% chance a duplicate turns into a wildcard shard"]]},
  {v:169,d:"Oct 29",t:[["🎴","New pull odds for every card: 70% one copy, 20% two copies, 4% three copies, 1% five copies, and a 5% chance a duplicate turns into a wildcard shard"]]},
  {v:168,d:"Oct 29",t:[["💎","Elite shards now cost 150,000 and Grail shards 1,000,000 in the shard store"]]},
  {v:167,d:"Oct 29",t:[["🃏","Cards now sometimes come in multiples: ×2 (24%), ×3 (5%) or a big ×10 (1%)"],["📚","Your collection sorts by rarity, then level, then how many copies are stacked. Tap “Ready to upgrade first” to put cards you can level up on top"]]},
