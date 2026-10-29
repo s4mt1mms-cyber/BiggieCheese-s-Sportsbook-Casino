@@ -155,7 +155,7 @@ let M = null;
 function ffaRow(p) { let e = M.rows.get(p.pid); if (!e) { e = { pid: p.pid, name: p.name, pts: 0, kills: 0, hs: 0, deaths: 0, at: now() }; M.rows.set(p.pid, e); } e.name = p.name; return e; }
 function ffaStart(delay) { const t = now(); M = { id: t, start: t + (delay || 0), end: t + (delay || 0) + FFA_MS, rows: new Map() }; for (const p of ROOM.players.values()) ffaRow(p); }
 function ffaBoard() { return [...M.rows.values()].sort((a, b) => b.pts - a.pts || b.hs - a.hs || a.at - b.at); }
-function ffaInfo() { if (!M) return null; return { id: M.id, start: M.start, end: M.end, top: ffaBoard().slice(0, 5).map(e => [e.name, e.pts]) }; }
+function ffaInfo() { if (!M) return null; return { id: M.id, start: M.start, end: M.end, top: ffaBoard().map(e => [e.name, e.pts]) }; }
 function ffaRespawn(p) {
   if (!FFA || p.ended || p.alive) return; const sp = pickSpawn(ROOM, p);
   Object.assign(p, { x: sp[0], y: 0, z: sp[1], yaw: sp[2], alive: true, hp: HP, prot: now() + PROT_MS, am: { rv: MAG, sn: MAGS.sn }, reloadUntil: 0, lastHitBy: null, lastHitAt: 0, hist: [[now(), sp[0], 0, sp[1]]] });
@@ -165,7 +165,7 @@ async function ffaFinish() {
   const m = M, board = ffaBoard(), w = board[0], players = m.rows.size, paid = !!(w && w.pts > 0 && players >= 2);
   if (paid) { try { await db.doc("bank/wwffa_" + m.id).create({ kind: "wwffa", from: "house", to: w.pid, amt: FFA_PRIZE, at: now(), pts: w.pts, players, note: "BiggieTown free-for-all win", wv: "srv." + now() }); }
     catch (e) { console.error("ffa prize", e); } }
-  broadcast(ROOM, { t: "ffaend", board: board.slice(0, 8).map(e => [e.name, e.pts, e.kills, e.hs]), winner: w ? w.name : null, wpid: w ? w.pid : null, paid, prize: FFA_PRIZE, players, next: FFA_GAP });
+  broadcast(ROOM, { t: "ffaend", board: board.map(e => [e.name, e.pts, e.kills, e.hs]), winner: w ? w.name : null, wpid: w ? w.pid : null, paid, prize: FFA_PRIZE, players, next: FFA_GAP });
   M = null; if (ROOM.players.size) { ffaStart(FFA_GAP); setTimeout(() => { for (const p of ROOM.players.values()) if (p.alive) { p.alive = false; ffaRespawn(p); } }, FFA_GAP); }
 }
 

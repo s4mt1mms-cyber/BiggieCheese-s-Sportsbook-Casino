@@ -47,6 +47,8 @@ body.wwon{overflow:hidden}
 .wwscope u{position:absolute;left:50%;top:50%;width:4px;height:4px;border-radius:50%;background:#050403;margin:-2px 0 0 -2px}
 .wwscope b{position:absolute;left:50%;top:50%;width:5px;height:5px;margin:-2.5px 0 0 -2.5px;border-radius:50%;background:#ff3b30;box-shadow:0 0 6px #ff3b30}
 .wwx.nox{opacity:0}
+.wwlb{position:absolute;right:max(14px,env(safe-area-inset-right));top:max(92px,calc(env(safe-area-inset-top) + 84px));min-width:150px;max-width:44%;background:rgba(20,12,6,.6);border:1px solid rgba(200,150,62,.6);border-radius:9px;padding:4px 8px;pointer-events:none;font:700 12px Barlow;color:#ffe9b8;display:none}
+.wwhud.pvp .wwlb{display:block}.wwlb div{display:flex;justify-content:space-between;gap:10px;line-height:1.45}.wwlb div.me{color:#9dffb0}.wwlb span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wwthp{position:relative;display:block;width:76px;height:10px;border-radius:6px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.3);overflow:hidden;margin-top:2px;font-style:normal}
 .wwthp i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(#7dff8c,#2fa84a)}.wwthp.low i{background:linear-gradient(#ff8a7a,#c0281c)}
 .wwthp u{position:absolute;right:4px;top:-2px;font:800 9px Barlow;text-decoration:none;text-shadow:0 1px 2px #000;color:#fff}
@@ -1108,7 +1110,9 @@ body.wwon{overflow:hidden}
   function headBlocked(p) { for (const c of nearCols(p.x, p.z)) { if (c.dr && c.dr.open) continue; if (c.y0 > p.y + 1.15 && c.y0 < p.y + 1.75 && p.x + .3 > c.x0 && p.x - .3 < c.x1 && p.z + .3 > c.z0 && p.z - .3 < c.z1) return true; } return false; }
   function stepPlayer(dt) {
     const p = G.p, k = G.keys; let fx = 0, fz = 0, run = false; if (G.dead) { G.moving = 0; return; }
-    { const want = !!((G.act.crouch && !G.set.crToggle) || G.crTog) && !(G.car && G.car.mine); G.crouch = want || (G.crK > .5 && headBlocked(p)); G.crK = (G.crK || 0) + ((G.crouch ? 1 : 0) - (G.crK || 0)) * Math.min(1, dt * 12); }
+    if (G.jumpQ && G.crK > .3) { G.crTog = false; G.crSup = true; const cb = G.hud.querySelector("#wwBC"); if (cb) cb.classList.remove("lit"); } /* jumping stands you up (owner) */
+    if (!G.act.crouch) G.crSup = false;
+    { const want = !!((G.act.crouch && !G.set.crToggle && !G.crSup) || G.crTog) && !(G.car && G.car.mine); G.crouch = want || (G.crK > .5 && headBlocked(p)); G.crK = (G.crK || 0) + ((G.crouch ? 1 : 0) - (G.crK || 0)) * Math.min(1, dt * 12); }
     if (G.mantle) { const m = G.mantle; m.t += dt / .34; const q = Math.min(1, m.t), up = Math.min(1, q * 1.6), fw = Math.max(0, (q - .45) / .55);
       p.y = m.y0 + (m.y1 - m.y0) * up * up * (3 - 2 * up); p.x = m.x0 + (m.x1 - m.x0) * fw; p.z = m.z0 + (m.z1 - m.z0) * fw; p.vx = p.vz = p.vy = 0;
       if (q >= 1) { G.mantle = null; p.ground = true; SFX.step(true); } G.jumpQ = false; G.moving = 0; return; }
@@ -1201,7 +1205,9 @@ body.wwon{overflow:hidden}
   /* free-for-all HUD: your points, the clock, the leader; the end-of-match board */
   function ffaChip() { const N = G.net, e = G && G.hud.querySelector("#wwBB"); if (!e || !N || !N.ffa) return; const f = N.fi || {}, t = Date.now() + (N.off || 0);
     const wait = f.start && t < f.start, left = Math.max(0, (wait ? f.start : f.end || t) - t), mm = `${Math.floor(left / 60000)}:${String(Math.floor(left / 1000) % 60).padStart(2, "0")}`, lead = (f.top || [])[0];
-    e.className = "wwchip wwbb"; e.innerHTML = `<b>${(N.pts || 0).toLocaleString()}</b> pts · ${wait ? "next match " : ""}${mm}${lead && lead[1] > 0 ? ` · 1st ${esc(lead[0])} ${lead[1]}` : ""}`; }
+    e.className = "wwchip wwbb"; e.innerHTML = `<b>${(N.pts || 0).toLocaleString()}</b> pts · ${wait ? "next match " : ""}${mm}`;
+    let lb = G.hud.querySelector("#wwLb"); if (!lb) { lb = document.createElement("div"); lb.id = "wwLb"; lb.className = "wwlb"; G.hud.appendChild(lb); }
+    const h = (f.top || []).map((r, i) => `<div${r[0] === N.name ? ' class="me"' : ""}><span>${i + 1}. ${esc(r[0])}</span><b>${r[1]}</b></div>`).join(""); if (lb._h !== h) { lb._h = h; lb.innerHTML = h; } }
   function ffaEnd(m) {
     const N = G.net; sesAdd("matches", 1); saveStats(); const me = N && N.pid, rows = (m.board || []).map((r, i) => `<tr${r[0] === (N && N.name) ? ' class="me"' : ""}><td>${i + 1}</td><td>${esc(r[0])}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join("");
     const won = m.wpid && m.wpid === me;
@@ -1276,6 +1282,7 @@ body.wwon{overflow:hidden}
       <div><b>Ending a run.</b> There's no cashing out: your run ends when you die. You walk out with half your stack if you got a kill, nothing if you didn't. Leaving the match counts as dying (the last person who hit you gets the kill). 3 seconds of spawn protection when you spawn.</div>
       <div><b>Free for all.</b> Free to play, 5-minute matches, hit Respawn 3 seconds after dying. A kill is 100 points, a headshot kill 150. Most points when the clock runs out wins 1,000 BB, paid only if 2 or more people played in that match.</div>
       </div><div class="wwrow"><button class="pri" data-ww="join">Back</button></div></div></div>`;
+    G.ui.querySelector(".wwrules div:last-child").innerHTML = `<b>Free for all.</b> Free to play, 5-minute matches, hit Respawn 3 seconds after dying. Every kill is 100 points, plus 50 more if it was a headshot (150). Most points when the clock runs out wins 1,000 BB, paid only if 2 or more people played in that match. Every player's score is on the board on the right.`;
   }
   function netMsg(t) { const e = G.ui.querySelector(".wwnetmsg"); if (e) e.textContent = t; }
   function showBusy(t) { G.state = "menu"; G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwpz"><h2>BiggieTown</h2><p class="wwnetmsg">${esc(t)}</p></div></div>`; }
@@ -1384,6 +1391,7 @@ body.wwon{overflow:hidden}
     }
   }
   function pvpEnd(keepConn) {
+    { const lb = G.hud.querySelector("#wwLb"); if (lb) lb.remove(); }
     const N = G.net; G.mode = "lobby"; hudPvp(false); G.cashing = false; if (N) { for (const R of N.pl.values()) rmRemote(R); N.pl.clear(); }
     setLive(1); setBB(G.ses.bb); stopOwnEmote(); if (!keepConn && N && N.ws) { N.leaving = true; try { N.ws.close(); } catch (_) {} }
   }
