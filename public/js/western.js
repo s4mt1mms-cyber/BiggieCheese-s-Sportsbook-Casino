@@ -952,7 +952,7 @@ body.wwon{overflow:hidden}
       sg.traverse(o => { if (o.isMesh) { o.renderOrder = 10; } });
     }
     G.ray = new T.Raycaster();
-    G.wpn = "rv"; G.amm = { rv: 6, sn: 5 }; G.ammo = 6; G.reloading = 0; G.lastShot = 0; G.recoil = 0; G.bob = 0; G.hp = 100;
+    G.wpn = "rv"; G.amm = { rv: 6, sn: 1 }; G.ammo = 6; G.reloading = 0; G.lastShot = 0; G.recoil = 0; G.bob = 0; G.hp = 100;
     G.fireTex = cvT(64, 64, (g, w) => { const r = g.createRadialGradient(32, 32, 0, 32, 32, 32); r.addColorStop(0, "rgba(255,245,200,1)"); r.addColorStop(.35, "rgba(255,150,40,.9)"); r.addColorStop(1, "rgba(200,40,0,0)"); g.fillStyle = r; g.fillRect(0, 0, w, w); });
     G.puffTex = cvT(64, 64, (g, w) => { const r = g.createRadialGradient(32, 32, 0, 32, 32, 32); r.addColorStop(0, "rgba(210,180,140,.9)"); r.addColorStop(1, "rgba(210,180,140,0)"); g.fillStyle = r; g.fillRect(0, 0, w, w); });
     G.holeMat = new T.MeshBasicMaterial({ map: cvT(64, 64, (g, w) => { const r = g.createRadialGradient(32, 32, 0, 32, 32, 30); r.addColorStop(0, "rgba(10,6,2,1)"); r.addColorStop(.35, "rgba(20,10,4,.9)"); r.addColorStop(.6, "rgba(60,40,20,.4)"); r.addColorStop(1, "rgba(0,0,0,0)"); g.fillStyle = r; g.fillRect(0, 0, w, w); }), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4 });
@@ -1034,7 +1034,7 @@ body.wwon{overflow:hidden}
       const dmin = others.length ? Math.min(...others.map(o => Math.hypot(o[0] - sp[0], o[1] - sp[1]))) : 99;
       if (others.length && (dmin < 15 || others.some(o => sees(o, sp)))) return; const sc = dmin + Math.random() * 12; if (sc > bs) { bs = sc; best = i; } });
     if (best == null) best = Math.floor(Math.random() * SPAWNS.length); G.lastSpawn = best; return SPAWNS[best]; }
-  function spawnPlayer() { if (G.car && G.car.mine) { G.car.mine = false; G.car.driver = 0; } const sp = G.started ? pickSpawn([]) : SPAWNS[0]; G.p = { x: sp[0], y: 0, z: sp[1], vy: 0, ground: true }; G.yaw = sp[2]; G.pitch = 0; G.amm = { rv: 6, sn: 5 }; G.ammo = MAGS[G.wpn || "rv"]; G.reloading = 0; G.aimToggle = false; G.aimHeld = false; }
+  function spawnPlayer() { if (G.car && G.car.mine) { G.car.mine = false; G.car.driver = 0; } const sp = G.started ? pickSpawn([]) : SPAWNS[0]; G.p = { x: sp[0], y: 0, z: sp[1], vy: 0, ground: true }; G.yaw = sp[2]; G.pitch = 0; G.amm = { rv: 6, sn: 1 }; G.ammo = MAGS[G.wpn || "rv"]; G.reloading = 0; G.aimToggle = false; G.aimHeld = false; }
   /* the car is solid (owner Oct 28): an oriented box ±1 × ±2.2, roof at 1.55 you can stand on */
   const CAR_HX = 1.0, CAR_HZ = 2.2, CAR_TOP = 1.55;
   function carLocal(x, z) { const c = G.car, dx = x - c.x, dz = z - c.z, co = Math.cos(c.yaw), si = Math.sin(c.yaw); return [dx * co - dz * si, dx * si + dz * co]; }
@@ -1108,7 +1108,7 @@ body.wwon{overflow:hidden}
   }
 
   /* ---------------- shooting ---------------- */
-  const MAGS = { rv: 6, sn: 5 }, RLS = { rv: 1.7, sn: 2.6 }, FIRE_GAP = { rv: 260, sn: 1300 };
+  const MAGS = { rv: 6, sn: 1 }, RLS = { rv: 1.7, sn: 2.0 }, FIRE_GAP = { rv: 260, sn: 400 }; /* sniper = bolt action (owner): one round, ~2 s to work the bolt after every shot */
   function swapGun() { if (G.state !== "play" || (G.car && G.car.mine)) return; G.amm[G.wpn] = G.ammo; G.wpn = G.wpn === "rv" ? "sn" : "rv"; G.ammo = G.amm[G.wpn]; G.reloading = 0;
     G.aimToggle = false; G.gun.visible = G.wpn === "rv"; G.gunS.visible = G.wpn === "sn"; G.recoil = .6; SFX.reload(); drawAmmo(); banner("", G.wpn === "sn" ? "Sniper · aim in to scope (5×)" : "Revolver");
     if (G.mode === "pvp") nsend({ t: "wpn", w: G.wpn }); const b = G.hud.querySelector("#wwBW"); if (b) b.textContent = G.wpn === "sn" ? "REVOLVER" : "SNIPER"; }
@@ -1133,6 +1133,7 @@ body.wwon{overflow:hidden}
     for (const w of G.wins) { if (w.broken) continue; const r = rayBox(o, dir, w.box); if (r && r.t < best.t) best = { t: r.t, kind: "glass", w }; }
     if (G.car && G.car.alive) { const t = carRay(o, dir); if (t != null && t < best.t) best = { t, kind: "car" }; }
     if (dir.y < 0) { const t = -o.y / dir.y; if (t < best.t) best = { t, kind: "ground", n: new T.Vector3(0, 1, 0) }; }
+    if (sn) setTimeout(() => { if (G && G.wpn === "sn") reload(); }, 120); /* work the bolt */
     const hp = o.clone().addScaledVector(dir, best.t);
     if (["bottle", "bell", "gong", "weed"].includes(best.kind)) sesAdd("hits", 1);
     if (best.kind === "bottle") { breakBottle(best.b, dir); hitMark(); sesAdd("bottles", 1); }
@@ -1219,7 +1220,7 @@ body.wwon{overflow:hidden}
       <div><b>Same hitbox.</b> Every character is hit the same, whatever skin they wear.</div>
       <div><b>Kills.</b> You take the victim's stack: all of it if they had no kills yet, half if they had one or more. Their run ends.</div>
       <div><b>The car.</b> 1,000 HP. Run someone over to kill them. Shoot it to wreck it: everyone inside or within 6 m dies, and whoever wrecked it gets the kills. It comes back after 1 minute.</div>
-      <div><b>Guns.</b> Revolver: 6 shots, 34 body (25 past 40 m), 100 head. Sniper (switch with the gun key): 5 shots, slow bolt, 80 body, 150 head at any range. From the hip the sniper has no crosshair and sprays everywhere; the moment you aim in it zooms 5× and is dead accurate. Crouching shrinks you (head at 1.1 m) and slows you down.</div>
+      <div><b>Guns.</b> Revolver: 6 shots, 34 body (25 past 40 m), 100 head. Sniper (switch with the gun key): bolt action, one shot then about 2 seconds to work the bolt, 80 body, 150 head at any range. From the hip the sniper has no crosshair and sprays everywhere; the moment you aim in it zooms 5× and is dead accurate. Crouching shrinks you (head at 1.1 m) and slows you down.</div>
       <div><b>Ending a run.</b> There's no cashing out: your run ends when you die. You walk out with half your stack if you got a kill, nothing if you didn't. Leaving the match counts as dying (the last person who hit you gets the kill). 3 seconds of spawn protection when you spawn.</div>
       </div><div class="wwrow"><button class="pri" data-ww="join">Back to buy-in</button></div></div></div>`;
   }
@@ -1270,7 +1271,7 @@ body.wwon{overflow:hidden}
         G.wins.forEach(w => fixGlass(w.i)); (m.glass || []).forEach(e => { const [i, st, u, v] = Array.isArray(e) ? e : [e, 2, .5, .5]; const w = G.wins[i]; if (!w) return;
           if (st === 1) crackGlass(i, u, v, false); else if (!w.broken) { w.broken = Date.now(); G.winMesh.setMatrixAt(i, new THREE.Matrix4().makeScale(0, 0, 0)); } }); G.winMesh.instanceMatrix.needsUpdate = true;
         if (G.car) { G.car.mine = false; if (m.car) carState(m.car, true); }
-        const s = m.spawn; G.p = { x: s[0], y: s[1], z: s[2], vy: 0, ground: true }; G.yaw = s[3]; G.pitch = 0; G.amm = { rv: 6, sn: 5 }; G.ammo = MAGS[G.wpn || "rv"]; G.reloading = 0; drawAmmo(); if (G.wpn === "sn") nsend({ t: "wpn", w: "sn" });
+        const s = m.spawn; G.p = { x: s[0], y: s[1], z: s[2], vy: 0, ground: true }; G.yaw = s[3]; G.pitch = 0; G.amm = { rv: 6, sn: 1 }; G.ammo = MAGS[G.wpn || "rv"]; G.reloading = 0; drawAmmo(); if (G.wpn === "sn") nsend({ t: "wpn", w: "sn" });
         G.prot = performance.now() + (m.prot || 0); N.startStack = m.tier; setBB(N.stack - N.tier);
         if (!N.pingT) N.pingT = setInterval(() => nsend({ t: "ping", c: Date.now(), rtt: N.rtt }), 2000);
         nsend({ t: "ping", c: Date.now() }); hudPvp(true); play(); banner("Draw!", `${m.tier.toLocaleString()} BB buy-in · last one standing wins`); return;
