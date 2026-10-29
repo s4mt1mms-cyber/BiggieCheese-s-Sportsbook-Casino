@@ -355,7 +355,7 @@ Fantasyland / ChudBootyCheeks. League Moments (`lm`) still works the old way (it
 - **Active cards** (`activeCards(id)`): every held card doing something (abilities, Joe Camel/Dragon dividends, Peter/Debby/Claire,
   Vector boost). Collection shows the list (`actListHtml`); `AB2_G` maps each AB2 key to its games (keep it complete when adding abilities); owned Common–SR ability cards still at LV 1 show as dimmed 🔒 "Turns on at LV 2" chips (`off`); each game page shows its own chips (`actBar(game)`: cr, rl, bj, hl, fp; the
   curse shows everywhere). Add new abilities there too.
-- **Presence**: "● N online" pill, green avatar rings — from existing prefs stamps (no extra writes).
+- **Presence**: "● N online" pill, green avatar rings — from existing prefs stamps (no extra writes). Since Oct 29 (owner) `prefs.act` {t: tab or "ww", at} (`actTick` writes after 4 s on a page + with the minute `mineAt` stamp; `actOf`, `ACT_LBL`) → the online list shows "● 🃏 Playing Blackjack" with a Watch/Join button (`data-actgo`: sets `bjWatch`/`rlWatch`/`gwSet`, or opens the live table tab).
 - **Admin tab**: invite codes, data import, card tools (per-card Preview + Add/Change image; a live preview of a card being added), previews.
   Uploading an image for a code-defined card (MV_ADD) writes `cardimg/<id>` and flags `imgOver.<id>` on that collection's meta doc,
   so the upload overrides the static WebP for everyone.

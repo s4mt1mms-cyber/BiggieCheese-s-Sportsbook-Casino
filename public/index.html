@@ -1711,6 +1711,7 @@ html.lite :is(.pmo-card.charge,.pmo-card.spinL,.pmo-card.spin,.pmo-pack) :is(.pm
 .onlpop{position:fixed;z-index:97;top:calc(env(safe-area-inset-top,0px) + 64px);right:max(12px,env(safe-area-inset-right,0px));width:min(300px,calc(100vw - 24px));max-height:min(70vh,calc(100dvh - env(safe-area-inset-top,0px) - 90px));overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;background:#0b0b0b;border:1px solid #3a3420;border-radius:14px;box-shadow:0 12px 40px #000c;padding:10px;display:flex;flex-direction:column;gap:2px}
 .onlhd{display:flex;align-items:center;justify-content:space-between;padding:2px 4px 8px}.onlx{background:none;border:0;color:var(--muted);font-size:16px;cursor:pointer;padding:4px 6px}
 .onlsub{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:10px 4px 4px;border-top:1px solid #2e2816;margin-top:6px}
+.onlrw{display:flex;align-items:center;gap:6px}.onlrw .onlrow{flex:1;min-width:0}.onlgo{flex:none;padding:4px 10px;font-size:13px}
 .onlrow{display:flex;align-items:center;gap:10px;background:none;border:0;color:var(--ink);font:inherit;text-align:left;padding:6px 4px;border-radius:8px;cursor:pointer}.onlrow:hover{background:#ffffff0d}
 .onlrow>span{display:flex;flex-direction:column;min-width:0}.onlrow b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.onlrow .pic{width:34px;height:34px;flex:none}
 .pkstage .packbig{width:min(58vw,240px,calc((100vh - 140px)*3/4));width:min(58vw,240px,calc((100dvh - 140px)*3/4))}
@@ -1983,7 +1984,7 @@ const role=id=>id&&id===S.meta.commissioner?"Commissioner":"Player";
 const logoOf=id=>{const ph=id&&(S.photos||{})[id];if(ph&&typeof ph==="string"&&ph.startsWith("data:image/"))return ph;const p=id&&S.prefs[id];if(!p)return null;if(typeof p.photo==="string"&&p.photo.startsWith("data:image/"))return p.photo;return null};
 const hasDragon=id=>{const c=((S.prefs||{})[id]||{}).cards||{};return Object.entries(c).some(([k,v])=>Number(v)>0&&(cardById(k)||{}).r===6)};
 /* online = seen in the last ~6.5 min (mining saves while the app is open on screen, plus live-table and chat stamps) */
-const seenAt=id=>{if(id===S.me)return Date.now();const p=(S.prefs||{})[id]||{};return Math.max(Number(p.mineAt)||0,Number(p.lv)||0,Number(p.chatSeen)||0,Number(p.liveT)||0,Number(p.bjSeq)||0)};
+const seenAt=id=>{if(id===S.me)return Date.now();const p=(S.prefs||{})[id]||{};return Math.max(Number(p.mineAt)||0,Number((p.act||{}).at)||0,Number(p.lv)||0,Number(p.chatSeen)||0,Number(p.liveT)||0,Number(p.bjSeq)||0)};
 const isOnline=id=>Date.now()-seenAt(id)<390000;
 const seenTxt=id=>{if(isOnline(id))return `<span class="onltxt">● Online</span>`;const t=seenAt(id);if(!t)return "";const m=Math.round((Date.now()-t)/60000);return `<span class="small muted">Last seen ${m<60?m+"m":m<1440?Math.round(m/60)+"h":Math.round(m/1440)+"d"} ago</span>`};
 const av=(id,cls="av")=>{const au=auraOf(id);if(!au){if(hasAb("shrex",id))cls+=" swamp";else if(hasDragon(id))cls+=" dglow";if(isOnline(id))cls+=" onl"}const u=logoOf(id),t=teamOf(id),h=u?`<img class="${cls}" src="${esc(u)}" alt="">`:t?badge(t).replace('class="badge"',`class="badge ${cls}"`):"";return au&&h?auWrap(au,h,"lt",{onl:isOnline(id)}):h};
@@ -7402,6 +7403,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:181,d:"Oct 29",t:[["🟢","Tap the green online count to see what everyone is doing (Blackjack, Roulette, Hold'em …) and jump in to watch or join"]]},
  {v:180,d:"Oct 29",t:[["⛪","BiggieTown: the church is a classic western chapel again (steeple and white cross). The upstairs loft is still there"]]},
  {v:179,d:"Oct 29",t:[["🤠","BiggieTown: joining a match right after the server wakes up no longer fails. It keeps trying for a few seconds instead"]]},
  {v:178,d:"Oct 29",t:[["⭐","Showcase: if you own more than one copy of a card, you can put it in more than one slot"]]},
@@ -8830,7 +8832,7 @@ setInterval(()=>{if(document.visibilityState!=="visible"){MINE_LAST=Date.now();r
   const q=S.prefs[S.me];if(Date.now()-(Number(q.mineAt)||0)<59000)return;
   /* one miner per device: other tabs see this tab's minute right away (the server copy only every 5 minutes) */
   try{if(Date.now()-(Number(localStorage.getItem("sb-mine-at"))||0)<59000)return;localStorage.setItem("sb-mine-at",String(Date.now()))}catch(_){}
-  if(!MINE_ON){const at=Date.now();q.mineAt=at;db.doc("prefs/"+S.me).update({mineAt:at}).catch(()=>{});return}
+  if(!MINE_ON){const at=Date.now(),act={t:actNow(),at};q.mineAt=at;q.act=act;db.doc("prefs/"+S.me).update({mineAt:at,act}).catch(()=>{});return}
   const n=(Number(q.mineEarn)||0)+MINE_PER,at=Date.now();q.mineEarn=n;q.mineAt=at;db.doc("prefs/"+S.me).update(tiAdd({mineEarn:n,mineAt:at},MINE_PER)).catch(()=>{q.mineEarn=n-MINE_PER});render()},5000);
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")MINE_LAST=Date.now()});
 /* background updates coalesce into at most one render per frame, and wait while a Flappy run is in progress */
@@ -9109,8 +9111,22 @@ function onlRender(){const b=$("#onlPill");if(!b)return;if(!S.me||!S.ready){b.hi
   const pop=$("#onlPop");if(pop)pop.innerHTML=onlHtml()}
 function onlHtml(){const ids=members().filter(id=>teamOf(id)),on=ids.filter(isOnline).sort((a,b)=>(a===S.me?-1:b===S.me?1:nm(a).localeCompare(nm(b))));
   const rec=ids.filter(id=>!isOnline(id)&&seenAt(id)).sort((a,b)=>seenAt(b)-seenAt(a)).slice(0,12);
-  const row=id=>`<button type="button" class="onlrow" data-member="${esc(id)}">${pic(id)}<span><b>${esc(nm(id))}${id===S.me?" <small class=\"muted\">(you)</small>":""}</b>${seenTxt(id)}</span></button>`;
+  const row=id=>{const a=isOnline(id)?actOf(id):null,L=a&&ACT_LBL[a];
+    return `<div class="onlrw"><button type="button" class="onlrow" data-member="${esc(id)}">${pic(id)}<span><b>${esc(nm(id))}${id===S.me?" <small class=\"muted\">(you)</small>":""}</b>${L?`<span class="onltxt">● ${L[0]} ${esc(L[1])}</span>`:seenTxt(id)}</span></button>${L&&L[2]&&id!==S.me?`<button type="button" class="btn small onlgo" data-actgo="${esc(id)}|${a}">${L[2]}</button>`:""}</div>`};
   return `<div class="onlhd"><b>🟢 Online now · ${on.length}</b><button type="button" class="onlx" data-onlx aria-label="Close">✕</button></div>${on.map(row).join("")||`<div class="small muted">Nobody right now.</div>`}${rec.length?`<div class="onlsub">Recently active</div>${rec.map(row).join("")}`:""}`}
+/* what each online player is doing (owner Oct 29): prefs.act {t: tab, at} written when you settle on a page (4 s) and with the minute presence stamp.
+   Online list: "● 🃏 Blackjack" + Watch (blackjack, roulette, craps, High-Low, solo Russian Roulette) or Join (live Hold'em / Russian Roulette tables). */
+const ACT_LBL={blackjack:["🃏","Playing Blackjack","Watch"],roulette:["🎡","Playing Roulette","Watch"],craps:["🎲","Playing Craps","Watch"],hilo:["🔼","Playing High-Low","Watch"],slots:["🎰","Playing Slots"],rr:["🔫","At Russian Roulette","Join"],th:["♠️","At Texas Hold'em","Join"],flappy:["🧀","At the Cheese Farm"],packs:["📚","Looking at cards"],shop:["🛒","In the Shop"],guide:["📖","In the Card Guidebook"],nfl:["🏈","Betting NFL"],nba:["🏀","Betting NBA"],nhl:["🏒","Betting NHL"],board:["📊","In the Sportsbook"],futures:["📈","Looking at futures"],bank:["🏦","At the Bank"],aura:["✨","In the Aura Shop"],chat:["💬","In chat"],standings:["🏆","Checking standings"],ww:["🤠","In BiggieTown"]};
+const actNow=()=>document.body.classList.contains("wwon")?"ww":S.tab;
+const actOf=id=>{if(id===S.me)return actNow();const a=((S.prefs||{})[id]||{}).act;return a&&a.t&&Date.now()-(Number(a.at)||0)<390000?a.t:null};
+function actTick(force){if(!S.me||!db||!S.prefs[S.me]||S.readOnly||document.visibilityState!=="visible")return;const t=actNow(),now=Date.now();
+  if(t!==S._actT){S._actT=t;S._actSince=now;return}const cur=S.prefs[S.me].act||{};if(!force&&cur.t===t)return;if(now-(S._actSince||0)<4000)return;
+  const v={t,at:now};S.prefs[S.me].act=v;db.doc("prefs/"+S.me).update({act:v}).catch(()=>{})}
+setInterval(()=>actTick(false),2000);
+document.addEventListener("click",async e=>{const b=e.target.closest("[data-actgo]");if(!b)return;const[id,t]=b.dataset.actgo.split("|");onlOpen(false);
+  S.tab=t;try{localStorage.setItem("sab-tab",t)}catch(_){}
+  if(t==="blackjack"){await lvReady(id);S.bjWatch=id;S._bjSig=null;S._bjVw=null;render();bjBeat()}else if(t==="roulette"){await lvReady(id);S.rlWatch=id;render();bjBeat()}
+  else if(GW_GAMES[t]&&t!=="rr"){render();gwSet(t,id)}else render();window.scrollTo(0,0)});
 function onlOpen(v){let pop=$("#onlPop");const b=$("#onlPill");if(b)b.setAttribute("aria-expanded",String(!!v));
   if(!v){if(pop)pop.remove();return}
   if(!pop){pop=document.createElement("div");pop.id="onlPop";pop.className="onlpop";pop.setAttribute("role","dialog");pop.setAttribute("aria-label","Who's online");document.body.appendChild(pop)}
