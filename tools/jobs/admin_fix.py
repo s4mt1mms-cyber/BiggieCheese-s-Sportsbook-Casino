@@ -115,6 +115,24 @@ elif fix == "drew10":
     # Oct 29 (owner): #CTESPN gets 10 "Drew · PBA Chrome Auto" cards (mv-art-1) as a gift; their page adds them after the card reset (cardGiftCheck)
     fs.collection("prefs").document("u_dcpiJ9m7xP0UTtjQUb3V7w").update({"cardGift": {"id": "drew10", "cid": "mv-art-1", "n": 10, "note": "A gift from BiggieCheese"}, "wv": "fix." + str(int(time.time()))})
     print("cardGift set")
+elif fix == "statreset2":
+    # Oct 29 (owner, 9:49 AM): reset all scoreboards again. Every player's stat baselines (prefs.sb0) are re-taken from the current fields
+    # (the app shows value - sb0), the best-since-reset Flappy score starts at 0, and the BiggieTown bottle-challenge best time is cleared
+    # (kept in wwBest0). Balances untouched. Betting records reset via STAT_RESET_AT in index.html.
+    def n(x, k): v = x.get(k); return v if isinstance(v, (int, float)) else 0
+    def crsum(b):
+        if isinstance(b, dict): return sum(v for v in b.values() if isinstance(v, (int, float)))
+        return 0
+    cnt = 0; now = int(time.time() * 1000)
+    for d in fs.collection("prefs").stream():
+        x = d.to_dict() or {}
+        sb0 = {"bjPL": n(x, "bjNet") + n(x, "bjBonus") + n(x, "revengeEarn"), "crPL": n(x, "crNet") + crsum(x.get("crBets")), "at": now}
+        for k in ["bjHands", "rlNet", "rlSpins", "crRolls", "hlNet", "hlRounds", "rrNet", "rrWins", "rrGames", "thNet", "thWins", "thGames", "flapEarn", "flapPlays", "slNet", "slSpins"]:
+            sb0[k] = n(x, k)
+        up = {"sb0": sb0, "flapBestS": 0, "wv": "fix." + str(int(time.time()))}
+        if x.get("wwBest"): up["wwBest0"] = x.get("wwBest"); up["wwBest"] = firestore.DELETE_FIELD
+        d.reference.update(up); cnt += 1
+    print("stat baselines re-written:", cnt)
 else:
     print("unknown fix", fix); sys.exit(1)
 done.set({fix: int(time.time() * 1000)}, merge=True)

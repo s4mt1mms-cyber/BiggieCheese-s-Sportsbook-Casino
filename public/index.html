@@ -2043,7 +2043,7 @@ function gradeParlay(b){let pending=false,mult=1;for(const L of b.legs||[]){cons
   if(pending)return null;if(mult===1)return "push";b._mult=mult;return "poster"}
 function parlayWin(b){const m=b._mult||((b.legs||[]).reduce((a,L)=>a*decOdds(L.odds),1));return Math.round(Number(b.stake)*(m-1))}
 /* ledger is reused within one synchronous pass (a render calls it dozens of times), then recomputed fresh */
-const STAT_RESET_AT=Date.parse("2026-10-23T19:45:00Z");/* owner: leaderboards/stats start over (3:45 PM ET Oct 23) */
+const STAT_RESET_AT=Date.parse("2026-10-29T14:00:00Z");/* owner Oct 29 9:49 AM: all scoreboards reset again (10 AM ET; casino baselines by job-fix statreset2). Was 2026-10-23T19:45:00Z *//* owner: leaderboards/stats start over (3:45 PM ET Oct 23) */
 let _LG=null;function ledger(){if(_LG)return _LG;_LG=ledger0();queueMicrotask(()=>{_LG=null});return _LG}
 function ledger0(){
   const rec={},net0={},byWeek={},wagered0={},events=[],wins={},wr={};
@@ -7402,6 +7402,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:177,d:"Oct 29",t:[["🏆","Every scoreboard has been reset: standings, casino leaderboards and the BiggieTown bottle challenge all start fresh. Balances aren't touched"]]},
  {v:176,d:"Oct 29",t:[["🏦","Loans are back to how they worked before: take as many as you like, and payments only come out on the due dates (no more winnings going straight to your loan)"]]},
  {v:175,d:"Oct 29",t:[["🃏","The BiggieCheese Pack now costs 7,500 BB"],["🎰","Fixed: casino games felt laggy and the slots win lines stopped showing. Both are back to normal"]]},
  {v:174,d:"Oct 29",t:[["🎡","Fixed the Daily Spin freezing when you tap Spin"],["💎","Fixed putting shards into a card's bar looking stuck, and made the collection smoother"]]},

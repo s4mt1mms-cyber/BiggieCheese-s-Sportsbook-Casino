@@ -389,6 +389,7 @@ Fantasyland / ChudBootyCheeks. League Moments (`lm`) still works the old way (it
   collections; still 3 copies total); his tithes burn (`TI_BURN`: pull docs have `tos:[]`, `tiSettle` does nothing — balOf already takes floor(tiWin/10)). **Oct 25 (owner): undone** — `TI_BURN=false`, tithes split among the others again; owed amounts from the burn days are written off once per player (`prefs.tiBurnFix` + a `ti_<me>_<paid>` doc with `tos:[]`). The 5,000 Remove-curse fee is now a pull-style tithe doc (`note:"Curse removal"`) split among the others instead of `prefs.curseFee`.
   Dev fees removed (`PACK_FEES=[]`, `SHOP_FEE=0`). 5% of every player-to-player card sale burned from the seller (`mkFee`, sales with soldAt ≥ `MK_FEE_AT`, in `cardMoney`).
 
+- **Stats reset #2 (Oct 29, 10 AM ET, owner):** `STAT_RESET_AT` moved to 2026-10-29T14:00Z; job-fix `statreset2` re-takes every `sb0` (now incl. slNet/slSpins), sets `flapBestS` 0 and moves `wwBest` → `wwBest0`.
 - **Stats reset (Oct 23, 3:45 PM ET):** leaderboards/standings/"overall" lines start over without touching balances. Casino: `prefs.sb0` = stat values at the reset
   (admin fix job `statreset`), shown through `stq(q)` (value − sb0; Flappy best = `prefs.flapBestS`, best since the reset). Betting: `ledger().rec/net/wagered`
   only count bets accepted/created from `STAT_RESET_AT`; balances, weekly nets and recaps still use every bet. Auras ½ price, skins −25%, emotes ½ (same day).
