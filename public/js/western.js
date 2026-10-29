@@ -835,7 +835,7 @@ body.wwon{overflow:hidden}
       for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; P(new T.CylinderGeometry(.011, .011, .088, 6), M({ color: 0x111111 }), Math.cos(a) * .028, Math.sin(a) * .028, 0, Math.PI / 2, cyl); }
       G.cyl = cyl; P(box(.03, .06, .12), blued, 0, .015, .035); P(box(.012, .03, .03), blued, 0, .068, .075).rotation.x = -.5;
       P(box(.034, .12, .06), grip, 0, -.06, .095, -.35); P(new T.TorusGeometry(.028, .005, 6, 12, Math.PI), blued, 0, -.015, .03, 0).rotation.z = Math.PI;
-      P(box(.004, .012, .004), blued, 0, .058, -.34);
+      P(box(.007, .034, .007), blued, 0, .073, -.34); /* front sight post: tip at y .09 */
       const hand = new T.Group(); hand.position.set(0, -.05, .11); gun.add(hand); P(box(.075, .07, .095), skin, .005, 0, 0, 0, hand); P(box(.03, .03, .07), skin, -.035, .02, -.05, 0, hand);
       P(new T.CylinderGeometry(.045, .055, .35, 10), sleeve, .02, -.07, .24, Math.PI / 2 - .25, hand);
       const fl = new T.Sprite(new T.SpriteMaterial({ map: cvT(128, 128, (g, w) => { const r = g.createRadialGradient(64, 64, 0, 64, 64, 64); r.addColorStop(0, "rgba(255,255,220,1)"); r.addColorStop(.3, "rgba(255,190,80,.9)"); r.addColorStop(1, "rgba(255,120,20,0)"); g.fillStyle = r; g.fillRect(0, 0, w, w);
@@ -1441,7 +1441,7 @@ body.wwon{overflow:hidden}
     cam.position.set(p.x, p.y + 1.62 + bob, p.z); cam.rotation.set(0, 0, 0); cam.rotation.order = "YXZ"; cam.rotation.y = G.yaw; cam.rotation.x = G.pitch + G.recoil * .035;
     /* viewmodel: hip vs sights, bob, recoil, reload spin */
     G.recoil = Math.max(0, G.recoil - dt * 7);
-    const vm = G.vm, a = G.adsK; vm.position.set(.2 * (1 - a), -.19 * (1 - a) - .118 * a - Math.abs(Math.sin(G.bob)) * .012 * bobA * (1 - a), -.42 - .1 * a + G.recoil * .05);
+    const vm = G.vm, a = G.adsK; vm.position.set(.2 * (1 - a), -.19 * (1 - a) - .0765 * a - Math.abs(Math.sin(G.bob)) * .012 * bobA * (1 - a), -.42 - .1 * a + G.recoil * .05);
     vm.rotation.y = .06 * (1 - a);
     vm.rotation.set(G.recoil * .35, .06 * (1 - a) + Math.sin(G.bob) * .02 * bobA * (1 - a), 0);
     if (G.reloading) { const k = 1 - G.reloading / 1.7, dip = Math.sin(Math.min(1, k) * Math.PI); vm.rotation.x -= dip * .9; vm.rotation.z = dip * .6; G.cyl.rotation.z += dt * 14 * dip; } else vm.rotation.z = 0;
