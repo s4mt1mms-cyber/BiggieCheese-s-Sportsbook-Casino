@@ -1277,7 +1277,7 @@ body.wwon{overflow:hidden}
       <div><b>Damage.</b> Body shot 34 (3 to kill). Past 40 m a body shot does 25. <b>Headshot 100: one shot kills.</b></div>
       <div><b>Same hitbox.</b> Every character is hit the same, whatever skin they wear: a body cylinder and a head ball, a little bigger than the models.</div>
       <div><b>Kills.</b> You take the victim's stack: all of it if they had no kills yet, half if they had one or more. Their run ends.</div>
-      <div><b>The car.</b> 1,000 HP. Run someone over to kill them. Shoot it to wreck it: everyone inside or within 6 m dies, and whoever wrecked it gets the kills. It comes back after 1 minute.</div>
+      <div><b>The car.</b> 500 HP. Getting hit by it hurts more the faster it's going (near full speed kills). You can shoot the driver. Shoot it to wreck it: everyone inside or within 6 m dies, and whoever wrecked it gets the kills. It comes back after 1 minute.</div>
       <div><b>Guns.</b> Revolver: 6 shots, 34 body (25 past 40 m), 100 head. Sniper (switch with the gun key): bolt action, one shot then about 2 seconds to work the bolt, and any hit kills (100 body, 150 head, any range). From the hip the sniper has no crosshair and sprays everywhere; the moment you aim in it zooms 5× and is dead accurate. Crouching shrinks you (head at 1.1 m) and slows you down.</div>
       <div><b>Ending a run.</b> There's no cashing out: your run ends when you die. You walk out with half your stack if you got a kill, nothing if you didn't. Leaving the match counts as dying (the last person who hit you gets the kill). 3 seconds of spawn protection when you spawn.</div>
       <div><b>Free for all.</b> Free to play, 5-minute matches, hit Respawn 3 seconds after dying. A kill is 100 points, a headshot kill 150. Most points when the clock runs out wins 1,000 BB, paid only if 2 or more people played in that match.</div>
@@ -1406,7 +1406,9 @@ body.wwon{overflow:hidden}
   function addRemote(m) {
     const N = G.net; let R = N.pl.get(m.n);
     if (R) { const skinChanged = R.skin !== m.skin && m.name !== "…"; R.name = m.name || R.name; R.stack = m.stack; if (skinChanged) { rmRemote(R); R.root = null; R.skin = m.skin; } }
-    else { R = { n: m.n, name: m.name, skin: m.skin, stack: m.stack, snaps: [], ph: Math.random() * 6, speed: 0, alive: false }; N.pl.set(m.n, R); }
+    else { const mm = N.meta && N.meta.get(m.n); if (mm && m.name === "…") { m.name = mm.name; m.skin = mm.skin; }
+      R = { n: m.n, name: m.name, skin: m.skin, stack: m.stack, snaps: [], ph: Math.random() * 6, speed: 0, alive: false }; N.pl.set(m.n, R); }
+    if (m.name !== "…") { (N.meta = N.meta || new Map()).set(m.n, { name: m.name, skin: m.skin }); } /* respawns come back with their own skin */
     if (!R.root) mkBody(R);
     return R;
   }
@@ -1429,7 +1431,7 @@ body.wwon{overflow:hidden}
   /* one size for everyone: scale each model so the top of its head is the top of the hitbox's head ball (1.93 m).
      Measured from the model's bounds while standing (skins load late, so it re-measures a few times). */
   function fitModel(R, now) {
-    if (R.scN >= 6 || now - (R.scAt || 0) < (R.scN ? 1500 : 0) || R.emo || ((R.flags || 0) & 32) || (R === G.me && (G.crK || 0) > .1)) return;
+    if (((R.flags || 0) & 16) || R.scN >= 6 || now - (R.scAt || 0) < (R.scN ? 1500 : 0) || R.emo || ((R.flags || 0) & 32) || (R === G.me && (G.crK || 0) > .1)) return;
     const T = THREE, r = R.root, s0 = r.scale.x; r.scale.setScalar(1); r.updateMatrixWorld(true); const b = new T.Box3().setFromObject(r), top = b.max.y - r.position.y;
     R.scAt = now; R.scN = (R.scN || 0) + 1; if (top > .4) { r.scale.setScalar(Math.max(.5, Math.min(2.5, 1.93 / top))); R.scaled = true; } else r.scale.setScalar(s0); r.updateMatrixWorld(true);
   }
@@ -1469,7 +1471,10 @@ body.wwon{overflow:hidden}
       const s = interp(R, rt); if (!s) continue;
       const px = R.root.position.x, pz = R.root.position.z; R.root.position.set(s[1], s[2], s[3]); R.root.rotation.set(0, s[4], 0); R.pitch = s[5];
       const sp = Math.hypot(s[1] - px, s[3] - pz) / Math.max(.001, dt); R.speed += (Math.min(9, sp) - R.speed) * Math.min(1, dt * 8);
-      if ((R.flags || 0) & 16) { R.root.visible = false; if (R.tag) { const v = new T.Vector3(G.car.x, 3, G.car.z).project(G.cam); R.tag.style.display = v.z < 1 ? "" : "none"; R.tag.style.transform = `translate(${((v.x + 1) / 2 * G.gw).toFixed(1)}px,${((1 - v.y) / 2 * G.gh).toFixed(1)}px) translate(-50%,-100%)`; if (R.tag._h !== R.name) { R.tag._h = R.name; R.tag.innerHTML = `<b>${esc(R.name)}</b><span>${Math.round(R.stack || 0).toLocaleString()} BB</span><i>Driving</i>`; } } continue; }
+      if ((R.flags || 0) & 16) { const c = G.car, P = API().emLerp(API().emLDance(0), 0); P.rise = 0; if (R.gun) R.gun.visible = false; R.root.visible = !!(c && c.alive);
+        R.root.rotation.set(0, c.yaw, 0); R.root.position.set(c.x + Math.sin(c.yaw) * .6, 0, c.z + Math.cos(c.yaw) * .6); API().emApply(T, R.sp, P);
+        if (R.seatDY == null && R.scaled) { R.root.updateMatrixWorld(true); const hp = new T.Vector3(); R.u.head.getWorldPosition(hp); R.seatDY = 2.45 - hp.y; }
+        R.root.position.y = R.seatDY || 1.1; if (R.tag) { const v = new T.Vector3(G.car.x, 3, G.car.z).project(G.cam); R.tag.style.display = v.z < 1 ? "" : "none"; R.tag.style.transform = `translate(${((v.x + 1) / 2 * G.gw).toFixed(1)}px,${((1 - v.y) / 2 * G.gh).toFixed(1)}px) translate(-50%,-100%)`; if (R.tag._h !== R.name) { R.tag._h = R.name; R.tag.innerHTML = `<b>${esc(R.name)}</b><span>${Math.round(R.stack || 0).toLocaleString()} BB</span><i>Driving</i>`; } } continue; }
       R.root.visible = true; API().emApply(T, R.sp, poseFor(R, dt, now)); vis.push(R);
       if (R.flashT > 0) { R.flashT -= dt; R.fl.visible = true; } else R.fl.visible = false;
     }
@@ -1570,7 +1575,7 @@ body.wwon{overflow:hidden}
      Glass, bell, doors, the car (owner Oct 28). In PvP the server keeps doors/glass/bell/car in sync and decides
      every car kill (run-overs, explosions) and the car's health; in free roam it all runs on this page.
      ===================================================================================================== */
-  const GLASS_BACK = 90000, CAR_HP = 1000, CAR_BOOM_R = 6, CAR_RESPAWN = 60000, CAR_SPAWN = [-30, -3, -Math.PI / 2];
+  const GLASS_BACK = 90000, CAR_HP = 500, CAR_BOOM_R = 6, CAR_RESPAWN = 60000, CAR_SPAWN = [-30, -3, -Math.PI / 2];
   function breakGlass(i, dir, mine) {
     const w = G.wins[i]; if (!w || w.broken) return; w.broken = w.crackAt || Date.now(); unCrack(w); const T = THREE;
     G.winMesh.setMatrixAt(i, new T.Matrix4().makeScale(0, 0, 0)); G.winMesh.instanceMatrix.needsUpdate = true;

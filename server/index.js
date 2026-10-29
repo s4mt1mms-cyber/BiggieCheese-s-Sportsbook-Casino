@@ -49,13 +49,19 @@ const EYE = 1.62;
 const BANK = { x0: -38.5, x1: -30.5, z0: -9.8, z1: -6.0 };
 /* doors / glass / bell / the car (owner Oct 28) */
 const doors = new Array(32).fill(false), glass = new Map(); let bellAt = 0;
-const GLASS_BACK = 90000, CAR_HP = 1000, CAR_BOOM_R = 6, CAR_RESPAWN = 60000, CAR_SPAWN = [-30, -3, -Math.PI / 2], CAR_MAX = 22;
+const GLASS_BACK = 90000, CAR_HP = 500, /* owner Oct 28 (was 1,000) */ CAR_BOOM_R = 6, CAR_RESPAWN = 60000, CAR_SPAWN = [-30, -3, -Math.PI / 2], CAR_MAX = 22;
 const car = { x: CAR_SPAWN[0], z: CAR_SPAWN[1], yaw: CAR_SPAWN[2], v: 0, hp: CAR_HP, alive: true, driver: null, deadAt: 0, lastHit: null, lastIn: 0 };
 const carArr = () => [+car.x.toFixed(2), +car.z.toFixed(2), +car.yaw.toFixed(3), +car.v.toFixed(2), Math.max(0, Math.round(car.hp)), car.driver ? car.driver.n : 0, car.alive ? 1 : 0];
 /* ray vs the car's box in car space (x ±1, y 0.2..2.6, z ±2.2) */
 function carRay(o, d) {
   const s = Math.sin(-car.yaw), k = Math.cos(-car.yaw), ox = o.x - car.x, oz = o.z - car.z;
   return rayBox({ x: ox * k + oz * s, y: o.y, z: -ox * s + oz * k }, { x: d.x * k + d.z * s, y: d.y, z: -d.x * s + d.z * k }, { x0: -1, x1: 1, y0: .2, y1: 2.6, z0: -2.2, z1: 2.2 });
+}
+/* the driver can be shot (owner Oct 28): head + chest balls on the driver's seat, in car space */
+function driverHit(o, d) {
+  const s = Math.sin(-car.yaw), k = Math.cos(-car.yaw), ox = o.x - car.x, oz = o.z - car.z, lo = { x: ox * k + oz * s, y: o.y, z: -ox * s + oz * k }, ld = { x: d.x * k + d.z * s, y: d.y, z: -d.x * s + d.z * k };
+  const th = raySphere(lo, ld, { x: 0, y: 2.45, z: .6 }, .27), tb = raySphere(lo, ld, { x: 0, y: 1.98, z: .6 }, .42);
+  if (th != null && (tb == null || th <= tb + .05)) return { t: th, head: true }; if (tb != null) return { t: tb, head: false }; return null;
 }
 function carOut(p) { if (car.driver === p) { car.driver = null; car.v = 0; } if (p) p.inCar = false; }
 
@@ -289,7 +295,9 @@ async function handle(c, m) {
       car.x = x; car.z = z; car.yaw = +m.yaw; car.v = Math.max(-8, Math.min(CAR_MAX, +m.v || 0)); p.x = x; p.z = z; p.y = 0; p.hist.push([t, x, 0, z]); while (p.hist.length && t - p.hist[0][0] > 1000) p.hist.shift();
       if (Math.abs(car.v) > 4) { const s = Math.sin(-car.yaw), k = Math.cos(-car.yaw);
         for (const q of [...ROOM.players.values()]) { if (q === p || !q.alive || q.inCar || q.prot > t) continue; const ox = q.x - car.x, oz = q.z - car.z, lx = ox * k + oz * s, lz = -ox * s + oz * k;
-          if (Math.abs(lx) < 1.35 && Math.abs(lz) < 2.6) kill(q, p, false, "car"); } }
+          if (Math.abs(lx) < 1.35 && Math.abs(lz) < 2.6) { /* damage grows with speed (owner Oct 28): ~36 at 7 m/s, 100 (a kill) from ~14 m/s */
+            if (t - (q.carHitAt || 0) < 700) continue; q.carHitAt = t; const dmg = Math.round(Math.min(150, (Math.abs(car.v) - 3) * 9)); q.hp = Math.max(0, q.hp - dmg); q.lastHitBy = p; q.lastHitAt = t;
+            send(q.ws, { t: "hit", by: p.n, dmg, hp: q.hp, hs: false, from: [car.x, car.z] }); send(c.ws, { t: "hc", on: q.n, kill: q.hp <= 0 }); if (q.hp <= 0) kill(q, p, false, "car"); } } }
       return;
     }
     case "ping": { send(c.ws, { t: "pong", c: m.c, s: now() }); if (m.rtt > 0) c.rtt = Math.min(1000, m.rtt); return; }
@@ -317,7 +325,8 @@ async function handle(c, m) {
       const L = Math.hypot(d.x, d.y, d.z); if (L < 0.5) return; d.x /= L; d.y /= L; d.z /= L;
       const o = { x: p.x, y: p.y + (p.cr ? EYE - .57 : EYE), z: p.z }, room = ROOM, rw = t - Math.min(MAX_REWIND, c.rtt / 2 + 100);
       let best = wallT(o, d, 120), hit = null, carHit = false;
-      if (car.alive && car.driver !== p) { const tc = carRay(o, d); if (tc != null && tc < best) { best = tc; carHit = true; } }
+      const wb = best; if (car.alive && car.driver !== p) { const tc = carRay(o, d); if (tc != null && tc < best) { best = tc; carHit = true; } }
+      { const dv = car.driver; if (dv && dv !== p && dv.alive && car.alive) { const hd = driverHit(o, d); if (hd && hd.t < wb) { best = hd.t; hit = { q: dv, head: hd.head }; carHit = false; } } }
       for (const q of room.players.values()) { if (q === p || !q.alive || q.inCar) continue; const at = posAt(q, rw), h = hitTest(o, d, at); if (h && h.t < best) { best = h.t; hit = { q, head: h.head }; carHit = false; } }
       broadcast(room, { t: "fx", n: p.n, e: [o.x + d.x * best, o.y + d.y * best, o.z + d.z * best] }, p);
       if (carHit) { car.hp -= w === "sn" ? SN_BODY : best > FAR ? FAR_BODY : BODY; car.lastHit = p; send(c.ws, { t: "hc", car: true }); if (car.hp <= 0) carBoom(p); return; }
