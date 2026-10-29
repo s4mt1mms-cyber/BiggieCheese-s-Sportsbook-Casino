@@ -101,7 +101,7 @@ async function endRun(p, reason) {
   const amt = Math.max(0, Math.floor(p.stack));
   try {
     await db.doc("bank/wwout_" + p.buyId).create({ kind: "wwout", from: "house", to: p.pid, amt, at: now(), buy: p.buyId, tier: p.tier, kills: p.kills, reason,
-      note: `Biggietown ${reason === "cash" ? "cash out" : reason === "dead" ? "walked out" : "left"}`, wv: "srv." + now() });
+      note: `BiggieTown ${reason === "cash" ? "cash out" : reason === "dead" ? "walked out" : "left"}`, wv: "srv." + now() });
   } catch (e) { if (!/already exists/i.test(String(e && e.message))) console.error("payout failed", p.pid, p.buyId, amt, e); }
   send(p.ws, { t: "out", amt, reason, kills: p.kills, buy: p.tier });
   p.conn.player = null;
@@ -122,7 +122,7 @@ const srv = http.createServer((req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   if (req.url.startsWith("/status")) { res.setHeader("Content-Type", "application/json");
     res.end(JSON.stringify({ up: true, v: MAP.v, rooms: TIERS.map(t => ({ tier: t, n: [...rooms.get(t).players.values()].filter(p => !p.dc).length })) })); return; }
-  res.end("Biggietown server");
+  res.end("BiggieTown server");
 });
 const wss = new WebSocketServer({ server: srv, maxPayload: 8192 });
 
@@ -148,7 +148,7 @@ async function handle(c, m) {
     /* {t:"hello", tok} -> {t:"auth", ok, pid, name, active, tier} */
     case "hello": {
       let tok; try { tok = await auth.verifyIdToken(String(m.tok || "")); } catch (_) { return send(c.ws, { t: "auth", ok: false, why: "Sign-in expired. Reopen the app." }); }
-      if (!(await allowed(tok.email))) return send(c.ws, { t: "auth", ok: false, why: "Biggietown isn't open yet." });
+      if (!(await allowed(tok.email))) return send(c.ws, { t: "auth", ok: false, why: "BiggieTown isn't open yet." });
       const ln = await db.doc("links/" + tok.uid).get(); const pid = ln.exists && ln.data().oldId; if (!pid) return send(c.ws, { t: "auth", ok: false, why: "Not a league member." });
       const pr = (await db.doc("prefs/" + pid).get()).data() || {}; const prof = (await db.doc("profiles/" + pid).get()).data() || {};
       c.pid = pid; c.name = pr.team || prof.name || "Stranger"; c.skin = pr.skin && pr.skins && pr.skins[pr.skin] ? pr.skin : null;
@@ -260,7 +260,7 @@ setInterval(async () => {
     const qs = await db.collection("bank").where("kind", "==", "wwbuy").where("used", "==", false).get();
     for (const d of qs.docs) { const b = d.data(); if (now() - (b.at || 0) < 180000) continue;
       await db.runTransaction(async tx => { const x = await tx.get(d.ref); if (!x.exists || x.data().used) return; tx.update(d.ref, { used: true, usedAt: now(), refunded: true });
-        tx.create(db.doc("bank/wwout_" + d.id), { kind: "wwout", from: "house", to: b.from, amt: Math.floor(b.amt) || 0, at: now(), buy: d.id, refund: true, note: "Biggietown buy-in refunded", wv: "srv." + now() }); }).catch(() => {});
+        tx.create(db.doc("bank/wwout_" + d.id), { kind: "wwout", from: "house", to: b.from, amt: Math.floor(b.amt) || 0, at: now(), buy: d.id, refund: true, note: "BiggieTown buy-in refunded", wv: "srv." + now() }); }).catch(() => {});
     }
   } catch (e) { console.error("refund sweep", e); }
 }, 60000);

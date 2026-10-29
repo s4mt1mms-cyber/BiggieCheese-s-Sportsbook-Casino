@@ -234,7 +234,7 @@ body.wwon{overflow:hidden}
     G.state = "menu"; G.mode = null;
     if (!loading && Date.now() - (G.srvAt || 0) > 8000) { G.srvAt = Date.now(); srvStatus(); }
     const live = G.server && G.server.up, n = live ? G.server.n || 0 : 0, best = (API().myBest && API().myBest()) || 0;
-    G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwmain"><div class="wwbrand">${STAR}<h1>Biggietown</h1><p>Shootouts for BiggieBucks</p>
+    G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwmain"><div class="wwbrand">${STAR}<h1>BiggieTown</h1><p>Shootouts for BiggieBucks</p>
         <div class="wwbest"><span>Your best bottle run</span><b>${best ? (best / 1000).toFixed(2) + "s" : "Not yet"}</b></div></div>
       ${loading ? `<div class="wwload">Saddling up…</div>` : `<div class="wwmm">
         <button class="pri${live ? "" : " soon"}" data-ww="join"><span>Join game</span><small>${live ? `${n} in town` : G.server && G.server.checked ? "Server offline" : "Checking server…"}</small></button>
@@ -322,7 +322,7 @@ body.wwon{overflow:hidden}
     audioInit();
     if (!TOUCH) { try { G.cv.requestPointerLock(); } catch (_) {} }
     try { const el = document.documentElement; if (!document.fullscreenElement && el.requestFullscreen) el.requestFullscreen({ navigationUI: "hide" }).then(() => { try { screen.orientation && screen.orientation.lock && screen.orientation.lock("landscape").catch(() => {}) } catch (_) {} }).catch(() => {}); } catch (_) {}
-    if (!G.started) { G.started = true; banner("Biggietown", "Population: you"); }
+    if (!G.started) { G.started = true; banner("BiggieTown", "Population: you"); }
     if (G.mode !== "pvp") { G.mode = "roam"; setLive(1); setBB(G.ses.bb); }
     placeButtons();
   }
@@ -992,7 +992,7 @@ body.wwon{overflow:hidden}
       <div class="wwrow"><button data-ww="menu">Back</button></div></div></div>`;
   }
   function netMsg(t) { const e = G.ui.querySelector(".wwnetmsg"); if (e) e.textContent = t; }
-  function showBusy(t) { G.state = "menu"; G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwpz"><h2>Biggietown</h2><p class="wwnetmsg">${esc(t)}</p></div></div>`; }
+  function showBusy(t) { G.state = "menu"; G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwpz"><h2>BiggieTown</h2><p class="wwnetmsg">${esc(t)}</p></div></div>`; }
   /* connect (or reuse the connection) and sign in with the app's token */
   function netOpen() {
     return new Promise((res, rej) => {

@@ -4,7 +4,7 @@
   "type": "module",
   "description": "Biggietown live match server (Cloud Run, WebSockets). Decides hits, kills and payouts.",
   "main": "index.js",
-  "engines": { "node": "20" },
+  "engines": { "node": "24" },
   "scripts": { "start": "node index.js" },
   "dependencies": { "firebase-admin": "^12.7.0", "ws": "^8.18.0" }
 }
