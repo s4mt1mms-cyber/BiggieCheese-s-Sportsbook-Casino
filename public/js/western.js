@@ -397,7 +397,7 @@ body.wwon{overflow:hidden}
       else if (a === "buyin") { if (G.server && G.server.up && API().admin && API().admin()) showTiers(); else showModes(); }
       else if (a === "ffa") joinFfa();
       else if (a === "respawn") { nsend({ t: "respawn" }); play(); }
-      else if (a === "join") { if (G.server && G.server.up) showModes(); else { const b2 = G.ui.querySelector("[data-ww=join] small"); if (b2) b2.textContent = "Server offline · try again soon"; srvStatus(); } }
+      else if (a === "join") { if (G.server && G.server.up) showModes(); else { const b2 = G.ui.querySelector("[data-ww=join] small"); if (b2) b2.textContent = "Waking up the server · tap again in a few seconds"; srvStatus(); } }
       else if (a === "leave") leaveMatch();
       else if (a === "rules") showRules();
       else if (a === "stats") showStats();
@@ -1264,7 +1264,7 @@ body.wwon{overflow:hidden}
   const NETV = 1, INTERP = 110;
   async function srvStatus() {
     try { const r = await fetch(API().server + "/status", { cache: "no-store" }); const j = await r.json(); G.server = { up: !!j.up, checked: true, ffa: j.ffa || null, n: j.n != null ? j.n : (j.rooms || []).reduce((a, x) => a + x.n, 0) }; }
-    catch (_) { G.server = { up: false, checked: true, n: 0, rooms: [] }; }
+    catch (_) { G.server = { up: false, checked: true, n: 0, rooms: [], waking: true }; G.srvAt = Date.now() - 6000; /* retry in ~2 s while it wakes up */ }
     if (G && G.state === "menu" && G.ready) showMenu(false);
   }
   /* buy-in slider (owner Oct 28): any amount from 100 to 10,000 BB, everyone plays in the same town */
@@ -1293,9 +1293,12 @@ body.wwon{overflow:hidden}
       <div class="wwrow"><button data-ww="menu">Back</button><button data-ww="rules">Rules</button></div></div></div>`;
   }
   async function joinFfa() {
-    showBusy("Connecting…");
-    try { const net = await netOpen("ffa"); showBusy(net.active ? "Back into your match…" : "Riding into town…"); nsend({ t: "join", buy: null }); }
-    catch (e) { showModes(); const b = G.ui.querySelector("[data-ww=ffa] small"); if (b) b.textContent = e.message || "Couldn't join."; }
+    /* Oct 29: the server sleeps when nobody plays; the first connect can fail while it wakes up, so try a few times before giving up */
+    for (let i = 0; i < 4; i++) {
+      showBusy(i ? "Waking up the server…" : "Connecting…");
+      try { const net = await netOpen("ffa"); showBusy(net.active ? "Back into your match…" : "Riding into town…"); nsend({ t: "join", buy: null }); return; }
+      catch (e) { if (i === 3 || /allowed/i.test(e.message || "")) { showModes(); const b = G.ui.querySelector("[data-ww=ffa] small"); if (b) b.textContent = e.message || "Couldn't join."; return; } await new Promise(r => setTimeout(r, 2500)); }
+    }
   }
   function showRules() {
     G.state = "menu"; G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwsc"><h2>How shootouts work</h2><div class="wwrules">

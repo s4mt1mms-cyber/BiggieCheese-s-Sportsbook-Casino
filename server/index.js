@@ -194,9 +194,12 @@ const wss = new WebSocketServer({ noServer: true, maxPayload: 8192 });
 /* /ffa WebSockets go to the free-for-all child process; everything else is this town */
 srv.on("upgrade", (req, sock, head) => {
   if (!FFA && String(req.url || "").startsWith("/ffa")) {
-    const up = net.connect(FFA_PORT, "127.0.0.1", () => { let h = `${req.method} ${req.url} HTTP/1.1\r\n`; for (let i = 0; i < req.rawHeaders.length; i += 2) h += `${req.rawHeaders[i]}: ${req.rawHeaders[i + 1]}\r\n`;
-      up.write(h + "\r\n"); if (head && head.length) up.write(head); sock.pipe(up); up.pipe(sock); });
-    up.on("error", () => sock.destroy()); sock.on("error", () => up.destroy()); return;
+    /* Oct 29: right after a cold start the free-for-all child isn't listening yet; keep trying for ~12 s instead of dropping the player (that showed as "servers down") */
+    let tries = 0, gone = false; sock.on("error", () => { gone = true; }); sock.on("close", () => { gone = true; });
+    const go = () => { if (gone) return; const up = net.connect(FFA_PORT, "127.0.0.1", () => { let h = `${req.method} ${req.url} HTTP/1.1\r\n`; for (let i = 0; i < req.rawHeaders.length; i += 2) h += `${req.rawHeaders[i]}: ${req.rawHeaders[i + 1]}\r\n`;
+        up.write(h + "\r\n"); if (head && head.length) up.write(head); sock.pipe(up); up.pipe(sock); sock.on("error", () => up.destroy()); sock.on("close", () => up.destroy()); });
+      up.on("error", () => { if (up.remoteAddress) { sock.destroy(); return; } if (++tries < 24 && !gone) setTimeout(go, 500); else sock.destroy(); }); };
+    go(); return;
   }
   wss.handleUpgrade(req, sock, head, ws => wss.emit("connection", ws, req));
 });
