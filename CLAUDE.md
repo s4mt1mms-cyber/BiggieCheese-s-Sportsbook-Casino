@@ -123,7 +123,7 @@ Fantasyland / ChudBootyCheeks. League Moments (`lm`) still works the old way (it
   floor(odds/2 × level mult)). Lunch? and the curse trigger on EVERY pull (dupes too); Dragon bounty only for a new Dragon. Pull log `pulls` (pack "v2").
 - **Levels**: one key per card (`id` or `id@L`), `LV_MAX=[13,11,9,7,5,3,1]`, `craftable` = pool & not curse. Upgrade `v2Up` (card view, `v2UpHtml`):
   L shards + `TIER_UP[L+1+2r]` BB, one prefs write (old key 0, new key 1, shards, `craftSpent`, `craftLog{c,f,t,fee,n,sh}`). Shard store `v2ShBuy` (prices 1,500/4,000/10,000/25,000/150,000/1,000,000 since Oct 29 2:51 AM, owner: wildcards)
-  (`SHARD_PRICE` 4k/11k/25k/64k/650k/2.4M since Oct 29 1:55 AM, owner: ≈1.25× the pack cost per shard, burned via craftSpent, craftLog `{sh,n,fee,buy:1}`). Dividend `v2Div`: `TIER_DIV[lv+2r-1]` × `V2_RDIV` (Elite ×3, Grail ×6 since Oct 29 3:08 AM, owner), Dragon 3,000, `V2_X3` Joe Camel/Debbie 3×,
+  (`SHARD_PRICE` 4k/11k/25k/64k/650k/2.4M since Oct 29 1:55 AM, owner: ≈1.25× the pack cost per shard, burned via craftSpent, craftLog `{sh,n,fee,buy:1}`). Dividend `v2Div`: `TIER_DIV[lv+2r-1]` × `V2_RDIV` (Elite ×3, Grail ×6 since Oct 29 3:08 AM, owner), Dragon `V2_DRAGON_DIV` 15,000 (owner 3:13 AM; was 3,000), `V2_X3` Joe Camel/Debbie 3×,
   curse 0; no full-set bonus for pool cards (LM keeps it). Crafting tab removed (`viewCraft` redirects to the collection).
 - **Abilities** `AB2` rewritten (brief Appendix B, `v[level-1]`, C–SR off at LV 1 via `abOff`); code abilities by level `ABV` + `abLv`/`abV`
   (dean edge → `crResolve(...,edge)`, hof amount `hofT`, slop `slopN`, shrex, hilo, bers `bersN`, lunch [pct,cap], social). Tiered helpers
