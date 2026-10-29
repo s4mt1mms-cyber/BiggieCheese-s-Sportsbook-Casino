@@ -1488,7 +1488,10 @@ body.wwon{overflow:hidden}
     for (const R of N.pl.values()) {
       if (!R.root) continue;
       if (R.dying) { const k = (now - R.dying) / 1000; R.root.rotation.x = -Math.min(1, k / .45) * Math.PI / 2 * .92; R.root.position.y = -Math.max(0, k - 2) * .6;
-        if (R.tag) R.tag.style.display = "none"; if (k > 3.2) { rmRemote(R); N.pl.delete(R.n); } continue; }
+        if (R.tag) R.tag.style.display = "none";
+        if (k > 3.2) { if (R.gone || !N.ffa) { rmRemote(R); N.pl.delete(R.n); }
+          else { R.dying = 0; R.alive = false; R.snaps = []; R.root.visible = false; R.root.rotation.set(0, 0, 0); R.root.position.y = 0; } } /* free for all: keep the body for their respawn (rebuilding a model mid-fight = a hitch) */
+        continue; }
       if (!R.alive) { R.root.visible = false; if (R.tag) R.tag.style.display = "none"; continue; }
       const s = interp(R, rt); if (!s) continue;
       const px = R.root.position.x, pz = R.root.position.z; R.root.position.set(s[1], s[2], s[3]); R.root.rotation.set(0, s[4], 0); R.pitch = s[5];
