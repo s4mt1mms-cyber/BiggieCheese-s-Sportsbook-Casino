@@ -141,6 +141,7 @@ Fantasyland / ChudBootyCheeks. League Moments (`lm`) still works the old way (it
   comment above `trMake`. Offers to a player (exact keys) or listings (want cards = ids, any level) for any mix of BB/shards/cards; maker's give escrowed
   (prefs `trDone[id]` e/t/f/r markers, BB to the house via bank `trE_`), taker's page `trAccept` (status race, one prefs write, bank `trT_/trW_/trW2_`, 5% of
   BB received burned), maker's page `trTick` claims/returns/expires. Receiving a pool card you already have: keep the higher level, the other → shards = its level.
+- **Update log** (tab `news`, `viewNews`, side menu above Standings): every `NEWS` entry, newest first, searchable.
 - **Card Guidebook** (tab `guide`, `viewGuide`): every card, census of owners, "Ability:" (red) + per-level text.
 - **Upgrade shards** tiered `V2_SH=[1,3,4,7,11,18,29,40,52,65,80,100]` (LV L→L+1 = V2_SH[L-1]); one-time reset `uprRun` (prefs.upr): upgraded pool cards → LV 1,
   shards refunded at the old 1-per-level cost (L·(L−1)/2), BB not refunded.
