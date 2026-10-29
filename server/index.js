@@ -164,7 +164,7 @@ function ffaStart(delay) { const t = now(); M = { id: t, start: t + (delay || 0)
 function ffaBoard() { return [...M.rows.values()].sort((a, b) => b.pts - a.pts || b.hs - a.hs || a.at - b.at); }
 function ffaInfo() { if (!M) return null; return { id: M.id, start: M.start, end: M.end, top: ffaBoard().map(e => [e.name, e.pts]) }; }
 function ffaRespawn(p) {
-  if (!FFA || p.ended || p.alive) return; const sp = pickSpawn(ROOM, p);
+  if (!FFA || p.ended || p.alive) return; carOut(p); const sp = pickSpawn(ROOM, p);
   Object.assign(p, { x: sp[0], y: 0, z: sp[1], yaw: sp[2], alive: true, hp: HP, prot: now() + PROT_MS, am: { rv: MAG, sn: MAGS.sn }, reloadUntil: 0, lastHitBy: null, lastHitAt: 0, hist: [[now(), sp[0], 0, sp[1]]] });
   send(p.ws, { t: "respawn", spawn: [p.x, p.y, p.z, p.yaw], prot: PROT_MS });
 }
@@ -231,7 +231,8 @@ async function handle(c, m) {
       if (!(await allowed(tok.email))) return send(c.ws, { t: "auth", ok: false, why: "BiggieTown isn't open yet." });
       const ln = await db.doc("links/" + tok.uid).get(); const pid = ln.exists && ln.data().oldId; if (!pid) return send(c.ws, { t: "auth", ok: false, why: "Not a league member." });
       const pr = (await db.doc("prefs/" + pid).get()).data() || {}; const prof = (await db.doc("profiles/" + pid).get()).data() || {};
-      c.pid = pid; c.name = pr.team || prof.name || "Stranger"; c.skin = pr.skin && pr.skins && pr.skins[pr.skin] ? pr.skin : null;
+      c.pid = pid; c.admin = tok.email === OWNER || await (async () => { try { const a = (await db.doc("config/admins").get()).data() || {}; return (a.emails || []).includes(tok.email); } catch (_) { return false; } })();
+      c.name = pr.team || prof.name || "Stranger"; c.skin = pr.skin && pr.skins && pr.skins[pr.skin] ? pr.skin : null;
       c.emotes = new Set(Object.keys(pr.emotes || {}).filter(k => pr.emotes[k]));
       const act = byPid.get(pid);
       return send(c.ws, { t: "auth", ok: true, pid, name: c.name, active: !!act, tier: act ? act.tier : null, min: BUY_MIN, max: BUY_MAX });
@@ -248,6 +249,7 @@ async function handle(c, m) {
           hp: HP, alive: false, hist: [], ammo: MAG, am: { rv: MAG, sn: MAGS.sn }, wpn: "rv", lastShot: 0, reloadUntil: 0, prot: 0, lastHitBy: null, lastHitAt: 0, cash0: 0, dc: 0, lastIn: 0 };
         byPid.set(c.pid, P); c.player = P; P.emotes = c.emotes || new Set(); P.lastEmo = 0;
       } else {
+        if (!c.admin) return send(c.ws, { t: "err", why: "The buy-in shootout is closed for now. Try Free for all." }); /* owner Oct 28 */
         const id = String(m.buy || ""); if (!/^wwin_[A-Za-z0-9_]+$/.test(id)) return send(c.ws, { t: "err", why: "No buy-in." });
         const ref = db.doc("bank/" + id); let tier = 0;
         try { await db.runTransaction(async tx => { const d = await tx.get(ref); const b = d.exists && d.data();

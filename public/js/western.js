@@ -390,7 +390,7 @@ body.wwon{overflow:hidden}
       else if (a === "laydone") { G.hud.classList.remove("edit"); G.hud.querySelectorAll(".wwbtn.sel").forEach(b => b.classList.remove("sel")); G.hud.querySelectorAll("#wwUse,#wwCash").forEach(b => { b.style.display = "none"; b._l = null; }); if (G.hud.querySelector("#wwUse")) G.hud.querySelector("#wwUse")._l = null; LSset("ww-set", G.set); showControls(); }
       else if (a === "setreset") { G.set = Object.assign({}, SET0, { keys: Object.assign({}, KEYS0), pos: {} }); LSset("ww-set", G.set); placeButtons(); showSettings(); if (G.master) G.master.gain.value = G.set.sound * .9; }
       else if (a === "exit") close();
-      else if (a === "buyin") { if (G.server && G.server.up) showTiers(); else showModes(); }
+      else if (a === "buyin") { if (G.server && G.server.up && API().admin && API().admin()) showTiers(); else showModes(); }
       else if (a === "ffa") joinFfa();
       else if (a === "respawn") { nsend({ t: "respawn" }); play(); }
       else if (a === "join") { if (G.server && G.server.up) showModes(); else { const b2 = G.ui.querySelector("[data-ww=join] small"); if (b2) b2.textContent = "Server offline · try again soon"; srvStatus(); } }
@@ -558,9 +558,9 @@ body.wwon{overflow:hidden}
   function buildWorld() {
     const T = THREE, gw = G.gw, gh = G.gh;
     const R = new T.WebGLRenderer({ canvas: G.cv, antialias: !TOUCH, powerPreference: "high-performance" });
-    R.setPixelRatio(Math.min(TOUCH ? 1.5 : 1.75, window.devicePixelRatio || 1)); R.setSize(gw, gh, false);
+    R.setPixelRatio(Math.min(TOUCH ? 1.5 : 1.25, window.devicePixelRatio || 1)); /* perf (Oct 28): computers 1.75 → 1.25 */ R.setSize(gw, gh, false);
     R.outputEncoding = T.sRGBEncoding; R.toneMapping = T.ACESFilmicToneMapping; R.toneMappingExposure = 1.05;
-    const SH = !TOUCH; R.shadowMap.enabled = SH; R.shadowMap.type = T.PCFSoftShadowMap;
+    const SH = !TOUCH; R.shadowMap.enabled = SH; R.shadowMap.type = T.PCFShadowMap; R.shadowMap.autoUpdate = false; R.shadowMap.needsUpdate = true; /* shadows re-drawn every 3rd frame (perf) */
     const sc = new T.Scene(), cam = new T.PerspectiveCamera(G.set.fov, gw / gh, .05, 900); sc.add(cam);
     Object.assign(G, { R, scene: sc, cam, cols: [], ladders: [], winSpecs: [], wins: [], shoot: [], dyn: [], decals: [], parts: [], doors: [], bottles: [], weeds: [], fovNow: G.set.fov, adsK: 0 });
     const FOG = new T.Color(0xe9c294); sc.fog = new T.Fog(FOG, 90, 460); sc.background = FOG;
@@ -727,7 +727,7 @@ body.wwon{overflow:hidden}
       put(box(1.6, 1.3, .7), wood("piano", "#2a170b"), w / 2 - 1.2, fl + .65, -d + 1.6, 0, grp); put(box(1.5, .08, .25), MT.white, w / 2 - 1.2, fl + 1.02, -d + 2.0, 0, grp);
       const ch = put(new T.TorusGeometry(.7, .05, 8, 24), MT.iron, 0, h - 1.1, -d / 2, 0, grp); ch.rotation.x = Math.PI / 2; ch.updateMatrixWorld(true);
       for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; put(new T.SphereGeometry(.09, 8, 6), MT.lamp, Math.cos(a) * .7, h - 1.02, -d / 2 + Math.sin(a) * .7, 0, grp, { ns: 1 }); }
-      const lp = new T.PointLight(0xffb35c, 1.4, 16, 1.6); lp.position.set(0, h - 1.3, -d / 2); grp.add(lp);
+      /* (no point light: perf) */
       for (let i = 0; i < 3; i++) G.bottleSpots.push({ grp, lx: bx + rnd(-.2, .2), ly: fl + 1.38, lz: -d * .55 + (i - 1) * 1.4, free: true });
       sign(named, 3.2, .8, 0, fl + 3.1, -d + .79, 0, "#2a1608", "#ffd76a", grp);
       /* wanted posters */
@@ -827,7 +827,7 @@ body.wwon{overflow:hidden}
       /* stained glass on both side walls (breakable like every window) */
       const SG = [0xb02a2a, 0x2a52b0, 0xd8a020, 0x2a8a4a, 0x8a2ab0, 0xb05a2a];
       for (let k = 0; k < 3; k++) [-1, 1].forEach((sd, j) => G.winSpecs.push({ g: grp, lx: sd * (W / 2 + .04), ly: 3.2, lz: -4 - k * 3.4, ww: .08, wh: 2.4, wd: 1.1, col: SG[(k * 2 + j) % SG.length] }));
-      const cl = new T.PointLight(0xffd8a0, 1.1, 18, 1.6); cl.position.set(0, Hh - 1.2, -D / 2); grp.add(cl);
+      /* (no point light: perf) */
       /* double doors (open/close button) */
       { const a = CL(-dw / 2, -t), b = CL(dw / 2, 0); const dcol = { x0: Math.min(a[0], b[0]), x1: Math.max(a[0], b[0]), y0: 0, y1: dh, z0: Math.min(a[1], b[1]), z1: Math.max(a[1], b[1]), mat: "wood" };
         const dr = { i: G.doors.length, open: false, wp: CL(0, -t / 2), hs: [], col: dcol, ang: 1.6 }; dcol.dr = dr; G.cols.push(dcol); G.doors.push(dr);
@@ -1263,7 +1263,7 @@ body.wwon{overflow:hidden}
     G.state = "menu"; const f = (G.server && G.server.ffa) || {}, n = (G.server && G.server.n) || 0, left = f.end ? Math.max(0, f.end - Date.now()) : 0;
     G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwsc"><h2>Join game</h2><div class="wwmm">
       <button class="pri${f.up ? "" : " soon"}" data-ww="ffa"><span>Free for all</span><small>Free · 5-minute matches · winner gets 1,000 BB · ${f.n || 0} playing${left && f.n ? ` · ${Math.floor(left / 60000)}:${String(Math.floor(left / 1000) % 60).padStart(2, "0")} left` : ""}</small></button>
-      <button data-ww="buyin"><span>Buy-in shootout</span><small>100 – 10,000 BB · each kill +your buy-in · ${n} in town</small></button></div>
+      ${API().admin && API().admin() ? `<button data-ww="buyin"><span>Buy-in shootout</span><small>Admins only for now · 100 – 10,000 BB · ${n} in town</small></button>` : `<button class="soon" disabled><span>Buy-in shootout</span><small>Coming soon</small></button>`}</div>
       <div class="wwrow"><button data-ww="menu">Back</button><button data-ww="rules">Rules</button></div></div></div>`;
   }
   async function joinFfa() {
@@ -1354,7 +1354,7 @@ body.wwon{overflow:hidden}
         return;
       }
       case "stack": N.stack = m.stack; if (!N.ffa) setBB(m.stack - N.tier); return;
-      case "respawn": { const s = m.spawn; G.dead = false; G.p = { x: s[0], y: s[1], z: s[2], vy: 0, ground: true }; G.yaw = s[3]; G.pitch = 0; G.amm = { rv: 6, sn: 1 }; G.ammo = MAGS[G.wpn || "rv"]; G.reloading = 0; drawAmmo();
+      case "respawn": { if (G.car && G.car.mine) carExit(true); const s = m.spawn; G.dead = false; G.p = { x: s[0], y: s[1], z: s[2], vy: 0, ground: true }; G.yaw = s[3]; G.pitch = 0; G.amm = { rv: 6, sn: 1 }; G.ammo = MAGS[G.wpn || "rv"]; G.reloading = 0; drawAmmo();
         if (G.wpn === "sn") nsend({ t: "wpn", w: "sn" }); N.hp = 100; drawHp(); G.prot = performance.now() + (m.prot || 0); hudPvp(true); if (G.state !== "play" && G.ui.querySelector("#wwRsp")) play(); return; }
       case "ffaend": ffaEnd(m); return;
       case "door": setDoor(m.i, !!m.open, false); return;
@@ -1651,7 +1651,6 @@ body.wwon{overflow:hidden}
     const c = G.car, T = THREE; c.alive = false; c.hp = 0; c.v = 0; c.deadAt = Date.now(); c.red.color.set(0x1a1410);
     c.g.traverse(o => { if (o.material && o.material.emissive) o.material.emissiveIntensity = 0; });
     const d = Math.hypot(G.p.x - x, G.p.z - z); G.vmul = Math.max(.3, Math.min(1.6, 14 / (d + 4))); SFX.boom(); G.vmul = 1; G.shake = Math.max(G.shake || 0, d < 25 ? 1 : .3);
-    const fl = new T.PointLight(0xff8a30, 6, 30, 2); fl.position.set(x, 2, z); G.scene.add(fl); G.parts.push({ o: fl, v: new T.Vector3(), life: .5, g: 0, light: true });
     for (let k = 0; k < 26; k++) { const sp = new T.Sprite(new T.SpriteMaterial({ map: k < 14 ? G.fireTex : G.puffTex, transparent: true, depthWrite: false, opacity: .95, blending: k < 14 ? T.AdditiveBlending : T.NormalBlending, color: k < 14 ? 0xffffff : 0x3a3430 }));
       sp.position.set(x + (Math.random() - .5) * 2, 1 + Math.random() * 1.5, z + (Math.random() - .5) * 3); sp.scale.setScalar(1.5); G.scene.add(sp);
       G.parts.push({ o: sp, v: new T.Vector3((Math.random() - .5) * 6, Math.random() * 6 + (k < 14 ? 2 : 1), (Math.random() - .5) * 6), life: k < 14 ? .9 : 2.6, grow: k < 14 ? 3 : 2.2, g: -.05 }); }
@@ -1783,6 +1782,7 @@ body.wwon{overflow:hidden}
     const emo = ownEmoteTick(dt), drv = carCam(), tp = !emo && !drv && tpCam(); G.tpOn = tp; G.vm.visible = !emo && !drv && !tp && !(G.wpn === "sn" && G.adsK > .6);
     selfBody(dt, emo, drv, tp);
     if (G.shake > 0) { G.shake = Math.max(0, G.shake - dt * 1.6); const k = G.shake * .12; cam.position.x += (Math.random() - .5) * k; cam.position.y += (Math.random() - .5) * k; cam.position.z += (Math.random() - .5) * k; }
+    G.fr = (G.fr || 0) + 1; if (G.R.shadowMap.enabled && G.fr % 3 === 0) G.R.shadowMap.needsUpdate = true;
     G.R.autoClear = false; G.R.clear(); G.R.render(G.scene, cam); G.R.clearDepth(); if (G.vc.aspect !== cam.aspect) { G.vc.aspect = cam.aspect; G.vc.updateProjectionMatrix(); } G.R.render(G.vs, G.vc);
   }
   /* practice bottles on the fence between runs */
