@@ -46,7 +46,12 @@ body.wwon{overflow:hidden}
 .wwscope i.pl.r{transform:translate(calc(var(--R) * .45),-50%)}.wwscope i.pl.l{transform:translate(calc(var(--R) * -1),-50%)}
 .wwscope u{position:absolute;left:50%;top:50%;width:4px;height:4px;border-radius:50%;background:#050403;margin:-2px 0 0 -2px}
 .wwscope b{position:absolute;left:50%;top:50%;width:5px;height:5px;margin:-2.5px 0 0 -2.5px;border-radius:50%;background:#ff3b30;box-shadow:0 0 6px #ff3b30}
-.wwx.nox{opacity:0}.wwbtn.lit{background:rgba(200,150,62,.75)!important}
+.wwx.nox{opacity:0}
+.wwdead{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);text-align:center;background:rgba(40,8,4,.75);border:2px solid #c8963e;border-radius:12px;padding:12px 22px;pointer-events:none}
+.wwdead b{display:block;font:400 26px Rye,Georgia,serif;color:#ffd0a0}.wwdead span{font:600 14px Barlow;color:#e8d4a8}
+.wwffaend{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);min-width:280px;max-width:92%;background:rgba(20,12,6,.9);border:2px solid #c8963e;border-radius:14px;padding:14px 18px;text-align:center;pointer-events:none;color:#ffe9b8}
+.wwffaend h3{margin:0 0 4px;font:400 26px Rye,Georgia,serif;color:#ffd24a}.wwffaend p{margin:0 0 8px;font:600 14px Barlow}.wwffaend table{width:100%;border-collapse:collapse;font:600 13px Barlow}
+.wwffaend td,.wwffaend th{padding:3px 6px;text-align:left}.wwffaend th{opacity:.6;font-weight:700}.wwffaend tr.me td{color:#9dffb0}.wwffaend small{display:block;margin-top:8px;opacity:.7;font:600 12px Barlow}.wwbtn.lit{background:rgba(200,150,62,.75)!important}
 .wwhit{position:absolute;left:50%;top:50%;width:26px;height:26px;margin:-13px 0 0 -13px;opacity:0}
 .wwhit.on{animation:wwhit .25s ease-out}
 .wwhit i{position:absolute;left:12px;top:-2px;width:2px;height:9px;background:#ffe9a8;transform-origin:1px 15px}
@@ -380,7 +385,9 @@ body.wwon{overflow:hidden}
       else if (a === "laydone") { G.hud.classList.remove("edit"); G.hud.querySelectorAll(".wwbtn.sel").forEach(b => b.classList.remove("sel")); G.hud.querySelectorAll("#wwUse,#wwCash").forEach(b => { b.style.display = "none"; b._l = null; }); if (G.hud.querySelector("#wwUse")) G.hud.querySelector("#wwUse")._l = null; LSset("ww-set", G.set); showControls(); }
       else if (a === "setreset") { G.set = Object.assign({}, SET0, { keys: Object.assign({}, KEYS0), pos: {} }); LSset("ww-set", G.set); placeButtons(); showSettings(); if (G.master) G.master.gain.value = G.set.sound * .9; }
       else if (a === "exit") close();
-      else if (a === "join") { if (G.server && G.server.up) showTiers(); else { const b2 = G.ui.querySelector("[data-ww=join] small"); if (b2) b2.textContent = "Server offline · try again soon"; srvStatus(); } }
+      else if (a === "buyin") { if (G.server && G.server.up) showTiers(); else showModes(); }
+      else if (a === "ffa") joinFfa();
+      else if (a === "join") { if (G.server && G.server.up) showModes(); else { const b2 = G.ui.querySelector("[data-ww=join] small"); if (b2) b2.textContent = "Server offline · try again soon"; srvStatus(); } }
       else if (a === "leave") leaveMatch();
       else if (a === "rules") showRules();
       else if (a === "stats") showStats();
@@ -1064,12 +1071,12 @@ body.wwon{overflow:hidden}
     const B = G.bounds; p.x = Math.max(B.x0, Math.min(B.x1, p.x)); p.z = Math.max(B.z0, Math.min(B.z1, p.z));
   }
   /* mantle (owner Oct 28): in the air next to a ledge, press jump again to pull yourself up onto it */
-  function tryMantle(p) {
+  function tryMantle(p, fromGround) {
     const fx = -Math.sin(G.yaw), fz = -Math.cos(G.yaw); let top = -1, lx = 0, lz = 0;
     for (const f of [.45, .6, .8]) { const qx = p.x + fx * f, qz = p.z + fz * f;
       for (const c of G.cols) { if (c.dr && c.dr.open) continue; if (qx < c.x0 || qx > c.x1 || qz < c.z0 || qz > c.z1) continue; if (c.y1 > p.y + .35 && c.y1 <= p.y + 2.0 && c.y1 > top) { top = c.y1; lx = qx; lz = qz; } }
       if (top > 0) break; }
-    if (top < 0) return false;
+    if (top < 0 || (fromGround && top < p.y + 1.15)) return false; /* from the ground only for ledges too high to just jump onto */
     let low = false;
     for (const c of G.cols) { if (c.dr && c.dr.open) continue; if (c.y1 > top + .05 && c.y0 < top + 1.75) { if (lx + .28 > c.x0 && lx - .28 < c.x1 && lz + .28 > c.z0 && lz - .28 < c.z1) { if (c.y0 < top + 1.2) return false; low = true; } if (c.y0 > p.y + 1.6 && p.x + .3 > c.x0 && p.x - .3 < c.x1 && p.z + .3 > c.z0 && p.z - .3 < c.z1) return false; } }
     if (low) { G.crK = 1; G.crouch = true; }
@@ -1087,7 +1094,7 @@ body.wwon{overflow:hidden}
   /* crouch (owner Oct 28): hold the crouch key (phone: CROUCH toggles); slower, lower eyes and hitbox, fits under low stuff; you stay down while something is over your head */
   function headBlocked(p) { for (const c of G.cols) { if (c.dr && c.dr.open) continue; if (c.y0 > p.y + 1.15 && c.y0 < p.y + 1.75 && p.x + .3 > c.x0 && p.x - .3 < c.x1 && p.z + .3 > c.z0 && p.z - .3 < c.z1) return true; } return false; }
   function stepPlayer(dt) {
-    const p = G.p, k = G.keys; let fx = 0, fz = 0, run = false;
+    const p = G.p, k = G.keys; let fx = 0, fz = 0, run = false; if (G.dead) { G.moving = 0; return; }
     { const want = !!((G.act.crouch && !G.set.crToggle) || G.crTog) && !(G.car && G.car.mine); G.crouch = want || (G.crK > .5 && headBlocked(p)); G.crK = (G.crK || 0) + ((G.crouch ? 1 : 0) - (G.crK || 0)) * Math.min(1, dt * 12); }
     if (G.mantle) { const m = G.mantle; m.t += dt / .34; const q = Math.min(1, m.t), up = Math.min(1, q * 1.6), fw = Math.max(0, (q - .45) / .55);
       p.y = m.y0 + (m.y1 - m.y0) * up * up * (3 - 2 * up); p.x = m.x0 + (m.x1 - m.x0) * fw; p.z = m.z0 + (m.z1 - m.z0) * fw; p.vx = p.vz = p.vy = 0;
@@ -1106,7 +1113,7 @@ body.wwon{overflow:hidden}
     }
     G.onLad = !!lad && G.onLad;
     const g = groundAt(p.x, p.z, p.y, .32);
-    if (G.jumpQ && !p.ground && !G.onLad && tryMantle(p)) { G.jumpQ = false; return; }
+    if ((G.jumpQ || G.act.jump || k.Space) && !G.onLad && !(G.car && G.car.mine) && (!p.ground || G.jumpQ) && tryMantle(p, p.ground)) { G.jumpQ = false; return; }
     if (G.jumpQ && p.ground) { p.vy = 6.37; p.ground = false; } /* 1.5× the old jump height */ G.jumpQ = false;
     p.vy -= 16 * dt; p.y += p.vy * dt; if (p.y <= g) { if (!p.ground && p.vy < -4) SFX.step(g > .1); p.y = g; p.vy = 0; p.ground = true; } else if (p.y > g + .05) p.ground = false;
     if (p.ground && g - p.y > -.5 && g > p.y) p.y = g;
@@ -1121,7 +1128,7 @@ body.wwon{overflow:hidden}
     if (G.mode === "pvp") nsend({ t: "wpn", w: G.wpn }); const b = G.hud.querySelector("#wwBW"); if (b) b.textContent = G.wpn === "sn" ? "REVOLVER" : "SNIPER"; }
   function reload() { if (G.reloading || G.ammo >= MAGS[G.wpn]) return; G.reloading = RLS[G.wpn]; SFX.reload(); if (G.mode === "pvp") nsend({ t: "rl", w: G.wpn }); }
   function fire() {
-    if (G.state !== "play" || (G.car && G.car.mine)) return; const now = performance.now();
+    if (G.state !== "play" || G.dead || (G.car && G.car.mine)) return; const now = performance.now();
     if (G.reloading) return; if (now - G.lastShot < FIRE_GAP[G.wpn]) return; if (G.ammo <= 0) { SFX.click(); reload(); return; }
     const sn = G.wpn === "sn", scoped = G.aimHeld || G.aimToggle; /* sniper: perfect the instant you aim in (quick scopes), wild from the hip */
     G.lastShot = now; G.ammo--; drawAmmo(); G.recoil = sn ? 1.6 : 1; G.flashT = .05; if (sn) { G.vmul = 1.5; SFX.shot(); G.vmul = 1; } else SFX.shot(); sesAdd("shots", 1);
@@ -1178,6 +1185,18 @@ body.wwon{overflow:hidden}
   /* PvP will call this for every kill: killer/victim names, headshot flag, BB moved */
   function killFeed(killer, victim, hs, bb, mine, how) { if (how === "quit" && !killer) return feed(`<b>${esc(victim)}</b> <span style="opacity:.7">left town</span>${bb ? ` · ${Math.round(bb).toLocaleString()} BB gone` : ""}`, mine);
     feed(`<b>${esc(killer)}</b> <span style="opacity:.7">${how === "car" ? "ran over" : how === "boom" ? "blew up" : how === "quit" ? "got the kill on" : "shot"}</span> ${esc(victim)}${hs ? ` <span class="hs">· headshot</span>` : ""}${bb ? ` · ${Math.round(bb).toLocaleString()} BB` : ""}`, mine); }
+  /* free-for-all HUD: your points, the clock, the leader; the end-of-match board */
+  function ffaChip() { const N = G.net, e = G && G.hud.querySelector("#wwBB"); if (!e || !N || !N.ffa) return; const f = N.fi || {}, t = Date.now() + (N.off || 0);
+    const wait = f.start && t < f.start, left = Math.max(0, (wait ? f.start : f.end || t) - t), mm = `${Math.floor(left / 60000)}:${String(Math.floor(left / 1000) % 60).padStart(2, "0")}`, lead = (f.top || [])[0];
+    e.className = "wwchip wwbb"; e.innerHTML = `<b>${(N.pts || 0).toLocaleString()}</b> pts · ${wait ? "next match " : ""}${mm}${lead && lead[1] > 0 ? ` · 1st ${esc(lead[0])} ${lead[1]}` : ""}`; }
+  function ffaEnd(m) {
+    const N = G.net; sesAdd("matches", 1); saveStats(); const me = N && N.pid, rows = (m.board || []).map((r, i) => `<tr${r[0] === (N && N.name) ? ' class="me"' : ""}><td>${i + 1}</td><td>${esc(r[0])}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join("");
+    const won = m.wpid && m.wpid === me;
+    const d = document.createElement("div"); d.className = "wwffaend"; d.innerHTML = `<h3>${won ? "You won the match" : m.winner ? `${esc(m.winner)} wins` : "Match over"}</h3>
+      <p>${m.paid ? `${won ? "You get" : "They get"} <b>${(m.prize || 1000).toLocaleString()} BB</b>` : m.players < 2 ? "No prize: it takes 2 or more players" : "No prize: nobody scored"}</p>
+      <table><tr><th></th><th>Player</th><th>Pts</th><th>Kills</th><th>HS</th></tr>${rows}</table><small>Next match in ${Math.round((m.next || 10000) / 1000)} seconds</small>`;
+    G.hud.appendChild(d); setTimeout(() => d.remove(), (m.next || 10000) - 500); if (N) N.pts = 0; if (won) SFX.ding();
+  }
   function setLive(n) { const e = G && G.hud.querySelector("#wwLive b"); if (e) e.textContent = n; }
   function setBB(v) { const e = G && G.hud.querySelector("#wwBB"); if (!e) return; v = Math.round(v || 0); e.className = "wwchip wwbb" + (v > 0 ? " up" : v < 0 ? " dn" : ""); e.innerHTML = `<b>${v > 0 ? "+" : v < 0 ? "−" : "+"}${Math.abs(v).toLocaleString()}</b> BB`; }
   function sesAdd(k, v) { G.ses[k] = (G.ses[k] || 0) + v; G.sesD[k] = (G.sesD[k] || 0) + v; if (k === "bb") setBB(G.ses.bb); }
@@ -1199,7 +1218,7 @@ body.wwon{overflow:hidden}
      ===================================================================================================== */
   const NETV = 1, INTERP = 110;
   async function srvStatus() {
-    try { const r = await fetch(API().server + "/status", { cache: "no-store" }); const j = await r.json(); G.server = { up: !!j.up, checked: true, n: j.n != null ? j.n : (j.rooms || []).reduce((a, x) => a + x.n, 0) }; }
+    try { const r = await fetch(API().server + "/status", { cache: "no-store" }); const j = await r.json(); G.server = { up: !!j.up, checked: true, ffa: j.ffa || null, n: j.n != null ? j.n : (j.rooms || []).reduce((a, x) => a + x.n, 0) }; }
     catch (_) { G.server = { up: false, checked: true, n: 0, rooms: [] }; }
     if (G && G.state === "menu" && G.ready) showMenu(false);
   }
@@ -1220,6 +1239,19 @@ body.wwon{overflow:hidden}
       G.ui.querySelector("#wwBuyV").textContent = x.toLocaleString() + " BB"; const g = G.ui.querySelector("#wwBuyGo"); g.dataset.wwtier = x; g.textContent = `Buy in · ${x.toLocaleString()} BB`; };
     r.addEventListener("input", () => upd(+r.value)); G.ui.querySelectorAll("[data-wwbq]").forEach(b => b.addEventListener("click", e => { e.stopPropagation(); upd(+b.dataset.wwbq); }));
   }
+  /* Join game → pick: free-for-all (free, points, 1,000 BB to the winner) or the buy-in shootout */
+  function showModes() {
+    G.state = "menu"; const f = (G.server && G.server.ffa) || {}, n = (G.server && G.server.n) || 0, left = f.end ? Math.max(0, f.end - Date.now()) : 0;
+    G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwsc"><h2>Join game</h2><div class="wwmm">
+      <button class="pri${f.up ? "" : " soon"}" data-ww="ffa"><span>Free for all</span><small>Free · 5-minute matches · winner gets 1,000 BB · ${f.n || 0} playing${left && f.n ? ` · ${Math.floor(left / 60000)}:${String(Math.floor(left / 1000) % 60).padStart(2, "0")} left` : ""}</small></button>
+      <button data-ww="buyin"><span>Buy-in shootout</span><small>100 – 10,000 BB · take their stack · ${n} in town</small></button></div>
+      <div class="wwrow"><button data-ww="menu">Back</button><button data-ww="rules">Rules</button></div></div></div>`;
+  }
+  async function joinFfa() {
+    showBusy("Connecting…");
+    try { const net = await netOpen("ffa"); showBusy(net.active ? "Back into your match…" : "Riding into town…"); nsend({ t: "join", buy: null }); }
+    catch (e) { showModes(); const b = G.ui.querySelector("[data-ww=ffa] small"); if (b) b.textContent = e.message || "Couldn't join."; }
+  }
   function showRules() {
     G.state = "menu"; G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwsc"><h2>How shootouts work</h2><div class="wwrules">
       <div><b>Health.</b> Everyone has 100 HP. You heal slowly after 6 seconds without getting hit.</div>
@@ -1229,15 +1261,18 @@ body.wwon{overflow:hidden}
       <div><b>The car.</b> 1,000 HP. Run someone over to kill them. Shoot it to wreck it: everyone inside or within 6 m dies, and whoever wrecked it gets the kills. It comes back after 1 minute.</div>
       <div><b>Guns.</b> Revolver: 6 shots, 34 body (25 past 40 m), 100 head. Sniper (switch with the gun key): bolt action, one shot then about 2 seconds to work the bolt, 80 body, 150 head at any range. From the hip the sniper has no crosshair and sprays everywhere; the moment you aim in it zooms 5× and is dead accurate. Crouching shrinks you (head at 1.1 m) and slows you down.</div>
       <div><b>Ending a run.</b> There's no cashing out: your run ends when you die. You walk out with half your stack if you got a kill, nothing if you didn't. Leaving the match counts as dying (the last person who hit you gets the kill). 3 seconds of spawn protection when you spawn.</div>
-      </div><div class="wwrow"><button class="pri" data-ww="join">Back to buy-in</button></div></div></div>`;
+      <div><b>Free for all.</b> Free to play, 5-minute matches, you respawn 3 seconds after dying. A kill is 100 points, a headshot kill 150. Most points when the clock runs out wins 1,000 BB, paid only if 2 or more people played in that match.</div>
+      </div><div class="wwrow"><button class="pri" data-ww="join">Back</button></div></div></div>`;
   }
   function netMsg(t) { const e = G.ui.querySelector(".wwnetmsg"); if (e) e.textContent = t; }
   function showBusy(t) { G.state = "menu"; G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwpz"><h2>BiggieTown</h2><p class="wwnetmsg">${esc(t)}</p></div></div>`; }
   /* connect (or reuse the connection) and sign in with the app's token */
-  function netOpen() {
+  function netOpen(mode) {
+    mode = mode || "money";
     return new Promise((res, rej) => {
-      const N = G.net; if (N && N.ws && N.ws.readyState === 1 && N.authed) return res(N);
-      const ws = new WebSocket(API().server.replace(/^http/, "ws") + "/ws"); const net = G.net = Object.assign(G.net || {}, { ws, authed: false, pl: N && N.pl || new Map(), off: 0, rtt: 120 });
+      const N = G.net; if (N && N.ws && N.ws.readyState === 1 && N.authed && (N.mode || "money") === mode) return res(N);
+      if (N && N.ws && N.ws.readyState <= 1) { N.leaving = true; try { N.ws.close(); } catch (_) {} }
+      const ws = new WebSocket(API().server.replace(/^http/, "ws") + (mode === "ffa" ? "/ffa" : "/ws")); const net = G.net = Object.assign(G.net || {}, { ws, mode, ffa: mode === "ffa", authed: false, leaving: false, pl: N && N.pl || new Map(), off: 0, rtt: 120 });
       let done = false; const to = setTimeout(() => { if (!done) { done = true; rej(new Error("The server didn't answer.")); try { ws.close(); } catch (_) {} } }, 9000);
       ws.onopen = async () => { const tok = await API().token(); ws.send(JSON.stringify({ t: "hello", tok, v: NETV })); };
       ws.onmessage = ev => { let m; try { m = JSON.parse(ev.data); } catch (_) { return; }
@@ -1263,7 +1298,7 @@ body.wwon{overflow:hidden}
     const net = G && G.net; if (!net || net.ws !== ws) return; net.authed = false;
     if (G.mode === "pvp" && !net.leaving) { /* dropped: reconnect and resume (the server keeps the run for 10 s) */
       banner("Reconnecting…", ""); let tries = 0; const again = () => { if (!G || G.mode !== "pvp") return; tries++;
-        netOpen().then(n => { if (n.active) nsend({ t: "join", buy: null }); else pvpEnd(); }).catch(() => { if (tries < 4) setTimeout(again, 1500); else { banner("Lost the connection", "You'll be paid out if your run ended"); pvpEnd(); } }); };
+        netOpen(net.mode).then(n => { if (n.active || n.ffa) nsend({ t: "join", buy: null }); else pvpEnd(); }).catch(() => { if (tries < 4) setTimeout(again, 1500); else { banner("Lost the connection", "You'll be paid out if your run ended"); pvpEnd(); } }); };
       setTimeout(again, 600);
     }
   }
@@ -1281,7 +1316,8 @@ body.wwon{overflow:hidden}
         const s = m.spawn; G.p = { x: s[0], y: s[1], z: s[2], vy: 0, ground: true }; G.yaw = s[3]; G.pitch = 0; G.amm = { rv: 6, sn: 1 }; G.ammo = MAGS[G.wpn || "rv"]; G.reloading = 0; drawAmmo(); if (G.wpn === "sn") nsend({ t: "wpn", w: "sn" });
         G.prot = performance.now() + (m.prot || 0); N.startStack = m.tier; setBB(N.stack - N.tier);
         if (!N.pingT) N.pingT = setInterval(() => nsend({ t: "ping", c: Date.now(), rtt: N.rtt }), 2000);
-        nsend({ t: "ping", c: Date.now() }); hudPvp(true); play(); banner("Draw!", `${m.tier.toLocaleString()} BB buy-in · last one standing wins`); return;
+        nsend({ t: "ping", c: Date.now() }); hudPvp(true); G.dead = false; N.ffa = !!m.ffa; N.pts = 0; if (m.ffa) { N.fi = m.ffa; ffaChip(); } play();
+        if (m.ffa) banner("Free for all", "5-minute match · most points wins 1,000 BB"); else banner("Draw!", `${m.tier.toLocaleString()} BB buy-in · last one standing wins`); return;
       }
       case "err": showTiers(m.why); return;
       case "pong": { const r = Date.now() - m.c; N.rtt = N.rtt ? N.rtt * .7 + r * .3 : r; N.off = m.s + r / 2 - Date.now(); return; }
@@ -1293,11 +1329,14 @@ body.wwon{overflow:hidden}
           let R = N.pl.get(n); if (!R) R = addRemote({ n, name: "…", skin: null, stack });
           R.stack = stack; R.flags = fl; R.snaps.push([m.ts, x, y, z, yaw, pitch]); if (R.snaps.length > 40) R.snaps.shift(); R.alive = true; seen.add(n); }
         for (const R of N.pl.values()) if (!seen.has(R.n) && !R.dying) R.alive = false;
-        setLive(m.live); N.hp = m.hp; drawHp(); N.cash = m.cash || 0; if (m.car) carState(m.car, false);
+        setLive(m.live); N.hp = m.hp; drawHp(); if (m.ffa) { N.fi = m.ffa; N.pts = m.pts || 0; ffaChip(); } N.cash = m.cash || 0; if (m.car) carState(m.car, false);
         if (m.ammo >= 0 && !G.reloading && m.ammo !== G.ammo && (m.aw || "rv") === G.wpn) { G.ammo = m.ammo; drawAmmo(); }
         return;
       }
-      case "stack": N.stack = m.stack; setBB(m.stack - N.tier); return;
+      case "stack": N.stack = m.stack; if (!N.ffa) setBB(m.stack - N.tier); return;
+      case "respawn": { const s = m.spawn; G.dead = false; G.p = { x: s[0], y: s[1], z: s[2], vy: 0, ground: true }; G.yaw = s[3]; G.pitch = 0; G.amm = { rv: 6, sn: 1 }; G.ammo = MAGS[G.wpn || "rv"]; G.reloading = 0; drawAmmo();
+        if (G.wpn === "sn") nsend({ t: "wpn", w: "sn" }); N.hp = 100; drawHp(); G.prot = performance.now() + (m.prot || 0); hudPvp(true); const d = G.hud.querySelector("#wwDead"); if (d) d.remove(); return; }
+      case "ffaend": ffaEnd(m); return;
       case "door": setDoor(m.i, !!m.open, false); return;
       case "glass": if (m.s === 1) crackGlass(m.i, m.u, m.v, false); else breakGlass(m.i, null, false); return;
       case "glassfix": fixGlass(m.i); return;
@@ -1310,11 +1349,14 @@ body.wwon{overflow:hidden}
         const d = from.distanceTo(G.cam.position); G.vmul = Math.max(.08, Math.min(1, 9 / (d + 4))); SFX.shot(); G.vmul = 1; if (R.u) R.flashT = .06; return; }
       case "hit": { N.hp = m.hp; drawHp(); dmgFx(m.from); return; }
       case "hc": { if (m.prot) { banner("", "Spawn protected"); return; } hitMark(m.hs); if (m.kill) SFX.ding(); sesAdd("hits", 1); return; }
-      case "kill": { const mine = m.kn === N.n || m.vn === N.n; killFeed(m.k, m.v, m.hs, m.amt, mine, m.how); if (m.kn === N.n) { N.kills++; sesAdd("kills", 1); banner(m.hs ? "Headshot" : "Got 'em", `+${m.amt.toLocaleString()} BB`); }
+      case "kill": { const mine = m.kn === N.n || m.vn === N.n; killFeed(m.k, m.v, m.hs, m.amt, mine, m.how); if (m.kn === N.n) { N.kills++; sesAdd("kills", 1); banner(m.hs ? "Headshot" : "Got 'em", N.ffa ? (m.pts ? `+${m.pts} points` : "Between matches · no points") : `+${m.amt.toLocaleString()} BB`); if (N.ffa) { N.pts += m.pts || 0; ffaChip(); } }
         const R = N.pl.get(m.vn); if (R) R.dying = performance.now(); return; }
-      case "dead": { G.mode = "dead"; sesAdd("deaths", 1); hudPvp(false); G.state = "menu";
+      case "dead": { if (m.ffa) { sesAdd("deaths", 1); G.dead = true; G.fireHeld = false; if (G.car && G.car.mine) carExit(true);
+          const d = document.createElement("div"); d.id = "wwDead"; d.className = "wwdead"; d.innerHTML = `<b>${m.by ? `${esc(m.by)} got you` : "You died"}</b><span>Respawning…</span>`; G.hud.appendChild(d); return; }
+        G.mode = "dead"; sesAdd("deaths", 1); hudPvp(false); G.state = "menu";
         G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwpz"><h2>Shot down</h2><p>${m.by ? `<b>${esc(m.by)}</b> got you and took <b>${m.took.toLocaleString()} BB</b>.` : "You're out."}</p><p>You walk out with <b>${m.keep.toLocaleString()} BB</b>.</p><p class="wwnetmsg" style="opacity:.7">Paying out…</p></div></div>`; return; }
-      case "out": { const net = m.amt - (m.buy || N.tier || 0); sesAdd("bb", net); sesAdd("matches", 1); saveStats(); pvpEnd(true);
+      case "out": { if (m.ffa) { saveStats(); pvpEnd(true); showMenu(false); return; }
+        const net = m.amt - (m.buy || N.tier || 0); sesAdd("bb", net); sesAdd("matches", 1); saveStats(); pvpEnd(true);
         const why = m.reason === "dead" ? "Walked out" : m.reason === "quit" ? "Left the match" : "Match ended";
         G.state = "menu"; G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwpz"><h2>${why}</h2>
           <p style="font:400 30px Rye,Georgia,serif;color:${net >= 0 ? "#9dffb0" : "#ffb3a0"};margin:4px 0">${net >= 0 ? "+" : "−"}${Math.abs(net).toLocaleString()} BB</p>
@@ -1329,7 +1371,8 @@ body.wwon{overflow:hidden}
     setLive(1); setBB(G.ses.bb); stopOwnEmote(); if (!keepConn && N && N.ws) { N.leaving = true; try { N.ws.close(); } catch (_) {} }
   }
   /* leave from the pause menu: the server keeps your body 10 s (or counts it as a death if you were hit in the last 10 s) */
-  function leaveMatch() { const N = G.net; if (N) N.leaving = true; try { N && N.ws && N.ws.close(); } catch (_) {} pvpEnd(true);
+  function leaveMatch() { const N = G.net; if (N) N.leaving = true; const wasFfa = N && N.ffa; try { N && N.ws && N.ws.close(); } catch (_) {} pvpEnd(true);
+    if (wasFfa) { saveStats(); showMenu(false); return; }
     G.state = "menu"; G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwpz"><h2>Left the match</h2><p>Leaving counts as dying: you walk out with half your stack if you got a kill, nothing if you didn't. It shows up in your balance in a few seconds.</p>
       <div class="wwgrid"><button class="pri" data-ww="menu">Main menu</button><button class="dang" data-ww="exit">Exit to casino</button></div></div></div>`; }
 
@@ -1658,17 +1701,20 @@ body.wwon{overflow:hidden}
       if (G.reloading) { G.reloading -= dt; if (G.reloading <= 0) { G.reloading = 0; G.ammo = MAGS[G.wpn]; drawAmmo(); } }
     }
     /* aim down sights */
-    const aiming = play && (G.aimHeld || G.aimToggle) && !G.reloading && !(G.car && G.car.mine), SN = G.wpn === "sn"; G.adsK += ((aiming ? 1 : 0) - G.adsK) * Math.min(1, dt * (SN ? 14 : 12));
+    const aiming = play && (G.aimHeld || G.aimToggle) && !G.reloading && !(G.car && G.car.mine), SN = G.wpn === "sn"; G.adsK += ((aiming ? 1 : 0) - G.adsK) * Math.min(1, dt * (SN ? 9 : 12));
     /* sniper zoom: the rifle comes up to your eye, then the scope blooms in while the view pushes in to 5× (accuracy is already perfect the instant you aim) */
-    const zk = SN ? Math.max(0, Math.min(1, (G.adsK - .3) / .6)) : 0, ze = zk * zk * (3 - 2 * zk);
+    const zk = SN ? Math.max(0, Math.min(1, (G.adsK - .25) / .7)) : 0, ze = zk * zk * zk * (zk * (zk * 6 - 15) + 10);
     const fov = SN ? G.set.fov / (1 + 4 * ze) : G.set.fov + (G.set.fov * .58 - G.set.fov) * G.adsK;
-    { const sc = G.hud.querySelector("#wwScope"); if (sc) { const o = SN ? Math.max(0, Math.min(1, (G.adsK - .35) / .3)) : 0; if (sc._o !== o) { sc._o = o; sc.style.opacity = o; sc.style.transform = `scale(${(1.25 - .25 * o).toFixed(3)})`; } }
+    { const sc = G.hud.querySelector("#wwScope"); if (sc) { const o = SN ? Math.max(0, Math.min(1, (G.adsK - .3) / .45)) : 0, oe = o * o * (3 - 2 * o), sw = performance.now() / 1000;
+        const k = o.toFixed(3) + (o > 0 && o < 1 ? sw.toFixed(2) : ""); if (sc._o !== k) { sc._o = k; sc.style.opacity = Math.min(1, oe * 1.15);
+          sc.style.transform = `translateY(${((1 - oe) * 18).toFixed(2)}vh) scale(${(1.6 - .6 * oe).toFixed(3)})`; sc.style.filter = o < 1 ? `blur(${((1 - oe) * 6).toFixed(1)}px) brightness(${(.35 + .65 * oe).toFixed(2)})` : ""; } }
       const xx = G.hud.querySelector("#wwX"); if (xx) xx.classList.toggle("nox", SN); } if (Math.abs(fov - G.fovNow) > .01) { G.fovNow = fov; cam.fov = fov; cam.updateProjectionMatrix(); }
     const x = G.hud.querySelector("#wwX"); if (x) x.classList.toggle("ads", G.adsK > .5); const dot = G.hud.querySelector("#wwDot"); if (dot) dot.classList.toggle("on", G.adsK > .6 && !SN);
     if (G.aimBtn) G.aimBtn.classList.toggle("on", !!G.aimToggle);
     /* camera */
     const p = G.p, bobA = G.p.ground ? Math.min(1, G.moving / 5) : 0, bob = Math.sin(G.bob * 2) * .035 * bobA * (1 - G.adsK * .8);
     cam.position.set(p.x, p.y + 1.62 - .57 * (G.crK || 0) + bob, p.z); cam.rotation.set(0, 0, 0); cam.rotation.order = "YXZ"; cam.rotation.y = G.yaw; cam.rotation.x = G.pitch + G.recoil * .035;
+    if (G.wpn === "sn" && G.adsK > .5) { const t = performance.now() / 1000, sw = .0011 * (1 - Math.min(1, (G.crK || 0) * .6)); cam.rotation.y += Math.sin(t * .9) * sw; cam.rotation.x += Math.sin(t * 1.7) * sw * .7; } /* a little breathing sway in the scope (less crouched) */
     /* viewmodel: hip vs sights, bob, recoil, reload spin */
     G.recoil = Math.max(0, G.recoil - dt * 7);
     const vm = G.vm, a = G.adsK; vm.position.set(.2 * (1 - a), -.19 * (1 - a) - .0765 * a - Math.abs(Math.sin(G.bob)) * .012 * bobA * (1 - a), -.42 - .1 * a + G.recoil * .05);
@@ -1699,7 +1745,7 @@ body.wwon{overflow:hidden}
     const tip = G.hud.querySelector("#wwTip"); if (tip) { const nearG = play && !G.chal.on && Math.hypot(p.x - G.chalTip[0], p.z - G.chalTip[1]) < 7; tip.textContent = "Shoot the gong to start the bottle challenge"; tip.classList.toggle("on", nearG); }
     /* PvP: send my movement 20×/s, move everyone else, cash-out, own emote camera */
     if (G.mode === "pvp" && G.net) { if (now - (G.net.sentAt || 0) > 50) { G.net.sentAt = now; nsend({ t: "in", x: +G.p.x.toFixed(3), y: +G.p.y.toFixed(3), z: +G.p.z.toFixed(3), yaw: +G.yaw.toFixed(4), pitch: +G.pitch.toFixed(4), cr: G.crK > .5 ? 1 : 0 }); } }
-    if (G.net) remotesTick(dt); cashTick(); carTick(dt); glassTick(); useTick();
+    if (G.net) remotesTick(dt); if (G.net && G.net.ffa && performance.now() - (G.ffaT || 0) > 500) { G.ffaT = performance.now(); ffaChip(); } cashTick(); carTick(dt); glassTick(); useTick();
     if (G.mode === "pvp" && G.car && G.car.mine) G.net.sentAt = now; /* the car message carries my position */
     const emo = ownEmoteTick(dt), drv = carCam(), tp = !emo && !drv && tpCam(); G.tpOn = tp; G.vm.visible = !emo && !drv && !tp && !(G.wpn === "sn" && G.adsK > .6);
     selfBody(dt, emo, drv, tp);

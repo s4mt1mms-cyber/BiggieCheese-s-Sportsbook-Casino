@@ -106,6 +106,10 @@ elif fix == "zcelestial":
     if x.get("aura") == "celestial": up["aura"] = None
     ref.update(up)
     print("auras now", sorted(((ref.get().to_dict() or {}).get("auras") or {}).keys()), "equipped", (ref.get().to_dict() or {}).get("aura"))
+elif fix == "wwopen":
+    # Oct 28 (owner): BiggieTown released to everyone (the match server lets anyone in when config/ww.open is true)
+    fs.collection("config").document("ww").set({"open": True, "at": int(time.time() * 1000)}, merge=True)
+    print("config/ww", fs.collection("config").document("ww").get().to_dict())
 else:
     print("unknown fix", fix); sys.exit(1)
 done.set({fix: int(time.time() * 1000)}, merge=True)

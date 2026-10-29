@@ -8,6 +8,9 @@
 // Protocol: JSON messages, see the comment above each handler. Map (walls, spawns) = map.json exported from the game (tools: server/README).
 import http from "node:http";
 import fs from "node:fs";
+import net from "node:net";
+import { fork } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { WebSocketServer } from "ws";
 import { initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
@@ -20,6 +23,10 @@ const COLS = MAP.cols.map(([x0, x1, y0, y1, z0, z1]) => ({ x0, x1, y0, y1, z0, z
 /* pushable wagons: [x, z, hx, hz] from map.json; positions relayed by whoever pushes them, they block bullets where they are now */
 const WAGONS = (MAP.wagons || []).map(([x, z, hx, hz]) => ({ x, z, hx, hz, x0: x - hx, x1: x + hx, y0: 0, y1: 2.4, z0: z - hz, z1: z + hz }));
 const OWNER = "s4mt1mms@gmail.com";
+/* Free-for-all (owner Oct 28): a second copy of this file runs as a child process (MODE=ffa, port 8081) with its own town;
+   the main server forwards /ffa WebSockets to it. Free to play, 5-minute matches, points for kills (more for headshots),
+   the top scorer wins FFA_PRIZE BB from the house, only if 2+ players played in that match. */
+const FFA = process.env.MODE === "ffa", FFA_PORT = 8081, FFA_MS = 5 * 60000, FFA_GAP = 10000, FFA_PRIZE = 1000, FFA_KILL = 100, FFA_HEAD = 150, FFA_RESPAWN = 3000;
 
 /* ---- rules of the match ---- */
 const BUY_MIN = 100, BUY_MAX = 10000;   /* owner Oct 28: any buy-in on a slider, everyone in one town */
@@ -115,6 +122,7 @@ async function endRun(p, reason) {
   if (p.ended) return; p.ended = true;
   const room = ROOM; room.players.delete(p.pid); if (byPid.get(p.pid) === p) byPid.delete(p.pid); carOut(p);
   broadcast(room, { t: "rm", n: p.n });
+  if (FFA) { send(p.ws, { t: "out", amt: 0, reason, kills: p.kills, buy: 0, ffa: true }); p.conn.player = null; return; }
   const amt = Math.max(0, Math.floor(p.stack));
   try {
     await db.doc("bank/wwout_" + p.buyId).create({ kind: "wwout", from: "house", to: p.pid, amt, at: now(), buy: p.buyId, tier: p.tier, kills: p.kills, reason,
@@ -126,6 +134,13 @@ async function endRun(p, reason) {
 
 function kill(v, k, head, how) {
   const room = ROOM; if (!v.alive) return; v.alive = false; v.hp = 0; carOut(v); if (k === v) k = null;
+  if (FFA) {
+    let pts = 0; if (k) { k.kills++; const live = M && now() >= M.start; if (live) { pts = head ? FFA_HEAD : FFA_KILL; const e = ffaRow(k); e.pts += pts; e.kills++; if (head) e.hs++; } }
+    if (M && now() >= M.start) ffaRow(v).deaths++;
+    broadcast(room, { t: "kill", k: k ? k.name : (how === "boom" ? "The car" : ""), v: v.name, kn: k ? k.n : 0, vn: v.n, hs: !!head, amt: 0, pts, how: how || "shot" });
+    send(v.ws, { t: "dead", by: k ? k.name : null, took: 0, keep: 0, ffa: true, ms: FFA_RESPAWN });
+    if (how !== "quit") setTimeout(() => ffaRespawn(v), FFA_RESPAWN); return;
+  }
   const take = v.kills > 0 ? Math.floor(v.stack / 2) : Math.floor(v.stack);
   v.stack -= take; const cut = Math.floor(take * HOUSE_CUT);
   if (k && k !== v) { k.stack += take - cut; k.kills++; send(k.ws, { t: "stack", stack: k.stack }); }
@@ -134,6 +149,25 @@ function kill(v, k, head, how) {
   setTimeout(() => endRun(v, "dead"), 1200);
 }
 
+
+/* ---- free-for-all matches ---- */
+let M = null;
+function ffaRow(p) { let e = M.rows.get(p.pid); if (!e) { e = { pid: p.pid, name: p.name, pts: 0, kills: 0, hs: 0, deaths: 0, at: now() }; M.rows.set(p.pid, e); } e.name = p.name; return e; }
+function ffaStart(delay) { const t = now(); M = { id: t, start: t + (delay || 0), end: t + (delay || 0) + FFA_MS, rows: new Map() }; for (const p of ROOM.players.values()) ffaRow(p); }
+function ffaBoard() { return [...M.rows.values()].sort((a, b) => b.pts - a.pts || b.hs - a.hs || a.at - b.at); }
+function ffaInfo() { if (!M) return null; return { id: M.id, start: M.start, end: M.end, top: ffaBoard().slice(0, 5).map(e => [e.name, e.pts]) }; }
+function ffaRespawn(p) {
+  if (!FFA || p.ended || p.alive) return; const sp = pickSpawn(ROOM, p);
+  Object.assign(p, { x: sp[0], y: 0, z: sp[1], yaw: sp[2], alive: true, hp: HP, prot: now() + PROT_MS, am: { rv: MAG, sn: MAGS.sn }, reloadUntil: 0, lastHitBy: null, lastHitAt: 0, hist: [[now(), sp[0], 0, sp[1]]] });
+  send(p.ws, { t: "respawn", spawn: [p.x, p.y, p.z, p.yaw], prot: PROT_MS });
+}
+async function ffaFinish() {
+  const m = M, board = ffaBoard(), w = board[0], players = m.rows.size, paid = !!(w && w.pts > 0 && players >= 2);
+  if (paid) { try { await db.doc("bank/wwffa_" + m.id).create({ kind: "wwffa", from: "house", to: w.pid, amt: FFA_PRIZE, at: now(), pts: w.pts, players, note: "BiggieTown free-for-all win", wv: "srv." + now() }); }
+    catch (e) { console.error("ffa prize", e); } }
+  broadcast(ROOM, { t: "ffaend", board: board.slice(0, 8).map(e => [e.name, e.pts, e.kills, e.hs]), winner: w ? w.name : null, wpid: w ? w.pid : null, paid, prize: FFA_PRIZE, players, next: FFA_GAP });
+  M = null; if (ROOM.players.size) { ffaStart(FFA_GAP); setTimeout(() => { for (const p of ROOM.players.values()) { if (p.alive) { p.alive = false; } ffaRespawn(p); } }, FFA_GAP); }
+}
 
 function carBoom(by) {
   if (!car.alive) return; car.alive = false; car.hp = 0; car.deadAt = now(); car.v = 0;
@@ -146,10 +180,24 @@ function carBoom(by) {
 const srv = http.createServer((req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   if (req.url.startsWith("/status")) { res.setHeader("Content-Type", "application/json");
-    res.end(JSON.stringify({ up: true, v: MAP.v, n: [...ROOM.players.values()].filter(p => !p.dc).length, min: BUY_MIN, max: BUY_MAX })); return; }
+    res.end(JSON.stringify({ up: true, v: MAP.v, n: [...ROOM.players.values()].filter(p => !p.dc).length, min: BUY_MIN, max: BUY_MAX, ffa: ffaStat })); return; }
   res.end("BiggieTown server");
 });
-const wss = new WebSocketServer({ server: srv, maxPayload: 8192 });
+const wss = new WebSocketServer({ noServer: true, maxPayload: 8192 });
+/* /ffa WebSockets go to the free-for-all child process; everything else is this town */
+srv.on("upgrade", (req, sock, head) => {
+  if (!FFA && String(req.url || "").startsWith("/ffa")) {
+    const up = net.connect(FFA_PORT, "127.0.0.1", () => { let h = `${req.method} ${req.url} HTTP/1.1\r\n`; for (let i = 0; i < req.rawHeaders.length; i += 2) h += `${req.rawHeaders[i]}: ${req.rawHeaders[i + 1]}\r\n`;
+      up.write(h + "\r\n"); if (head && head.length) up.write(head); sock.pipe(up); up.pipe(sock); });
+    up.on("error", () => sock.destroy()); sock.on("error", () => up.destroy()); return;
+  }
+  wss.handleUpgrade(req, sock, head, ws => wss.emit("connection", ws, req));
+});
+let ffaStat = FFA ? null : { up: false, n: 0 };
+if (!FFA) { let stopping = false; const start = () => { const ch = fork(fileURLToPath(import.meta.url), [], { env: { ...process.env, MODE: "ffa", PORT: String(FFA_PORT) } });
+    ch.on("message", m => { if (m && m.t === "stat") ffaStat = { up: true, n: m.n, end: m.end, start: m.start }; });
+    ch.on("exit", () => { ffaStat = { up: false, n: 0 }; if (!stopping) setTimeout(start, 3000); }); process.on("SIGTERM", () => { stopping = true; try { ch.kill("SIGTERM"); } catch (_) {} }); }; start(); }
+else setInterval(() => { try { process.send && process.send({ t: "stat", n: ROOM.players.size, end: M ? M.end : 0, start: M ? M.start : 0 }); } catch (_) {} }, 3000);
 
 async function allowed(email) {
   if (email === OWNER) return true;
@@ -188,6 +236,10 @@ async function handle(c, m) {
       if (P) { /* resume (dropped connection or a second device): take over the same run */
         if (P.conn !== c) { try { if (P.conn && P.conn.ws !== c.ws) P.conn.ws.close(4000, "resumed"); } catch (_) {} }
         P.conn = c; P.ws = c.ws; P.dc = 0; c.player = P;
+      } else if (FFA) {
+        P = { conn: c, ws: c.ws, pid: c.pid, name: c.name, skin: c.skin, n: nextN++, tier: 0, buyId: null, stack: 0, kills: 0, x: 0, y: 0, z: 0, yaw: 0, pitch: 0,
+          hp: HP, alive: false, hist: [], ammo: MAG, am: { rv: MAG, sn: MAGS.sn }, wpn: "rv", lastShot: 0, reloadUntil: 0, prot: 0, lastHitBy: null, lastHitAt: 0, cash0: 0, dc: 0, lastIn: 0 };
+        byPid.set(c.pid, P); c.player = P; P.emotes = c.emotes || new Set(); P.lastEmo = 0;
       } else {
         const id = String(m.buy || ""); if (!/^wwin_[A-Za-z0-9_]+$/.test(id)) return send(c.ws, { t: "err", why: "No buy-in." });
         const ref = db.doc("bank/" + id); let tier = 0;
@@ -202,9 +254,10 @@ async function handle(c, m) {
       }
       const room = ROOM;
       if (!room.players.has(P.pid)) { room.players.set(P.pid, P); broadcast(room, { t: "add", ...info(P) }, P); }
+      if (FFA) { if (!M) ffaStart(0); ffaRow(P); }
       if (!P.alive) { const sp = pickSpawn(room, P); Object.assign(P, { x: sp[0], y: 0, z: sp[1], yaw: sp[2], alive: true, hp: HP, prot: now() + PROT_MS, ammo: MAG, am: { rv: MAG, sn: MAGS.sn }, reloadUntil: 0, hist: [[now(), sp[0], 0, sp[1]]] }); }
       return send(c.ws, { t: "welcome", n: P.n, tier: P.tier, stack: P.stack, kills: P.kills, hp: P.hp, spawn: [P.x, P.y, P.z, P.yaw], prot: Math.max(0, P.prot - now()),
-        players: [...room.players.values()].filter(q => q !== P).map(info), bank: BANK, doors, wagons: WAGONS.map(w => [w.x, w.z]), glass: [...glass].map(([i, g]) => [i, g.s, g.u, g.v]), car: carArr(), rules: { cut: HOUSE_CUT, body: BODY, head: HEAD, prot: PROT_MS, cash: CASH_MS } });
+        players: [...room.players.values()].filter(q => q !== P).map(info), bank: BANK, doors, wagons: WAGONS.map(w => [w.x, w.z]), glass: [...glass].map(([i, g]) => [i, g.s, g.u, g.v]), car: carArr(), ffa: FFA ? ffaInfo() : null, rules: { cut: HOUSE_CUT, body: BODY, head: HEAD, prot: PROT_MS, cash: CASH_MS } });
     }
     /* {t:"emo", id}: play an emote you own (from the shop); everyone in the match sees it. 8 s cooldown */
     case "emo": {
@@ -287,13 +340,18 @@ async function handle(c, m) {
 
 function onClose(c) {
   const p = c.player; if (!p || p.ended || p.conn !== c) return;
+  if (FFA) { p.alive = false; endRun(p, "quit"); return; }
   if (now() - p.lastHitAt < COMBAT_MS && p.lastHitBy && p.alive) { kill(p, p.lastHitBy.ended ? null : p.lastHitBy, false, "quit"); return; }  /* quitting mid-fight = dying */
   p.dc = now();   /* the body stays (and can be shot) for DC_MS, then the run cashes out */
 }
 
 /* ---- the tick: snapshots, cash-outs, dropped players, reloads, healing ---- */
+let ffaSentAt = 0;
 setInterval(() => {
   const t = now();
+  if (FFA && M && t >= M.end && !M.done) { M.done = true; ffaFinish(); }
+  if (FFA && M && !ROOM.players.size && t > M.start + 1000) M = null; /* empty town: the next player starts a fresh match */
+  const fi = FFA && M && t - ffaSentAt > 1000 ? (ffaSentAt = t, ffaInfo()) : null;
   for (const [i, g] of glass) if (t - g.at > GLASS_BACK) { glass.delete(i); broadcast(ROOM, { t: "glassfix", i }); }
   if (!car.alive && t - car.deadAt > CAR_RESPAWN) Object.assign(car, { x: CAR_SPAWN[0], z: CAR_SPAWN[1], yaw: CAR_SPAWN[2], v: 0, hp: CAR_HP, alive: true, driver: null, lastHit: null });
   if (car.driver && (car.driver.ended || !car.driver.alive || (car.driver.dc && t - car.driver.dc > 1000))) carOut(car.driver);
@@ -311,12 +369,12 @@ setInterval(() => {
       (p.prot > t ? 1 : 0) | (p.cash0 ? 2 : 0) | (p.dc ? 4 : 0) | (p.reloadUntil ? 8 : 0) | (p.inCar ? 16 : 0) | (p.cr ? 32 : 0), p.stack]);
     const live = list.length;
     const ca = carArr();
-    for (const p of room.players.values()) send(p.ws, { t: "s", ts: t, p: list, live, car: ca, hp: Math.floor(p.hp), ammo: p.reloadUntil ? -1 : p.am[p.wpn], aw: p.wpn, cash: p.cash0 ? Math.min(1, (t - p.cash0) / CASH_MS) : 0 });
+    for (const p of room.players.values()) send(p.ws, { t: "s", ts: t, p: list, live, car: ca, ...(fi ? { ffa: fi, pts: (M.rows.get(p.pid) || {}).pts || 0 } : {}), hp: Math.floor(p.hp), ammo: p.reloadUntil ? -1 : p.am[p.wpn], aw: p.wpn, cash: p.cash0 ? Math.min(1, (t - p.cash0) / CASH_MS) : 0 });
   }
 }, TICK_MS);
 
 /* buy-ins nobody joined with (the connection dropped right after paying): refund after 3 minutes */
-setInterval(async () => {
+if (!FFA) setInterval(async () => {
   try {
     const qs = await db.collection("bank").where("kind", "==", "wwbuy").where("used", "==", false).get();
     for (const d of qs.docs) { const b = d.data(); if (now() - (b.at || 0) < 180000) continue;

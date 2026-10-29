@@ -2764,7 +2764,7 @@ window.WWAPI={loadThree:()=>rrLoad(),rrChairParts:(...a)=>rrChairParts(...a),pre
   myEmotes:()=>EMOTES.filter(e=>(S.prefs[S.me]||{}).emotes&&(S.prefs[S.me]||{}).emotes[e.id]).map(e=>({id:e.id,n:e.n,len:e.len})),emote:id=>EM_BY[id]||null,
   rrAnimal:(...a)=>rrAnimal(...a),emApply:(...a)=>emApply(...a),emLerp:(...a)=>emLerp(...a),emLDance:(...a)=>emLDance(...a),rrSolveArm:(...a)=>rrSolveArm(...a),
   closed:()=>{try{render()}catch(_){}}};
-function wwOpen(){if(!S.me)return toast("Sign in to play.");if(!S.canEdit)return;/* admin-only while the owner tests it (Oct 28) */if(S.tab==="rr"||S.tab==="th"){S.tab="home";render()}
+function wwOpen(){if(!S.me)return toast("Sign in to play.");/* released to everyone Oct 28 (owner) */if(S.tab==="rr"||S.tab==="th"){S.tab="home";render()}
   const go=()=>{try{window.WW.open()}catch(e){console.error(e);toast("Couldn't start the game.")}};if(window.WW)return go();
   const sc=document.createElement("script");sc.src="/js/western.js?v="+encodeURIComponent(APP_BUILD);sc.onload=go;sc.onerror=()=>toast("Couldn't load the game. Check your connection.");document.head.appendChild(sc)}
 try{if(matchMedia("(prefers-reduced-motion:reduce)").matches){const f=document.getElementById("auFx");f&&f.pauseAnimations&&f.pauseAnimations()}}catch(_){}
@@ -6691,6 +6691,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:144,d:"Oct 28",t:[["🤠","New game: BiggieTown! A first-person shootout in an old western town. Side menu → Multiplayer games → BiggieTown"],["🎯","Free for all: free to play, 5-minute matches, points for kills (more for headshots). Top scorer wins 1,000 BB"],["💰","Buy-in shootout: put in 100 – 10,000 BB and take the stack of whoever you shoot"],["🔫","Revolver and a bolt-action sniper, a car you can drive (and blow up), saloons, a church bell, shootable windows and more"]]},
  {v:143,d:"Oct 27",t:[["🧀","Fixed: on a slow connection a Cheese Farm run could show +0 BB and not save. Runs now pay right away"]]},
  {v:142,d:"Oct 27",t:[["🎡","Fixed: King Slop's respin counter on the roulette page now counts down as you use them"]]},
  {v:141,d:"Oct 26",t:[["⚡","Tournament blackjack responds instantly now"],["🃏","Tournament blackjack now plays exactly like the normal table: 2-deck shoe, splits, shuffles and all"],["🏆","Blackjack Tournament winner now also keeps whatever their stack finishes over 5,000 (finish at 6,000 and win = pot + 1,000 BB)"]]},
@@ -8289,7 +8290,7 @@ function sideOpen(v){pageLock("side",!!v);const wrap=$("#sideNav"),pnl=wrap.quer
   requestAnimationFrame(()=>{pnl.style.transform="translateX(-100%)";sh.style.opacity="0"});
   setTimeout(()=>{wrap.hidden=true;pnl.style.transform="";sh.style.opacity="";pnl.style.transition="";sh.style.transition=""},230)}
 function sideRender(){
-  document.querySelectorAll(".sitem[data-side]").forEach(b=>b.classList.toggle("on",b.dataset.side===S.tab));{const w=document.querySelector('.sitem[data-side="western"]');if(w)w.hidden=!S.canEdit}{const w=document.querySelector('.sitem[data-side="wheel"]');if(w)w.classList.toggle("ready",wheelReady())}{const s=$("#casinoSub");if(s&&CASINO_TABS.includes(S.tab)&&s.hidden)casinoOpen(true);const b=$("#casinoTgl");if(b)b.classList.toggle("on",CASINO_TABS.includes(S.tab))}{const s=$("#sbSub");if(s&&SB_TABS.includes(S.tab)&&s.hidden)sbOpen(true);const b=$("#sbTgl");if(b)b.classList.toggle("on",SB_TABS.includes(S.tab))}{const s=$("#mpSub");if(s&&MP_TABS.includes(S.tab)&&s.hidden)mpOpen(true);const b=$("#mpTgl");if(b)b.classList.toggle("on",MP_TABS.includes(S.tab))}
+  document.querySelectorAll(".sitem[data-side]").forEach(b=>b.classList.toggle("on",b.dataset.side===S.tab));{const w=document.querySelector('.sitem[data-side="western"]');if(w)w.hidden=false}{const w=document.querySelector('.sitem[data-side="wheel"]');if(w)w.classList.toggle("ready",wheelReady())}{const s=$("#casinoSub");if(s&&CASINO_TABS.includes(S.tab)&&s.hidden)casinoOpen(true);const b=$("#casinoTgl");if(b)b.classList.toggle("on",CASINO_TABS.includes(S.tab))}{const s=$("#sbSub");if(s&&SB_TABS.includes(S.tab)&&s.hidden)sbOpen(true);const b=$("#sbTgl");if(b)b.classList.toggle("on",SB_TABS.includes(S.tab))}{const s=$("#mpSub");if(s&&MP_TABS.includes(S.tab)&&s.hidden)mpOpen(true);const b=$("#mpTgl");if(b)b.classList.toggle("on",MP_TABS.includes(S.tab))}
   $("#sideAdmin").hidden=!S.canEdit;
   const w=$("#sideWho");if(S.me){w.innerHTML=`${pic(S.me,false,"fx")}<span><b>${esc(nm(S.me))}</b><small>${myBalShow().toLocaleString()} BB</small></span>`}else w.innerHTML=`<span><b>Not signed in</b></span>`;
 }
