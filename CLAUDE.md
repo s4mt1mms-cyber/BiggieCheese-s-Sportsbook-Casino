@@ -134,7 +134,7 @@ Fantasyland / ChudBootyCheeks. League Moments (`lm`) still works the old way (it
   crystals popping out of the card (`.shfx`, `shPop`). Rules: `freshWrite()` also requires the `v3.` wv prefix (pre-V2 tabs can't write).
 - Collection tabs (owner Oct 29): League Moments · Platinum Mysterio · Multiverse (`cset` "v2" = the whole pool, default); labels `CNM` in viewPacks.
 - Upgrade glow (owner Oct 29): `lvGlow(c)` on pool cards with max > 1: (lv−1)/(max−1) ≥ .5 silver `lvg-s`, ≥ .75 gold `lvg-g`, max neon red `lvg-m` + red MAX badge `.lvb.mxr`.
-  Collection sorts higher levels first within a rarity; unowned cards = one greyed "Not owned yet" group at the bottom, rarest first. Pack opening reads the live prefs copy (no server read first); upgrade animation 3 hits.
+  Upgrades are optimistic (`v2Up` applies locally + animates at once, saves via the `_V2UQ` queue, resyncs from the server on failure). Collection sorts higher levels first within a rarity; unowned cards = one greyed "Not owned yet" group at the bottom, rarest first. Pack opening reads the live prefs copy (no server read first); upgrade animation 3 hits.
 - **Shop** (side menu, tab `shop`, same viewPacks): sub-tabs Packs · Shards (`v2ShardShopHtml`, one card-sized box per rarity, bulk `S.pk.shq` 1/2/3/5/10) ·
   Marketplace (`trMktHtml`). Card Collections (tab `packs`) is the collection only; active cards list sits under it.
 - **Trades** (Oct 29, replaced the old market for new deals; old listings/offers still settle and show under "Older listings"): `trades/{id}`, see the

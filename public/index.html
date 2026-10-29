@@ -1260,6 +1260,7 @@ body.auspace .auit,body.auspace .auhero{background:transparent!important;backdro
 .shbart{flex:1;display:grid;place-items:center;width:100%}.shbnm{color:var(--rc);font-size:14px;text-align:center}
 .shbbuy{width:100%;margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:1px;padding:8px 6px;border-radius:12px;border:1px solid var(--rc);background:#000a;color:#fff;font:700 12px system-ui,sans-serif;cursor:pointer}.shbbuy b{font-size:14px;color:#5cff72}.shbbuy:disabled{opacity:.45;cursor:default}
 @media (max-width:420px){.shgrid{grid-template-columns:repeat(2,1fr)}}
+.cgrid>.tcard,.unown>.tcard{content-visibility:auto;contain-intrinsic-size:auto 160px}
 .unown{display:contents}.unown>.tcard{filter:grayscale(1) brightness(.45);opacity:.75}.unown>.tcard .lvb,.unown>.tcard .tfdiv{display:none}
 .tcard.lvg-s{box-shadow:0 0 0 2px #e4e9f0,0 0 12px 3px #d5dde8b0,0 0 26px 6px #b8c4d455!important}
 .tcard.lvg-g{box-shadow:0 0 0 2px #ffd34d,0 0 14px 4px #ffc928c0,0 0 30px 8px #ffb30060!important}
@@ -6441,17 +6442,21 @@ async function v2Buy(){if(S._pkChain)return;const q=S.prefs[S.me]||{},n=(Number(
   try{for(let i=0;i<n;i++){if(i>0&&Math.floor(ledger().balOf(S.me))<v2Price()){toast("Out of BiggieBucks. Opened "+i+" of "+n+".");break}
     const d=await v2Buy1(i<n-1?`Next pack (${i+2} of ${n})`:null);if(!d)break;await d}}finally{S._pkChain=false;render()}}
 /* Upgrade one card a level: one prefs write (old key → 0, new key → 1, shards, craftSpent, craftLog) checked against the saved copy */
-async function v2Up(cid){if(S._cfBusy||!S.me||!db)return;if(!(S.prefs[S.me]||{}).upr)return toast("Card levels are updating. Try again in a moment.");if(S.readOnly)return toast("View only. Ask the commish for access.");const c=cardById(cid);if(!c||!craftable(c))return;const L=c.lv||1;if(L>=LV_MAX[c.r])return toast("Already at max level.");
-  const cost=v2UpCost(c),to=lvK(cid,L+1);S._cfBusy=true;
-  try{const D=(await db.doc("prefs/"+S.me).get()).data()||{},cs=D.cards||{};if(!(Number(cs[cid])>0))return toast("You don't have that card at this level anymore.");
-    const have=Math.floor(Number((D.shards||{})[c.r])||0);if(have<cost.sh)return toast(`You need ${shTxt(c.r,cost.sh)} (you have ${have}).`);
-    if(Math.floor(ledger().balOf(S.me))<cost.bb)return toast(`You need ${cost.bb.toLocaleString()} BB.`);const at=Date.now();
-    const patch={cards:{[cid]:0,[to]:1},shards:{[c.r]:have-cost.sh},craftSpent:(Number(D.craftSpent)||0)+cost.bb,craftLog:{[at]:{c:baseOf(cid),f:L,t:L+1,fee:cost.bb,n:cost.sh,sh:c.r}}};
-    await db.doc("prefs/"+S.me).update(patch);
-    const q=S.prefs[S.me]=S.prefs[S.me]||{};q.cards={...(q.cards||{}),...patch.cards};q.shards={...(q.shards||{}),...patch.shards};q.craftSpent=patch.craftSpent;q.craftLog={...(q.craftLog||{}),...patch.craftLog};
-    const max=L+1>=LV_MAX[c.r];if(max)try{db.collection("chat").add({type:"bet",kind:"bank",uid:S.me,poster:S.me,at,text:`⬆️ ${nm(S.me)} upgraded ${c.name} to MAX (LV ${L+1})!`})}catch(_){}
-    document.querySelectorAll(".pkov").forEach(x=>x.remove());render();cfAnim([cid],to,max,[])}
-  catch(e){console.warn("upgrade",e);toast("The upgrade didn't go through. Nothing was used or charged. Try again.")}finally{S._cfBusy=false}}
+/* owner Oct 29 1:57 AM: upgrades are instant: checked against the live prefs copy, applied locally and animated right away; the save runs in
+   the background (rolled back with a toast if it fails). Several upgrades in a row queue up in order. */
+let _V2UQ=Promise.resolve();
+function v2Up(cid){if(!S.me||!db)return;if(!(S.prefs[S.me]||{}).upr)return toast("Card levels are updating. Try again in a moment.");if(S.readOnly)return toast("View only. Ask the commish for access.");const c=cardById(cid);if(!c||!craftable(c))return;const L=c.lv||1;if(L>=LV_MAX[c.r])return toast("Already at max level.");
+  const cost=v2UpCost(c),to=lvK(cid,L+1),q=S.prefs[S.me]=S.prefs[S.me]||{},cs=q.cards||{};if(!(Number(cs[cid])>0))return toast("You don't have that card at this level anymore.");
+  const have=Math.floor(Number((q.shards||{})[c.r])||0);if(have<cost.sh)return toast(`You need ${shTxt(c.r,cost.sh)} (you have ${have}).`);
+  if(Math.floor(ledger().balOf(S.me))<cost.bb)return toast(`You need ${cost.bb.toLocaleString()} BB.`);const at=Date.now();
+  const patch={cards:{[cid]:0,[to]:1},shards:{[c.r]:have-cost.sh},craftSpent:(Number(q.craftSpent)||0)+cost.bb,craftLog:{[at]:{c:baseOf(cid),f:L,t:L+1,fee:cost.bb,n:cost.sh,sh:c.r}}};
+  const prev={cards:{[cid]:cs[cid],[to]:cs[to]||0},shards:{[c.r]:have},craftSpent:q.craftSpent};
+  q.cards={...cs,...patch.cards};q.shards={...(q.shards||{}),...patch.shards};q.craftSpent=patch.craftSpent;q.craftLog={...(q.craftLog||{}),...patch.craftLog};
+  const max=L+1>=LV_MAX[c.r];document.querySelectorAll(".pkov").forEach(x=>x.remove());render();cfAnim([cid],to,max,[]);
+  _V2UQ=_V2UQ.then(()=>db.doc("prefs/"+S.me).update(patch)).then(()=>{if(max)try{db.collection("chat").add({type:"bet",kind:"bank",uid:S.me,poster:S.me,at,text:`⬆️ ${nm(S.me)} upgraded ${c.name} to MAX (LV ${L+1})!`})}catch(_){}},e=>{console.warn("upgrade",e);
+    /* resync from the saved copy (this undoes this upgrade and anything queued behind it) */
+    db.doc("prefs/"+S.me).get().then(f=>{const D=f.data()||{};Object.assign(q,{cards:D.cards||{},shards:D.shards||{},craftSpent:D.craftSpent||0,craftLog:D.craftLog||{}});render()}).catch(()=>{Object.assign(q,{cards:{...(q.cards||{}),...prev.cards},shards:{...(q.shards||{}),...prev.shards},craftSpent:prev.craftSpent});render()});
+    document.querySelectorAll(".cfov").forEach(x=>x.remove());toast("The upgrade didn't save (connection?). Nothing was used or charged. Try again.")})}
 /* Shard store: n shards of rarity r, paid to the house (burned like upgrades: craftSpent + craftLog {sh,n,fee,buy}) */
 async function v2ShBuy(r,n){if(S._shBusy||!S.me||!db)return;if(S.readOnly)return toast("View only. Ask the commish for access.");r=Number(r);n=Math.max(1,Math.floor(Number(n)||1));const price=SHARD_PRICE[r];if(!price)return;const fee=price*n;
   if(Math.floor(ledger().balOf(S.me))<fee)return toast(`You need ${fee.toLocaleString()} BB.`);S._shBusy=true;
@@ -7256,6 +7261,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:158,d:"Oct 29",t:[["⬆️","Upgrading cards is instant now, no more freezing"]]},
  {v:157,d:"Oct 29",t:[["💎","Shard store prices went up so packs stay the better deal: Common 4,000 · Uncommon 11,000 · Rare 25,000 · Super Rare 64,000 · Elite 650,000 · Grail 2.4M"],["📚","Cards you don't have yet now sit together at the bottom of your collection, rarest first"]]},
  {v:156,d:"Oct 29",t:[["🎴","Elites and Grails are now half as likely to show up in a BiggieCheese Pack"]]},
  {v:155,d:"Oct 29",t:[["🤝","Brand-new trading: propose a trade to any player, or list one on the Marketplace, for any mix of BB, shards and cards"],["🃏","Getting a card you already have in a trade gives you shards: one per level (you keep the higher level)"],["📖","New Card Guidebook (under Card Collections): every card, who owns it, and what each ability does at every level"],["⬆️","Upgrades now take more shards each level (1, 3, 4, 7, 11, 18 …). Upgraded cards were reset to LV 1 and you got all those shards back"]]},
