@@ -44,7 +44,7 @@ const DC_MS = 10000;           // a dropped player's body stays this long (can s
 const TICK_MS = 50;            // 20 snapshots a second
 const MAX_REWIND = 250;
 /* one hitbox for everyone: a standing cylinder + a head sphere (metres, from the feet) */
-const HB = { r: 0.38, y0: 0.05, y1: 1.5, hy: 1.68, hr: 0.22 };
+const HB = { r: 0.42, y0: 0.05, y1: 1.5, hy: 1.68, hr: 0.25 };   /* owner Oct 28: a little bigger than the models (was r .38, head .22) */
 const EYE = 1.62;
 const BANK = { x0: -38.5, x1: -30.5, z0: -9.8, z1: -6.0 };
 /* doors / glass / bell / the car (owner Oct 28) */
@@ -139,7 +139,7 @@ function kill(v, k, head, how) {
     if (M && now() >= M.start) ffaRow(v).deaths++;
     broadcast(room, { t: "kill", k: k ? k.name : (how === "boom" ? "The car" : ""), v: v.name, kn: k ? k.n : 0, vn: v.n, hs: !!head, amt: 0, pts, how: how || "shot" });
     send(v.ws, { t: "dead", by: k ? k.name : null, took: 0, keep: 0, ffa: true, ms: FFA_RESPAWN });
-    if (how !== "quit") setTimeout(() => ffaRespawn(v), FFA_RESPAWN); return;
+    v.deadAt = now(); if (how !== "quit") setTimeout(() => ffaRespawn(v), 20000); return; /* the player taps Respawn after FFA_RESPAWN; 20 s backstop */
   }
   const take = v.kills > 0 ? Math.floor(v.stack / 2) : Math.floor(v.stack);
   v.stack -= take; const cut = Math.floor(take * HOUSE_CUT);
@@ -166,7 +166,7 @@ async function ffaFinish() {
   if (paid) { try { await db.doc("bank/wwffa_" + m.id).create({ kind: "wwffa", from: "house", to: w.pid, amt: FFA_PRIZE, at: now(), pts: w.pts, players, note: "BiggieTown free-for-all win", wv: "srv." + now() }); }
     catch (e) { console.error("ffa prize", e); } }
   broadcast(ROOM, { t: "ffaend", board: board.slice(0, 8).map(e => [e.name, e.pts, e.kills, e.hs]), winner: w ? w.name : null, wpid: w ? w.pid : null, paid, prize: FFA_PRIZE, players, next: FFA_GAP });
-  M = null; if (ROOM.players.size) { ffaStart(FFA_GAP); setTimeout(() => { for (const p of ROOM.players.values()) { if (p.alive) { p.alive = false; } ffaRespawn(p); } }, FFA_GAP); }
+  M = null; if (ROOM.players.size) { ffaStart(FFA_GAP); setTimeout(() => { for (const p of ROOM.players.values()) if (p.alive) { p.alive = false; ffaRespawn(p); } }, FFA_GAP); }
 }
 
 function carBoom(by) {
@@ -304,6 +304,7 @@ async function handle(c, m) {
       if (p.cash0 && !inBank(p)) { p.cash0 = 0; send(c.ws, { t: "cash", on: false }); }
       return;
     }
+    case "respawn": { if (FFA && p && !p.alive && now() - (p.deadAt || 0) >= FFA_RESPAWN - 250) ffaRespawn(p); return; }
     case "wpn": { if (!p || !p.alive) return; p.wpn = gunOf(m.w); p.reloadUntil = 0; return; }
     case "rl": { if (!p || !p.alive) return; const w = gunOf(m.w); if (p.am[w] < MAGS[w] && !p.reloadUntil) { p.reloadUntil = now() + RLMS[w]; p.reloadW = w; } return; }
     /* {t:"shot", d:[dx,dy,dz]}: fired from the server's idea of your eyes; others are rewound to what you saw */
@@ -363,10 +364,10 @@ setInterval(() => {
       if (p.reloadUntil && t >= p.reloadUntil) { p.reloadUntil = 0; p.am[p.reloadW || "rv"] = MAGS[p.reloadW || "rv"]; }
 
       /* slow heal after 6 s without being hit */
-      if (p.alive && p.hp < HP && t - p.lastHitAt > 6000) p.hp = Math.min(HP, p.hp + 0.4);
+      if (p.alive && p.hp < HP && t - p.lastHitAt > 7000) p.hp = Math.min(HP, p.hp + 0.3); /* owner Oct 28: after 7 s, ~6 HP/s */
     }
     const list = [...room.players.values()].filter(p => p.alive).map(p => [p.n, +p.x.toFixed(2), +p.y.toFixed(2), +p.z.toFixed(2), +p.yaw.toFixed(3), +p.pitch.toFixed(3),
-      (p.prot > t ? 1 : 0) | (p.cash0 ? 2 : 0) | (p.dc ? 4 : 0) | (p.reloadUntil ? 8 : 0) | (p.inCar ? 16 : 0) | (p.cr ? 32 : 0), p.stack]);
+      (p.prot > t ? 1 : 0) | (p.cash0 ? 2 : 0) | (p.dc ? 4 : 0) | (p.reloadUntil ? 8 : 0) | (p.inCar ? 16 : 0) | (p.cr ? 32 : 0), p.stack, Math.ceil(p.hp)]);
     const live = list.length;
     const ca = carArr();
     for (const p of room.players.values()) send(p.ws, { t: "s", ts: t, p: list, live, car: ca, ...(fi ? { ffa: fi, pts: (M.rows.get(p.pid) || {}).pts || 0 } : {}), hp: Math.floor(p.hp), ammo: p.reloadUntil ? -1 : p.am[p.wpn], aw: p.wpn, cash: p.cash0 ? Math.min(1, (t - p.cash0) / CASH_MS) : 0 });

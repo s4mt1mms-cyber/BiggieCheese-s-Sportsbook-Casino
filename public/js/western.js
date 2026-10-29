@@ -47,6 +47,9 @@ body.wwon{overflow:hidden}
 .wwscope u{position:absolute;left:50%;top:50%;width:4px;height:4px;border-radius:50%;background:#050403;margin:-2px 0 0 -2px}
 .wwscope b{position:absolute;left:50%;top:50%;width:5px;height:5px;margin:-2.5px 0 0 -2.5px;border-radius:50%;background:#ff3b30;box-shadow:0 0 6px #ff3b30}
 .wwx.nox{opacity:0}
+.wwthp{position:relative;display:block;width:76px;height:10px;border-radius:6px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.3);overflow:hidden;margin-top:2px;font-style:normal}
+.wwthp i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(#7dff8c,#2fa84a)}.wwthp.low i{background:linear-gradient(#ff8a7a,#c0281c)}
+.wwthp u{position:absolute;right:4px;top:-2px;font:800 9px Barlow;text-decoration:none;text-shadow:0 1px 2px #000;color:#fff}
 .wwdead{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);text-align:center;background:rgba(40,8,4,.75);border:2px solid #c8963e;border-radius:12px;padding:12px 22px;pointer-events:none}
 .wwdead b{display:block;font:400 26px Rye,Georgia,serif;color:#ffd0a0}.wwdead span{font:600 14px Barlow;color:#e8d4a8}
 .wwffaend{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);min-width:280px;max-width:92%;background:rgba(20,12,6,.9);border:2px solid #c8963e;border-radius:14px;padding:14px 18px;text-align:center;pointer-events:none;color:#ffe9b8}
@@ -387,6 +390,7 @@ body.wwon{overflow:hidden}
       else if (a === "exit") close();
       else if (a === "buyin") { if (G.server && G.server.up) showTiers(); else showModes(); }
       else if (a === "ffa") joinFfa();
+      else if (a === "respawn") { nsend({ t: "respawn" }); play(); }
       else if (a === "join") { if (G.server && G.server.up) showModes(); else { const b2 = G.ui.querySelector("[data-ww=join] small"); if (b2) b2.textContent = "Server offline · try again soon"; srvStatus(); } }
       else if (a === "leave") leaveMatch();
       else if (a === "rules") showRules();
@@ -732,7 +736,8 @@ body.wwon{overflow:hidden}
     const cyl = (r, hh, mat, lx, ly, lz, grp, L, solid) => { put(new T.CylinderGeometry(r, r * .92, hh, 12), mat, lx, ly + hh / 2, lz, 0, grp); if (solid) { const a = L(lx - r, lz - r), b = L(lx + r, lz + r); colBox(a[0], b[0], ly, ly + hh, a[1], b[1]); } };
     const bars = (grp, lbox, fl, x0, x1, lz, hh) => { lbox(x1 - x0, hh, .06, MT.iron, (x0 + x1) / 2, fl, lz, true, "metal"); /* collider */
       for (let x = x0 + .08; x < x1; x += .22) put(box(.035, hh, .035), MT.iron, x, fl + hh / 2, lz + .05, 0, grp); put(box(x1 - x0, .06, .06), MT.iron, (x0 + x1) / 2, fl + hh, lz + .05, 0, grp); };
-    const goods = (grp, x0, x1, y, lz) => { const C = [0xa83a2a, 0x3a6a9a, 0xd8b04a, 0x6a8a3a, 0xe8dcc0, 0x8a5a2a]; for (let x = x0; x < x1; x += .34) put(box(.22, .26 + Math.random() * .12, .24), M({ color: C[(Math.random() * C.length) | 0], roughness: .8 }), x, y + .15, lz, 0, grp); };
+    const GOODS = [0xa83a2a, 0x3a6a9a, 0xd8b04a, 0x6a8a3a, 0xe8dcc0, 0x8a5a2a].map(c => M({ color: c, roughness: .8 })); /* shared, so they batch into a few draw calls */
+    const goods = (grp, x0, x1, y, lz) => { for (let x = x0; x < x1; x += .34) put(box(.22, .26 + Math.random() * .12, .24), GOODS[(Math.random() * GOODS.length) | 0], x, y + .15, lz, 0, grp); };
     const storeInside = (grp, lbox, fl, w, d, h, L) => {
       const sh = wood("shelf", "#3d2210"); lbox(w - .8, 2.5, .5, sh, 0, fl, -d + .55, true); [0.55, 1.25, 1.95].forEach(y => goods(grp, -w / 2 + .7, w / 2 - .7, fl + y, -d + .62));
       lbox(w * .5, 1.0, .7, wood("counter", "#5a3318"), -.6, fl, -d * .5, true); put(box(.5, .35, .3), MT.brass, -.6 - w * .15, fl + 1.18, -d * .5, 0, grp);
@@ -936,6 +941,7 @@ body.wwon{overflow:hidden}
         const W = { i, mtx, broken: 0, col: w.col || 0x2a3a48, box: { x0: b.min.x, x1: b.max.x, y0: b.min.y, y1: b.max.y, z0: b.min.z, z1: b.max.z }, c: b.getCenter(new T.Vector3()) }; G.wins.push(W);
         G.cols.push(Object.assign({}, W.box, { mat: "glass", gw: W, dr: { get open() { return !!W.broken; } } })); });
       im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true; sc.add(im); G.winMesh = im; }
+    G.grid = new Map(); for (const c of G.cols) gridAdd(c);
     buildCar(T, M);
 
     /* ---- first-person revolver ---- */
@@ -1055,10 +1061,10 @@ body.wwon{overflow:hidden}
   function carLocal(x, z) { const c = G.car, dx = x - c.x, dz = z - c.z, co = Math.cos(c.yaw), si = Math.sin(c.yaw); return [dx * co - dz * si, dx * si + dz * co]; }
   function carSolid() { const c = G.car; return c && !c.mine && c.g && c.g.visible !== false; }
   function groundAt(x, z, feet, r) {
-    let g = 0; if (carSolid() && feet >= CAR_TOP - .5) { const [lx, lz] = carLocal(x, z); if (Math.abs(lx) < CAR_HX && Math.abs(lz) < CAR_HZ) g = CAR_TOP; } for (const c of G.cols) { if (c.y1 > feet + .48) continue; if (x + r * .3 < c.x0 || x - r * .3 > c.x1 || z + r * .3 < c.z0 || z - r * .3 > c.z1) continue; if (c.y1 > g) g = c.y1; } return g;
+    let g = 0; if (carSolid() && feet >= CAR_TOP - .5) { const [lx, lz] = carLocal(x, z); if (Math.abs(lx) < CAR_HX && Math.abs(lz) < CAR_HZ) g = CAR_TOP; } for (const c of nearCols(x, z)) { if (c.y1 > feet + .48) continue; if (x + r * .3 < c.x0 || x - r * .3 > c.x1 || z + r * .3 < c.z0 || z - r * .3 > c.z1) continue; if (c.y1 > g) g = c.y1; } return g;
   }
   function collide(p, r) {
-    const feet = p.y, ht = G.crK > .5 ? 1.2 : 1.75; for (let it = 0; it < 2; it++) for (const c of G.cols) {
+    const feet = p.y, ht = G.crK > .5 ? 1.2 : 1.75; for (let it = 0; it < 2; it++) for (const c of nearCols(p.x, p.z)) {
       if (c.y1 <= feet + .46 || c.y0 >= feet + ht || (c.dr && c.dr.open)) continue;
       const cx = Math.max(c.x0, Math.min(p.x, c.x1)), cz = Math.max(c.z0, Math.min(p.z, c.z1)), dx = p.x - cx, dz = p.z - cz, d2 = dx * dx + dz * dz;
       if (d2 >= r * r) continue;
@@ -1075,15 +1081,21 @@ body.wwon{overflow:hidden}
   function tryMantle(p, fromGround) {
     const fx = -Math.sin(G.yaw), fz = -Math.cos(G.yaw); let top = -1, lx = 0, lz = 0;
     for (const f of [.45, .6, .8]) { const qx = p.x + fx * f, qz = p.z + fz * f;
-      for (const c of G.cols) { if (c.dr && c.dr.open) continue; if (qx < c.x0 || qx > c.x1 || qz < c.z0 || qz > c.z1) continue; if (c.y1 > p.y + .35 && c.y1 <= p.y + 2.0 && c.y1 > top) { top = c.y1; lx = qx; lz = qz; } }
+      for (const c of nearCols(qx, qz)) { if (c.dr && c.dr.open) continue; if (qx < c.x0 || qx > c.x1 || qz < c.z0 || qz > c.z1) continue; if (c.y1 > p.y + .35 && c.y1 <= p.y + 2.0 && c.y1 > top) { top = c.y1; lx = qx; lz = qz; } }
       if (top > 0) break; }
     if (top < 0 || (fromGround && top < p.y + 1.15)) return false; /* from the ground only for ledges too high to just jump onto */
     let low = false;
-    for (const c of G.cols) { if (c.dr && c.dr.open) continue; if (c.y1 > top + .05 && c.y0 < top + 1.75) { if (lx + .28 > c.x0 && lx - .28 < c.x1 && lz + .28 > c.z0 && lz - .28 < c.z1) { if (c.y0 < top + 1.2) return false; low = true; } if (c.y0 > p.y + 1.6 && p.x + .3 > c.x0 && p.x - .3 < c.x1 && p.z + .3 > c.z0 && p.z - .3 < c.z1) return false; } }
+    for (const c of nearCols(lx, lz)) { if (c.dr && c.dr.open) continue; if (c.y1 > top + .05 && c.y0 < top + 1.75) { if (lx + .28 > c.x0 && lx - .28 < c.x1 && lz + .28 > c.z0 && lz - .28 < c.z1) { if (c.y0 < top + 1.2) return false; low = true; } if (c.y0 > p.y + 1.6 && p.x + .3 > c.x0 && p.x - .3 < c.x1 && p.z + .3 > c.z0 && p.z - .3 < c.z1) return false; } }
     if (low) { G.crK = 1; G.crouch = true; }
     G.mantle = { t: 0, y0: p.y, y1: top, x0: p.x, z0: p.z, x1: lx, z1: lz }; SFX.step(true); return true;
   }
-  function setWagon(W, x, z) { const dx = x - W.x, dz = z - W.z; W.x = x; W.z = z; Object.assign(W.col, { x0: x - W.hx, x1: x + W.hx, z0: z - W.hz, z1: z + W.hz }); W.g.position.set(x, 0, z);
+  /* collider grid (perf, Oct 28): each collider sits in every 4 m cell it touches (+1 m margin); nearCols(x,z) = the few that can matter there */
+  const GC = 4, NOCOLS = [];
+  function gridAdd(c) { if (!G.grid) return; c._cells = []; for (let ix = Math.floor((c.x0 - 1) / GC); ix <= Math.floor((c.x1 + 1) / GC); ix++) for (let iz = Math.floor((c.z0 - 1) / GC); iz <= Math.floor((c.z1 + 1) / GC); iz++) {
+      const k = ix * 1000 + iz; let a = G.grid.get(k); if (!a) G.grid.set(k, a = []); a.push(c); c._cells.push(a); } }
+  function gridDel(c) { for (const a of c._cells || []) { const i = a.indexOf(c); if (i >= 0) a.splice(i, 1); } c._cells = []; }
+  function nearCols(x, z) { return G.grid ? G.grid.get(Math.floor(x / GC) * 1000 + Math.floor(z / GC)) || NOCOLS : G.cols; }
+  function setWagon(W, x, z) { const dx = x - W.x, dz = z - W.z; W.x = x; W.z = z; gridDel(W.col); Object.assign(W.col, { x0: x - W.hx, x1: x + W.hx, z0: z - W.hz, z1: z + W.hz }); gridAdd(W.col); W.g.position.set(x, 0, z);
     const roll = (W.ax === "z" ? dz : dx) / .55; W.whs.forEach(h => h.rotation.x += roll); }
   function pushWagons(p, r, dt) {
     for (const W of G.wagons || []) { const c = W.col; if (p.y > c.y1 - .3) continue; const cx = Math.max(c.x0, Math.min(p.x, c.x1)), cz = Math.max(c.z0, Math.min(p.z, c.z1)), dx = p.x - cx, dz = p.z - cz, d = Math.hypot(dx, dz);
@@ -1093,7 +1105,7 @@ body.wwon{overflow:hidden}
       if (G.mode === "pvp" && performance.now() - (W.sentAt || 0) > 90) { W.sentAt = performance.now(); nsend({ t: "wagon", i: W.i, x: +W.x.toFixed(3), z: +W.z.toFixed(3) }); } }
   }
   /* crouch (owner Oct 28): hold the crouch key (phone: CROUCH toggles); slower, lower eyes and hitbox, fits under low stuff; you stay down while something is over your head */
-  function headBlocked(p) { for (const c of G.cols) { if (c.dr && c.dr.open) continue; if (c.y0 > p.y + 1.15 && c.y0 < p.y + 1.75 && p.x + .3 > c.x0 && p.x - .3 < c.x1 && p.z + .3 > c.z0 && p.z - .3 < c.z1) return true; } return false; }
+  function headBlocked(p) { for (const c of nearCols(p.x, p.z)) { if (c.dr && c.dr.open) continue; if (c.y0 > p.y + 1.15 && c.y0 < p.y + 1.75 && p.x + .3 > c.x0 && p.x - .3 < c.x1 && p.z + .3 > c.z0 && p.z - .3 < c.z1) return true; } return false; }
   function stepPlayer(dt) {
     const p = G.p, k = G.keys; let fx = 0, fz = 0, run = false; if (G.dead) { G.moving = 0; return; }
     { const want = !!((G.act.crouch && !G.set.crToggle) || G.crTog) && !(G.car && G.car.mine); G.crouch = want || (G.crK > .5 && headBlocked(p)); G.crK = (G.crK || 0) + ((G.crouch ? 1 : 0) - (G.crK || 0)) * Math.min(1, dt * 12); }
@@ -1140,7 +1152,7 @@ body.wwon{overflow:hidden}
     if (G.mode === "pvp") { nsend({ t: "shot", d: [dir.x, dir.y, dir.z], w: G.wpn }); G.prot = 0; }
     let best = { t: 300, kind: "none" };
     if (G.mode === "pvp" && G.net) for (const R of G.net.pl.values()) { if (!R.alive || !R.root || R.dying) continue; const p = R.root.position;
-      for (const [y, r] of ((R.flags || 0) & 32) ? [[1.1, .22], [.75, .42], [.35, .4]] : [[1.68, .22], [1.2, .42], [.6, .4]]) { const t = raySphere(o, dir, { x: p.x, y: p.y + y, z: p.z }, r); if (t != null && t < best.t) best = { t, kind: "player" }; } }
+      for (const [y, r] of ((R.flags || 0) & 32) ? [[1.1, .25], [.75, .46], [.35, .44]] : [[1.68, .25], [1.2, .46], [.6, .44]]) { const t = raySphere(o, dir, { x: p.x, y: p.y + y, z: p.z }, r); if (t != null && t < best.t) best = { t, kind: "player" }; } }
     for (const s of G.shoot) { const t = raySphere(o, dir, s.c, s.r); if (t != null && t < best.t) best = { t, kind: s.kind, s }; }
     for (const b of G.bottles) { if (!b.alive) continue; const t = raySphere(o, dir, b.c, b.r); if (t != null && t < best.t) best = { t, kind: "bottle", b }; }
     for (const w of G.weeds) { const t = raySphere(o, dir, w.g.position, .45); if (t != null && t < best.t) best = { t, kind: "weed", w }; }
@@ -1255,14 +1267,14 @@ body.wwon{overflow:hidden}
   }
   function showRules() {
     G.state = "menu"; G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwsc"><h2>How shootouts work</h2><div class="wwrules">
-      <div><b>Health.</b> Everyone has 100 HP. You heal slowly after 6 seconds without getting hit.</div>
+      <div><b>Health.</b> Everyone has 100 HP (shown over their heads). After 7 seconds without getting hit you heal about 6 HP a second.</div>
       <div><b>Damage.</b> Body shot 34 (3 to kill). Past 40 m a body shot does 25. <b>Headshot 100: one shot kills.</b></div>
-      <div><b>Same hitbox.</b> Every character is hit the same, whatever skin they wear.</div>
+      <div><b>Same hitbox.</b> Every character is hit the same, whatever skin they wear: a body cylinder and a head ball, a little bigger than the models.</div>
       <div><b>Kills.</b> You take the victim's stack: all of it if they had no kills yet, half if they had one or more. Their run ends.</div>
       <div><b>The car.</b> 1,000 HP. Run someone over to kill them. Shoot it to wreck it: everyone inside or within 6 m dies, and whoever wrecked it gets the kills. It comes back after 1 minute.</div>
       <div><b>Guns.</b> Revolver: 6 shots, 34 body (25 past 40 m), 100 head. Sniper (switch with the gun key): bolt action, one shot then about 2 seconds to work the bolt, and any hit kills (100 body, 150 head, any range). From the hip the sniper has no crosshair and sprays everywhere; the moment you aim in it zooms 5× and is dead accurate. Crouching shrinks you (head at 1.1 m) and slows you down.</div>
       <div><b>Ending a run.</b> There's no cashing out: your run ends when you die. You walk out with half your stack if you got a kill, nothing if you didn't. Leaving the match counts as dying (the last person who hit you gets the kill). 3 seconds of spawn protection when you spawn.</div>
-      <div><b>Free for all.</b> Free to play, 5-minute matches, you respawn 3 seconds after dying. A kill is 100 points, a headshot kill 150. Most points when the clock runs out wins 1,000 BB, paid only if 2 or more people played in that match.</div>
+      <div><b>Free for all.</b> Free to play, 5-minute matches, hit Respawn 3 seconds after dying. A kill is 100 points, a headshot kill 150. Most points when the clock runs out wins 1,000 BB, paid only if 2 or more people played in that match.</div>
       </div><div class="wwrow"><button class="pri" data-ww="join">Back</button></div></div></div>`;
   }
   function netMsg(t) { const e = G.ui.querySelector(".wwnetmsg"); if (e) e.textContent = t; }
@@ -1326,9 +1338,9 @@ body.wwon{overflow:hidden}
       case "rm": { const R = N.pl.get(m.n); if (R) { R.gone = true; if (!R.dying) rmRemote(R), N.pl.delete(m.n); } return; }
       case "s": {
         const seen = new Set();
-        for (const e of m.p) { const [n, x, y, z, yaw, pitch, fl, stack] = e; if (n === N.n) { if (stack !== N.stack) { N.stack = stack; setBB(stack - N.tier); } continue; }
+        for (const e of m.p) { const [n, x, y, z, yaw, pitch, fl, stack, hp] = e; if (n === N.n) { if (stack !== N.stack) { N.stack = stack; setBB(stack - N.tier); } continue; }
           let R = N.pl.get(n); if (!R) R = addRemote({ n, name: "…", skin: null, stack });
-          R.stack = stack; R.flags = fl; R.snaps.push([m.ts, x, y, z, yaw, pitch]); if (R.snaps.length > 40) R.snaps.shift(); R.alive = true; seen.add(n); }
+          R.stack = stack; R.flags = fl; R.hp = hp == null ? 100 : hp; R.snaps.push([m.ts, x, y, z, yaw, pitch]); if (R.snaps.length > 40) R.snaps.shift(); R.alive = true; seen.add(n); }
         for (const R of N.pl.values()) if (!seen.has(R.n) && !R.dying) R.alive = false;
         setLive(m.live); N.hp = m.hp; drawHp(); if (m.ffa) { N.fi = m.ffa; N.pts = m.pts || 0; ffaChip(); } N.cash = m.cash || 0; if (m.car) carState(m.car, false);
         if (m.ammo >= 0 && !G.reloading && m.ammo !== G.ammo && (m.aw || "rv") === G.wpn) { G.ammo = m.ammo; drawAmmo(); }
@@ -1336,7 +1348,7 @@ body.wwon{overflow:hidden}
       }
       case "stack": N.stack = m.stack; if (!N.ffa) setBB(m.stack - N.tier); return;
       case "respawn": { const s = m.spawn; G.dead = false; G.p = { x: s[0], y: s[1], z: s[2], vy: 0, ground: true }; G.yaw = s[3]; G.pitch = 0; G.amm = { rv: 6, sn: 1 }; G.ammo = MAGS[G.wpn || "rv"]; G.reloading = 0; drawAmmo();
-        if (G.wpn === "sn") nsend({ t: "wpn", w: "sn" }); N.hp = 100; drawHp(); G.prot = performance.now() + (m.prot || 0); hudPvp(true); const d = G.hud.querySelector("#wwDead"); if (d) d.remove(); return; }
+        if (G.wpn === "sn") nsend({ t: "wpn", w: "sn" }); N.hp = 100; drawHp(); G.prot = performance.now() + (m.prot || 0); hudPvp(true); if (G.state !== "play" && G.ui.querySelector("#wwRsp")) play(); return; }
       case "ffaend": ffaEnd(m); return;
       case "door": setDoor(m.i, !!m.open, false); return;
       case "glass": if (m.s === 1) crackGlass(m.i, m.u, m.v, false); else breakGlass(m.i, null, false); return;
@@ -1352,11 +1364,15 @@ body.wwon{overflow:hidden}
       case "hc": { if (m.prot) { banner("", "Spawn protected"); return; } hitMark(m.hs); if (m.kill) SFX.ding(); sesAdd("hits", 1); return; }
       case "kill": { const mine = m.kn === N.n || m.vn === N.n; killFeed(m.k, m.v, m.hs, m.amt, mine, m.how); if (m.kn === N.n) { N.kills++; sesAdd("kills", 1); banner(m.hs ? "Headshot" : "Got 'em", N.ffa ? (m.pts ? `+${m.pts} points` : "Between matches · no points") : `+${m.amt.toLocaleString()} BB`); if (N.ffa) { N.pts += m.pts || 0; ffaChip(); } }
         const R = N.pl.get(m.vn); if (R) R.dying = performance.now(); return; }
-      case "dead": { if (m.ffa) { sesAdd("deaths", 1); G.dead = true; G.fireHeld = false; if (G.car && G.car.mine) carExit(true);
-          const d = document.createElement("div"); d.id = "wwDead"; d.className = "wwdead"; d.innerHTML = `<b>${m.by ? `${esc(m.by)} got you` : "You died"}</b><span>Respawning…</span>`; G.hud.appendChild(d); return; }
+      case "dead": { try { document.exitPointerLock && document.exitPointerLock(); } catch (_) {}
+        if (m.ffa) { sesAdd("deaths", 1); G.dead = true; G.fireHeld = false; G.aimHeld = false; G.aimToggle = false; G.act = {}; if (G.car && G.car.mine) carExit(true); G.state = "menu";
+          const wait = m.ms || 3000, t0 = performance.now();
+          G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwpz"><h2>${m.by ? `${esc(m.by)} got you` : "You died"}</h2><p>${N.pts || 0} points this match</p>
+            <div class="wwgrid"><button class="pri" id="wwRsp" data-ww="respawn" disabled>Respawn in ${Math.ceil(wait / 1000)}</button><button data-ww="leave">Leave match</button></div></div></div>`;
+          const tick = () => { const b = G && G.ui.querySelector("#wwRsp"); if (!b) return; const left = wait - (performance.now() - t0); if (left <= 0) { b.disabled = false; b.textContent = "Respawn"; return; } b.textContent = `Respawn in ${Math.ceil(left / 1000)}`; setTimeout(tick, 200); }; tick(); return; }
         G.mode = "dead"; sesAdd("deaths", 1); hudPvp(false); G.state = "menu";
         G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwpz"><h2>Shot down</h2><p>${m.by ? `<b>${esc(m.by)}</b> got you and took <b>${m.took.toLocaleString()} BB</b>.` : "You're out."}</p><p>You walk out with <b>${m.keep.toLocaleString()} BB</b>.</p><p class="wwnetmsg" style="opacity:.7">Paying out…</p></div></div>`; return; }
-      case "out": { if (m.ffa) { saveStats(); pvpEnd(true); showMenu(false); return; }
+      case "out": { try { document.exitPointerLock && document.exitPointerLock(); } catch (_) {} if (m.ffa) { saveStats(); pvpEnd(true); showMenu(false); return; }
         const net = m.amt - (m.buy || N.tier || 0); sesAdd("bb", net); sesAdd("matches", 1); saveStats(); pvpEnd(true);
         const why = m.reason === "dead" ? "Walked out" : m.reason === "quit" ? "Left the match" : "Match ended";
         G.state = "menu"; G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwpz"><h2>${why}</h2>
@@ -1402,6 +1418,13 @@ body.wwon{overflow:hidden}
     root.visible = false; Object.assign(R, { root, chair, body, u, sp: { chair, body, a: 0 }, scaled: false });
     const tag = document.createElement("div"); tag.className = "wwtag"; G.hud.appendChild(tag); R.tag = tag;
   }
+  /* one size for everyone: scale each model so the top of its head is the top of the hitbox's head ball (1.93 m).
+     Measured from the model's bounds while standing (skins load late, so it re-measures a few times). */
+  function fitModel(R, now) {
+    if (R.scN >= 6 || now - (R.scAt || 0) < (R.scN ? 1500 : 0) || R.emo || ((R.flags || 0) & 32) || (R === G.me && (G.crK || 0) > .1)) return;
+    const T = THREE, r = R.root, s0 = r.scale.x; r.scale.setScalar(1); r.updateMatrixWorld(true); const b = new T.Box3().setFromObject(r), top = b.max.y - r.position.y;
+    R.scAt = now; R.scN = (R.scN || 0) + 1; if (top > .4) { r.scale.setScalar(Math.max(.5, Math.min(2.5, 1.93 / top))); R.scaled = true; } else r.scale.setScalar(s0); r.updateMatrixWorld(true);
+  }
   function rmRemote(R) {
     if (R.root) { R.root.traverse(o => { if (o.geometry && !o.isSkinnedMesh) o.geometry.dispose(); }); G.scene.remove(R.root); }
     if (R.tag) R.tag.remove(); R.root = null; R.tag = null;
@@ -1444,9 +1467,7 @@ body.wwon{overflow:hidden}
     }
     G.scene.updateMatrixWorld();
     for (const R of vis) {
-      if (!R.scaled) { /* one size for everyone: scale the model so its head is where the hitbox's head is (1.68 m) */
-        const hp = new T.Vector3(); R.u.head.getWorldPosition(hp); const hy = (hp.y - R.root.position.y) / (R.root.scale.y || 1);
-        if (hy > .3) { R.root.scale.setScalar(Math.max(.5, Math.min(2, 1.68 / hy))); R.scaled = true; R.root.updateMatrixWorld(true); } }
+      fitModel(R, now);
       API().rrSolveArm(T, R.body, R.u.armL, sm); API().rrSolveArm(T, R.body, R.u.armR, sm);
     }
     /* name tags: name + stack, hidden behind walls (checked a few times a second) */
@@ -1456,7 +1477,8 @@ body.wwon{overflow:hidden}
       const on = sp.z < 1 && Math.abs(sp.x) < 1.1 && Math.abs(sp.y) < 1.1; /* owner: tags show through walls */
       R.tag.style.display = on ? "" : "none"; if (!on) continue;
       const f = R.flags || 0, st = (f & 1) ? "Protected" : (f & 2) ? "Cashing out" : (f & 4) ? "Disconnected" : "";
-      const html = `<b>${esc(R.name)}</b><span>${Math.round(R.stack || 0).toLocaleString()} BB</span>${st ? `<i>${st}</i>` : ""}`; if (R.tag._h !== html) { R.tag._h = html; R.tag.innerHTML = html; }
+      const hpv = Math.max(0, Math.min(100, Math.ceil(R.hp == null ? 100 : R.hp)));
+      const html = `<b>${esc(R.name)}</b><span>${G.net && G.net.ffa ? "" : `${Math.round(R.stack || 0).toLocaleString()} BB`}</span><em class="wwthp${hpv <= 34 ? " low" : ""}"><i style="width:${hpv}%"></i><u>${hpv}</u></em>${st ? `<i>${st}</i>` : ""}`; if (R.tag._h !== html) { R.tag._h = html; R.tag.innerHTML = html; }
       R.tag.style.transform = `translate(${((sp.x + 1) / 2 * W).toFixed(1)}px,${((1 - sp.y) / 2 * H).toFixed(1)}px) translate(-50%,-100%) scale(${Math.max(.55, Math.min(1, 14 / d)).toFixed(2)})`; R.tag.style.opacity = d > 60 ? .7 : 1;
     }
   }
@@ -1499,7 +1521,7 @@ body.wwon{overflow:hidden}
     R.speed += (Math.min(9, G.moving || 0) - R.speed) * Math.min(1, dt * 8); R.pitch = tp ? G.pitch : 0;
     const P = poseFor(R, dt, performance.now()); if (!tp) { P.ral = 0; P.lal = 0; P.hx = 0; } if (R.gun) R.gun.visible = tp;
     API().emApply(T, R.sp, P); R.root.updateMatrixWorld(true);
-    if (!R.scaled) { const hp = new T.Vector3(); R.u.head.getWorldPosition(hp); const hy = (hp.y - R.root.position.y) / (R.root.scale.y || 1); if (hy > .3) { R.root.scale.setScalar(Math.max(.5, Math.min(2, 1.68 / hy))); R.scaled = true; } }
+    fitModel(R, performance.now());
     R.u.head.scale.setScalar(tp ? 1 : .001); const sm = r => 1 - Math.exp(-dt * r); API().rrSolveArm(T, R.body, R.u.armL, sm); API().rrSolveArm(T, R.body, R.u.armR, sm);
   }
   function emoWheel(on) {
@@ -1649,7 +1671,7 @@ body.wwon{overflow:hidden}
     const fx = -Math.sin(c.yaw), fz = -Math.cos(c.yaw), rx = Math.cos(c.yaw), rz = -Math.sin(c.yaw); let nx = c.x + (fx * c.v + rx * c.vr) * dt, nz = c.z + (fz * c.v + rz * c.vr) * dt;
     /* two circles (front + back) against the walls */
     let hit = false; for (const off of [1.3, -1.3]) { const q = { x: nx + fx * off, z: nz + fz * off, y: 0 }, bx = q.x, bz = q.z;
-      for (const cc of G.cols) { if (cc.y1 < .7 || (cc.dr && cc.dr.open)) continue; const px = Math.max(cc.x0, Math.min(q.x, cc.x1)), pz = Math.max(cc.z0, Math.min(q.z, cc.z1)), dx = q.x - px, dz = q.z - pz, d2 = dx * dx + dz * dz;
+      for (const cc of nearCols(q.x, q.z)) { if (cc.y1 < .7 || (cc.dr && cc.dr.open)) continue; const px = Math.max(cc.x0, Math.min(q.x, cc.x1)), pz = Math.max(cc.z0, Math.min(q.z, cc.z1)), dx = q.x - px, dz = q.z - pz, d2 = dx * dx + dz * dz;
         if (d2 < 1.15 * 1.15) { const d = Math.sqrt(d2) || .001, kk = (1.15 - d) / d; q.x += dx * kk; q.z += dz * kk; hit = true; } }
       nx += q.x - bx; nz += q.z - bz; }
     const B = G.bounds; nx = Math.max(B.x0 + 1, Math.min(B.x1 - 1, nx)); nz = Math.max(B.z0 + 1, Math.min(B.z1 - 1, nz));
