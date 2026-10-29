@@ -25,5 +25,9 @@ jobs:
           gcloud run deploy biggietown --source server --region us-central1 --project biggiecheesesportsbook
           --allow-unauthenticated --max-instances 1 --min-instances 0 --timeout 3600 --session-affinity
           --memory 512Mi --cpu 1 --concurrency 250 --quiet
+      - name: Show the build log if it failed
+        if: failure()
+        run: |
+          for r in us-central1 global; do id=$(gcloud builds list --project biggiecheesesportsbook --region $r --limit 1 --format 'value(id)' 2>/dev/null); [ -n "$id" ] && gcloud builds log "$id" --project biggiecheesesportsbook --region $r | tail -80 && break; done
       - name: Check it answers
         run: curl -fsS "$(gcloud run services describe biggietown --region us-central1 --project biggiecheesesportsbook --format 'value(status.url)')/status"
