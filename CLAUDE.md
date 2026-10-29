@@ -113,7 +113,7 @@ Fantasyland / ChudBootyCheeks. League Moments (`lm`) still works the old way (it
   `prefs.v2pity` cards since the last Dragon, `V2_PITY` 35,000 forces one. `prefs.freeV2` free packs (Paradise every N packs `paraN`, Rotunda
   floor(odds/2 × level mult)). Lunch? and the curse trigger on EVERY pull (dupes too); Dragon bounty only for a new Dragon. Pull log `pulls` (pack "v2").
 - **Levels**: one key per card (`id` or `id@L`), `LV_MAX=[13,11,9,7,5,3,1]`, `craftable` = pool & not curse. Upgrade `v2Up` (card view, `v2UpHtml`):
-  L shards + `TIER_UP[L+1+2r]` BB, one prefs write (old key 0, new key 1, shards, `craftSpent`, `craftLog{c,f,t,fee,n,sh}`). Shard store `v2ShBuy` (prices 4k/11k/25k/64k/650k/2.4M since Oct 29 1:55 AM, owner: ≈1.25× the pack cost per shard)
+  L shards + `TIER_UP[L+1+2r]` BB, one prefs write (old key 0, new key 1, shards, `craftSpent`, `craftLog{c,f,t,fee,n,sh}`). Shard store `v2ShBuy` (prices 600/1,600/3,700/9,200/46,000/172,000 since Oct 29 2:12 AM, owner: a pack's expected shards at the brief's ratios = 10,000, store 10% under)
   (`SHARD_PRICE` 4k/11k/25k/64k/650k/2.4M since Oct 29 1:55 AM, owner: ≈1.25× the pack cost per shard, burned via craftSpent, craftLog `{sh,n,fee,buy:1}`). Dividend `v2Div`: `TIER_DIV[lv+2r-1]`, Dragon 3,000, `V2_X3` Joe Camel/Debbie 3×,
   curse 0; no full-set bonus for pool cards (LM keeps it). Crafting tab removed (`viewCraft` redirects to the collection).
 - **Abilities** `AB2` rewritten (brief Appendix B, `v[level-1]`, C–SR off at LV 1 via `abOff`); code abilities by level `ABV` + `abLv`/`abV`
@@ -146,7 +146,7 @@ Fantasyland / ChudBootyCheeks. League Moments (`lm`) still works the old way (it
 - **Receiving rule** (`v2Recv`, trades + seized collateral): new card → LV 1 + floor(invested/2) shards (`v2Inv`); duplicate → max(1, floor((1+invested)/2)) shards; "back" restores your own card.
 - **Update log** (tab `news`, `viewNews`, side menu above Standings): every `NEWS` entry, newest first, searchable.
 - **Card Guidebook** (tab `guide`, `viewGuide`): every card, census of owners, "Ability:" (red) + per-level text.
-- **Upgrade shards** tiered `V2_SH=[1,3,4,7,11,18,29,40,52,65,80,100]` (LV L→L+1 = V2_SH[L-1]); one-time reset `uprRun` (prefs.upr): upgraded pool cards → LV 1,
+- **Upgrade shards** tiered `V2_SH=[1,3,5,8,13,21,33,46,60,75,92,115]` (Oct 29 2:12 AM; was 1,3,4,7,11,18,29,40,52,65,80,100) (LV L→L+1 = V2_SH[L-1]); one-time reset `uprRun` (prefs.upr): upgraded pool cards → LV 1,
   shards refunded at the old 1-per-level cost (L·(L−1)/2), BB not refunded.
 - Tests: scratch `dmr/trtest.cjs` (trades reconcile to the BB), `dmr/cv2test.cjs` (old app vs new app: every offline player's balance moves by exactly the expected credit).
 
