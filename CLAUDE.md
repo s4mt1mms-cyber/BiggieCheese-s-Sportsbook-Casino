@@ -135,7 +135,16 @@ Fantasyland / ChudBootyCheeks. League Moments (`lm`) still works the old way (it
 - Collection tabs (owner Oct 29): League Moments · Platinum Mysterio · Multiverse (`cset` "v2" = the whole pool, default); labels `CNM` in viewPacks.
 - Upgrade glow (owner Oct 29): `lvGlow(c)` on pool cards with max > 1: (lv−1)/(max−1) ≥ .5 silver `lvg-s`, ≥ .75 gold `lvg-g`, max neon red `lvg-m` + red MAX badge `.lvb.mxr`.
   Collection sorts higher levels first within a rarity. Pack opening reads the live prefs copy (no server read first); upgrade animation 3 hits.
-- Tests: scratch `dmr/cv2test.cjs` (old app vs new app: every offline player's balance moves by exactly the expected credit).
+- **Shop** (side menu, tab `shop`, same viewPacks): sub-tabs Packs · Shards (`v2ShardShopHtml`, one card-sized box per rarity, bulk `S.pk.shq` 1/2/3/5/10) ·
+  Marketplace (`trMktHtml`). Card Collections (tab `packs`) is the collection only; active cards list sits under it.
+- **Trades** (Oct 29, replaced the old market for new deals; old listings/offers still settle and show under "Older listings"): `trades/{id}`, see the
+  comment above `trMake`. Offers to a player (exact keys) or listings (want cards = ids, any level) for any mix of BB/shards/cards; maker's give escrowed
+  (prefs `trDone[id]` e/t/f/r markers, BB to the house via bank `trE_`), taker's page `trAccept` (status race, one prefs write, bank `trT_/trW_/trW2_`, 5% of
+  BB received burned), maker's page `trTick` claims/returns/expires. Receiving a pool card you already have: keep the higher level, the other → shards = its level.
+- **Card Guidebook** (tab `guide`, `viewGuide`): every card, census of owners, "Ability:" (red) + per-level text.
+- **Upgrade shards** tiered `V2_SH=[1,3,4,7,11,18,29,40,52,65,80,100]` (LV L→L+1 = V2_SH[L-1]); one-time reset `uprRun` (prefs.upr): upgraded pool cards → LV 1,
+  shards refunded at the old 1-per-level cost (L·(L−1)/2), BB not refunded.
+- Tests: scratch `dmr/trtest.cjs` (trades reconcile to the BB), `dmr/cv2test.cjs` (old app vs new app: every offline player's balance moves by exactly the expected credit).
 
 ## Features (where to look)
 
