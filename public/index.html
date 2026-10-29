@@ -1017,6 +1017,21 @@ body.auspace .auit,body.auspace .auhero{background:transparent!important;backdro
 .updbar{position:fixed!important;left:50%;transform:translateX(-50%);top:calc(10px + env(safe-area-inset-top,0px));z-index:2147483000;border:1px solid #f5cf5d;background:rgba(0,0,0,.92);color:#fff;font:inherit;font-size:15px;padding:10px 16px;border-radius:999px;box-shadow:0 6px 20px rgba(0,0,0,.6);white-space:nowrap;cursor:pointer}.updbar b{color:#f5cf5d}
 .cadraft{width:min(240px,70vw);margin:6px auto 4px}
 .colsum{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 4px}.colsum>div{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid var(--line)}.colsum b{font-size:18px}
+/* Card System V2 summary popup (owner Oct 29 3:27 AM): shown once to everyone, only the red X closes it */
+.v2ibox{position:relative;max-width:560px;width:calc(100vw - 24px);max-height:calc(100dvh - 32px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 18px 22px;text-align:left}
+.v2ibox .v2ihd{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:10px;margin:0 -18px 6px;padding:16px 60px 12px 18px;background:var(--paper);border-bottom:1px solid #ffffff14}
+.v2ibox .v2ihd h2{margin:0;font-size:22px;line-height:1.15}
+.v2ix{position:absolute;right:12px;top:50%;margin-top:-20px;width:40px;height:40px;border-radius:50%;border:0;background:#e0262c;color:#fff;font-size:22px;font-weight:900;line-height:40px;text-align:center;cursor:pointer;box-shadow:0 2px 10px #e0262c66;padding:0}
+.v2ix:active{transform:scale(.94)}
+.v2ibox section{margin:14px 0 0;padding:12px 14px;border-radius:14px;background:#ffffff08;border:1px solid #ffffff12}
+.v2ibox section h3{margin:0 0 6px;font-size:16px;display:flex;gap:8px;align-items:center}
+.v2ibox section p,.v2ibox section li{font-size:14px;line-height:1.45;margin:4px 0}
+.v2ibox section ul{margin:4px 0;padding-left:18px}
+.v2ibox table{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+.v2ibox td,.v2ibox th{padding:4px 6px;border-bottom:1px solid #ffffff12;text-align:left}
+.v2ibox th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;opacity:.7}
+.v2ibox td.n,.v2ibox th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.v2ilead{font-size:14px;opacity:.85;margin:6px 0 0}
 .newsbox{max-height:calc(100dvh - 40px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));overflow-y:auto;-webkit-overflow-scrolling:touch}.newsday{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:4px}.newslist{display:grid;gap:8px;text-align:left}.newsitem{display:grid;grid-template-columns:24px 1fr;gap:8px;align-items:start;padding:7px 10px;border-radius:10px;background:rgba(255,255,255,.05);font-size:15px;line-height:1.3}.newslist{gap:6px}.newsbox #newsOk{position:sticky;bottom:0;box-shadow:0 -10px 16px 4px var(--paper)}
 .dragchip{position:fixed!important;z-index:60;pointer-events:none;transform:translate(-50%,-60%) scale(1.15)!important;box-shadow:0 8px 16px rgba(0,0,0,.6)!important;margin:0!important}
 .rlcell i.on,.rlout i.on{pointer-events:auto;touch-action:none;cursor:grab}
@@ -7577,7 +7592,62 @@ function viewNews(){const q=(S.nwq||"").trim().toLowerCase(),L=NEWS.filter(n=>!q
     <input type="search" class="trq" data-nwq placeholder="Search updates" value="${esc(S.nwq||"")}">
     ${L.map(n=>`<article class="nwitem"><header><b>Update ${n.v}</b><span class="small muted">${esc(n.d)}</span></header>${n.t.map(([i,t])=>`<div class="nwl"><span>${i}</span><span>${esc(t)}</span></div>`).join("")}</article>`).join("")||`<p class="empty small">No updates match.</p>`}</div>`}
 document.addEventListener("input",e=>{if(e.target.matches("[data-nwq]")){S.nwq=e.target.value;clearTimeout(viewNews._q);viewNews._q=setTimeout(()=>{render();const i=$("[data-nwq]");if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length)}},300)}});
-function newsPopup(){if(!S.ready||!S.me||!db||S.tab==="chat"||$("#newsOv")||$("#recapOv")||$("#divOv"))return;const q=S.prefs[S.me];if(!q||!NEWS.length)return;
+/* ===== Card System V2 summary (owner Oct 29 3:27 AM): one popup that explains the whole update, shown once to every player on their next visit.
+   Only the red X closes it. Closing it also marks every "What's new" entry so far as seen (they stay in the Update log). prefs.v2Intro + localStorage. ===== */
+const V2_INTRO=1;
+function v2IntroSeen(q){let v=Number((q||{}).v2Intro)||0;try{v=Math.max(v,Number(localStorage.getItem("sb-v2intro"))||0)}catch(_){}return v>=V2_INTRO}
+function v2IntroHtml(){const RC=i=>`<b style="color:${CR[i].c}">${esc(CR[i].n)}</b>`,f=n=>n.toLocaleString();
+  const rows=[0,1,2,3,4,5,6].map(r=>{const M=LV_MAX[r],lo=r===6?V2_DRAGON_DIV:TIER_DIV[Math.min(13,1+2*r)-1]*(V2_RDIV[r]||1),hi=r===6?V2_DRAGON_DIV:TIER_DIV[Math.min(13,M+2*r)-1]*(V2_RDIV[r]||1);
+    return `<tr><td>${RC(r)}</td><td class="n">${V2_ODDS[r]}%</td><td class="n">${M}</td><td class="n">${lo===hi?f(lo):f(lo)+" → "+f(hi)}</td></tr>`}).join("");
+  return `<div class="pickbox v2ibox" role="dialog" aria-label="The new card system"><div class="v2ihd"><h2>🧀 The new card system</h2><button type="button" class="v2ix" id="v2iX" aria-label="Close">✕</button></div>
+  <p class="v2ilead">Lots changed overnight. Here's everything in one place. You can find every individual change later in <b>Update log</b> (side menu).</p>
+  <section><h3>🔄 Fresh start</h3><ul>
+    <li>Everyone's balance was set to exactly <b>2,000,000 BB</b>.</li>
+    <li>All Multiverse, Fantasyland and ChudBootyCheeks cards, copies and shards were wiped so everyone starts even.</li>
+    <li><b>League Moments</b> cards are retired and gone from the game.</li>
+    <li><b>Platinum Mysterio</b> cards were retired and cashed in at 3× their quick-sell value. Peter Griffin, Claire and the Evil Witch stay.</li>
+    <li>Your skins, auras, emotes and Cheese Farm were not touched.</li></ul></section>
+  <section><h3>🎴 One pack: the BiggieCheese Pack</h3>
+    <p><b>10,000 BB</b> for 5 cards (open 1, 3, 5 or 10 at a time in <b>Shop → Packs</b>). Every Multiverse, Fantasyland and ChudBootyCheeks card is in it, and no card ever sells out. Each card rolls its rarity on its own:</p>
+    <table><tr><th>Rarity</th><th class="n">Chance</th><th class="n">Max LV</th><th class="n">Dividend / day</th></tr>${rows}</table>
+    <p class="small muted">Dividend runs from LV 1 to max level. Joe Camel and Debbie pay 3×. The Jimmy Scroggins curse still hides in the pack (${V2_CURSE}%), and pulling a new Dragon still collects the Dragon bounty.</p></section>
+  <section><h3>🃏 Copies</h3>
+    <p>A card you don't have yet unlocks at <b>LV 1</b>. Every card you pull also rolls how many copies you get:</p>
+    <ul><li><b>75%</b> one copy · <b>17%</b> two · <b>1.5%</b> three · <b>0.5%</b> five</li><li><b>5%</b>: a <b>wildcard shard</b> of that rarity instead (only on cards you already own; a brand-new card always unlocks)</li></ul>
+    <p>Extra copies fill the bar under the card: <b style="color:#4f82ff">blue</b> = filling, <b style="color:#2fbf6b">green ⬆</b> = ready to upgrade, <b style="color:#c27bff">purple Max</b> = fully upgraded.</p></section>
+  <section><h3>⬆️ Upgrading</h3>
+    <p>Open a card in your collection and tap <b>Upgrade</b>. Each level costs copies of that card plus a small BB fee (${f(TIER_UP[2])} to ${f(TIER_UP[13])} BB):</p>
+    <p class="small">Copies for each next level: ${V2_SH.join(" · ")}</p>
+    <ul><li>Higher levels pay bigger dividends and make abilities stronger.</li><li>Upgraded cards glow: <b>silver</b> halfway, <b style="color:#ffd54a">gold</b> three quarters of the way, <b style="color:#ff3b3b">neon red + MAX</b> when maxed.</li>
+    <li>Sort your collection with <b>Ready to upgrade first</b> to see what you can level up right now.</li></ul></section>
+  <section><h3>💎 Shards (wildcards)</h3><ul>
+    <li>A shard counts as one copy of <b>any</b> card of its rarity.</li>
+    <li>When you upgrade, shards cover the copies you're missing, or tap <b>Put shards into the bar</b> on any card to fill it up now.</li>
+    <li>Shard store (<b>Shop → Shards</b>): ${[0,1,2,3,4,5].map(r=>`${RC(r)} ${f(SHARD_PRICE[r])}`).join(" · ")} BB each.</li>
+    <li>You can also buy and sell shards with other players in the Marketplace.</li></ul></section>
+  <section><h3>⚡ Abilities</h3><ul>
+    <li>${RC(0)} to ${RC(3)} abilities switch on at <b>LV 2</b> and get stronger every level.</li>
+    <li>${RC(4)} and ${RC(5)} abilities work from LV 1 and also grow with level.</li>
+    <li>The new <b>Card Guidebook</b> (side menu) lists every card, who owns it, and exactly what each ability does at every level.</li></ul></section>
+  <section><h3>🤝 Trading</h3><ul>
+    <li><b>Shop → Marketplace</b>: propose a trade to any player, or post a listing for everyone, with any mix of BB, shards and cards.</li>
+    <li>Getting a card from someone: a card you don't have arrives at LV 1 plus half of the copies that went into it; a card you already have turns into copies on your bar.</li>
+    <li>5% of the BB in every trade is burned.</li></ul></section>
+  <section><h3>🏦 Loans</h3><ul>
+    <li>You can only have one loan as a borrower at a time.</li>
+    <li>Paying off early costs the rest of the schedule.</li>
+    <li>While you owe, new money that comes into your balance goes toward the loan automatically.</li>
+    <li>Collateral can be shards and cards at any level (higher levels are worth more if they get seized).</li></ul></section>
+  <section><h3>🎰 Also new</h3><ul>
+    <li>Slots pay out a little more often and the jackpot grows faster.</li>
+    <li>New <b>Shop</b> in the side menu (Packs · Shards · Marketplace); <b>Card Collections</b> is just your collection now.</li>
+    <li>New <b>Update log</b> in the side menu with every change ever made.</li>
+    <li>Fixed: the Daily Spin freezing, upgrades feeling slow, and general lag in the collection.</li></ul></section>
+  <p class="small muted" style="margin-top:14px">This is still a beta, so numbers may get tuned. Tap the red ✕ when you're done.</p></div>`}
+function v2IntroPopup(){const q=S.prefs[S.me];if(!q||v2IntroSeen(q)||!q.cv3)return false;if(document.querySelector("#cv2Ov,#dflOv,.pkov,.cfov,#whOv,#tiOv"))return true;
+  const o=document.createElement("div");o.id="newsOv";o.className="overlay v2iov";o.innerHTML=v2IntroHtml();document.body.appendChild(o);
+  o.querySelector("#v2iX").onclick=()=>{const top=NEWS[0].v;try{localStorage.setItem("sb-v2intro",String(V2_INTRO));localStorage.setItem("sb-news-seen",String(top))}catch(_){}q.v2Intro=V2_INTRO;q.newsSeen=Math.max(Number(q.newsSeen)||0,top);db.doc("prefs/"+S.me).update({v2Intro:V2_INTRO,newsSeen:q.newsSeen}).catch(()=>{});o.remove()};return true}
+function newsPopup(){if(!S.ready||!S.me||!db||S.tab==="chat"||$("#newsOv")||$("#recapOv")||$("#divOv"))return;const q=S.prefs[S.me];if(!q||!NEWS.length)return;if(v2IntroPopup())return;
   let seen=Number(q.newsSeen)||0;try{seen=Math.max(seen,Number(localStorage.getItem("sb-news-seen"))||0)}catch(_){}
   const top=NEWS[0].v;if(seen>=top)return;const list=NEWS.filter(n=>n.v>seen).slice(0,seen?3:1);
   const o=document.createElement("div");o.id="newsOv";o.className="overlay";
