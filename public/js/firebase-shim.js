@@ -749,7 +749,7 @@ function makeDb(F, fs) {
 
   // Oct 23: every write carries a fresh random "wv" (write version). The Firestore rules refuse writes without a new wv,
   // so a tab still running an older copy of the app (which doesn't know about the deflation) can't change money.
-  const WV = () => "v3." + Math.random().toString(36).slice(2, 10);
+  const WV = () => "v4." + Math.random().toString(36).slice(2, 10);
   function docRef(ref) {
     return {
       id: ref.id,

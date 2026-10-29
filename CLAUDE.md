@@ -105,6 +105,13 @@ into prefs every ~10 s / 20 actions and on page hide; mining saves every 5 min; 
 only; live tables are only subscribed while at a table. Don't add listeners on whole collections casually.
 
 ## Card System V2 (Oct 29, owner's "Card System Overhaul" dev brief) — CURRENT, read this before touching cards
+**Copies (Oct 29 2:18 AM, owner, overrides the shard notes below):** a duplicate pull is one more COPY of that card (`prefs.cp {cardId:n}`, the bar under
+the card: `cpBarHtml`, blue partial / green ready with ⬆ / purple "Max" band), except 2% (`V2_WILD`) that become a shard (kind "wild"). Upgrading LV L → L+1
+needs `V2_SH[L-1]` copies + `TIER_UP` BB; shards are WILDCARDS that cover missing copies of any card of their rarity (`v2UpPlan`). Receiving a card from a
+player (trade / seized collateral, `v2Recv`) moves value as copies: new → LV 1 + floor(invested/2) copies; duplicate → max(1, floor((1+invested)/2)) copies.
+Beta reset #2 (`cv3One`/`cv3Run`, prefs.cv3 {amt,from,to}, bank `cv3_<id>`): pool cards, copies and shards wiped and every balance set to exactly
+`CV3_BAL` 2,000,000 (owner 2:22 AM, instead of refunds); runs after the Platinum payout lands. Admin card gifts: prefs.cardGift {id,cid,n} via job-fix
+(`drew10`: #CTESPN 10× Drew · PBA Chrome Auto) → `cardGiftCheck` adds them after cv3. wv prefix v4 (rules accept v3|v4 during the switch, then v4 only).
 Everything below about rarity packs, print runs/supply, crafting, quick-selling pool cards and trading pool cards is HISTORY for Multiverse /
 Fantasyland / ChudBootyCheeks. League Moments (`lm`) still works the old way (its own rarity packs, supply, quick-sell, market). Platinum Mysterio cards are kept as they were (owner Oct 29: not credited, still trade/quick-sell; no new packs).
 - **Pool** `POOL=["mv","fl","cb"]`, `inPool(id)`, `v2Pool()` (cards by rarity; the curse separate). `cardOld(k)` = pool card (doesn't trade, was credited).

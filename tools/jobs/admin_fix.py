@@ -4,7 +4,8 @@
   zcelestial: Chancellor Zartog loses the Celestial aura, no refund (owner, Oct 25).
   zhrollback: Zartog + hung like hernandez cards back to the Oct 23 snapshot (min), +75,000 each (owner, Oct 25).
   kjloan: 1M House loan, 0%, due 5 minutes after King Julian's next visit (owner, Oct 24).
-  kjspin: one free Daily Spin for King Julian (owner, Oct 24)."""
+  kjspin: one free Daily Spin for King Julian (owner, Oct 24).
+  drew10: #CTESPN gets 10 Drew · PBA Chrome Auto cards (owner, Oct 29)."""
 import sys, time
 from common import db
 from google.cloud import firestore
@@ -110,6 +111,10 @@ elif fix == "wwopen":
     # Oct 28 (owner): BiggieTown released to everyone (the match server lets anyone in when config/ww.open is true)
     fs.collection("config").document("ww").set({"open": True, "at": int(time.time() * 1000)}, merge=True)
     print("config/ww", fs.collection("config").document("ww").get().to_dict())
+elif fix == "drew10":
+    # Oct 29 (owner): #CTESPN gets 10 "Drew · PBA Chrome Auto" cards (mv-art-1) as a gift; their page adds them after the card reset (cardGiftCheck)
+    fs.collection("prefs").document("u_dcpiJ9m7xP0UTtjQUb3V7w").update({"cardGift": {"id": "drew10", "cid": "mv-art-1", "n": 10, "note": "A gift from BiggieCheese"}, "wv": "fix." + str(int(time.time()))})
+    print("cardGift set")
 else:
     print("unknown fix", fix); sys.exit(1)
 done.set({fix: int(time.time() * 1000)}, merge=True)
