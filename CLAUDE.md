@@ -132,6 +132,7 @@ Fantasyland / ChudBootyCheeks. League Moments (`lm`) still works the old way (it
 - Shard crystals (owner Oct 29): `shardSvg(r,px,cls)` / `SH_ART` (Common light-blue hexagon, Uncommon green pentagon, Rare dark-blue octagon,
   SR purple cracked orb, Elite red 4-point star, Grail yellow trillion, Dragon pink burst; `live` = idle motion per rarity). Duplicate pulls show three
   crystals popping out of the card (`.shfx`, `shPop`). Rules: `freshWrite()` also requires the `v3.` wv prefix (pre-V2 tabs can't write).
+- Collection tabs (owner Oct 29): League Moments · Platinum Mysterio · Multiverse (`cset` "v2" = the whole pool, default); labels `CNM` in viewPacks.
 - Tests: scratch `dmr/cv2test.cjs` (old app vs new app: every offline player's balance moves by exactly the expected credit).
 
 ## Features (where to look)
