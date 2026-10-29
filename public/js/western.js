@@ -13,9 +13,9 @@
   /* ---------------- settings ---------------- */
   /* control mapping: computer actions → key codes or "Mouse0/1/2…"; phone: drag the buttons anywhere (pos = fractions of the screen), size, left-handed, AIM tap or hold */
   const ACTS = [["fwd", "Move forward", "KeyW"], ["back", "Move back", "KeyS"], ["left", "Move left", "KeyA"], ["right", "Move right", "KeyD"], ["fire", "Fire", "Mouse0"], ["aim", "Aim down sights", "Mouse2"],
-    ["reload", "Reload", "KeyR"], ["jump", "Jump", "Space"], ["run", "Run", "ShiftLeft"], ["use", "Use · doors · car · bell", "KeyF"], ["emote", "Emotes", "KeyB"], ["crouch", "Crouch (hold)", "KeyC"], ["swap", "Switch gun (revolver / sniper)", "KeyQ"], ["view", "First / third person", "KeyV"], ["pause", "Pause", "KeyP"]];
+    ["reload", "Reload", "KeyR"], ["jump", "Jump", "Space"], ["run", "Run", "ShiftLeft"], ["use", "Use · doors · car · bell", "KeyF"], ["emote", "Emotes", "KeyB"], ["crouch", "Crouch", "KeyC"], ["swap", "Switch gun (revolver / sniper)", "KeyQ"], ["view", "First / third person", "KeyV"], ["pause", "Pause", "KeyP"]];
   const KEYS0 = Object.fromEntries(ACTS.map(a => [a[0], a[2]]));
-  const SET0 = { sens: 1, ads: 0.6, invert: false, tp: false, fov: 75, sound: 1, keys: KEYS0, btn: 1, lefty: false, aimHold: false, pos: {} };
+  const SET0 = { sens: 1, ads: 0.6, invert: false, tp: false, crToggle: false, fov: 75, sound: 1, keys: KEYS0, btn: 1, lefty: false, aimHold: false, pos: {} };
   const SET = () => { const s = Object.assign({}, SET0, LS("ww-set", {})); s.keys = Object.assign({}, KEYS0, s.keys || {}); s.pos = s.pos || {}; return s; };
   const keyName = c => { if (!c) return "–"; if (c.startsWith("Mouse")) return ["Left click", "Middle click", "Right click", "Mouse 4", "Mouse 5"][+c.slice(5)] || "Mouse " + c.slice(5);
     if (c.startsWith("Key")) return c.slice(3); if (c.startsWith("Digit")) return c.slice(5); if (c.startsWith("Arrow")) return c.slice(5) + " arrow";
@@ -303,6 +303,7 @@ body.wwon{overflow:hidden}
       <label>Field of view <span class="v" id="wwFv">${s.fov}°</span><input type="range" min="60" max="100" step="1" value="${s.fov}" data-wwset="fov"></label>
       <label>Sound <span class="v" id="wwVv">${Math.round(s.sound * 100)}%</span><input type="range" min="0" max="1" step="0.05" value="${s.sound}" data-wwset="sound"></label>
       <label class="ck">Invert look up/down <input type="checkbox" data-wwset="invert" ${s.invert ? "checked" : ""}></label>
+      <label class="ck">Toggle crouch (tap instead of hold) <input type="checkbox" data-wwset="crToggle" ${s.crToggle ? "checked" : ""}></label>
       <label class="ck">Third-person camera <input type="checkbox" data-wwset="tp" ${s.tp ? "checked" : ""}></label>
       <p style="text-align:left;opacity:.75;margin:0">Aim-in sensitivity is a multiplier on your look sensitivity while you aim down the sights.</p>
       </div><div class="wwrow"><button data-ww="controls">Controls</button><button data-ww="setreset">Defaults</button><button class="pri" data-ww="setdone">Done</button></div></div></div>`;
@@ -337,7 +338,7 @@ body.wwon{overflow:hidden}
     k[a] = code; G.capturing = null; G.capJust = performance.now(); LSset("ww-set", G.set); showControls();
   }
   function setVal(k, v) {
-    const s = G.set; s[k] = k === "invert" || k === "tp" ? !!v : Number(v); LSset("ww-set", s);
+    const s = G.set; s[k] = k === "invert" || k === "tp" || k === "crToggle" ? !!v : Number(v); LSset("ww-set", s);
     const lab = { btn: ["#wwBv", x => Math.round(x * 100) + "%"], sens: ["#wwSv", x => x.toFixed(2) + "×"], ads: ["#wwAv", x => x.toFixed(2) + "×"], fov: ["#wwFv", x => x + "°"], sound: ["#wwVv", x => Math.round(x * 100) + "%"] }[k];
     if (lab) { const e = G.ui.querySelector(lab[0]); if (e) e.textContent = lab[1](s[k]); }
     if (G.master) G.master.gain.value = s.sound * 0.9;
@@ -394,7 +395,7 @@ body.wwon{overflow:hidden}
       G.keys[k] = true; if (act) { e.preventDefault(); G.act[act] = true; }
       if (act === "reload") reload(); if (act === "jump") G.jumpQ = true; if (act === "fire" && !e.repeat) fire(); if (act === "aim") G.aimHeld = true;
       if (act === "cash" && !e.repeat) cashPress(true); if (act === "emote" && !e.repeat) { if (TOUCH) emoteMenu(); else emoWheel(true); }
-      if (G.emoW && /^Digit[1-9]$/.test(k)) { const it = G.emoW.list[+k.slice(5) - 1]; if (it) { emoWheel(false); playEmote(it.id); } } if (act === "use" && !e.repeat) doUse(); if (act === "swap" && !e.repeat) swapGun(); if (act === "view" && !e.repeat) { G.set.tp = !G.set.tp; LSset("ww-set", G.set); banner("", G.set.tp ? "Third person" : "First person"); }
+      if (G.emoW && /^Digit[1-9]$/.test(k)) { const it = G.emoW.list[+k.slice(5) - 1]; if (it) { emoWheel(false); playEmote(it.id); } } if (act === "use" && !e.repeat) doUse(); if (act === "swap" && !e.repeat) swapGun(); if (act === "crouch" && !e.repeat && G.set.crToggle) G.crTog = !G.crTog; if (act === "view" && !e.repeat) { G.set.tp = !G.set.tp; LSset("ww-set", G.set); banner("", G.set.tp ? "Third person" : "First person"); }
       if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Tab"].includes(k)) e.preventDefault();
     };
     H_.ku = e => { if (!G) return; e.stopPropagation(); G.keys[e.code] = false; const act = actOf(e.code); if (act) { G.act[act] = false; if (act === "aim") G.aimHeld = false; if (act === "cash") cashPress(false); if (act === "emote" && G.emoW) { const it = G.emoW.list[G.emoW.sel]; emoWheel(false); if (it) playEmote(it.id); } } };
@@ -460,7 +461,7 @@ body.wwon{overflow:hidden}
   function look(dx, dy, k) {
     const s = G.set, ads = G.adsK > 0.5 ? s.ads : 1, m = k * s.sens * ads * (G.fovNow / 75) * (G.wpn === "sn" && G.adsK > .5 ? 1.6 : 1);
     /* driving: look around the car (free look; eases back behind the car after a couple of seconds) */
-    if (G.car && G.car.mine) { G.dYaw = (G.dYaw || 0) - dx * m; G.dPitch = Math.max(-.5, Math.min(.9, (G.dPitch || 0) + dy * m * (s.invert ? -1 : 1))); /* owner Oct 28: driving look inverted vs on foot */ G.dLookAt = performance.now(); return; }
+    if (G.car && G.car.mine) { if (G.carLook == null) G.carLook = G.car.yaw; G.carLook -= dx * m; /* owner Oct 28: you steer by looking */ G.dPitch = Math.max(-.5, Math.min(.9, (G.dPitch || 0) + dy * m * (s.invert ? -1 : 1))); /* owner Oct 28: driving look inverted vs on foot */ G.dLookAt = performance.now(); return; }
     G.yaw -= dx * m; G.pitch -= dy * m * (s.invert ? -1 : 1); G.pitch = Math.max(-1.45, Math.min(1.45, G.pitch));
   }
   function placeButtons() {
@@ -1081,7 +1082,7 @@ body.wwon{overflow:hidden}
   function headBlocked(p) { for (const c of G.cols) { if (c.dr && c.dr.open) continue; if (c.y0 > p.y + 1.15 && c.y0 < p.y + 1.75 && p.x + .3 > c.x0 && p.x - .3 < c.x1 && p.z + .3 > c.z0 && p.z - .3 < c.z1) return true; } return false; }
   function stepPlayer(dt) {
     const p = G.p, k = G.keys; let fx = 0, fz = 0, run = false;
-    { const want = !!(G.act.crouch || G.crTog) && !(G.car && G.car.mine); G.crouch = want || (G.crK > .5 && headBlocked(p)); G.crK = (G.crK || 0) + ((G.crouch ? 1 : 0) - (G.crK || 0)) * Math.min(1, dt * 12); }
+    { const want = !!((G.act.crouch && !G.set.crToggle) || G.crTog) && !(G.car && G.car.mine); G.crouch = want || (G.crK > .5 && headBlocked(p)); G.crK = (G.crK || 0) + ((G.crouch ? 1 : 0) - (G.crK || 0)) * Math.min(1, dt * 12); }
     if (G.mantle) { const m = G.mantle; m.t += dt / .34; const q = Math.min(1, m.t), up = Math.min(1, q * 1.6), fw = Math.max(0, (q - .45) / .55);
       p.y = m.y0 + (m.y1 - m.y0) * up * up * (3 - 2 * up); p.x = m.x0 + (m.x1 - m.x0) * fw; p.z = m.z0 + (m.z1 - m.z0) * fw; p.vx = p.vz = p.vy = 0;
       if (q >= 1) { G.mantle = null; p.ground = true; SFX.step(true); } G.jumpQ = false; G.moving = 0; return; }
@@ -1580,8 +1581,10 @@ body.wwon{overflow:hidden}
   /* driving (this page is the driver): W/S or the stick = gas/brake/reverse, A/D = steer; slides off walls */
   function carDrive(dt) {
     const c = G.car, k = G.keys, A = G.act; let th = 0, st = 0;
-    if (A.fwd || k.ArrowUp) th += 1; if (A.back || k.ArrowDown) th -= 1; if (A.left || k.ArrowLeft) st -= 1; if (A.right || k.ArrowRight) st += 1;
-    const sk = Object.values(G.touches).find(q => q.kind === "stick"); if (sk && sk.mx != null) { th += -sk.my; st += sk.mx; }
+    if (A.fwd || k.ArrowUp) th += 1; if (A.back || k.ArrowDown) th -= 1;
+    const sk = Object.values(G.touches).find(q => q.kind === "stick"); if (sk && sk.mx != null) th += -sk.my;
+    /* steer toward where you're looking (mouse / look drag), not with A/D (owner Oct 28) */
+    if (G.carLook == null) G.carLook = c.yaw; { let df = G.carLook - c.yaw; df = Math.atan2(Math.sin(df), Math.cos(df)); st = -df * 2.2 * Math.sign(c.v || 1); }
     th = Math.max(-1, Math.min(1, th)); st = Math.max(-1, Math.min(1, st));
     /* drift (owner Oct 28): holding Jump while driving = handbrake: less grip, tighter turns, the car slides, tire smoke */
     const drift = !!(A.jump || k.Space), MAX = 17, REV = 6; c.vr = c.vr || 0;
@@ -1612,9 +1615,10 @@ body.wwon{overflow:hidden}
     if (G.mode !== "pvp" && !c.alive && Date.now() - c.deadAt > CAR_RESPAWN) carRespawn();
   }
   /* chase camera while you drive */
-  function carCam() { const c = G.car; if (!c || !c.mine) { G.dYaw = 0; G.dPitch = 0; return false; }
+  function carCam() { const c = G.car; if (!c || !c.mine) { G.dYaw = 0; G.dPitch = 0; G.carLook = null; return false; }
     const dt = Math.min(.05, (performance.now() - (G.dCamT || performance.now())) / 1000); G.dCamT = performance.now();
-    if (performance.now() - (G.dLookAt || 0) > 2500) { const k = Math.exp(-dt * 2.2); G.dYaw = (G.dYaw || 0) * k; G.dPitch = (G.dPitch || 0) * k; }
+    if (G.carLook == null) G.carLook = c.yaw; { const df = G.carLook - c.yaw; G.dYaw = Math.atan2(Math.sin(df), Math.cos(df)); }
+    if (performance.now() - (G.dLookAt || 0) > 2500) { const k = Math.exp(-dt * 2.2); G.dPitch = (G.dPitch || 0) * k; }
     const yw = c.yaw + (G.dYaw || 0), pt = G.dPitch || 0, dist = 7.2;
     G.cam.position.set(c.x + Math.sin(yw) * dist * Math.cos(pt), Math.max(1.2, 3.4 + Math.sin(pt) * 6), c.z + Math.cos(yw) * dist * Math.cos(pt));
     G.cam.lookAt(c.x - Math.sin(yw) * 3, 1.3, c.z - Math.cos(yw) * 3); return true; }
