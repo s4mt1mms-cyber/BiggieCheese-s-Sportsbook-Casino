@@ -35,6 +35,17 @@ const MAX_REWIND = 250;
 const HB = { r: 0.38, y0: 0.05, y1: 1.5, hy: 1.68, hr: 0.22 };
 const EYE = 1.62;
 const BANK = { x0: -38.5, x1: -30.5, z0: -9.8, z1: -6.0 };
+/* doors / glass / bell / the car (owner Oct 28) */
+const doors = new Array(32).fill(false), glass = new Map(); let bellAt = 0;
+const GLASS_BACK = 90000, CAR_HP = 300, CAR_BOOM_R = 6, CAR_RESPAWN = 60000, CAR_SPAWN = [-30, -3, -Math.PI / 2], CAR_MAX = 22;
+const car = { x: CAR_SPAWN[0], z: CAR_SPAWN[1], yaw: CAR_SPAWN[2], v: 0, hp: CAR_HP, alive: true, driver: null, deadAt: 0, lastHit: null, lastIn: 0 };
+const carArr = () => [+car.x.toFixed(2), +car.z.toFixed(2), +car.yaw.toFixed(3), +car.v.toFixed(2), Math.max(0, Math.round(car.hp)), car.driver ? car.driver.n : 0, car.alive ? 1 : 0];
+/* ray vs the car's box in car space (x ±1, y 0.2..2.6, z ±2.2) */
+function carRay(o, d) {
+  const s = Math.sin(-car.yaw), k = Math.cos(-car.yaw), ox = o.x - car.x, oz = o.z - car.z;
+  return rayBox({ x: ox * k + oz * s, y: o.y, z: -ox * s + oz * k }, { x: d.x * k + d.z * s, y: d.y, z: -d.x * s + d.z * k }, { x0: -1, x1: 1, y0: .2, y1: 2.6, z0: -2.2, z1: 2.2 });
+}
+function carOut(p) { if (car.driver === p) { car.driver = null; car.v = 0; } if (p) p.inCar = false; }
 
 /* ---- helpers ---- */
 const now = () => Date.now();
@@ -97,7 +108,7 @@ function broadcast(room, m, except) { for (const p of room.players.values()) if 
 /* the run is over: write the payout once, take the player out of the room */
 async function endRun(p, reason) {
   if (p.ended) return; p.ended = true;
-  const room = ROOM; room.players.delete(p.pid); if (byPid.get(p.pid) === p) byPid.delete(p.pid);
+  const room = ROOM; room.players.delete(p.pid); if (byPid.get(p.pid) === p) byPid.delete(p.pid); carOut(p);
   broadcast(room, { t: "rm", n: p.n });
   const amt = Math.max(0, Math.floor(p.stack));
   try {
@@ -108,16 +119,24 @@ async function endRun(p, reason) {
   p.conn.player = null;
 }
 
-function kill(v, k, head) {
-  const room = ROOM; v.alive = false; v.hp = 0;
+function kill(v, k, head, how) {
+  const room = ROOM; if (!v.alive) return; v.alive = false; v.hp = 0; carOut(v); if (k === v) k = null;
   const take = v.kills > 0 ? Math.floor(v.stack / 2) : Math.floor(v.stack);
   v.stack -= take; const cut = Math.floor(take * HOUSE_CUT);
   if (k && k !== v) { k.stack += take - cut; k.kills++; send(k.ws, { t: "stack", stack: k.stack }); }
-  broadcast(room, { t: "kill", k: k ? k.name : "The desert", v: v.name, kn: k ? k.n : 0, vn: v.n, hs: !!head, amt: take });
+  broadcast(room, { t: "kill", k: k ? k.name : (how === "boom" ? "The car" : "The desert"), v: v.name, kn: k ? k.n : 0, vn: v.n, hs: !!head, amt: take, how: how || "shot" });
   send(v.ws, { t: "dead", by: k ? k.name : null, took: take, keep: v.stack });
   setTimeout(() => endRun(v, "dead"), 1200);
 }
 
+
+function carBoom(by) {
+  if (!car.alive) return; car.alive = false; car.hp = 0; car.deadAt = now(); car.v = 0;
+  broadcast(ROOM, { t: "boom", x: car.x, z: car.z });
+  const k = by && !by.ended && by.alive ? by : null;
+  for (const q of [...ROOM.players.values()]) { if (!q.alive) continue; if (q === car.driver || Math.hypot(q.x - car.x, q.z - car.z) < CAR_BOOM_R) kill(q, k, false, "boom"); }
+  car.driver = null;
+}
 /* ---- connections ---- */
 const srv = http.createServer((req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -180,17 +199,42 @@ async function handle(c, m) {
       if (!room.players.has(P.pid)) { room.players.set(P.pid, P); broadcast(room, { t: "add", ...info(P) }, P); }
       if (!P.alive) { const sp = pickSpawn(room, P); Object.assign(P, { x: sp[0], y: 0, z: sp[1], yaw: sp[2], alive: true, hp: HP, prot: now() + PROT_MS, ammo: MAG, hist: [[now(), sp[0], 0, sp[1]]] }); }
       return send(c.ws, { t: "welcome", n: P.n, tier: P.tier, stack: P.stack, kills: P.kills, hp: P.hp, spawn: [P.x, P.y, P.z, P.yaw], prot: Math.max(0, P.prot - now()),
-        players: [...room.players.values()].filter(q => q !== P).map(info), bank: BANK, rules: { cut: HOUSE_CUT, body: BODY, head: HEAD, prot: PROT_MS, cash: CASH_MS } });
+        players: [...room.players.values()].filter(q => q !== P).map(info), bank: BANK, doors, glass: [...glass.keys()], car: carArr(), rules: { cut: HOUSE_CUT, body: BODY, head: HEAD, prot: PROT_MS, cash: CASH_MS } });
     }
     /* {t:"emo", id}: play an emote you own (from the shop); everyone in the match sees it. 8 s cooldown */
     case "emo": {
       if (!p || !p.alive) return; const id = String(m.id || ""), t = now(); if (!(p.emotes && p.emotes.has(id)) || t - p.lastEmo < 8000) return;
       p.lastEmo = t; broadcast(ROOM, { t: "emo", n: p.n, id }); return;
     }
+    /* doors: {t:"door", i, open} — everyone sees it */
+    case "door": { if (!p) return; const i = m.i | 0; if (i < 0 || i >= doors.length) return; doors[i] = !!m.open; broadcast(ROOM, { t: "door", i, open: doors[i] }, p); return; }
+    /* a window shot out: {t:"glass", i}; it comes back after 90 s */
+    case "glass": { if (!p) return; const i = m.i | 0; if (i < 0 || i > 999 || glass.has(i)) return; glass.set(i, now()); broadcast(ROOM, { t: "glass", i }, p); return; }
+    /* the church bell: loud for everyone, 3 s cooldown */
+    case "bell": { if (!p || now() - bellAt < 3000) return; bellAt = now(); broadcast(ROOM, { t: "bell" }); return; }
+    /* get in / out of the car: {t:"car", on} */
+    case "car": {
+      if (!p || !p.alive) return;
+      if (m.on) { if (!car.alive || car.driver || Math.hypot(p.x - car.x, p.z - car.z) > 4) return send(c.ws, { t: "car", on: false, why: car.driver ? "Someone's driving it" : "Too far from the car" });
+        car.driver = p; p.inCar = true; p.prot = 0; car.lastIn = now(); return send(c.ws, { t: "car", on: true }); }
+      if (car.driver === p) { carOut(p); p.x = car.x + Math.cos(car.yaw) * 1.9; p.z = car.z - Math.sin(car.yaw) * 1.9; p.y = 0; p.hist.push([now(), p.x, p.y, p.z]); send(c.ws, { t: "car", on: false }); }
+      return;
+    }
+    /* driving: {t:"cin", x, z, yaw, v} ~20/s from the driver; run-overs are decided here */
+    case "cin": {
+      if (!p || car.driver !== p || !car.alive) return; const t = now(), dt = Math.max(.03, Math.min(1, (t - (car.lastIn || t - 50)) / 1000)); car.lastIn = t;
+      const x = +m.x, z = +m.z; if (![x, z, +m.yaw].every(Number.isFinite)) return; const B = MAP.bounds;
+      if (Math.hypot(x - car.x, z - car.z) > CAR_MAX * dt + 1 || x < B.x0 - 1 || x > B.x1 + 1 || z < B.z0 - 1 || z > B.z1 + 1) return;
+      car.x = x; car.z = z; car.yaw = +m.yaw; car.v = Math.max(-8, Math.min(CAR_MAX, +m.v || 0)); p.x = x; p.z = z; p.y = 0; p.hist.push([t, x, 0, z]); while (p.hist.length && t - p.hist[0][0] > 1000) p.hist.shift();
+      if (Math.abs(car.v) > 4) { const s = Math.sin(-car.yaw), k = Math.cos(-car.yaw);
+        for (const q of [...ROOM.players.values()]) { if (q === p || !q.alive || q.inCar || q.prot > t) continue; const ox = q.x - car.x, oz = q.z - car.z, lx = ox * k + oz * s, lz = -ox * s + oz * k;
+          if (Math.abs(lx) < 1.35 && Math.abs(lz) < 2.6) kill(q, p, false, "car"); } }
+      return;
+    }
     case "ping": { send(c.ws, { t: "pong", c: m.c, s: now() }); if (m.rtt > 0) c.rtt = Math.min(1000, m.rtt); return; }
     /* {t:"in", x,y,z,yaw,pitch} ~20/s: the player's own movement, checked for speed and bounds */
     case "in": {
-      if (!p || !p.alive) return; const t = now(), dt = Math.max(0.03, Math.min(1, (t - (p.lastIn || t - 50)) / 1000)); p.lastIn = t;
+      if (!p || !p.alive || p.inCar) return; const t = now(), dt = Math.max(0.03, Math.min(1, (t - (p.lastIn || t - 50)) / 1000)); p.lastIn = t;
       const x = +m.x, y = +m.y, z = +m.z; if (![x, y, z].every(Number.isFinite)) return;
       const B = MAP.bounds, dh = Math.hypot(x - p.x, z - p.z), dv = Math.abs(y - p.y);
       if (dh > 8.5 * dt + 0.6 || dv > 9 * dt + 0.8 || x < B.x0 - 1 || x > B.x1 + 1 || z < B.z0 - 1 || z > B.z1 + 1 || y < -0.5 || y > 12) { send(c.ws, { t: "pos", x: p.x, y: p.y, z: p.z }); return; }
@@ -208,9 +252,11 @@ async function handle(c, m) {
       let d = Array.isArray(m.d) ? { x: +m.d[0], y: +m.d[1], z: +m.d[2] } : null; if (!d || ![d.x, d.y, d.z].every(Number.isFinite)) return;
       const L = Math.hypot(d.x, d.y, d.z); if (L < 0.5) return; d.x /= L; d.y /= L; d.z /= L;
       const o = { x: p.x, y: p.y + EYE, z: p.z }, room = ROOM, rw = t - Math.min(MAX_REWIND, c.rtt / 2 + 100);
-      let best = wallT(o, d, 120), hit = null;
-      for (const q of room.players.values()) { if (q === p || !q.alive) continue; const at = posAt(q, rw), h = hitTest(o, d, at); if (h && h.t < best) { best = h.t; hit = { q, head: h.head }; } }
+      let best = wallT(o, d, 120), hit = null, carHit = false;
+      if (car.alive && car.driver !== p) { const tc = carRay(o, d); if (tc != null && tc < best) { best = tc; carHit = true; } }
+      for (const q of room.players.values()) { if (q === p || !q.alive || q.inCar) continue; const at = posAt(q, rw), h = hitTest(o, d, at); if (h && h.t < best) { best = h.t; hit = { q, head: h.head }; carHit = false; } }
       broadcast(room, { t: "fx", n: p.n, e: [o.x + d.x * best, o.y + d.y * best, o.z + d.z * best] }, p);
+      if (carHit) { car.hp -= best > FAR ? FAR_BODY : BODY; car.lastHit = p; send(c.ws, { t: "hc", car: true }); if (car.hp <= 0) carBoom(p); return; }
       if (!hit) return;
       const q = hit.q; if (q.prot > t) { send(c.ws, { t: "hc", on: q.n, prot: true }); return; }
       const dmg = hit.head ? HEAD : best > FAR ? FAR_BODY : BODY; q.hp = Math.max(0, q.hp - dmg); q.lastHitBy = p; q.lastHitAt = t;
@@ -223,7 +269,7 @@ async function handle(c, m) {
     /* {t:"cash", on}: hold still-ish at the bank for CASH_MS (taking a hit cancels it) */
     case "cash": {
       if (!p || !p.alive) return; if (!m.on) { p.cash0 = 0; return send(c.ws, { t: "cash", on: false }); }
-      if (!inBank(p)) return send(c.ws, { t: "cash", on: false, why: "bank" });
+      if (!inBank(p) || p.inCar) return send(c.ws, { t: "cash", on: false, why: "bank" });
       p.cash0 = now(); return send(c.ws, { t: "cash", on: true, ms: CASH_MS });
     }
   }
@@ -238,6 +284,9 @@ function onClose(c) {
 /* ---- the tick: snapshots, cash-outs, dropped players, reloads, healing ---- */
 setInterval(() => {
   const t = now();
+  for (const [i, at] of glass) if (t - at > GLASS_BACK) { glass.delete(i); broadcast(ROOM, { t: "glassfix", i }); }
+  if (!car.alive && t - car.deadAt > CAR_RESPAWN) Object.assign(car, { x: CAR_SPAWN[0], z: CAR_SPAWN[1], yaw: CAR_SPAWN[2], v: 0, hp: CAR_HP, alive: true, driver: null, lastHit: null });
+  if (car.driver && (car.driver.ended || !car.driver.alive || (car.driver.dc && t - car.driver.dc > 1000))) carOut(car.driver);
   for (const room of rooms.values()) {
     if (!room.players.size) continue;
     for (const p of [...room.players.values()]) {
@@ -249,9 +298,10 @@ setInterval(() => {
       if (p.alive && p.hp < HP && t - p.lastHitAt > 6000) p.hp = Math.min(HP, p.hp + 0.4);
     }
     const list = [...room.players.values()].filter(p => p.alive).map(p => [p.n, +p.x.toFixed(2), +p.y.toFixed(2), +p.z.toFixed(2), +p.yaw.toFixed(3), +p.pitch.toFixed(3),
-      (p.prot > t ? 1 : 0) | (p.cash0 ? 2 : 0) | (p.dc ? 4 : 0) | (p.reloadUntil ? 8 : 0), p.stack]);
+      (p.prot > t ? 1 : 0) | (p.cash0 ? 2 : 0) | (p.dc ? 4 : 0) | (p.reloadUntil ? 8 : 0) | (p.inCar ? 16 : 0), p.stack]);
     const live = list.length;
-    for (const p of room.players.values()) send(p.ws, { t: "s", ts: t, p: list, live, hp: Math.floor(p.hp), ammo: p.reloadUntil ? -1 : p.ammo, cash: p.cash0 ? Math.min(1, (t - p.cash0) / CASH_MS) : 0 });
+    const ca = carArr();
+    for (const p of room.players.values()) send(p.ws, { t: "s", ts: t, p: list, live, car: ca, hp: Math.floor(p.hp), ammo: p.reloadUntil ? -1 : p.ammo, cash: p.cash0 ? Math.min(1, (t - p.cash0) / CASH_MS) : 0 });
   }
 }, TICK_MS);
 
