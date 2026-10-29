@@ -442,7 +442,7 @@ Switch on/off: GitHub Actions → "Live tables on the server (switch)". Buy-ins/
 player's own client to prefs (`rrNet`/`thNet`).
 
 ## Scheduled jobs (GitHub Actions, `tools/jobs`)
-- `job-scoreboard.yml` hourly at :46 — Sleeper live scores/projections → fair moneylines → `meta/scoreboard`;
+- `job-scoreboard.yml` every 15 min (:01/:16/:31/:46 since Oct 29; GitHub only fired the hourly cron every 3–7 h, which tripped the 3 h `NFL_STALE`/`NBA_STALE`/`NHL_STALE` betting pause) — Sleeper live scores/projections → fair moneylines → `meta/scoreboard`;
   then (separate step, runs even if the fantasy step exits early) `nfl.py` → `meta/nfl` lines + `nfl/{season}_{week}` results.
   Tests: `cd tools/jobs && python3 -m unittest test_nfl`.
   Projections use each team's BEST lineup from its roster (`best_fill`; starters whose game started are locked at actual; taxi/IR out),
