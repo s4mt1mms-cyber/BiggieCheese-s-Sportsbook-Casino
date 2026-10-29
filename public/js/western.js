@@ -47,8 +47,9 @@ body.wwon{overflow:hidden}
 .wwscope u{position:absolute;left:50%;top:50%;width:4px;height:4px;border-radius:50%;background:#050403;margin:-2px 0 0 -2px}
 .wwscope b{position:absolute;left:50%;top:50%;width:5px;height:5px;margin:-2.5px 0 0 -2.5px;border-radius:50%;background:#ff3b30;box-shadow:0 0 6px #ff3b30}
 .wwx.nox{opacity:0}
-.wwlb{position:absolute;right:max(14px,env(safe-area-inset-right));top:max(92px,calc(env(safe-area-inset-top) + 84px));min-width:150px;max-width:44%;background:rgba(20,12,6,.6);border:1px solid rgba(200,150,62,.6);border-radius:9px;padding:4px 8px;pointer-events:none;font:700 12px Barlow;color:#ffe9b8;display:none}
-.wwhud.pvp .wwlb{display:block}.wwlb div{display:flex;justify-content:space-between;gap:10px;line-height:1.45}.wwlb div.me{color:#9dffb0}.wwlb span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wwsb{position:absolute;left:max(12px,env(safe-area-inset-left));top:max(124px,calc(env(safe-area-inset-top) + 116px));width:168px;background:rgba(10,6,2,.42);border-radius:8px;padding:4px 0;pointer-events:none;font:700 11px Barlow;color:#f3e2c4;display:none;text-shadow:0 1px 2px #000}
+.wwhud.pvp .wwsb{display:block}.wwsb div{display:flex;align-items:center;gap:6px;padding:1px 8px;line-height:1.5}.wwsb div i{width:12px;opacity:.6;font-style:normal}.wwsb div span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wwsb div b{color:#ffd76a;font-weight:800}.wwsb div.me{background:rgba(92,255,114,.13);color:#b8ffc4}.wwsb div.me b{color:#9dffb0}
 .wwthp{position:relative;display:block;width:76px;height:10px;border-radius:6px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.3);overflow:hidden;margin-top:2px;font-style:normal}
 .wwthp i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(#7dff8c,#2fa84a)}.wwthp.low i{background:linear-gradient(#ff8a7a,#c0281c)}
 .wwthp u{position:absolute;right:4px;top:-2px;font:800 9px Barlow;text-decoration:none;text-shadow:0 1px 2px #000;color:#fff}
@@ -500,7 +501,7 @@ body.wwon{overflow:hidden}
         <div class="wwemo" id="wwEmo"></div>
         ${TOUCH ? "" : `<div class="wwchip wwusek" id="wwUse" style="display:none"></div>`}
         ${TOUCH ? "" : `<div class="wwchip wwcashk" id="wwCash" style="display:none">Hold <b>${esc(keyName(G.set.keys.cash))}</b> to cash out · <b>${esc(keyName(G.set.keys.emote))}</b> emotes</div>`}
-        ${TOUCH ? `<div class="wwbtn" data-b="fire" id="wwBF">FIRE</div><div class="wwbtn" data-b="aim" id="wwBA">AIM</div><div class="wwbtn" data-b="reload" id="wwBR">↻</div><div class="wwbtn" data-b="jump" id="wwBJ">JUMP</div><div class="wwbtn" data-b="emote" id="wwBE">EMOTE</div><div class="wwbtn" data-b="swap" id="wwBW">GUN</div><div class="wwbtn" data-b="crouch" id="wwBC">CROUCH</div><div class="wwbtn wwuseb" data-b="use" id="wwUse" style="display:none"></div><div class="wwbtn wwcashb" data-b="cash" id="wwCash" style="display:none">HOLD TO<br>CASH OUT</div>` : ""}`);
+        ${TOUCH ? `<div class="wwbtn" data-b="fire" id="wwBF">FIRE</div><div class="wwbtn" data-b="aim" id="wwBA">AIM</div><div class="wwbtn" data-b="reload" id="wwBR">↻</div><div class="wwbtn" data-b="jump" id="wwBJ">JUMP</div><div class="wwbtn" data-b="emote" id="wwBE">EMOTE</div><div class="wwbtn" data-b="swap" id="wwBW">SWAP</div><div class="wwbtn" data-b="crouch" id="wwBC">CROUCH</div><div class="wwbtn wwuseb" data-b="use" id="wwUse" style="display:none"></div><div class="wwbtn wwcashb" data-b="cash" id="wwCash" style="display:none">HOLD TO<br>CASH OUT</div>` : ""}`);
       el = G.hud.querySelector("#wwPause"); el.addEventListener("click", e => { e.stopPropagation(); pause(); });
       el.addEventListener("touchstart", e => { e.stopPropagation(); e.preventDefault(); pause(); }, { passive: false });
       G.aimBtn = G.hud.querySelector("#wwBA");
@@ -511,7 +512,7 @@ body.wwon{overflow:hidden}
       const put = (id, cx, cy, rr) => { const el = G.hud.querySelector(id), sp = POS[el.dataset.b]; rr *= ((G.set.bsz || {})[el.dataset.b] || 1); if (sp) { cx = sp[0] * gw; cy = sp[1] * gh; } else if (L) cx = gw - cx; Object.assign(el.style, { width: rr * 2 + "px", height: rr * 2 + "px", left: (cx - rr) + "px", top: (cy - rr) + "px", fontSize: Math.round(rr * .36) + "px" }); };
       const fx = gw - pad - r * 1.35 - 24, fy = gh - pad - r * 1.35 - 6;
       put("#wwBF", fx, fy, r * 1.35); put("#wwBA", fx - r * 2.7, fy + r * .15, r * .95); put("#wwBR", fx + r * .35, fy - r * 2.55, r * .8); put("#wwBJ", fx - r * 2.5, fy - r * 2.1, r * .8);
-      put("#wwBE", fx - r * 4.6, fy + r * .35, r * .7); put("#wwBW", fx + r * .45, fy - r * 4.3, r * .7); put("#wwBC", fx - r * 4.4, fy - r * 1.6, r * .7); put("#wwCash", gw / 2, gh * .62, r * 1.1); put("#wwUse", fx - r * 2.4, fy - r * 4.3, r * 1.0);
+      put("#wwBE", fx - r * 4.6, fy + r * .35, r * .7); put("#wwBW", fx - r * 4.6, fy - r * 3.35, r * .7); put("#wwBC", fx - r * 4.6, fy - r * 1.5, r * .7); put("#wwCash", gw / 2, gh * .62, r * 1.1); put("#wwUse", fx - r * 2.4, fy - r * 4.3, r * 1.0);
       const am = G.hud.querySelector("#wwAmmo"); am.style.right = "auto"; am.style.left = "50%"; am.style.transform = "translateX(-50%)";
     }
   }
@@ -1142,7 +1143,7 @@ body.wwon{overflow:hidden}
   const MAGS = { rv: 6, sn: 1 }, RLS = { rv: 1.7, sn: 2.0 }, FIRE_GAP = { rv: 260, sn: 400 }; /* sniper = bolt action (owner): one round, ~2 s to work the bolt after every shot */
   function swapGun() { if (G.state !== "play" || (G.car && G.car.mine)) return; G.amm[G.wpn] = G.ammo; G.wpn = G.wpn === "rv" ? "sn" : "rv"; G.ammo = G.amm[G.wpn]; G.reloading = 0;
     G.aimToggle = false; G.gun.visible = G.wpn === "rv"; G.gunS.visible = G.wpn === "sn"; G.recoil = .6; SFX.reload(); drawAmmo(); banner("", G.wpn === "sn" ? "Sniper · aim in to scope (5×)" : "Revolver");
-    if (G.mode === "pvp") nsend({ t: "wpn", w: G.wpn }); const b = G.hud.querySelector("#wwBW"); if (b) b.textContent = G.wpn === "sn" ? "REVOLVER" : "SNIPER"; }
+    if (G.mode === "pvp") nsend({ t: "wpn", w: G.wpn }); const b = G.hud.querySelector("#wwBW"); if (b) b.textContent = "SWAP"; }
   function reload() { if (G.reloading || G.ammo >= MAGS[G.wpn]) return; G.reloading = RLS[G.wpn]; SFX.reload(); if (G.mode === "pvp") nsend({ t: "rl", w: G.wpn }); }
   function fire() {
     if (G.state !== "play" || G.dead || (G.car && G.car.mine)) return; const now = performance.now();
@@ -1206,8 +1207,9 @@ body.wwon{overflow:hidden}
   function ffaChip() { const N = G.net, e = G && G.hud.querySelector("#wwBB"); if (!e || !N || !N.ffa) return; const f = N.fi || {}, t = Date.now() + (N.off || 0);
     const wait = f.start && t < f.start, left = Math.max(0, (wait ? f.start : f.end || t) - t), mm = `${Math.floor(left / 60000)}:${String(Math.floor(left / 1000) % 60).padStart(2, "0")}`, lead = (f.top || [])[0];
     e.className = "wwchip wwbb"; e.innerHTML = `<b>${(N.pts || 0).toLocaleString()}</b> pts · ${wait ? "next match " : ""}${mm}`;
-    let lb = G.hud.querySelector("#wwLb"); if (!lb) { lb = document.createElement("div"); lb.id = "wwLb"; lb.className = "wwlb"; G.hud.appendChild(lb); }
-    const h = (f.top || []).map((r, i) => `<div${r[0] === N.name ? ' class="me"' : ""}><span>${i + 1}. ${esc(r[0])}</span><b>${r[1]}</b></div>`).join(""); if (lb._h !== h) { lb._h = h; lb.innerHTML = h; } }
+    let lb = G.hud.querySelector("#wwLb"); if (!lb) { lb = document.createElement("div"); lb.id = "wwLb"; lb.className = "wwsb"; G.hud.appendChild(lb); }
+    const all = (f.top || []).map((r, i) => [i, r]), mine = all.find(x => x[1][0] === N.name), show = all.slice(0, 5); if (mine && mine[0] >= 5) show.push(mine); /* top 5 + you */
+    const h = show.map(([i, r]) => `<div${r[0] === N.name ? ' class="me"' : ""}><i>${i + 1}</i><span>${esc(r[0])}</span><b>${r[1]}</b></div>`).join(""); if (lb._h !== h) { lb._h = h; lb.innerHTML = h; } }
   function ffaEnd(m) {
     const N = G.net; sesAdd("matches", 1); saveStats(); const me = N && N.pid, rows = (m.board || []).map((r, i) => `<tr${r[0] === (N && N.name) ? ' class="me"' : ""}><td>${i + 1}</td><td>${esc(r[0])}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join("");
     const won = m.wpid && m.wpid === me;
