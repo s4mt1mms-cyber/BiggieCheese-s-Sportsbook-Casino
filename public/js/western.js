@@ -460,7 +460,7 @@ body.wwon{overflow:hidden}
   function look(dx, dy, k) {
     const s = G.set, ads = G.adsK > 0.5 ? s.ads : 1, m = k * s.sens * ads * (G.fovNow / 75) * (G.wpn === "sn" && G.adsK > .5 ? 1.6 : 1);
     /* driving: look around the car (free look; eases back behind the car after a couple of seconds) */
-    if (G.car && G.car.mine) { G.dYaw = (G.dYaw || 0) + dx * m; G.dPitch = Math.max(-.5, Math.min(.9, (G.dPitch || 0) + dy * m * (s.invert ? -1 : 1))); /* owner Oct 28: driving look inverted vs on foot */ G.dLookAt = performance.now(); return; }
+    if (G.car && G.car.mine) { G.dYaw = (G.dYaw || 0) - dx * m; G.dPitch = Math.max(-.5, Math.min(.9, (G.dPitch || 0) + dy * m * (s.invert ? -1 : 1))); /* owner Oct 28: driving look inverted vs on foot */ G.dLookAt = performance.now(); return; }
     G.yaw -= dx * m; G.pitch -= dy * m * (s.invert ? -1 : 1); G.pitch = Math.max(-1.45, Math.min(1.45, G.pitch));
   }
   function placeButtons() {
@@ -619,6 +619,9 @@ body.wwon{overflow:hidden}
       for (let i = 0; i < xs.length - 1; i++) { const x0 = xs[i], x1 = xs[i + 1]; if (x1 - x0 < 1e-3) continue; const m = (x0 + x1) / 2;
         const ys = ops.filter(q => q[0] < m && q[1] > m).map(q => [Math.max(0, q[2]), Math.min(H, q[3])]).sort((p, q) => p[0] - q[0]);
         let y = 0; for (const [b0, b1] of ys) { if (b0 > y + 1e-3) emit(x0, x1, y, b0); y = Math.max(y, b1); } if (H > y + 1e-3) emit(x0, x1, y, H); } }
+    /* a flight of solid steps (each ≤ .3 high, so you just walk up): from (zBot, yBase) to (zTop, yTop), x0..x1, using a box maker with lbox's signature */
+    function stairs(mk, mat, x0, x1, zBot, zTop, yBase, yTop) { const n = Math.ceil((yTop - yBase) / .28), dz = (zTop - zBot) / n;
+      for (let i = 0; i < n; i++) { const top = yBase + (i + 1) * (yTop - yBase) / n; mk(x1 - x0, top - yBase, Math.abs(dz), mat, (x0 + x1) / 2, yBase, zBot + (i + .5) * dz, true); } }
     function building(o) {
       const { x, zf, rot, w, d, h, name } = o, grp = new T.Group(); grp.position.set(x, 0, zf); grp.rotation.y = rot; sc.add(grp); grp.updateMatrixWorld(true);
       const fl = .32; /* every building is a hollow shell now (owner Oct 28): windows are real holes in the wall */
@@ -684,6 +687,12 @@ body.wwon{overflow:hidden}
     const chairM = wood("chair", "#5a3218"), leather = M({ color: 0x5a1010, roughness: .55 });
     const saloonInside = (named) => (grp, lbox, fl, w, d, h, L) => {
       const bx = -w / 2 + 2.2, bz = -d + 2.4;
+      { const UP = 3.6, gd = 4.2, fz = -.22 - gd, flr = wood("floor", "#6a4528"), rl = MT.rail; /* upstairs (owner Oct 28) */
+        lbox(w - .44, .2, gd, flr, 0, UP - .2, -.22 - gd / 2, true, "wood");
+        const sx0 = w / 2 - 1.5, sx1 = w / 2 - .23; stairs(lbox, wood("stair", "#5e3f24"), sx0, sx1, fz - 6.6, fz, fl, UP);
+        lbox(sx0 - (-w / 2 + .22), .95, .08, rl, (-w / 2 + .22 + sx0) / 2, UP, fz + .04, true); for (let x = -w / 2 + .5; x < sx0; x += .5) put(box(.05, .9, .05), rl, x, UP + .45, fz + .04, 0, grp);
+        lbox(.08, .95, 6.6, rl, sx0 - .04, fl + .9, fz - 3.3, false); put(new T.CylinderGeometry(.06, .06, .3, 8), MT.lamp, 0, UP + 2.2, -1.6, 0, grp, { ns: 1 });
+        [[-3, -1.6], [2.4, -2.2]].forEach(([tx, tz]) => { put(new T.CylinderGeometry(.55, .55, .06, 16), wood("tab", "#6a3e1e"), tx, UP + .74, tz, 0, grp); put(new T.CylinderGeometry(.07, .16, .72, 8), wood("tab", "#6a3e1e"), tx, UP + .36, tz, 0, grp); const wp = L(tx, tz); colBox(wp[0] - .5, wp[0] + .5, UP, UP + .78, wp[1] - .5, wp[1] + .5); }); }
       lbox(.9, 1.15, d * .55, wood("bar", "#5a3318"), bx, fl, -d * .55, true); put(box(1.1, .08, d * .55 + .1), wood("bartop", "#2e1a0c"), bx, fl + 1.19, -d * .55, 0, grp);
       put(box(d * .55, .06, .06).rotateY(Math.PI / 2), MT.brass, bx + .5, fl + .25, -d * .55, 0, grp);
       lbox(w - .6, 2.6, .5, wood("shelf", "#3d2210"), 0, fl, -d + .5, true); put(box(w * .5, 1.5, .03), M({ color: 0x8a9aa8, roughness: .05, metalness: .9 }), 0, fl + 2.2, -d + .78, 0, grp);
@@ -779,11 +788,17 @@ body.wwon{overflow:hidden}
       cb(W, Hh, t, wl, 0, 0, -D + t / 2);
       { const ops = [0, 1, 2].map(k => { const lz = -4 - k * 3.4; return [lz - .55, lz + .55, 2.0, 4.4]; });
         [-1, 1].forEach(sd => holes(-D, 0, Hh, ops, (a0, a1, y0, y1) => cb(t, y1 - y0, a1 - a0, wl, sd * (W / 2 - t / 2), y0, (a0 + a1) / 2))); }
-      cb(side, Hh, t, wl, -W / 2 + side / 2, 0, -t / 2); cb(side, Hh, t, wl, W / 2 - side / 2, 0, -t / 2); cb(dw, Hh - dh, t, wl, 0, dh, -t / 2);
+      holes(-W / 2, W / 2, Hh, [[-dw / 2, dw / 2, 0, dh], [-.8, .8, 4.1, 5.3]], (a0, a1, y0, y1) => cb(a1 - a0, y1 - y0, t, wl, (a0 + a1) / 2, y0, -t / 2));
+      /* back loft over the doors (owner Oct 28): a window to shoot from, stairs up the left wall */
+      { const LT = 3.5, ld = 3.0, lz0 = -t - ld, fw = wood("chfl", "#6a4a2e"), rl = MT.rail; cb(W - .44, .2, ld, fw, 0, LT - .2, -t - ld / 2, true);
+        stairs(cb, wood("stair", "#5e3f24"), -W / 2 + .23, -W / 2 + 1.08, lz0 - 4.9, lz0, .15, LT);
+        cb(W / 2 - .23 - (-W / 2 + 1.1), .95, .08, rl, (W / 2 - .23 + (-W / 2 + 1.1)) / 2, LT, lz0 + .04, true); for (let x = -W / 2 + 1.3; x < W / 2 - .2; x += .45) put(box(.05, .9, .05), rl, x, LT + .45, lz0 + .04, 0, grp);
+        G.winSpecs.push({ g: grp, lx: 0, ly: 4.7, lz: .03, ww: 1.6, wh: 1.2, col: 0x2a52b0 }); const tr = wood("t#3a2414", "#3a2414", true);
+        put(box(1.8, .12, .12), tr, 0, 5.36, .06, 0, grp); put(box(1.8, .12, .12), tr, 0, 4.04, .06, 0, grp); }
       cb(W - .1, .15, D - .1, wood("chfl", "#6a4a2e"), 0, 0, -D / 2, true); put(box(W - .3, .1, D - .3), inW, 0, Hh - .05, -D / 2, 0, grp, { ns: 1 });
       [[W - .5, .02, 0, -D + t + .02]].forEach(([a, c, lx, lz]) => put(box(a, Hh - .2, c), inW, lx, .15 + (Hh - .2) / 2, lz, 0, grp, { ns: 1 }));
       const pew = wood("pew", "#5a3418");
-      for (let r = 0; r < 5; r++) { const lz = -3.6 - r * 1.75; [-1, 1].forEach(sd => { cb(3.0, .5, .55, pew, sd * 2.35, .15, lz, true); put(box(3.0, .55, .08), pew, sd * 2.35, .15 + .75, lz + .27, 0, grp); }); }
+      for (let r = 0; r < 5; r++) { const lz = -3.9 - r * 1.75; [-1, 1].forEach(sd => { cb(2.5, .5, .55, pew, sd * 2.0, .15, lz, true); put(box(2.5, .55, .08), pew, sd * 2.0, .15 + .75, lz + .27, 0, grp); }); }
       cb(2.6, 1.05, 1.0, wood("altar", "#3d2210"), 0, .15, -D + 1.5, true); put(box(2.7, .06, 1.1), MT.white, 0, 1.23, -D + 1.5, 0, grp);
       put(box(.14, 1.8, .1), MT.brass, 0, 3.2, -D + t + .08, 0, grp); put(box(.9, .14, .1), MT.brass, 0, 3.6, -D + t + .08, 0, grp);
       [-.8, .8].forEach(x => { put(new T.CylinderGeometry(.05, .05, .4, 8), MT.white, x, 1.46, -D + 1.3, 0, grp); put(new T.SphereGeometry(.05, 6, 5), MT.lamp, x, 1.7, -D + 1.3, 0, grp, { ns: 1 }); });
