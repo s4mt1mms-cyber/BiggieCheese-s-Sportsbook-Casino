@@ -686,7 +686,8 @@ body.wwon{overflow:hidden}
       /* porch: deck (walkable step), posts, roof */
       const pd = 2.6; lbox(w, .3, pd, MT.deck, 0, 0, pd / 2, true, "wood");
       if (!o.noRoof) { const np = Math.max(2, Math.round(w / 4)); for (let i = 0; i < np; i++) { const lx = -w / 2 + .25 + i * (w - .5) / (np - 1); lbox(.22, 3.0, .22, MT.post, lx, .3, pd - .15, true); }
-        const pr = put(box(w + .4, .14, pd + .4), MT.roof, 0, 3.35, pd / 2, 0, grp); pr.rotation.x = .08; pr.updateMatrixWorld(true); }
+        const pr = put(box(w + .4, .14, pd + .4), MT.roof, 0, 3.35, pd / 2, 0, grp); pr.rotation.x = .08; pr.updateMatrixWorld(true);
+        { const a = L(-w / 2 - .2, -.2), b = L(w / 2 + .2, pd + .2); colBox(a[0], b[0], 3.26, 3.44, a[1], b[1], "wood"); } /* you can stand on the porch roofs (owner Oct 28) */ }
       put(box(w - .05, .05, d - .05), MT.roof, 0, h + .025, -d / 2, 0, grp);
       /* ladder up the back wall to the roof (high ground) */
       if (o.ladder) { const lx = (w / 2 - 1.3) * (o.ladder < 0 ? -1 : 1), top = h + .9, lz = -d - .12;
@@ -1102,9 +1103,9 @@ body.wwon{overflow:hidden}
     const A = G.act; if (A.fwd || k.ArrowUp) fz += 1; if (A.back || k.ArrowDown) fz -= 1; if (A.left || k.ArrowLeft) fx -= 1; if (A.right || k.ArrowRight) fx += 1; if (A.run) run = true;
     const st = Object.values(G.touches).find(q => q.kind === "stick"); if (st && st.mx != null) { fx += st.mx; fz -= st.my; if (Math.hypot(st.mx, st.my) > .92) run = true; }
     const ads = G.adsK > .5, len = Math.hypot(fx, fz); if (len > 1) { fx /= len; fz /= len; }
-    const sp = G.crouch ? (ads ? 1.7 : 2.6) : ads ? 2.2 : run ? 9 : 5.6, sy = Math.sin(G.yaw), cy = Math.cos(G.yaw);
+    const sp = G.crouch ? (ads ? 1.7 : 2.6) : ads ? 1.8 : run ? 9 : 5.6, sy = Math.sin(G.yaw), cy = Math.cos(G.yaw);
     const vx = (-sy * fz + cy * fx) * sp, vz = (-cy * fz - sy * fx) * sp;
-    p.vx = (p.vx || 0) + (vx - (p.vx || 0)) * Math.min(1, dt * 12); p.vz = (p.vz || 0) + (vz - (p.vz || 0)) * Math.min(1, dt * 12);
+    if (!(ads && !p.ground)) { p.vx = (p.vx || 0) + (vx - (p.vx || 0)) * Math.min(1, dt * 12); p.vz = (p.vz || 0) + (vz - (p.vz || 0)) * Math.min(1, dt * 12); } /* aiming mid-jump keeps your speed (owner) */
     p.x += p.vx * dt; p.z += p.vz * dt; pushWagons(p, .32, dt); collide(p, .32);
     const lad = (G.ladders || []).find(l => p.x > l.x0 && p.x < l.x1 && p.z > l.z0 && p.z < l.z1 && p.y < l.top);
     if (lad && (fz > .2 || (G.onLad && fz < -.2))) {
@@ -1259,7 +1260,7 @@ body.wwon{overflow:hidden}
       <div><b>Same hitbox.</b> Every character is hit the same, whatever skin they wear.</div>
       <div><b>Kills.</b> You take the victim's stack: all of it if they had no kills yet, half if they had one or more. Their run ends.</div>
       <div><b>The car.</b> 1,000 HP. Run someone over to kill them. Shoot it to wreck it: everyone inside or within 6 m dies, and whoever wrecked it gets the kills. It comes back after 1 minute.</div>
-      <div><b>Guns.</b> Revolver: 6 shots, 34 body (25 past 40 m), 100 head. Sniper (switch with the gun key): bolt action, one shot then about 2 seconds to work the bolt, 80 body, 150 head at any range. From the hip the sniper has no crosshair and sprays everywhere; the moment you aim in it zooms 5× and is dead accurate. Crouching shrinks you (head at 1.1 m) and slows you down.</div>
+      <div><b>Guns.</b> Revolver: 6 shots, 34 body (25 past 40 m), 100 head. Sniper (switch with the gun key): bolt action, one shot then about 2 seconds to work the bolt, and any hit kills (100 body, 150 head, any range). From the hip the sniper has no crosshair and sprays everywhere; the moment you aim in it zooms 5× and is dead accurate. Crouching shrinks you (head at 1.1 m) and slows you down.</div>
       <div><b>Ending a run.</b> There's no cashing out: your run ends when you die. You walk out with half your stack if you got a kill, nothing if you didn't. Leaving the match counts as dying (the last person who hit you gets the kill). 3 seconds of spawn protection when you spawn.</div>
       <div><b>Free for all.</b> Free to play, 5-minute matches, you respawn 3 seconds after dying. A kill is 100 points, a headshot kill 150. Most points when the clock runs out wins 1,000 BB, paid only if 2 or more people played in that match.</div>
       </div><div class="wwrow"><button class="pri" data-ww="join">Back</button></div></div></div>`;
@@ -1701,20 +1702,17 @@ body.wwon{overflow:hidden}
       if (G.reloading) { G.reloading -= dt; if (G.reloading <= 0) { G.reloading = 0; G.ammo = MAGS[G.wpn]; drawAmmo(); } }
     }
     /* aim down sights */
-    const aiming = play && (G.aimHeld || G.aimToggle) && !G.reloading && !(G.car && G.car.mine), SN = G.wpn === "sn"; G.adsK += ((aiming ? 1 : 0) - G.adsK) * Math.min(1, dt * (SN ? 9 : 12));
+    const aiming = play && (G.aimHeld || G.aimToggle) && !G.reloading && !(G.car && G.car.mine), SN = G.wpn === "sn"; G.adsK += ((aiming ? 1 : 0) - G.adsK) * Math.min(1, dt * (SN ? 14 : 12));
     /* sniper zoom: the rifle comes up to your eye, then the scope blooms in while the view pushes in to 5× (accuracy is already perfect the instant you aim) */
-    const zk = SN ? Math.max(0, Math.min(1, (G.adsK - .25) / .7)) : 0, ze = zk * zk * zk * (zk * (zk * 6 - 15) + 10);
+    const zk = SN ? Math.max(0, Math.min(1, (G.adsK - .3) / .6)) : 0, ze = zk * zk * (3 - 2 * zk);
     const fov = SN ? G.set.fov / (1 + 4 * ze) : G.set.fov + (G.set.fov * .58 - G.set.fov) * G.adsK;
-    { const sc = G.hud.querySelector("#wwScope"); if (sc) { const o = SN ? Math.max(0, Math.min(1, (G.adsK - .3) / .45)) : 0, oe = o * o * (3 - 2 * o), sw = performance.now() / 1000;
-        const k = o.toFixed(3) + (o > 0 && o < 1 ? sw.toFixed(2) : ""); if (sc._o !== k) { sc._o = k; sc.style.opacity = Math.min(1, oe * 1.15);
-          sc.style.transform = `translateY(${((1 - oe) * 18).toFixed(2)}vh) scale(${(1.6 - .6 * oe).toFixed(3)})`; sc.style.filter = o < 1 ? `blur(${((1 - oe) * 6).toFixed(1)}px) brightness(${(.35 + .65 * oe).toFixed(2)})` : ""; } }
+    { const sc = G.hud.querySelector("#wwScope"); if (sc) { const o = SN ? Math.max(0, Math.min(1, (G.adsK - .35) / .3)) : 0; if (sc._o !== o) { sc._o = o; sc.style.opacity = o; sc.style.transform = `scale(${(1.25 - .25 * o).toFixed(3)})`; } }
       const xx = G.hud.querySelector("#wwX"); if (xx) xx.classList.toggle("nox", SN); } if (Math.abs(fov - G.fovNow) > .01) { G.fovNow = fov; cam.fov = fov; cam.updateProjectionMatrix(); }
     const x = G.hud.querySelector("#wwX"); if (x) x.classList.toggle("ads", G.adsK > .5); const dot = G.hud.querySelector("#wwDot"); if (dot) dot.classList.toggle("on", G.adsK > .6 && !SN);
     if (G.aimBtn) G.aimBtn.classList.toggle("on", !!G.aimToggle);
     /* camera */
     const p = G.p, bobA = G.p.ground ? Math.min(1, G.moving / 5) : 0, bob = Math.sin(G.bob * 2) * .035 * bobA * (1 - G.adsK * .8);
     cam.position.set(p.x, p.y + 1.62 - .57 * (G.crK || 0) + bob, p.z); cam.rotation.set(0, 0, 0); cam.rotation.order = "YXZ"; cam.rotation.y = G.yaw; cam.rotation.x = G.pitch + G.recoil * .035;
-    if (G.wpn === "sn" && G.adsK > .5) { const t = performance.now() / 1000, sw = .0011 * (1 - Math.min(1, (G.crK || 0) * .6)); cam.rotation.y += Math.sin(t * .9) * sw; cam.rotation.x += Math.sin(t * 1.7) * sw * .7; } /* a little breathing sway in the scope (less crouched) */
     /* viewmodel: hip vs sights, bob, recoil, reload spin */
     G.recoil = Math.max(0, G.recoil - dt * 7);
     const vm = G.vm, a = G.adsK; vm.position.set(.2 * (1 - a), -.19 * (1 - a) - .0765 * a - Math.abs(Math.sin(G.bob)) * .012 * bobA * (1 - a), -.42 - .1 * a + G.recoil * .05);

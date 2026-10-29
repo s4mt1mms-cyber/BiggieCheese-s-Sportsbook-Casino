@@ -35,7 +35,7 @@ const HOUSE_CUT = 0;            // share of each kill's BB that goes to the hous
 const HP = 100, BODY = 34, HEAD = 100, FAR = 40, FAR_BODY = 25;
 const FIRE_MS = 230, MAG = 6, RELOAD_MS = 1600;
 /* guns (owner Oct 28): rv = revolver, sn = sniper (5-round, slow bolt, 80 body / 150 head, no falloff) */
-const MAGS = { rv: MAG, sn: 1 }, FIREMS = { rv: FIRE_MS, sn: 400 }, RLMS = { rv: RELOAD_MS, sn: 1900 }, SN_BODY = 80, SN_HEAD = 150;
+const MAGS = { rv: MAG, sn: 1 }, FIREMS = { rv: FIRE_MS, sn: 400 }, RLMS = { rv: RELOAD_MS, sn: 1900 }, SN_BODY = 100, SN_HEAD = 150; /* owner Oct 28: the sniper kills in one hit anywhere */
 const gunOf = (w) => (w === "sn" ? "sn" : "rv");
 const PROT_MS = 3000;          // spawn protection (ends early when you shoot)
 const CASH_MS = 5000;          // stand at the bank this long to cash out
