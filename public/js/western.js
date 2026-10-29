@@ -1759,7 +1759,7 @@ body.wwon{overflow:hidden}
   function loop(now) {
     if (!G) return; G.raf = requestAnimationFrame(loop);
     if (now - (G.lastF || 0) < (G.state === "play" ? 12.5 : 45)) return; /* ~60 fps cap that also works on 144 Hz screens (renders ~72 there, not 48); menus/pause ~20 fps */
-    const ft = now - (G.lastF || now); G.lastF = now;
+    const ft = now - (G.lastF || now); G.lastF = now; const t0 = performance.now(); G._t0 = t0;
     /* dynamic resolution (light graphics): if frames come slower than ~50 fps, render fewer pixels (down to 55%); climb back when it's smooth */
     if (!G.hi && G.state === "play" && G.R) { const D = G.dres || (G.dres = { pr: G.R.getPixelRatio(), max: G.R.getPixelRatio(), sum: 0, n: 0, t: now, good: 0 });
       if (ft > 0 && ft < 200) { D.sum += ft; D.n++; }
@@ -1768,7 +1768,9 @@ body.wwon{overflow:hidden}
         else if (avg < 19 && D.pr < D.max) { if (++D.good >= 4) { D.pr = Math.min(D.max, D.pr + .08); G.R.setPixelRatio(D.pr); G.R.setSize(G.gw, G.gh, false); D.good = 0; } } else D.good = 0; } }
     if (G.set.fps) { G.fpsN = (G.fpsN || 0) + 1; if (now - (G.fpsT || 0) > 500) { const f = Math.round(G.fpsN * 1000 / (now - (G.fpsT || now - 500))); G.fpsN = 0; G.fpsT = now;
         let e = G.hud && G.hud.querySelector("#wwFps"); if (!e && G.hud) { e = document.createElement("div"); e.id = "wwFps"; e.style.cssText = "position:absolute;left:50%;bottom:max(6px,env(safe-area-inset-bottom));transform:translateX(-50%);font:700 11px Barlow;color:#fff;background:rgba(0,0,0,.45);padding:2px 8px;border-radius:6px;pointer-events:none;z-index:5"; G.hud.appendChild(e); }
-        if (e) e.textContent = `${f} fps${G.net && G.net.rtt && G.mode === "pvp" ? ` · ${Math.round(G.net.rtt)} ms` : ""}`; } }
+        if (!G.gpuName) { try { const gl = G.R.getContext(), x = gl.getExtension("WEBGL_debug_renderer_info"); G.gpuName = String(x ? gl.getParameter(x.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER)).replace(/ANGLE \(|\)$/g, "").slice(0, 60); } catch (_) { G.gpuName = "?"; } }
+        const cv = G.R.domElement;
+        if (e) e.textContent = `${f} fps · cpu ${(G.cpuMs || 0).toFixed(1)} ms · ${cv.width}×${cv.height}${G.net && G.net.rtt && G.mode === "pvp" ? ` · ping ${Math.round(G.net.rtt)} ms` : ""} · ${G.gpuName}`; } }
     else if (G.hud) { const e = G.hud.querySelector("#wwFps"); if (e) e.remove(); }
     const dt = Math.min(.05, (now - G.last) / 1000); G.last = now; G.t += dt;
     const T = THREE, cam = G.cam, play = G.state === "play";
@@ -1826,7 +1828,7 @@ body.wwon{overflow:hidden}
     selfBody(dt, emo, drv, tp);
     if (G.shake > 0) { G.shake = Math.max(0, G.shake - dt * 1.6); const k = G.shake * .12; cam.position.x += (Math.random() - .5) * k; cam.position.y += (Math.random() - .5) * k; cam.position.z += (Math.random() - .5) * k; }
     G.fr = (G.fr || 0) + 1; if (G.R.shadowMap.enabled && G.fr % 3 === 0) G.R.shadowMap.needsUpdate = true;
-    G.R.autoClear = false; G.R.clear(); G.R.render(G.scene, cam); G.R.clearDepth(); if (G.vc.aspect !== cam.aspect) { G.vc.aspect = cam.aspect; G.vc.updateProjectionMatrix(); } G.R.render(G.vs, G.vc);
+    G.R.autoClear = false; G.R.clear(); G.R.render(G.scene, cam); G.R.clearDepth(); if (G.vc.aspect !== cam.aspect) { G.vc.aspect = cam.aspect; G.vc.updateProjectionMatrix(); } G.R.render(G.vs, G.vc); if (G._t0) G.cpuMs = (G.cpuMs || 0) * .9 + (performance.now() - G._t0) * .1;
   }
   /* practice bottles on the fence between runs */
   function chalPractice() { if (!G || !G.chal || G.chal.on) return; G.bottles.filter(b => b.kind === "prac" && b.alive).forEach(b => { b.alive = false; b.g.parent && b.g.parent.remove(b.g); }); G.chal.spots.slice(0, 6).forEach(s => spawnBottle(s, "prac")); }
