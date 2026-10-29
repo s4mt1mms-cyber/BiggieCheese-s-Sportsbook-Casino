@@ -106,7 +106,7 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
 
 ## Card System V2 (Oct 29, owner's "Card System Overhaul" dev brief) — CURRENT, read this before touching cards
 **Copies (Oct 29 2:18 AM, owner, overrides the shard notes below):** a duplicate pull is one more COPY of that card (`prefs.cp {cardId:n}`, the bar under
-the card: `cpBarHtml`, blue partial / green ready with ⬆ / purple "Max" band), except 2% (`V2_WILD`) that become a shard (kind "wild"). Each pulled card comes ×1/2/3/10 at 70/24/5/1% (`V2_MULT`, `v2Mult`, pull `n`; new = card + n−1 copies). Collection sort: rarity → level → copies; `pkSt().csort=="ready"` puts ready-to-upgrade cards in their own top group. Upgrading LV L → L+1
+the card: `cpBarHtml`, blue partial / green ready with ⬆ / purple "Max" band), rolled once per pull by `V2_MULT` (owner Oct 29 2:53 AM): 70% ×1 · 20% ×2 · 5% shard (0 → kind "wild", one wildcard shard; a NEW card on that roll just unlocks ×1) · 4% ×3 · 1% ×5 (`v2Mult`, pull `n`; new = card + n−1 copies; `V2_WILD` is unused). Collection sort: rarity → level → copies; `pkSt().csort=="ready"` puts ready-to-upgrade cards in their own top group. Upgrading LV L → L+1
 needs `V2_SH[L-1]` copies + `TIER_UP` BB; shards are WILDCARDS that cover missing copies of any card of their rarity (`v2UpPlan`). Receiving a card from a
 player (trade / seized collateral, `v2Recv`) moves value as copies: new → LV 1 + floor(invested/2) copies; duplicate → max(1, floor((1+invested)/2)) copies.
 Beta reset #2 (`cv3One`/`cv3Run`, prefs.cv3 {amt,from,to}, bank `cv3_<id>`): pool cards, copies and shards wiped and every balance set to exactly
