@@ -104,6 +104,33 @@ per-action casino state goes to `live/{me}` (only the player + spectators listen
 into prefs every ~10 s / 20 actions and on page hide; mining saves every 5 min; chat listens to the newest 20/50
 only; live tables are only subscribed while at a table. Don't add listeners on whole collections casually.
 
+## Card System V2 (Oct 29, owner's "Card System Overhaul" dev brief) — CURRENT, read this before touching cards
+Everything below about rarity packs, print runs/supply, crafting, quick-selling pool cards and trading pool cards is HISTORY for Multiverse /
+Fantasyland / ChudBootyCheeks. League Moments (`lm`) still works the old way (its own rarity packs, supply, quick-sell, market). Platinum Mysterio cards are kept as they were (owner Oct 29: not credited, still trade/quick-sell; no new packs).
+- **Pool** `POOL=["mv","fl","cb"]`, `inPool(id)`, `v2Pool()` (cards by rarity; the curse separate). `cardOld(k)` = pool card (doesn't trade, was credited).
+- **One pack** `V2_PACK` (5 cards, 2,500 BB, Vail discount via `v2Price`), `v2Buy`/`v2Buy1`/`v2Open`: each card rolls `V2_ODDS` (+ `V2_CURSE` 0.1%) then a
+  uniform card of that rarity; reads the SAVED prefs first. Not owned → key added at LV 1; owned → +1 shard `prefs.shards{r:n}` (curse dupes: no shard).
+  `prefs.v2pity` cards since the last Dragon, `V2_PITY` 35,000 forces one. `prefs.freeV2` free packs (Paradise every N packs `paraN`, Rotunda
+  floor(odds/2 × level mult)). Lunch? and the curse trigger on EVERY pull (dupes too); Dragon bounty only for a new Dragon. Pull log `pulls` (pack "v2").
+- **Levels**: one key per card (`id` or `id@L`), `LV_MAX=[13,11,9,7,5,3,1]`, `craftable` = pool & not curse. Upgrade `v2Up` (card view, `v2UpHtml`):
+  L shards + `TIER_UP[L+1+2r]` BB, one prefs write (old key 0, new key 1, shards, `craftSpent`, `craftLog{c,f,t,fee,n,sh}`). Shard store `v2ShBuy`
+  (`SHARD_PRICE`, burned via craftSpent, craftLog `{sh,n,fee,buy:1}`). Dividend `v2Div`: `TIER_DIV[lv+2r-1]`, Dragon 3,000, `V2_X3` Joe Camel/Debbie 3×,
+  curse 0; no full-set bonus for pool cards (LM keeps it). Crafting tab removed (`viewCraft` redirects to the collection).
+- **Abilities** `AB2` rewritten (brief Appendix B, `v[level-1]`, C–SR off at LV 1 via `abOff`); code abilities by level `ABV` + `abLv`/`abV`
+  (dean edge → `crResolve(...,edge)`, hof amount `hofT`, slop `slopN`, shrex, hilo, bers `bersN`, lunch [pct,cap], social). Tiered helpers
+  `hlUwsX`, `chrisSh` (Chris steals SHARDS: steals doc {sh,n}, victim's page takes what's there, thief's page reverts the rest), crab `wheelCrab`/`wheelWin`
+  (n spins every 24/n h), summer `RL_SUMMER`, crndd 20+5L% / 45+5L%. Vector boost checks any level (`fpHasBoost`).
+- **Trading**: pool cards can't be listed/offered/traded/collateral (`tradeCards`, guards in mkList/mkBuy/ofMake/ofDirHtml/pickers). Shards trade:
+  market docs `{cid:"sh-<r>",shard:r,qty,price}` (`isShL`, `shList`/`shBuy`/`shCancel`, `v2MktHtml`); money via `cardMoney` like any sale (5% burned).
+- **Switchover** (`cv2Run`/`cv2One`/`cv2Patch`/`cv2Items`/`cv2Strip`, gate `#cv2Ov`, popup `cv2Pop`): per player once: every pool card anywhere
+  (prefs, open listings, unclaimed trades, offer escrow, loan collateral/requests) credited at 3× `qsOld` (the pre-switch quick-sell), prefs keys → 0,
+  `prefs.cv2{v,at,amt,n,docs,vd}`, then `bank/cv2_<id>` {from:"house",kind:"cv2"}, then those docs stripped (`vd`). Own page or the admin page for offline players.
+- **Loans** (all, incl. Heart of Finance): one at a time as borrower (`bkHasLoan`), payoff locked = rest of the schedule (`bkPayoffNow`), and `bkSweep`
+  (borrower's page, 15 s) pays every balance rise above the low-water mark (`BK_SW`, `swBase` on the loan) to the loan (payments `sweep:true`).
+- **Slots**: per-reel strips `SL_WR` (every winning combo ≈2.5% more often, lines 96.35%), jackpot 1% of all-time `slWag` + 0.5% (`SL_JP_ADD`) of `slWag2`
+  (wagers since Oct 29) = 1.5% going forward; `node tools/test/slots.test.mjs`.
+- Tests: scratch `dmr/cv2test.cjs` (old app vs new app: every offline player's balance moves by exactly the expected credit).
+
 ## Features (where to look)
 
 - **Sportsbook**: player-vs-player bets and House lines/parlays/futures from `meta/scoreboard` + `meta/futures`.
