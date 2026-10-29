@@ -6580,14 +6580,18 @@ const trW=D=>({cards:{...((D&&D.cards)||{})},shards:{...((D&&D.shards)||{})},d:{
 const trSet=(W,k,n)=>{W.cards[k]=n;W.d.c[k]=n},trSh=(W,r,n)=>{W.shards[r]=n;W.d.s[r]=n};
 const trShN=(W,r)=>Math.max(0,Math.floor(Number(W.shards[r])||0));
 function trTake(W,x){x=trN(x);for(const k of x.cards){const n=Number(W.cards[k])||0;if(n<1)return false;trSet(W,k,n-1)}for(const r in x.sh){const h=trShN(W,r);if(h<x.sh[r])return false;trSh(W,r,h-x.sh[r])}return true}
-function trGive(W,x){x=trN(x);for(const r in x.sh)trSh(W,r,trShN(W,r)+x.sh[r]);
-  for(const k of x.cards){const c=cardById(k);if(!c){trSet(W,k,(Number(W.cards[k])||0)+1);continue}
-    if(!inPool(k)){trSet(W,k,(Number(W.cards[k])||0)+1);continue}
-    const b=baseOf(k),L=lvOf(k),ex=Object.keys(W.cards).find(e=>baseOf(e)===b&&Number(W.cards[e])>0);
-    if(!ex){trSet(W,k,1);continue}const M=lvOf(ex);
-    if(c.abil==="curse"){continue}/* a second curse just disappears (it has no shards) */
-    if(L>M){trSet(W,ex,0);trSet(W,k,1);trSh(W,c.r,trShN(W,c.r)+M)}else trSh(W,c.r,trShN(W,c.r)+L)}
-  return true}
+/* Receiving a pool card from someone else (a trade, seized loan collateral) — owner Oct 29 2:06 AM: a card you don't have arrives at LV 1 plus
+   half the shards invested in its levels (v2Inv); a duplicate turns into half of what it's worth in shards (worth = 1 + invested, at least 1 shard).
+   mode "back" = your own card coming back (cancelled trade, repaid loan): restored as it was; if you got another copy meanwhile, the lower one
+   becomes its full worth in shards. League Moments / Platinum cards just stack; a second curse disappears. */
+const v2Inv=L=>{let n=0;for(let i=0;i<L-1;i++)n+=V2_SH[i]||0;return n};
+function v2Recv(W,k,mode){const c=cardById(k);if(!c||!inPool(k)){trSet(W,k,(Number(W.cards[k])||0)+1);return}
+  const b=baseOf(k),L=lvOf(k),ex=Object.keys(W.cards).find(e=>baseOf(e)===b&&Number(W.cards[e])>0);
+  if(c.abil==="curse"){if(!ex)trSet(W,b,1);return}
+  if(mode==="back"){if(!ex){trSet(W,k,1);return}const M=lvOf(ex);if(L>M){trSet(W,ex,0);trSet(W,k,1);trSh(W,c.r,trShN(W,c.r)+1+v2Inv(M))}else trSh(W,c.r,trShN(W,c.r)+1+v2Inv(L));return}
+  if(!ex){trSet(W,b,1);const h=Math.floor(v2Inv(L)/2);if(h)trSh(W,c.r,trShN(W,c.r)+h);return}
+  trSh(W,c.r,trShN(W,c.r)+Math.max(1,Math.floor((1+v2Inv(L))/2)))}
+function trGive(W,x,mode){x=trN(x);for(const r in x.sh)trSh(W,r,trShN(W,r)+x.sh[r]);for(const k of x.cards)v2Recv(W,k,mode||"xfer");return true}
 const trPatch=W=>{const p={};if(Object.keys(W.d.c).length)p.cards=W.d.c;if(Object.keys(W.d.s).length)p.shards=W.d.s;return p};
 /* a listing's wanted cards → the keys the taker would hand over (their copy of each card, any level), or null */
 function trResolve(W,ids){const used={},out=[];for(const id of ids){const b=baseOf(id);const k=Object.keys(W.cards).filter(e=>baseOf(e)===b&&(Number(W.cards[e])||0)-(used[e]||0)>0).sort((a,c)=>lvOf(c)-lvOf(a))[0];if(!k)return null;used[k]=(used[k]||0)+1;out.push(k)}return out}
@@ -6644,7 +6648,7 @@ async function trTick(){if(!S.me||!db||S.readOnly||!S.ready||!S.ld||!S.ld.bank||
       if(t0.from===S.me&&t0.status==="open"&&now>(t0.at||0)+(t0.kind==="list"?TR_LTTL:TR_TTL)){await trSetSt(t0.id,"expired");continue}
       if(t0.from===S.me&&t0.status==="open"&&t0.listingId){const l=S.trades.find(x=>x.id===t0.listingId);if(!l||l.status!=="open"){const ls=await db.doc("trades/"+t0.listingId).get(),ld=ls.exists?ls.data():null;if(!ld||(ld.status!=="open"&&ld.usedBy!==t0.id)){await trSetSt(t0.id,"declined");continue}}}
       if(t0.from===S.me&&["declined","cancelled","expired","failed"].includes(t0.status)&&!t0.returned){const ref=db.doc("trades/"+t0.id),d=(await ref.get()).data()||{};if(d.returned)continue;
-        if(mk==="e"){const D=(await db.doc("prefs/"+S.me).get()).data()||{};if((D.trDone||{})[t0.id]==="e"){const W=trW(D);trGive(W,d.give);const p=trPatch(W);p.trDone={[t0.id]:"r"};await db.doc("prefs/"+S.me).update(p);if(p.cards)q.cards={...(q.cards||{}),...p.cards};if(p.shards)q.shards={...(q.shards||{}),...p.shards};q.trDone={...(q.trDone||{}),[t0.id]:"r"}}}
+        if(mk==="e"){const D=(await db.doc("prefs/"+S.me).get()).data()||{};if((D.trDone||{})[t0.id]==="e"){const W=trW(D);trGive(W,d.give,"back");const p=trPatch(W);p.trDone={[t0.id]:"r"};await db.doc("prefs/"+S.me).update(p);if(p.cards)q.cards={...(q.cards||{}),...p.cards};if(p.shards)q.shards={...(q.shards||{}),...p.shards};q.trDone={...(q.trDone||{}),[t0.id]:"r"}}}
         const g=trN(d.give);if(g.bb>0&&(S.bank||[]).some(x=>x.id==="trE_"+t0.id))await trBank("trR_"+t0.id,{from:"house",to:S.me,amt:g.bb,note:"Trade escrow back",tr:t0.id});
         await ref.update({returned:true,live:false});t0.returned=true;if(!trEmpty(d.give)&&mk==="e")toast(`${trTxt(d.give)} back with you.`);continue}
       if(t0.from===S.me&&t0.status==="accepted"&&mk!=="f"&&!t0.fromDone){const ref=db.doc("trades/"+t0.id),d=(await ref.get()).data()||{};if(d.status!=="accepted"||d.fromDone)continue;
@@ -6687,7 +6691,7 @@ function trCompHtml(){const st=trSt(),C=st.c||(st.c={mode:"offer",to:"",give:trB
     ${C.mode==="offer"?`<label class="trto"><span class="stlbl">Trade with</span><select data-trto ${L?"disabled":""}><option value="">Pick a player…</option>${ppl.map(id=>`<option value="${esc(id)}" ${id===C.to?"selected":""}>${esc(nm(id))}</option>`).join("")}</select></label>`:`<p class="small muted">Anyone can take your listing by giving you what you ask for, or send you an offer instead.</p>`}
     <div class="trgrid">${side("give")}<div class="trmid" aria-hidden="true">⇄</div>${side("want")}</div>
     <label class="trnotel"><span class="stlbl">Note (optional)</span><input type="text" maxlength="140" data-trnote value="${esc(C.note||"")}" placeholder="Say something nice"></label>
-    <div class="trsum"><div><b>${esc(trTxt(C.give))}</b> <span class="muted">for</span> <b>${esc(trTxt(C.want,C.mode==="list"))}</b></div><small class="muted">What you give leaves your collection until the trade is done or cancelled. 5% of BB received is burned. Cards you get: new ones join your collection at their level; if you already have the card you keep the higher level and the other becomes shards (one per level).</small></div>
+    <div class="trsum"><div><b>${esc(trTxt(C.give))}</b> <span class="muted">for</span> <b>${esc(trTxt(C.want,C.mode==="list"))}</b></div><small class="muted">What you give leaves your collection until the trade is done or cancelled. 5% of BB received is burned. Cards you get from someone else: a new one joins your collection at LV 1 plus half the shards spent leveling it; one you already have turns into half of what it's worth in shards.</small></div>
     <div class="trbtns"><button type="button" class="btn" data-trsend>${C.mode==="list"?"🏷️ Post listing":"🤝 Send offer"}</button><button type="button" class="btn ghost" data-trclear>Clear</button></div></div>`}
 function trMktHtml(){const st=trSt();trSub();const T=S.trades||[],me=S.me;
   const lists=T.filter(t=>t.kind==="list"&&t.status==="open"),mineL=lists.filter(t=>t.from===me),othersL=lists.filter(t=>t.from!==me);
@@ -7262,6 +7266,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:160,d:"Oct 29",t:[["🏦","Loans: put up any amount of shards as collateral, and cards from your collection at any level (higher levels are worth more if they get seized)"],["🃏","Getting a card from another player (a trade or seized collateral): a new one starts at LV 1 and you get back half the shards spent leveling it; a duplicate turns into half its worth in shards"]]},
  {v:159,d:"Oct 29",t:[["📰","New Update log in the menu: every change to the game, all in one place"]]},
  {v:158,d:"Oct 29",t:[["⬆️","Upgrading cards is instant now, no more freezing"]]},
  {v:157,d:"Oct 29",t:[["💎","Shard store prices went up so packs stay the better deal: Common 4,000 · Uncommon 11,000 · Rare 25,000 · Super Rare 64,000 · Elite 650,000 · Grail 2.4M"],["📚","Cards you don't have yet now sit together at the bottom of your collection, rarest first"]]},
@@ -7500,7 +7505,7 @@ function mkItemTxt(w){if(w.cid){const c=cardById(baseOf(w.cid));return c?`${crOf
 function mkWantTxt(w){return mkItems(w).map(mkItemTxt).join(" + ")}
 const mkFits=(w,c)=>w.cid?(w.lv?c.id===lvK(w.cid,w.lv):baseOf(c.id)===baseOf(w.cid)):w.up?c.r>=w.r&&crPm(c.r)===crPm(w.r):c.r===w.r;
 /* can I cover every item with separate copies? (specific cards first, then the narrowest rarity asks) */
-function mkCover(l,pre){const items=mkItems(l.want);if(!items.length||!S.me)return null;const left={};const own=tradeCards();own.forEach(c=>left[c.id]=cardCount(c.id));
+function mkCover(l,pre,all){const items=mkItems(l.want);if(!items.length||!S.me)return null;const left={};const own=all?ownCards():tradeCards();own.forEach(c=>left[c.id]=cardCount(c.id));
   const order=items.map((w,i)=>({w,i})).sort((a,b)=>(a.w.cid?0:a.w.up?2:1)-(b.w.cid?0:b.w.up?2:1)||(b.w.r||0)-(a.w.r||0));const out=[];
   for(const{w,i}of order){let pick=pre&&pre[i]&&left[pre[i]]>0&&mkFits(w,cardById(pre[i]))?pre[i]:null;if(!pick){const c=own.filter(c=>left[c.id]>0&&mkFits(w,c)).sort((a,b)=>a.r-b.r)[0];pick=c&&c.id}if(!pick)return null;left[pick]--;out[i]=pick}return out}
 function mkMatches(l){return mkCover(l)?[1]:[]}
@@ -7603,7 +7608,13 @@ function bkNextDue(l){const a=bkAmts(l),paid=bkPaidTot(l);let c=0;for(let k=0;k<
 const bkKey=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 const bkCardsTxt=cids=>(cids||[]).map(g=>{const c=cardById(g);return c?c.name:"a card"}).join(", ");
 const bkChat=text=>{try{db.collection("chat").add({type:"bet",kind:"bank",uid:S.me,poster:S.me,at:Date.now(),text})}catch(_){}};
-async function bkGive(cids){if(!cids||!cids.length)return;const q=S.prefs[S.me];const ch={};cids.forEach(g=>ch[g]=(ch[g]!=null?ch[g]:cardCount(g))+1);q.cards={...(q.cards||{}),...ch};await db.doc("prefs/"+S.me).update({cards:ch})}
+/* collateral moving to me: mode "back" = my own cards (and shards) returning, "xfer" = seized from the borrower (the receiving rule, v2Recv) */
+async function bkGive(cids,mode,sh){cids=cids||[];sh=trN({sh}).sh;if(!cids.length&&!Object.keys(sh).length)return;const D=(await db.doc("prefs/"+S.me).get()).data()||{},W=trW(D);trGive(W,{cards:cids,sh},mode||"back");const p=trPatch(W);if(!Object.keys(p).length)return;await db.doc("prefs/"+S.me).update(p);const q=S.prefs[S.me];if(p.cards)q.cards={...(q.cards||{}),...p.cards};if(p.shards)q.shards={...(q.shards||{}),...p.shards}}
+const bkShTxt=sh=>{sh=trN({sh}).sh;return Object.keys(sh).map(r=>shTxt(Number(r),sh[r])).join(" + ")};
+const bkCollTxt=l=>[bkCardsTxt(l.collateral||[]),bkShTxt(l.collSh)].filter(Boolean).join(" + ");
+/* shard collateral picker for the loan forms (S.bkSh {r:n}; request = yours to put up, offer = what the borrower must put up) */
+function bkShHtml(RQ){const sh=S.bkSh||{},mine=shardsOf(S.me);return `<div class="stlbl">${RQ?"Shards you put up (optional)":"Shards the borrower must put up (optional)"}</div><div class="trshs">${[0,1,2,3,4,5,6].map(r=>{const n=sh[r]||0,max=RQ?mine[r]:999999;return `<div class="trsh${n?" on":""}" style="--rc:${CR[r].c}">${shardSvg(r,24)}<span class="trshn">${esc(CR[r].n.split(" ")[0])}</span><span class="trstep"><button type="button" data-bksh="${r}" data-d="-1" ${n?"":"disabled"}>−</button><b class="num">${n}</b><button type="button" data-bksh="${r}" data-d="1" ${n<max?"":"disabled"}>+</button></span>${RQ?`<small class="muted">${max} owned</small>`:""}</div>`}).join("")}</div>`}
+document.addEventListener("click",e=>{const t=e.target.closest("[data-bksh]");if(!t)return;const r=Number(t.dataset.bksh),sh=S.bkSh=S.bkSh||{},n=Math.max(0,(sh[r]||0)+Number(t.dataset.d)*(e.shiftKey?10:1));if(n)sh[r]=n;else delete sh[r];render()});
 const bkWait=ms=>new Promise(r=>setTimeout(r,ms));
 
 async function bkSend(){if(S._bkBusy||!S.me)return;const F=S.bkF,to=F.to,amt=Number(F.amt),note=String(F.note||"").trim().slice(0,120);
@@ -7618,12 +7629,12 @@ function bkTerms(F){return{P:Number(F.P),rate:Number(F.rate),rateU:F.rateU,compN
 async function bkPost(){if(S._bkBusy||!S.me)return;const F=S.bkF,t=bkTerms(F),c=bkCalc(t);if(!c||c.err)return toast(c?c.err:"Check the terms.");
   if(c.P>Math.floor(ledger().balOf(S.me)))return toast("You can't lend more than your balance.");
   const coll=(S.bkColl||[]).slice(0,20);const sz=bkSeizeTerms(F);if(sz.err)return toast(sz.err);S._bkBusy=true;
-  const doc={...t,rate:Math.round(t.rate*100)/100,coll,seizeN:null,seizeU:null,...sz,only:(F.only||[]).filter(id=>id!==S.me&&S.prefs[id]),note:String(F.title||"").trim().slice(0,80)};
+  const doc={...t,rate:Math.round(t.rate*100)/100,coll,collSh:trN({sh:S.bkSh}).sh,seizeN:null,seizeU:null,...sz,only:(F.only||[]).filter(id=>id!==S.me&&S.prefs[id]),note:String(F.title||"").trim().slice(0,80)};
   if(S.bkEdit){const id=S.bkEdit;try{const s=await db.doc("loans/"+id).get();const D=s.exists&&s.data();
       if(!D||D.lender!==S.me||D.status!=="open"){S.bkEdit=null;return toast("Someone already took that offer (or it was taken down). Not changed.")}
-      await db.doc("loans/"+id).update({...doc,editedAt:Date.now()});S.bkEdit=null;S.bkColl=[];F.title="";F.only=[];toast("Offer updated.")}
+      await db.doc("loans/"+id).update({...doc,editedAt:Date.now()});S.bkEdit=null;S.bkColl=[];S.bkSh={};F.title="";F.only=[];toast("Offer updated.")}
     catch(e){toast("Couldn't save changes. Try again.")}finally{setTimeout(()=>{S._bkBusy=false},1500);render()}return}
-  try{await db.collection("loans").add({lender:S.me,...doc,status:"open",at:Date.now()});S.bkColl=[];F.title="";F.only=[];toast("Loan offer posted.");
+  try{await db.collection("loans").add({lender:S.me,...doc,status:"open",at:Date.now()});S.bkColl=[];S.bkSh={};F.title="";F.only=[];toast("Loan offer posted.");
     bkChat(`${nm(S.me)} is offering a ${c.P.toLocaleString()} BB loan at ${t.rate}%/${t.rateU} · ${c.n} payment${c.n>1?"s":""} of ~${c.amts[0].toLocaleString()} BB 🏦 · ${coll.length?`collateral: ${mkWantTxt({items:coll})} · ${bkSeizeTxt(sz)}`:"unsecured"}`)}
   catch(e){toast("Couldn't post the offer. Try again.")}finally{setTimeout(()=>{S._bkBusy=false},1500);render()}}
 
@@ -7749,13 +7760,13 @@ document.addEventListener("click",async e=>{const t=e.target.closest("[data-abbk
    away (held on the request; mintedAll counts them). Anyone can lend: the lender writes lender/takenAt/sched and the doc is then exactly a
    taken loan offer (ledger, payments, seizure all unchanged). Taking it down returns the cards through bkProcess ("cancelled" → collateralBackClaimed). */
 async function bkReqPost(){if(S._bkBusy||!S.me)return;if(bkHasLoan(S.me))return toast("One loan at a time: you already have a loan or a request up.");const F=bkF(),t=bkTerms(F),c=bkCalc(t);if(!c||c.err)return toast(c?c.err:"Check the terms.");
-  const cids=(S.bkRq||[]).slice(0,20),need={};if(!cids.length)return toast("Add at least one card as collateral.");cids.forEach(g=>need[g]=(need[g]||0)+1);if(Object.entries(need).some(([g,n])=>cardCount(g)<n))return toast("You don't have those cards anymore.");
+  const cids=(S.bkRq||[]).slice(0,20),need={},rsh=trN({sh:S.bkSh}).sh;if(!cids.length&&!Object.keys(rsh).length)return toast("Add at least one card or some shards as collateral.");cids.forEach(g=>need[g]=(need[g]||0)+1);if(Object.entries(need).some(([g,n])=>cardCount(g)<n))return toast("You don't have those cards anymore.");if(Object.entries(rsh).some(([r,n])=>shardsOf(S.me)[r]<n))return toast("You don't have that many shards.");
   const sz=bkSeizeTerms(F);if(sz.err)return toast(sz.err);S._bkBusy=true;let escrowed=false;
-  try{const q=S.prefs[S.me];const ch={};Object.entries(need).forEach(([g,n])=>ch[g]=cardCount(g)-n);q.cards={...(q.cards||{}),...ch};escrowed=true;await db.doc("prefs/"+S.me).update({cards:ch});
-    await db.collection("loans").add({borrower:S.me,req:true,...t,rate:Math.round(t.rate*100)/100,coll:cids.map(cid=>({cid})),collateral:cids,seizeN:null,seizeU:null,...sz,only:[],note:String(F.title||"").trim().slice(0,80),status:"open",at:Date.now()});escrowed=false;
-    S.bkRq=[];F.title="";S.bkForm=null;toast("Loan request posted.");
+  try{const q=S.prefs[S.me];const ch={},shp={};Object.entries(need).forEach(([g,n])=>ch[g]=cardCount(g)-n);for(const r in rsh)shp[r]=shardsOf(S.me)[r]-rsh[r];q.cards={...(q.cards||{}),...ch};q.shards={...(q.shards||{}),...shp};escrowed=true;await db.doc("prefs/"+S.me).update({...(Object.keys(ch).length?{cards:ch}:{}),...(Object.keys(shp).length?{shards:shp}:{})});
+    await db.collection("loans").add({borrower:S.me,req:true,...t,rate:Math.round(t.rate*100)/100,coll:cids.map(cid=>({cid})),collateral:cids,collSh:rsh,seizeN:null,seizeU:null,...sz,only:[],note:String(F.title||"").trim().slice(0,80),status:"open",at:Date.now()});escrowed=false;
+    S.bkRq=[];S.bkSh={};F.title="";S.bkForm=null;toast("Loan request posted.");
     bkChat(`${nm(S.me)} is asking for a ${c.P.toLocaleString()} BB loan at ${t.rate}%/${t.rateU} · ${c.n} payment${c.n>1?"s":""} of ~${c.amts[0].toLocaleString()} BB 🙏 · collateral: ${bkCardsTxt(cids)} · ${bkSeizeTxt(sz)}`)}
-  catch(e){if(escrowed)try{await bkGive(cids)}catch(_){}toast("Couldn't post the request. Try again.")}finally{setTimeout(()=>{S._bkBusy=false},1500);render()}}
+  catch(e){if(escrowed)try{await bkGive(cids,"back",rsh)}catch(_){}toast("Couldn't post the request. Try again.")}finally{setTimeout(()=>{S._bkBusy=false},1500);render()}}
 async function bkFund(id){if(S._bkBusy||!S.me)return;const l0=(S.loans||[]).find(x=>x.id===id);if(!l0||!l0.req||l0.status!=="open")return;if(l0.borrower===S.me)return toast("You can't lend to yourself.");
   if(!S._bkFundAsk||S._bkFundAsk.id!==id||Date.now()-S._bkFundAsk.at>8000){S._bkFundAsk={id,at:Date.now()};toast("Tap Lend again to confirm.");return render()}S._bkFundAsk=null;
   S._bkBusy=true;try{const s=await db.doc("loans/"+id).get();if(!s.exists)return;const D=s.data();if(D.status!=="open"||!D.req||D.lender)return toast("Someone beat you to it (or it was taken down).");
@@ -7763,7 +7774,7 @@ async function bkFund(id){if(S._bkBusy||!S.me)return;const l0=(S.loans||[]).find
     const now=Date.now();await db.doc("loans/"+id).update({status:"active",lender:S.me,takenAt:now,sched:{payMs:c.payMs,amts:c.amts},payments:[],swBase:Math.floor(ledger().balOf(D.borrower))+c.P});
     await bkWait(700);const s2=await db.doc("loans/"+id).get();const E=s2.exists&&s2.data();
     if(!E||E.lender!==S.me||E.status!=="active"||E.takenAt!==now)return toast("Someone beat you to it.");
-    toast(`You lent ${c.P.toLocaleString()} BB to ${nm(D.borrower)}.`);S.bkTab="mine";bkChat(`${nm(S.me)} lent ${nm(D.borrower)} ${c.P.toLocaleString()} BB on their loan request 🏦 · collateral: ${bkCardsTxt(D.collateral||[])}`)}
+    toast(`You lent ${c.P.toLocaleString()} BB to ${nm(D.borrower)}.`);S.bkTab="mine";bkChat(`${nm(S.me)} lent ${nm(D.borrower)} ${c.P.toLocaleString()} BB on their loan request 🏦 · collateral: ${bkCollTxt(D)}`)}
   catch(e){toast("Couldn't lend. Try again.")}finally{S._bkBusy=false;render()}}
 async function bkRqCancel(id){if(S._bkBusy)return;const l=(S.loans||[]).find(x=>x.id===id);if(!l||!l.req||l.borrower!==S.me||l.status!=="open")return;S._bkBusy=true;
   try{const s=await db.doc("loans/"+id).get();if(!s.exists||s.data().status!=="open")return toast("Someone already lent it.");
@@ -7782,28 +7793,29 @@ async function bkCancel(id){if(S._bkBusy)return;const l=(S.loans||[]).find(x=>x.
 
 function bkTake(id){const l=(S.loans||[]).find(x=>x.id===id);if(!l||l.status!=="open"||!S.me)return;if(l.lender===S.me)return toast("You can't take your own loan.");if(!canTake(l))return toast(`That offer is only for ${onlyTxt(l)}.`);
   const c=bkCalc(l);if(!c||c.err)return toast("That offer has invalid terms.");if(Math.floor(ledger().balOf(l.lender))<c.P)return toast(`${nm(l.lender)} doesn't have enough BB to fund this right now.`);
-  const items=l.coll||[],L={want:{items}};let pick=items.length?mkCover(L):[];if(items.length&&!pick)return toast("You don't have the collateral they ask for.");
-  const own=tradeCards();const o=document.createElement("div");o.className="pkov";
+  const items=l.coll||[],L={want:{items}};let pick=items.length?mkCover(L,undefined,true):[];const wsh=trN({sh:l.collSh}).sh;if(Object.entries(wsh).some(([r,n])=>shardsOf(S.me)[r]<n))return toast(`They want ${bkShTxt(wsh)} as collateral and you don't have that many.`);if(items.length&&!pick)return toast("You don't have the collateral they ask for.");
+  const own=ownCards();const o=document.createElement("div");o.className="pkov";
   const draw=()=>{o.innerHTML=`<div class="pkview"><h3>Borrow ${c.P.toLocaleString()} BB from ${esc(nm(l.lender))}</h3>
     <p class="small muted">${c.n} payment${c.n>1?"s":""} of ~${c.amts[0].toLocaleString()} BB every ${esc(bkUT(l.payN,l.payU))}, ${c.total.toLocaleString()} BB total. Payments come out of your balance automatically on each payment date (if you're short, whatever you have is taken and the loan goes late); you can also pay any amount in between. The payoff is locked in now and never grows (${c.total.toLocaleString()} BB). Until it's paid, all your winnings and income go to it first. One loan at a time. ${items.length?`Collateral is locked until the loan ends. ${esc(bkSeizeTxt(l))}, in the order listed.`:(bkGradual(l)?"Unsecured. A missed payment makes you late; catch up within "+esc(bkUT(l.seizeN,l.seizeU))+" of the final payment date or you default.":"Unsecured. A missed payment is a default.")}</p>
     ${items.length?items.map((w,i)=>`<label class="mktrow"><span class="small">${esc(mkItemTxt(w))}</span><select data-ti="${i}">${own.filter(x=>mkFits(w,x)).map(x=>`<option value="${x.id}" ${pick[i]===x.id?"selected":""}>${esc(CR[x.r].n)} · ${esc(x.name)} (×${cardCount(x.id)})</option>`).join("")}</select></label>`).join("")+`<div class="cgrid tradepick">${pick.map(g=>cardHtml(cardById(g),{small:true})).join("")}</div>`:`<p class="small">No collateral needed.</p>`}
     <button type="button" class="btn" data-tgo>Take loan${pick.length?` · put up ${pick.length} card${pick.length>1?"s":""}`:""}</button><button type="button" class="btn ghost" data-pkclose>Cancel</button></div>`};
   draw();document.body.appendChild(o);
-  o.addEventListener("change",e=>{const sl=e.target.closest("[data-ti]");if(!sl)return;const pre=pick.slice();pre[Number(sl.dataset.ti)]=sl.value;const np=mkCover(L,pre);if(!np||np[Number(sl.dataset.ti)]!==sl.value){toast("You don't have enough copies for that combo.");draw();return}pick=np;draw()});
+  o.addEventListener("change",e=>{const sl=e.target.closest("[data-ti]");if(!sl)return;const pre=pick.slice();pre[Number(sl.dataset.ti)]=sl.value;const np=mkCover(L,pre,true);if(!np||np[Number(sl.dataset.ti)]!==sl.value){toast("You don't have enough copies for that combo.");draw();return}pick=np;draw()});
   o.addEventListener("click",async e=>{if(e.target===o||e.target.closest("[data-pkclose]"))return o.remove();if(!e.target.closest("[data-tgo]"))return;o.remove();await bkDoTake(l,pick,l.editedAt||0)})}
 
 async function bkDoTake(l,gives,ed){if(S._bkBusy)return;if(bkHasLoan(S.me))return toast("One loan at a time: pay off your other loan first.");gives=[].concat(gives||[]);const need={};gives.forEach(g=>need[g]=(need[g]||0)+1);if(Object.entries(need).some(([g,n])=>cardCount(g)<n))return toast("You don't have those cards anymore.");
-  S._bkBusy=true;let escrowed=false;
+  S._bkBusy=true;let escrowed=false,dshE={};
   try{const s=await db.doc("loans/"+l.id).get();if(!s.exists||s.data().status!=="open")return toast("Someone beat you to it.");const D=s.data();if(D.lender===S.me)return toast("You can't take your own loan.");if(ed!==undefined&&(D.editedAt||0)!==ed)return toast("The lender just changed the terms — check them again");if(!canTake(D))return toast(`That offer is only for ${onlyTxt(D)}.`);
     const c=bkCalc(D);if(!c||c.err)return toast("That offer has invalid terms.");
-    if(D.coll&&D.coll.length){const chk=mkCover({want:{items:D.coll}},gives);if(!chk||chk.some((g,i)=>g!==gives[i]))return toast("Those cards don't match the collateral.")}
+    const dsh=trN({sh:D.collSh}).sh;dshE=dsh;if(Object.entries(dsh).some(([r,n])=>shardsOf(S.me)[r]<n))return toast("You don't have the shards they want as collateral.");
+    if(D.coll&&D.coll.length){const chk=mkCover({want:{items:D.coll}},gives,true);if(!chk||chk.some((g,i)=>g!==gives[i]))return toast("Those cards don't match the collateral.")}
     if(Math.floor(ledger().balOf(D.lender))<c.P)return toast(`${nm(D.lender)} doesn't have enough BB to fund this right now.`);
-    if(gives.length){const q=S.prefs[S.me];const ch={};Object.entries(need).forEach(([g,n])=>ch[g]=cardCount(g)-n);q.cards={...(q.cards||{}),...ch};escrowed=true;await db.doc("prefs/"+S.me).update({cards:ch})}
+    if(gives.length||Object.keys(dsh).length){const q=S.prefs[S.me];const ch={},shp={};Object.entries(need).forEach(([g,n])=>ch[g]=cardCount(g)-n);for(const r in dsh)shp[r]=shardsOf(S.me)[r]-dsh[r];q.cards={...(q.cards||{}),...ch};q.shards={...(q.shards||{}),...shp};escrowed=true;await db.doc("prefs/"+S.me).update({...(Object.keys(ch).length?{cards:ch}:{}),...(Object.keys(shp).length?{shards:shp}:{})})}
     const now=Date.now();await db.doc("loans/"+l.id).update({status:"active",borrower:S.me,takenAt:now,collateral:gives,sched:{payMs:c.payMs,amts:c.amts},payments:[],swBase:Math.floor(ledger().balOf(S.me))+c.P});
     await bkWait(700);const s2=await db.doc("loans/"+l.id).get();const E=s2.exists&&s2.data();
-    if(!E||E.borrower!==S.me||E.status!=="active"||E.takenAt!==now){if(escrowed){escrowed=false;await bkGive(gives)}return toast("Someone beat you to it.")}
+    if(!E||E.borrower!==S.me||E.status!=="active"||E.takenAt!==now){if(escrowed){escrowed=false;await bkGive(gives,"back",dsh)}return toast("Someone beat you to it.")}
     escrowed=false;toast(`You borrowed ${c.P.toLocaleString()} BB.`);bkChat(`${nm(S.me)} took ${nm(D.lender)}'s ${c.P.toLocaleString()} BB loan 🏦${gives.length?` · collateral: ${bkCardsTxt(gives)}`:""}`)}
-  catch(e){if(escrowed)try{await bkGive(gives)}catch(_){}toast("Couldn't take the loan. Try again.")}finally{S._bkBusy=false;render()}}
+  catch(e){if(escrowed)try{await bkGive(gives,"back",dshE)}catch(_){}toast("Couldn't take the loan. Try again.")}finally{S._bkBusy=false;render()}}
 
 /* borrower pays any chunk (or the whole payoff). amt: number, or {payoff:expectedPrice} */
 async function bkPay(id,arg){if(S._bkBusy)return;const l0=(S.loans||[]).find(x=>x.id===id);if(!l0||l0.borrower!==S.me||!["active","late"].includes(l0.status))return;
@@ -7875,13 +7887,13 @@ async function bkProcess(){if(!S.me||!db||_bkProc||S.readOnly||!S.ready)return;_
               await db.doc("loans/"+l.id).update(up);Object.assign(l0,up);
               const sc=(up.seized||[]).length>(l.seized||[]).length&&up.status!=="defaulted"?up.seized[up.seized.length-1]:null;
               if(up.status==="repaid")bkChat(`${nm(l.borrower)} repaid ${nm(l.lender)}'s ${Number(l.P).toLocaleString()} BB loan in full ✅`);
-              else if(up.status==="defaulted")bkChat(`${nm(l.borrower)} defaulted on ${nm(l.lender)}'s loan 💀${(l.collateral||[]).length?` · ${nm(l.lender)} takes ${bkCardsTxt(l.collateral)}`:" · unsecured, the lender eats it"}`);
+              else if(up.status==="defaulted")bkChat(`${nm(l.borrower)} defaulted on ${nm(l.lender)}'s loan 💀${(l.collateral||[]).length||Object.keys(l.collSh||{}).length?` · ${nm(l.lender)} takes ${bkCollTxt(l)}`:" · unsecured, the lender eats it"}`);
               else if(up.status==="late")bkChat(`${nm(l.borrower)} missed a payment on ${nm(l.lender)}'s loan ⏰${sc?` · ${bkCardsTxt([sc])} seized`:""}`);
               else if(up.status==="active"&&l.status==="late")bkChat(`${nm(l.borrower)} caught up on ${nm(l.lender)}'s loan 👍${(l.seized||[]).length?" · seized cards released":""}`);
               else if(sc)bkChat(`${nm(l.lender)} seized ${bkCardsTxt([sc])} from ${nm(l.borrower)} 🔒`)}}}}}
     /* collateral settles on the receiving side's own page, once */
-    const claim=async flag=>{const s=await db.doc("loans/"+l0.id).get();if(!s.exists||s.data()[flag])return;await db.doc("loans/"+l0.id).update({[flag]:true});l0[flag]=true;await bkGive(s.data().collateral||[]);return s.data()};
-    if(l0.status==="defaulted"&&l0.lender===S.me&&!l0.collateralClaimed){const d=await claim("collateralClaimed");if(d&&(d.collateral||[]).length)toast(`${nm(d.borrower)} defaulted. You got ${bkCardsTxt(d.collateral)}.`)}
+    const claim=async flag=>{const s=await db.doc("loans/"+l0.id).get();if(!s.exists||s.data()[flag])return;await db.doc("loans/"+l0.id).update({[flag]:true});l0[flag]=true;await bkGive(s.data().collateral||[],flag==="collateralClaimed"?"xfer":"back",s.data().collSh);return s.data()};
+    if(l0.status==="defaulted"&&l0.lender===S.me&&!l0.collateralClaimed){const d=await claim("collateralClaimed");if(d&&(d.collateral||[]).length||Object.keys(d.collSh||{}).length)toast(`${nm(d.borrower)} defaulted. You got ${bkCollTxt(d)}.`)}
     if((l0.status==="repaid"||l0.status==="cancelled")&&l0.borrower===S.me&&!l0.collateralBackClaimed){const d=await claim("collateralBackClaimed");if(d&&(d.collateral||[]).length)toast("Loan settled. Your collateral is back.")}
   }catch(_){}}}finally{_bkProc=false}}
 setInterval(bkProcess,5000);
@@ -7909,7 +7921,7 @@ function bkF(){return S.bkF||(S.bkF={to:"",amt:"",note:"",P:"1000",rate:"5",rate
 const bkUnitSel=(k,v)=>`<select data-bkf="${k}">${BK_UL.map(u=>`<option value="${u}" ${u===v?"selected":""}>${u}${k==="rateU"?"":"(s)"}</option>`).join("")}</select>`;
 function bkLvMax(F){const x=cardById((F.cc)||"");return craftable(x)?LV_MAX[x.r]:1}
 function bkLvOpts(F){return `<option value="">Any level</option>`+Array.from({length:bkLvMax(F)},(_,i)=>`<option value="${i+1}" ${String(F.cl)===String(i+1)?"selected":""}>LV ${i+1}</option>`).join("")}
-function bkCardOpts(F){return Object.keys(CSETS).filter(setOpen).flatMap(k=>cardsCat(k)).filter(c=>c.r===Number(F.cr)&&pmSeen(c.id)&&!cardOld(c.id)).map(c=>`<option value="${c.id}" ${F.cc===c.id?"selected":""}>${esc(c.name)}</option>`).join("")}
+function bkCardOpts(F){return Object.keys(CSETS).filter(setOpen).flatMap(k=>cardsCat(k)).filter(c=>c.r===Number(F.cr)&&pmSeen(c.id)).map(c=>`<option value="${c.id}" ${F.cc===c.id?"selected":""}>${esc(c.name)}</option>`).join("")}
 function bkPrevHtml(){const F=bkF(),c=bkCalc(bkTerms(F));if(!c||c.err)return `<span class="neg small">${esc(c?c.err:"Check the terms.")}</span>`;
   const bal=Math.floor(ledger().balOf(S.me));return `<div class="bkstats"><div><span>Per payment</span><b class="num">${c.amts[0].toLocaleString()}${c.amts.some(a=>a!==c.amts[0])?"*":""}</b></div><div><span>Total repaid</span><b class="num">${c.total.toLocaleString()}</b></div><div><span>Interest</span><b class="num pos">+${c.interest.toLocaleString()}</b></div><div><span>Length</span><b class="num">${bkCd(c.payMs*c.n)}</b></div><div><span>Early payoff</span><b class="num">${bkPreMin(c).toLocaleString()}+</b></div></div>${c.amts.some(a=>a!==c.amts[0])?`<div class="small muted">* whole-BB rounding: payments range ${Math.min(...c.amts)}–${Math.max(...c.amts)} BB.</div>`:""}${c.P>bal&&!(S.bkForm==="req"&&!S.bkEdit)?`<div class="small neg">You only have ${bal.toLocaleString()} BB.</div>`:""}`}
 function bkTermsTxt(l){return `${Number(l.rate)}%/${l.rateU}, compounded every ${bkUT(l.compN,l.compU)} · ${l.n} payment${Number(l.n)>1?"s":""} every ${bkUT(l.payN,l.payU)}`}
@@ -7928,9 +7940,9 @@ function bkRow(l){const c=bkCalc(l)||{},me=S.me,st=l.status,N=l.sched?l.sched.am
   else if(l.sched&&(st==="repaid"||st==="defaulted"))nxt=`<div class="small muted">Paid ${bkPaidTot(l).toLocaleString()} BB in total</div>`;
   const short=st==="open"&&!l.req&&c.P&&Math.floor(ledger().balOf(l.lender))<c.P;
   const seized=new Set();(l.seized||[]).forEach((g,i)=>seized.add(i));
-  const has=(l.collateral&&l.collateral.length),want=l.coll&&l.coll.length;
-  const coll=has?`<div class="bkcoll">${l.collateral.map((g,i)=>{const x=cardById(g);return x?`<span class="${seized.has(i)&&st==="late"?"seized":""}" style="--c:${CR[x.r].c}" data-cardview="${g}" title="${seized.has(i)?"Seized (returns if they catch up)":"Priority "+(i+1)}">${i+1}. ${esc(x.name)}${seized.has(i)&&st==="late"?" · seized":""}</span>`:""}).join("")}</div>${st==="late"&&seized.size?`<div class="small muted">Seized cards return if they catch up.</div>`:""}${["active","late"].includes(st)?`<div class="small muted">🔒 Collateral is locked until the loan ends.</div>`:""}`
-    :want?`<div class="small muted">Collateral (seizure order): ${l.coll.map((w,i)=>`${i+1}. ${esc(mkItemTxt(w))}`).join(" · ")}</div>`:`<div class="small muted">No collateral — unsecured</div>`;
+  const has=(l.collateral&&l.collateral.length),want=l.coll&&l.coll.length,shT=bkShTxt(l.collSh),shH=shT?`<div class="small">💎 Shard collateral: <b>${esc(shT)}</b>${l.borrower?"":" (the borrower puts these up)"}</div>`:"";
+  const coll=shH+(has?`<div class="bkcoll">${l.collateral.map((g,i)=>{const x=cardById(g);return x?`<span class="${seized.has(i)&&st==="late"?"seized":""}" style="--c:${CR[x.r].c}" data-cardview="${g}" title="${seized.has(i)?"Seized (returns if they catch up)":"Priority "+(i+1)}">${i+1}. ${esc(x.name)}${seized.has(i)&&st==="late"?" · seized":""}</span>`:""}).join("")}</div>${st==="late"&&seized.size?`<div class="small muted">Seized cards return if they catch up.</div>`:""}${["active","late"].includes(st)?`<div class="small muted">🔒 Collateral is locked until the loan ends.</div>`:""}`
+    :want?`<div class="small muted">Collateral (seizure order): ${l.coll.map((w,i)=>`${i+1}. ${esc(mkItemTxt(w))}`).join(" · ")}</div>`:(shT?"":`<div class="small muted">No collateral — unsecured</div>`));
   const sz=(has||want)?`<div class="small muted">${esc(bkSeizeTxt(l))}</div>`:bkGradual(l)?`<div class="small muted">Late payments allowed; defaults ${esc(bkUT(l.seizeN,l.seizeU))} after the final payment date if still behind</div>`:`<div class="small muted">A missed payment is a default</div>`;
   const rq=!!l.req&&st==="open",rshort=rq&&me&&c.P&&Math.floor(ledger().balOf(me))<c.P;
   let btn="";if(rq)btn=l.borrower===me?`<button type="button" class="btn ghost small" data-bk="rqcancel" data-id="${esc(l.id)}">Take down</button>`:me?`<button type="button" class="btn small" data-bk="fund" data-id="${esc(l.id)}" ${rshort?"disabled":""}>${rshort?"Not enough BB":S._bkFundAsk&&S._bkFundAsk.id===l.id?`Confirm · lend ${(c.P||0).toLocaleString()} BB`:`Lend ${(c.P||0).toLocaleString()} BB`}</button>`:"";
@@ -7960,7 +7972,7 @@ function bkActivity(me){const out=[],E=(at,v,h,bad)=>{if(at)out.push({at:Number(
     const seen=new Set();for(const p of l.payments||[]){if(seen.has(p.k))continue;seen.add(p.k);const a=Math.floor(Number(p.amt))||0;if(!a)continue;
       const kind=p.early?"Payoff":typeof p.k==="string"&&p.k[0]==="x"?"Part payment":p.partial?"Partial payment (short)":p.late?"Late payment":"Loan payment";
       E(p.at,L?a:-a,L?`💵 ${kind} from ${who}`:`💵 ${kind} to ${who}`)}
-    if(l.status==="defaulted")E(l.defaultedAt,0,L?`💀 ${who} defaulted${(l.collateral||[]).length?` · you get ${esc(bkCardsTxt(l.collateral))}`:" · unsecured"}`:`💀 Defaulted on ${who}'s loan${(l.collateral||[]).length?` · lost ${esc(bkCardsTxt(l.collateral))}`:""}`,B);
+    if(l.status==="defaulted")E(l.defaultedAt,0,L?`💀 ${who} defaulted${bkCollTxt(l)?` · you get ${esc(bkCollTxt(l))}`:" · unsecured"}`:`💀 Defaulted on ${who}'s loan${bkCollTxt(l)?` · lost ${esc(bkCollTxt(l))}`:""}`,B);
     else if(l.status==="late"&&(l.seized||[]).length)E(l.lastSeizeAt,0,L?`🔒 Holding ${esc(bkCardsTxt(l.seized))} from ${who}`:`🔒 Seized: ${esc(bkCardsTxt(l.seized))} (returns if you catch up)`,B);
     if(l.status==="repaid")E(l.repaidAt,0,`✅ ${L?`${who} repaid your loan`:`Repaid ${who}'s loan`}`)}
   {const q=S.prefs[me]||{};if(q.dfl&&q.dflAt)E(q.dflAt,Math.round(Number(q.rb15)||0),`📉 Deflation reset · balance ÷15 (${(Number(q.rbFrom)||0).toLocaleString()} → ${(Number(q.rbTo)||0).toLocaleString()} BB, 10,000 minimum)`,(Number(q.rb15)||0)<0)
@@ -7990,15 +8002,15 @@ function viewBank(){if(!S.me)return `<div class="empty">Sign in to use the bank.
   return `<div class="bkwrap"><div class="bkhead"><h2>🏦 Bank</h2><div class="small">Balance <b class="num" style="color:#5cff72">${bal.toLocaleString()} BB</b></div></div>${tabs}${body}</div>`}
 /* the offer / request form (Loans tab). mode "lend" = offer a loan (wanted collateral, optional); "req" = ask for one (your own cards, required) */
 function bkFormHtml(mode){const F=bkF(),RQ=mode==="req"&&!S.bkEdit,coll=RQ?(S.bkRq||[]).map(cid=>({cid})):(S.bkColl||[]);
-  const own=RQ?tradeCards().filter(x=>cardCount(x.id)-(S.bkRq||[]).filter(g=>g===x.id).length>0).sort((a,b)=>b.r-a.r||a.name.localeCompare(b.name)):[];
+  const own=RQ?ownCards().filter(x=>cardCount(x.id)-(S.bkRq||[]).filter(g=>g===x.id).length>0).sort((a,b)=>b.r-a.r||a.name.localeCompare(b.name)):[];
   const list=(up,dn,rm)=>coll.length?`<div class="bkcl">${coll.map((w,i)=>`<div style="--c:${CR[w.cid?(cardById(w.cid)||{r:0}).r:w.r].c}"><b>${i+1}.</b><span>${esc(mkItemTxt(w))}</span><button type="button" data-bk="${up}" data-i="${i}" ${i?"":"disabled"} aria-label="Move up">↑</button><button type="button" data-bk="${dn}" data-i="${i}" ${i<coll.length-1?"":"disabled"} aria-label="Move down">↓</button><button type="button" data-bk="${rm}" data-i="${i}" aria-label="Remove">✕</button></div>`).join("")}</div>`:"";
-  const collHtml=RQ?`<div class="stlbl">Collateral: your cards (required) · seizure order</div><div class="small muted">No BB needed to ask: you put up cards instead.</div>${list("rqup","rqdn","rqrm")||`<div class="small muted">Add at least one card. Your cards leave your collection while the request is up and come back if you take it down.</div>`}
-    <div class="row bkform"><label class="grow">Card<select id="bkRqC">${own.map(x=>`<option value="${esc(x.id)}">${esc(crOf(x).n)} · ${esc(x.name)}${x.lv>1?` LV ${x.lv}`:""} (×${cardCount(x.id)-(S.bkRq||[]).filter(g=>g===x.id).length})</option>`).join("")||`<option value="">No cards</option>`}</select></label><button type="button" class="btn ghost" data-bk="rqadd">+ Add</button></div>`
+  const collHtml=RQ?`<div class="stlbl">Collateral: your cards and/or shards (required) · seizure order</div><div class="small muted">No BB needed to ask: you put up cards (any level: higher levels are worth more if they get seized) or shards instead.</div>${list("rqup","rqdn","rqrm")||`<div class="small muted">Add at least one card or some shards. They leave your collection while the request is up and come back if you take it down.</div>`}
+    <div class="row bkform"><label class="grow">Card<select id="bkRqC">${own.map(x=>`<option value="${esc(x.id)}">${esc(crOf(x).n)} · ${esc(x.name)}${x.lv>1?` LV ${x.lv}`:""} (×${cardCount(x.id)-(S.bkRq||[]).filter(g=>g===x.id).length})</option>`).join("")||`<option value="">No cards</option>`}</select></label><button type="button" class="btn ghost" data-bk="rqadd">+ Add</button></div>${bkShHtml(true)}`
    :`<div class="stlbl">Collateral · seizure order</div>${list("upc","dnc","rmc")||`<div class="small muted">No collateral — unsecured. Optional: add cards the borrower must put up.</div>`}
     <div class="row bkform"><label>Kind<select data-bkf="cm"><option value="r" ${F.cm==="r"?"selected":""}>Any of rarity</option><option value="up" ${F.cm==="up"?"selected":""}>Rarity or better</option><option value="cid" ${F.cm==="cid"?"selected":""}>Specific card</option></select></label>
     <label>Rarity<select data-bkf="cr">${(setOpen("pm")?CR:CRN).map((R,i)=>`<option value="${i}" ${String(F.cr)===String(i)?"selected":""}>${esc(R.n)}</option>`).join("")}</select></label>
     <label id="bkCCw" ${F.cm==="cid"?"":"hidden"}>Card<select data-bkf="cc" id="bkCC">${bkCardOpts(F)}</select></label><label id="bkCLw" ${F.cm==="cid"&&bkLvMax(F)>1?"":"hidden"}>Level<select data-bkf="cl" id="bkCL">${bkLvOpts(F)}</select></label>
-    <label>Qty<input class="n s" data-bkf="cq" type="number" min="1" max="10" step="1" value="${esc(F.cq)}"></label><button type="button" class="btn ghost" data-bk="addc">+ Add</button></div>`;
+    <label>Qty<input class="n s" data-bkf="cq" type="number" min="1" max="10" step="1" value="${esc(F.cq)}"></label><button type="button" class="btn ghost" data-bk="addc">+ Add</button></div>${bkShHtml(false)}`;
   return `<section class="card${S.bkEdit?" bkediting":""}" id="bkOffer"><h3>${S.bkEdit?"✏️ Editing offer":RQ?"🙏 Ask for a loan":"🤝 Offer a loan"}</h3><div class="row bkform">
     <label>${RQ?"Amount you want (BB)":"Principal (BB)"}<input class="n" data-bkf="P" type="number" min="1" step="1" value="${esc(F.P)}"></label>
     <label>Rate %<input class="n" data-bkf="rate" type="number" min="0" max="1000" step="0.1" value="${esc(F.rate)}"></label><label>per${bkUnitSel("rateU",F.rateU)}</label></div>
