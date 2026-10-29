@@ -815,11 +815,21 @@ body.wwon{overflow:hidden}
       /* the bell rope hangs inside, just past the doors, under the tower */
       put(new T.CylinderGeometry(.03, .03, Hh - 1.2, 6), M({ color: 0xc9a46a, roughness: 1 }), 1.1, 1.2 + (Hh - 1.2) / 2, -2.2, 0, grp);
       put(new T.SphereGeometry(.09, 8, 6), M({ color: 0x8a5a2a }), 1.1, 1.15, -2.2, 0, grp); G.rope = CL(1.1, -2.2);
-      { const ra = .55, rl = W / 2 / Math.cos(ra) + .5; [-1, 1].forEach(sd => { const r = new T.Mesh(box(rl, .2, D + .5), MT.roof); r.position.set(sd * W / 4, Hh + Math.tan(ra) * W / 4, -D / 2); r.rotation.z = -sd * ra; grp.add(r); r.userData.st = 1; });
+      { const ra = .55, rl = W / 2 / Math.cos(ra) + .5, oroof = M({ color: 0x2f6a5e, roughness: .45, metalness: .45 }); [-1, 1].forEach(sd => { const r = new T.Mesh(box(rl, .2, D + .5), oroof); r.position.set(sd * W / 4, Hh + Math.tan(ra) * W / 4, -D / 2); r.rotation.z = -sd * ra; grp.add(r); r.userData.st = 1; });
         const sh = new T.Shape(); sh.moveTo(-W / 2, 0); sh.lineTo(W / 2, 0); sh.lineTo(0, Math.tan(ra) * W / 2); sh.lineTo(-W / 2, 0); const tri = new T.Mesh(new T.ShapeGeometry(sh), wl); tri.position.set(0, Hh, .01); grp.add(tri); tri.userData.st = 1; }
-      put(box(3, 4, 3), wl, 0, Hh + 2, -1.5, 0, grp); const sp = new T.Mesh(new T.ConeGeometry(2.2, 4.5, 4), MT.roof); sp.rotation.y = Math.PI / 4; sp.position.set(0, Hh + 6.25, -1.5); grp.add(sp); sp.updateMatrixWorld(true);
-      put(box(.15, 1.4, .15), MT.white, 0, Hh + 9.2, -1.5, 0, grp); put(box(.9, .15, .15), MT.white, 0, Hh + 9.45, -1.5, 0, grp);
-      sign("CHAPEL", 3, .7, 0, 3.8, .06, 0, "#e9e2d4", "#3a2414", grp);
+      /* onion domes: gold over the bell tower and the middle of the nave, blue ones at the back corners */
+      const gold = M({ color: 0xd8a531, roughness: .22, metalness: .92 }), blue = M({ color: 0x2a56a8, roughness: .35, metalness: .5 }), drumM = M({ color: 0xf0ebe0, roughness: .8 }), trimG = M({ color: 0x2f6a5e, roughness: .5, metalness: .4 });
+      const onion = (r, h) => new T.LatheGeometry([[0, 0], [r * .82, h * .04], [r, h * .26], [r * .93, h * .46], [r * .6, h * .66], [r * .26, h * .83], [r * .08, h * .95], [0, h]].map(([x, y]) => new T.Vector2(x, y)), 20);
+      const cross = (x, y, z, k) => { put(box(.07 * k, 1.3 * k, .07 * k), gold, x, y + .65 * k, z, 0, grp); put(box(.42 * k, .06 * k, .06 * k), gold, x, y + 1.05 * k, z, 0, grp); put(box(.66 * k, .07 * k, .07 * k), gold, x, y + .8 * k, z, 0, grp);
+        const sl = put(box(.48 * k, .06 * k, .06 * k), gold, x, y + .35 * k, z, 0, grp); sl.rotation.z = -.35; sl.updateMatrixWorld(true); };
+      const cupola = (x, z, y, dr, dh, r, h, mat) => { put(new T.CylinderGeometry(dr, dr, dh, 20), drumM, x, y + dh / 2, z, 0, grp); put(new T.CylinderGeometry(dr + .08, dr + .08, .14, 20), trimG, x, y + dh, z, 0, grp);
+        for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; put(box(.16, dh * .55, .04), MT.dark, x + Math.cos(a) * (dr + .005), y + dh * .5, z + Math.sin(a) * (dr + .005), -a + Math.PI / 2, grp); }
+        put(onion(r, h), mat, x, y + dh + .07, z, 0, grp); cross(x, y + dh + h, z, Math.max(.6, r / 1.4)); };
+      put(box(3, 4, 3), wl, 0, Hh + 2, -1.5, 0, grp); put(box(3.2, .18, 3.2), trimG, 0, Hh + 4.05, -1.5, 0, grp);
+      cupola(0, -1.5, Hh + 4.1, 1.05, 1.1, 1.35, 2.5, gold);
+      const ridge = Hh + Math.tan(.55) * W / 2; cupola(0, -8, ridge - .5, 1.7, 1.7, 2.1, 3.6, gold);
+      [-1, 1].forEach(sd => cupola(sd * 2.6, -12.3, Hh + 1.0, .65, .9, .85, 1.7, blue));
+      sign("ORTHODOX CHURCH", 3.4, .55, 0, 3.45, .06, 0, "#f0ebe0", "#2a3a6a", grp);
       const bell = new T.Group(); bell.position.set(0, Hh + 3.2, -1.5); grp.add(bell);
       const bm = new T.Mesh(new T.CylinderGeometry(.3, .62, .8, 16, 1, true), M({ color: 0xb8862e, roughness: .3, metalness: .9, side: T.DoubleSide })); bm.position.y = -.4; bell.add(bm);
       G.bell = { g: bell, a: 0, v: 0 }; bell.updateMatrixWorld(true);
@@ -1431,7 +1441,8 @@ body.wwon{overflow:hidden}
   function ensureMe() { if (!G.me) { const R = { n: G.net ? G.net.n : 0, name: "", skin: API().mySkin ? API().mySkin() : null, snaps: [], ph: 0, speed: 0 }; mkBody(R); if (R.tag) R.tag.remove(); R.tag = null; G.me = R; } return G.me; }
   /* your own body: look down and see yourself (head hidden in first person), the whole you in third person */
   function selfBody(dt, emo, drv, tp) {
-    if (emo) return; const R = ensureMe(); if (!R || !R.root) return; if (drv || !G.p || G.state === "menu") { R.root.visible = false; return; }
+    if (emo) return; if (!tp) { if (G.me && G.me.root) G.me.root.visible = false; return; } /* owner Oct 28: first person = no body again */
+    const R = ensureMe(); if (!R || !R.root) return; if (drv || !G.p || G.state === "menu") { R.root.visible = false; return; }
     const T = THREE, p = G.p, bk = tp ? 0 : .3; R.root.visible = true; R.root.position.set(p.x + Math.sin(G.yaw) * bk, p.y, p.z + Math.cos(G.yaw) * bk); R.root.rotation.set(0, G.yaw, 0);
     R.speed += (Math.min(9, G.moving || 0) - R.speed) * Math.min(1, dt * 8); R.pitch = tp ? G.pitch : 0;
     const P = poseFor(R, dt, performance.now()); if (!tp) { P.ral = 0; P.lal = 0; P.hx = 0; } if (R.gun) R.gun.visible = tp;
