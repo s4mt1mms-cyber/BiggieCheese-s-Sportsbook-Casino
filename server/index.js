@@ -17,6 +17,8 @@ initializeApp();
 const db = getFirestore(), auth = getAuth();
 const MAP = JSON.parse(fs.readFileSync(new URL("./map.json", import.meta.url)));
 const COLS = MAP.cols.map(([x0, x1, y0, y1, z0, z1]) => ({ x0, x1, y0, y1, z0, z1 }));
+/* pushable wagons: [x, z, hx, hz] from map.json; positions relayed by whoever pushes them, they block bullets where they are now */
+const WAGONS = (MAP.wagons || []).map(([x, z, hx, hz]) => ({ x, z, hx, hz, x0: x - hx, x1: x + hx, y0: 0, y1: 2.4, z0: z - hz, z1: z + hz }));
 const OWNER = "s4mt1mms@gmail.com";
 
 /* ---- rules of the match ---- */
@@ -58,7 +60,7 @@ function rayBox(o, d, c) {
     let a = (lo - od) / dd, b = (hi - od) / dd; if (a > b) [a, b] = [b, a]; if (a > t0) t0 = a; if (b < t1) t1 = b; if (t0 > t1) return null; }
   return t0;
 }
-function wallT(o, d, max) { let best = max; for (const c of COLS) { const t = rayBox(o, d, c); if (t != null && t < best) best = t; } return best; }
+function wallT(o, d, max) { let best = max; for (const c of COLS) { const t = rayBox(o, d, c); if (t != null && t < best) best = t; } for (const c of WAGONS) { const t = rayBox(o, d, c); if (t != null && t < best) best = t; } return best; }
 function raySphere(o, d, c, r) { const ox = o.x - c.x, oy = o.y - c.y, oz = o.z - c.z, b = ox * d.x + oy * d.y + oz * d.z, cc = ox * ox + oy * oy + oz * oz - r * r, h = b * b - cc; if (h < 0) return null; const t = -b - Math.sqrt(h); return t > 0 ? t : null; }
 /* ray vs the standing cylinder of the hitbox */
 function rayCyl(o, d, p) {
@@ -199,7 +201,7 @@ async function handle(c, m) {
       if (!room.players.has(P.pid)) { room.players.set(P.pid, P); broadcast(room, { t: "add", ...info(P) }, P); }
       if (!P.alive) { const sp = pickSpawn(room, P); Object.assign(P, { x: sp[0], y: 0, z: sp[1], yaw: sp[2], alive: true, hp: HP, prot: now() + PROT_MS, ammo: MAG, hist: [[now(), sp[0], 0, sp[1]]] }); }
       return send(c.ws, { t: "welcome", n: P.n, tier: P.tier, stack: P.stack, kills: P.kills, hp: P.hp, spawn: [P.x, P.y, P.z, P.yaw], prot: Math.max(0, P.prot - now()),
-        players: [...room.players.values()].filter(q => q !== P).map(info), bank: BANK, doors, glass: [...glass].map(([i, g]) => [i, g.s, g.u, g.v]), car: carArr(), rules: { cut: HOUSE_CUT, body: BODY, head: HEAD, prot: PROT_MS, cash: CASH_MS } });
+        players: [...room.players.values()].filter(q => q !== P).map(info), bank: BANK, doors, wagons: WAGONS.map(w => [w.x, w.z]), glass: [...glass].map(([i, g]) => [i, g.s, g.u, g.v]), car: carArr(), rules: { cut: HOUSE_CUT, body: BODY, head: HEAD, prot: PROT_MS, cash: CASH_MS } });
     }
     /* {t:"emo", id}: play an emote you own (from the shop); everyone in the match sees it. 8 s cooldown */
     case "emo": {
@@ -207,6 +209,8 @@ async function handle(c, m) {
       p.lastEmo = t; broadcast(ROOM, { t: "emo", n: p.n, id }); return;
     }
     /* doors: {t:"door", i, open} — everyone sees it */
+    case "wagon": { if (!p || !p.alive) return; const w = WAGONS[m.i | 0], x = +m.x, z = +m.z; if (!w || !Number.isFinite(x) || !Number.isFinite(z) || Math.hypot(x - w.x, z - w.z) > 3 || Math.hypot(x - p.x, z - p.z) > 6) return;
+      Object.assign(w, { x, z, x0: x - w.hx, x1: x + w.hx, z0: z - w.hz, z1: z + w.hz }); broadcast(ROOM, { t: "wagon", i: m.i | 0, x, z }, p); return; }
     case "door": { if (!p) return; const i = m.i | 0; if (i < 0 || i >= doors.length) return; doors[i] = !!m.open; broadcast(ROOM, { t: "door", i, open: doors[i] }, p); return; }
     /* a window shot out: {t:"glass", i}; it comes back after 90 s */
     case "glass": { if (!p) return; const i = m.i | 0, st = m.s === 1 ? 1 : 2; if (i < 0 || i > 999) return; const g = glass.get(i); if (g && g.s >= st) return;

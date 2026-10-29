@@ -150,6 +150,9 @@ body.wwon{overflow:hidden}
 .wwemo{position:absolute;right:max(16px,env(safe-area-inset-right));top:max(60px,calc(env(safe-area-inset-top) + 52px));display:none;flex-direction:column;gap:6px;pointer-events:auto;background:rgba(20,12,6,.85);border:2px solid #c8963e;border-radius:12px;padding:8px;max-height:60%;overflow:auto}
 .wwemo.on{display:flex}.wwemo button{font:800 14px Barlow;padding:8px 14px;border-radius:9px;border:1px solid #c8963e;background:#5a3418;color:#ffe9b8;text-align:left}
 .wwemo span{font:600 13px Barlow;color:#e8d4a8;padding:4px 6px}
+.wwemo.wheel{left:50%;top:50%;right:auto;transform:translate(-50%,-50%);width:340px;height:340px;max-height:none;border-radius:50%;background:radial-gradient(rgba(20,12,6,.35) 22%,rgba(20,12,6,.78) 23%);display:none;padding:0;overflow:visible;pointer-events:none}
+.wwemo.wheel.on{display:block}.wwemo.wheel button{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis;text-align:center}
+.wwemo.wheel button.sel{background:#c8963e;color:#1a0e04;transform:translate(-50%,-50%) scale(1.12)}.wwemo.wheel i{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font:600 12px Barlow;color:#e8d4a8;text-align:center;width:120px;font-style:normal}
 .wwbuy{margin:8px 0 2px;padding:10px 12px;border:1px solid rgba(200,150,62,.5);border-radius:12px;background:rgba(0,0,0,.25)}
 .wwbuyv{display:flex;align-items:baseline;gap:10px}.wwbuyv span{font:700 11px Barlow;letter-spacing:.14em;text-transform:uppercase;color:#c8a46a}
 .wwbuyv b{font:400 28px Rye,Georgia,serif;color:#ffe29a}.wwbuyv small{margin-left:auto;font:700 11px Barlow;letter-spacing:.1em;text-transform:uppercase;opacity:.75}
@@ -278,7 +281,7 @@ body.wwon{overflow:hidden}
   }
   function pause() {
     if (!G || G.state !== "play") return;
-    G.state = "pause"; G.fireHeld = false; G.aimHeld = false; G.keys = {}; G.act = {}; G.touches = {}; hideSticks();
+    G.state = "pause"; if (G.emoW) emoWheel(false); G.fireHeld = false; G.aimHeld = false; G.keys = {}; G.act = {}; G.touches = {}; hideSticks();
     try { if (document.pointerLockElement) document.exitPointerLock(); } catch (_) {}
     const pvp = G.mode === "pvp";
     G.ui.innerHTML = `<div class="wwpanel"><div class="wwcard wwpz"><h2>Paused</h2>${pvp ? `<p style="margin:0;color:#ffd0a0">You're still in the match. Others can see and shoot you. Leaving counts as dying.</p>` : ""}<div class="wwgrid">
@@ -385,17 +388,19 @@ body.wwon{overflow:hidden}
       if (G.state !== "play") return;
       G.keys[k] = true; if (act) { e.preventDefault(); G.act[act] = true; }
       if (act === "reload") reload(); if (act === "jump") G.jumpQ = true; if (act === "fire" && !e.repeat) fire(); if (act === "aim") G.aimHeld = true;
-      if (act === "cash" && !e.repeat) cashPress(true); if (act === "emote" && !e.repeat) emoteMenu(); if (act === "use" && !e.repeat) doUse();
+      if (act === "cash" && !e.repeat) cashPress(true); if (act === "emote" && !e.repeat) { if (TOUCH) emoteMenu(); else emoWheel(true); }
+      if (G.emoW && /^Digit[1-9]$/.test(k)) { const it = G.emoW.list[+k.slice(5) - 1]; if (it) { emoWheel(false); playEmote(it.id); } } if (act === "use" && !e.repeat) doUse();
       if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Tab"].includes(k)) e.preventDefault();
     };
-    H_.ku = e => { if (!G) return; e.stopPropagation(); G.keys[e.code] = false; const act = actOf(e.code); if (act) { G.act[act] = false; if (act === "aim") G.aimHeld = false; if (act === "cash") cashPress(false); } };
+    H_.ku = e => { if (!G) return; e.stopPropagation(); G.keys[e.code] = false; const act = actOf(e.code); if (act) { G.act[act] = false; if (act === "aim") G.aimHeld = false; if (act === "cash") cashPress(false); if (act === "emote" && G.emoW) { const it = G.emoW.list[G.emoW.sel]; emoWheel(false); if (it) playEmote(it.id); } } };
     window.addEventListener("keydown", H_.kd, true); window.addEventListener("keyup", H_.ku, true);
-    H_.mm = e => { if (!G || G.state !== "play" || document.pointerLockElement !== G.cv) return; look(e.movementX, e.movementY, 0.0022); };
+    H_.mm = e => { if (!G || G.state !== "play" || document.pointerLockElement !== G.cv) return; if (G.emoW) { emoAim(e.movementX, e.movementY); return; } look(e.movementX, e.movementY, 0.0022); };
     H_.md = e => {
       if (!G || TOUCH) return;
       if (G.capturing) { e.preventDefault(); bindTo("Mouse" + e.button); return; }
       if (G.state === "play" && document.pointerLockElement !== G.cv && e.target === G.cv) { try { G.cv.requestPointerLock(); } catch (_) {} return; }
       if (G.state !== "play") return;
+      if (G.emoW) { e.preventDefault(); const it = G.emoW.list[G.emoW.sel]; if (it && e.button === 0) { emoWheel(false); playEmote(it.id); } return; } /* clicks pick an emote, never shoot or aim */
       const act = actOf("Mouse" + e.button); if (!act) return; G.act[act] = true;
       if (act === "fire") { G.fireHeld = true; fire(); } else if (act === "aim") G.aimHeld = true; else if (act === "reload") reload(); else if (act === "jump") G.jumpQ = true; else if (act === "pause") pause();
     };
@@ -603,33 +608,48 @@ body.wwon{overflow:hidden}
     /* ---- buildings ----
        Built in local space (front at z=0 facing +z, depth toward -z), then placed: north side faces +z (rot 0), south side faces -z (rot π).
        Local boxes are converted to world boxes for collisions. */
+    /* fill a wall span [a0,a1] × [0,H] with boxes, leaving rectangular openings ops [[a0,a1,y0,y1]] (windows, doors) */
+    function holes(a0, a1, H, ops, emit) {
+      const xs = [a0, a1]; ops.forEach(q => [q[0], q[1]].forEach(v => { if (v > a0 && v < a1) xs.push(v); })); xs.sort((p, q) => p - q);
+      for (let i = 0; i < xs.length - 1; i++) { const x0 = xs[i], x1 = xs[i + 1]; if (x1 - x0 < 1e-3) continue; const m = (x0 + x1) / 2;
+        const ys = ops.filter(q => q[0] < m && q[1] > m).map(q => [Math.max(0, q[2]), Math.min(H, q[3])]).sort((p, q) => p[0] - q[0]);
+        let y = 0; for (const [b0, b1] of ys) { if (b0 > y + 1e-3) emit(x0, x1, y, b0); y = Math.max(y, b1); } if (H > y + 1e-3) emit(x0, x1, y, H); } }
     function building(o) {
       const { x, zf, rot, w, d, h, name } = o, grp = new T.Group(); grp.position.set(x, 0, zf); grp.rotation.y = rot; sc.add(grp); grp.updateMatrixWorld(true);
-      const fl = o.enter ? .32 : 0;
+      const fl = .32; /* every building is a hollow shell now (owner Oct 28): windows are real holes in the wall */
       const L = (lx, lz) => { const c = Math.cos(rot), s = Math.sin(rot); return [x + lx * c + lz * s, zf - lx * s + lz * c]; };
       const lbox = (bw, bh, bd, mat, lx, ly, lz, solid, snd, opt) => { const m = put(box(bw, bh, bd), mat, lx, ly + bh / 2, lz, 0, grp, opt);
         if (solid !== false) { const a = L(lx - bw / 2, lz - bd / 2), b = L(lx + bw / 2, lz + bd / 2); colBox(a[0], b[0], ly, ly + bh, a[1], b[1], snd); } return m; };
       const wall = o.brick ? MT.brick : wood("w" + o.col, o.col);
       const trim = wood("t" + (o.trim || "#3a2414"), o.trim || "#3a2414", true);
-      if (!o.enter) lbox(w, h, d, wall, 0, 0, -d / 2);
-      else {
-        const t = .22, dw = 2.4, side = (w - dw) / 2;
+      const wl = [], nw = Math.max(1, Math.floor((w - 3) / 3.2));
+      for (let i = 0; i < nw; i++) { const lx = (i + .5) / nw * (w - 1) - (w - 1) / 2; if (Math.abs(lx) < 1.6) continue; wl.push([lx, 1.8, 1.3, 1.5]); if (h > 6) wl.push([lx, 5, 1.1, 1.4]); }
+      {
+        const t = .22, dw = o.enter ? 2.4 : 1.3, dh = o.enter ? 2.9 : fl + 2.5;
+        const ops = wl.map(([lx, ly, ww, wh]) => [lx - ww / 2, lx + ww / 2, ly - wh / 2, ly + wh / 2]); if (o.enter || o.door) ops.push([-dw / 2, dw / 2, 0, dh]);
         lbox(w, h, t, wall, 0, 0, -d + t / 2); lbox(t, h, d, wall, -w / 2 + t / 2, 0, -d / 2); lbox(t, h, d, wall, w / 2 - t / 2, 0, -d / 2);
-        lbox(side, h, t, wall, -w / 2 + side / 2, 0, -t / 2); lbox(side, h, t, wall, w / 2 - side / 2, 0, -t / 2); lbox(dw, h - 2.9, t, wall, 0, 2.9, -t / 2);
+        holes(-w / 2, w / 2, h, ops, (a0, a1, y0, y1) => lbox(a1 - a0, y1 - y0, t, wall, (a0 + a1) / 2, y0, -t / 2));
         lbox(w - .1, fl, d - .1, wood("floor", "#6a4528"), 0, 0, -d / 2, true, "wood");
         lbox(w, .15, d, wood("ceil", "#3d2817"), 0, h - .15, -d / 2, true); /* ceiling = the roof you can stand on */
         /* inside walls a bit darker so the room reads as shade */
         const inW = M({ map: plank(o.inCol || "#5a3a22", [1, 1]), color: 0x9a8a7a });
         [[w - .5, h - fl, .02, 0, -d + t + .02], [.02, h - fl, d - .5, -w / 2 + t + .02, -d / 2], [.02, h - fl, d - .5, w / 2 - t - .02, -d / 2]].forEach(([a, b, c, lx, lz]) => put(box(a, b, c), inW, lx, fl + b / 2, lz, 0, grp, { ns: 1 }));
         o.interior && o.interior(grp, lbox, fl, w, d, h, L);
+        if (o.door) { /* a plain hinged door (USE opens/closes it) */
+          const a = L(-dw / 2, -t), b = L(dw / 2, 0), dcol = { x0: Math.min(a[0], b[0]), x1: Math.max(a[0], b[0]), y0: 0, y1: dh, z0: Math.min(a[1], b[1]), z1: Math.max(a[1], b[1]), mat: "wood" };
+          const dr = { i: G.doors.length, open: false, wp: L(0, -t / 2), hs: [], col: dcol, ang: 1.5 }; dcol.dr = dr; G.cols.push(dcol); G.doors.push(dr);
+          const hinge = new T.Group(); hinge.position.set(-dw / 2, fl, -t / 2); grp.add(hinge);
+          put(box(dw - .06, dh - fl - .06, .07), wood("door", "#8a5a30", true), dw / 2, (dh - fl) / 2, 0, 0, hinge, { dyn: 1 }); put(box(.1, .1, .14), MT.brass, dw - .2, 1.15, 0, 0, hinge, { dyn: 1 });
+          dr.hs.push({ hinge, sd: 1, a: 0, v: 0 });
+        }
         /* swinging batwing doors */
-        const dcol = (() => { const a = L(-dw / 2, -t), b = L(dw / 2, 0); return { x0: Math.min(a[0], b[0]), x1: Math.max(a[0], b[0]), y0: fl, y1: fl + 2.7, z0: Math.min(a[1], b[1]), z1: Math.max(a[1], b[1]), mat: "wood" }; })();
+        if (o.enter) { const dcol = (() => { const a = L(-dw / 2, -t), b = L(dw / 2, 0); return { x0: Math.min(a[0], b[0]), x1: Math.max(a[0], b[0]), y0: fl, y1: fl + 2.7, z0: Math.min(a[1], b[1]), z1: Math.max(a[1], b[1]), mat: "wood" }; })();
         const dr = { i: G.doors.length, open: false, wp: L(0, -t / 2), hs: [], col: dcol }; dcol.dr = dr; G.cols.push(dcol); G.doors.push(dr);
         [-1, 1].forEach(sd => { const hinge = new T.Group(); hinge.position.set(sd * dw / 2, fl + .55, -t / 2); grp.add(hinge);
           const dmat = wood("batwing", "#b07a3e", true), dk = wood("batwingT", "#5a3418", true);
           const dm = put(box(dw / 2 - .12, .78, .05), dmat, -sd * (dw / 4 - .03), .45, 0, 0, hinge, { dyn: 1 });
           put(box(dw / 2 - .1, .1, .07), dk, -sd * (dw / 4 - .03), .88, 0, 0, hinge, { dyn: 1 }); put(box(dw / 2 - .1, .1, .07), dk, -sd * (dw / 4 - .03), .06, 0, 0, hinge, { dyn: 1 });
-          dr.hs.push({ hinge, sd, a: 0, v: 0 }); });
+          dr.hs.push({ hinge, sd, a: 0, v: 0 }); }); }
       }
       /* false front, sign, trim, windows, door */
       const hf = o.hf || h + 1.6;
@@ -638,9 +658,8 @@ body.wwon{overflow:hidden}
       sign(name, Math.min(w - 1, 9), Math.min(1.5, (w - 1) / 5), 0, h + (hf - h) / 2 + .1, .26, 0, o.sbg, o.sfg, grp);
       const win = (lx, ly, ww, wh) => { G.winSpecs.push({ g: grp, lx, ly, lz: .03, ww, wh }); put(box(ww + .2, .12, .12), trim, lx, ly + wh / 2 + .06, .06, 0, grp); put(box(ww + .2, .12, .12), trim, lx, ly - wh / 2 - .06, .06, 0, grp);
         put(box(.06, wh, .1), trim, lx, ly, .07, 0, grp); };
-      const nw = Math.max(1, Math.floor((w - 3) / 3.2));
-      for (let i = 0; i < nw; i++) { const lx = (i + .5) / nw * (w - 1) - (w - 1) / 2; if (Math.abs(lx) < 1.6) continue; win(lx, 1.8, 1.3, 1.5); if (h > 6) win(lx, 5, 1.1, 1.4); }
-      if (!o.enter) { put(box(1.3, 2.4, .08), wood("door", "#8a5a30", true), 0, 1.2 + fl, .04, 0, grp); put(box(.1, .1, .1), MT.brass, .45, 1.2, .1, 0, grp); }
+      wl.forEach(q => win(...q));
+      if (!o.enter && !o.door) { put(box(1.3, 2.4, .08), wood("door", "#8a5a30", true), 0, 1.2 + fl, .04, 0, grp); put(box(.1, .1, .1), MT.brass, .45, 1.2, .1, 0, grp); }
       if (h > 6 && o.balcony) { lbox(w, .18, 1.6, MT.deck, 0, 3.6, .8, false); for (let i = 0; i <= 8; i++) put(box(.06, .9, .06), MT.rail, -w / 2 + .1 + i * (w - .2) / 8, 4.2, 1.55, 0, grp); put(box(w, .08, .08), MT.rail, 0, 4.6, 1.55, 0, grp); }
       /* porch: deck (walkable step), posts, roof */
       const pd = 2.6; lbox(w, .3, pd, MT.deck, 0, 0, pd / 2, true, "wood");
@@ -680,17 +699,60 @@ body.wwon{overflow:hidden}
       ["WANTED", "WANTED", "REWARD"].forEach((t, i) => sign(t, .7, .9, -w / 2 + .36, fl + 1.8, -d * .25 - i * 1.1, Math.PI / 2, "#e8d4a8", "#3a1c0a", grp));
     };
     G.bottleSpots = [];
+    /* ---- interiors for the buildings you can walk into (owner Oct 28) ---- */
+    const cyl = (r, hh, mat, lx, ly, lz, grp, L, solid) => { put(new T.CylinderGeometry(r, r * .92, hh, 12), mat, lx, ly + hh / 2, lz, 0, grp); if (solid) { const a = L(lx - r, lz - r), b = L(lx + r, lz + r); colBox(a[0], b[0], ly, ly + hh, a[1], b[1]); } };
+    const bars = (grp, lbox, fl, x0, x1, lz, hh) => { lbox(x1 - x0, hh, .06, MT.iron, (x0 + x1) / 2, fl, lz, true, "metal"); /* collider */
+      for (let x = x0 + .08; x < x1; x += .22) put(box(.035, hh, .035), MT.iron, x, fl + hh / 2, lz + .05, 0, grp); put(box(x1 - x0, .06, .06), MT.iron, (x0 + x1) / 2, fl + hh, lz + .05, 0, grp); };
+    const goods = (grp, x0, x1, y, lz) => { const C = [0xa83a2a, 0x3a6a9a, 0xd8b04a, 0x6a8a3a, 0xe8dcc0, 0x8a5a2a]; for (let x = x0; x < x1; x += .34) put(box(.22, .26 + Math.random() * .12, .24), M({ color: C[(Math.random() * C.length) | 0], roughness: .8 }), x, y + .15, lz, 0, grp); };
+    const storeInside = (grp, lbox, fl, w, d, h, L) => {
+      const sh = wood("shelf", "#3d2210"); lbox(w - .8, 2.5, .5, sh, 0, fl, -d + .55, true); [0.55, 1.25, 1.95].forEach(y => goods(grp, -w / 2 + .7, w / 2 - .7, fl + y, -d + .62));
+      lbox(w * .5, 1.0, .7, wood("counter", "#5a3318"), -.6, fl, -d * .5, true); put(box(.5, .35, .3), MT.brass, -.6 - w * .15, fl + 1.18, -d * .5, 0, grp);
+      [[w / 2 - 1, -1.6], [w / 2 - 1.7, -1.2], [-w / 2 + 1, -1.5]].forEach(([x, z]) => cyl(.38, 1.0, wood("barrel", "#6a4424"), x, fl, z, grp, L, true));
+      [[-w / 2 + 1.1, -d + 2.2], [-w / 2 + 1.1, -d + 3.1]].forEach(([x, z]) => lbox(.8, .8, .8, wood("crate", "#8a6a3a", true), x, fl, z, true));
+      put(box(.7, .5, .45), M({ color: 0xc9b48a, roughness: 1 }), w / 2 - 1.2, fl + .25, -d + 1.6, 0, grp); put(box(.7, .5, .45), M({ color: 0xc9b48a, roughness: 1 }), w / 2 - 1.2, fl + .75, -d + 1.6, 0, grp);
+    };
+    const bankInside = (grp, lbox, fl, w, d, h, L) => {
+      const cw = w - 2.2; lbox(cw, 1.1, .6, wood("counter", "#4a2a14"), -w / 2 + .2 + cw / 2, fl, -d * .45, true);
+      for (let x = -w / 2 + .35; x < -w / 2 + .2 + cw; x += .2) put(box(.03, 1.0, .03), MT.brass, x, fl + 1.6, -d * .45, 0, grp); put(box(cw, .05, .05), MT.brass, -w / 2 + .2 + cw / 2, fl + 2.1, -d * .45, 0, grp);
+      lbox(2.4, 2.5, 1.0, MT.iron, w / 2 - 1.6, fl, -d + .8, true, "metal"); const vd = put(new T.CylinderGeometry(.85, .85, .1, 24), MT.brass, w / 2 - 1.6, fl + 1.25, -d + 1.33, 0, grp); vd.rotation.x = Math.PI / 2; vd.updateMatrixWorld(true);
+      put(box(1.2, .9, .05), MT.felt, -w / 2 + 1.6, fl + 1.6, -d + .26, 0, grp); lbox(1.4, .78, .8, wood("desk", "#5a3318"), -w / 2 + 1.6, fl, -d + 1.6, true);
+      [-.3, 0, .3].forEach(dx => put(box(.22, .08, .12), MT.brass, -w / 2 + 1.6 + dx, fl + .82, -d + 1.6, 0, grp)); sign("BANK", 1.6, .5, -w / 2 + 1.6, fl + 2.5, -d + .27, 0, "#1a1a2a", "#e8c86a", grp);
+    };
+    const sheriffInside = (grp, lbox, fl, w, d, h, L) => {
+      lbox(1.6, .8, .8, wood("desk", "#5a3318"), -w / 2 + 1.6, fl, -d * .4, true); put(box(.4, .05, .3), MT.white, -w / 2 + 1.5, fl + .83, -d * .4, 0, grp); put(box(.12, .25, .12), MT.amber, -w / 2 + 2.1, fl + .93, -d * .4, 0, grp);
+      bars(grp, lbox, fl, .2, w / 2 - .25, -d + 2.6, 2.6); lbox(1.8, .45, .8, wood("cot", "#6a4a2a"), w / 2 - 1.3, fl, -d + 1.0, true); put(box(1.7, .1, .7), M({ color: 0x8a7a6a }), w / 2 - 1.3, fl + .5, -d + 1.0, 0, grp);
+      ["WANTED", "WANTED", "OUTLAW"].forEach((tx, i) => sign(tx, .7, .9, -w / 2 + .36, fl + 1.8, -1.6 - i * 1.1, Math.PI / 2, "#e8d4a8", "#3a1c0a", grp));
+      put(box(1.2, .1, .2), wood("rack", "#3d2210"), -w / 2 + 1.5, fl + 2.0, -d + .3, 0, grp); for (let i = 0; i < 3; i++) put(box(.06, 1.1, .06), MT.iron, -w / 2 + 1.1 + i * .4, fl + 1.5, -d + .34, 0, grp);
+    };
+    const barberInside = (grp, lbox, fl, w, d, h, L) => {
+      put(box(w * .6, 1.2, .03), M({ color: 0x8a9aa8, roughness: .05, metalness: .9 }), 0, fl + 1.8, -d + .26, 0, grp); lbox(w * .6, .9, .5, wood("counter", "#e8dcc0"), 0, fl, -d + .5, true);
+      [-1.5, 1.5].forEach(x => { lbox(.7, .55, .7, M({ color: 0x7a1d1d, roughness: .6 }), x, fl, -d + 1.9, true); put(box(.7, .8, .12), M({ color: 0x7a1d1d, roughness: .6 }), x, fl + .95, -d + 2.2, 0, grp); put(new T.CylinderGeometry(.08, .2, .3, 10), MT.iron, x, fl + .15, -d + 1.9, 0, grp); });
+      for (let i = 0; i < 3; i++) lbox(.5, .45, .5, wood("chair", "#5a3218"), -w / 2 + .7, fl, -1.6 - i * .8, true);
+      const pole = put(new T.CylinderGeometry(.09, .09, 1.1, 12), M({ color: 0xd84a3a }), w / 2 - .6, fl + 1.4, -1.0, 0, grp);
+    };
+    const undertakerInside = (grp, lbox, fl, w, d, h, L) => {
+      const pine = wood("coffin", "#4a3020", true), dk = wood("coffinD", "#2a1a10", true);
+      [[-2.2, -d + .45], [-1.2, -d + .45], [1.4, -d + .45]].forEach(([x, z]) => lbox(.75, 2.0, .38, pine, x, fl, z, true));
+      [[-1.8, -d * .5], [1.2, -d * .55]].forEach(([x, z]) => { lbox(.8, .55, 2.0, dk, x, fl + .6, z, true); lbox(.9, .6, .3, wood("trestle", "#5a3a20"), x, fl, z - .7, true); lbox(.9, .6, .3, wood("trestle", "#5a3a20"), x, fl, z + .7, true); });
+      put(new T.CylinderGeometry(.05, .05, .35, 8), MT.white, w / 2 - 1, fl + 1.1, -d + 1, 0, grp); lbox(.6, .9, .6, wood("stand", "#3d2210"), w / 2 - 1, fl, -d + 1, true);
+    };
+    const jailInside = (grp, lbox, fl, w, d, h, L) => {
+      bars(grp, lbox, fl, -w / 2 + .25, w / 2 - .25, -d + 3.2, 2.7); lbox(.08, 2.7, 2.9, MT.iron, 0, fl, -d + 1.7, true, "metal");
+      [-1, 1].forEach(sd => { lbox(1.8, .45, .8, wood("cot", "#6a4a2a"), sd * (w / 4), fl, -d + .8, true); put(box(.4, .3, .4), MT.iron, sd * (w / 4 + 1.2), fl + .15, -d + 1.8, 0, grp); });
+      lbox(1.4, .8, .8, wood("desk", "#5a3318"), -w / 2 + 1.4, fl, -2.2, true); put(box(.4, .1, .3), MT.iron, -w / 2 + 1.4, fl + .85, -2.2, 0, grp);
+      put(new T.TorusGeometry(.12, .02, 6, 12), MT.brass, -w / 2 + .3, fl + 1.7, -2.2, 0, grp);
+    };
 
     const ZN = -9.6, ZS = 9.6;
     const north = [
-      { x: -46, w: 10, d: 10, h: 4.6, ladder: 1, name: "GENERAL STORE", col: "#a8865c", sbg: "#2a3a1c" },
-      { x: -34.5, w: 9, d: 10, h: 5, name: "BANK", col: "#7a3b28", brick: 1, sbg: "#1a1a2a", sfg: "#e8c86a" },
+      { x: -46, w: 10, d: 10, h: 4.6, ladder: 1, name: "GENERAL STORE", col: "#a8865c", sbg: "#2a3a1c", door: 1, interior: storeInside },
+      { x: -34.5, w: 9, d: 10, h: 5, name: "BANK", col: "#7a3b28", brick: 1, sbg: "#1a1a2a", sfg: "#e8c86a", door: 1, interior: bankInside },
       { x: -21, w: 14, d: 14, h: 7.6, name: "THE RUSTY SPUR", col: "#8a5a34", enter: 1, balcony: 1, hf: 9.6, sbg: "#5a1a10", interior: saloonInside("RUSTY SPUR") },
-      { x: -8, w: 8, d: 9, h: 4.4, ladder: -1, name: "SHERIFF", col: "#6e7884", sbg: "#2a2a2a", sfg: "#f3d38a" },
+      { x: -8, w: 8, d: 9, h: 4.4, ladder: -1, name: "SHERIFF", col: "#6e7884", sbg: "#2a2a2a", sfg: "#f3d38a", door: 1, interior: sheriffInside },
       { x: 3, w: 10, d: 11, h: 7.4, ladder: 1, name: "GRAND HOTEL", col: "#6f8a6a", balcony: 1, sbg: "#1d3320" },
-      { x: 14.5, w: 9, d: 9, h: 4.5, name: "BARBER", col: "#b3a48a", sbg: "#5a1a1a" },
+      { x: 14.5, w: 9, d: 9, h: 4.5, name: "BARBER", col: "#b3a48a", sbg: "#5a1a1a", door: 1, interior: barberInside },
       { x: 27, w: 12, d: 11, h: 5, ladder: -1, name: "BLACKSMITH", col: "#5e4a3a", sbg: "#1a1410" },
-      { x: 42, w: 10, d: 10, h: 4.8, name: "UNDERTAKER", col: "#4a4040", sbg: "#101010", sfg: "#cfc6b8" }];
+      { x: 42, w: 10, d: 10, h: 4.8, name: "UNDERTAKER", col: "#4a4040", sbg: "#101010", sfg: "#cfc6b8", door: 1, interior: undertakerInside }];
     const south = [
       { x: -45, w: 11, d: 12, h: 6, name: "LIVERY STABLE", col: "#8a2a20", sbg: "#3a1408", noRoof: 1 },
       { x: -31, w: 10, d: 10, h: 4.6, ladder: 1, name: "POST OFFICE", col: "#8f9aa0", sbg: "#1a2a3a" },
@@ -698,7 +760,7 @@ body.wwon{overflow:hidden}
       { x: -3, w: 14, d: 14, h: 7.6, ladder: -1, name: "GOLDEN NUGGET", col: "#9a6a2a", enter: 1, balcony: 1, hf: 9.8, sbg: "#3a2408", sfg: "#ffd24a", inCol: "#4e2e1a", interior: saloonInside("GOLDEN NUGGET") },
       { x: 12, w: 9, d: 10, h: 4.6, name: "DRUGS & SUNDRIES", col: "#a87a6a", sbg: "#2a1a3a" },
       { x: 25, w: 10, d: 10, h: 4.6, ladder: 1, name: "TELEGRAPH", col: "#9a9070", sbg: "#2a2414" },
-      { x: 40, w: 12, d: 11, h: 5, name: "JAIL", col: "#7a7064", brick: 1, sbg: "#1a1a1a" }];
+      { x: 40, w: 12, d: 11, h: 5, name: "JAIL", col: "#7a7064", brick: 1, sbg: "#1a1a1a", door: 1, interior: jailInside }];
     north.forEach(o => building(Object.assign({ zf: ZN, rot: 0 }, o)));
     south.forEach(o => building(Object.assign({ zf: ZS, rot: Math.PI }, o)));
 
@@ -709,10 +771,12 @@ body.wwon{overflow:hidden}
       const CL = (lx, lz) => [52 - lz, lx], cb = (bw, bh, bd, mat, lx, ly, lz, solid, opt) => { const m = put(box(bw, bh, bd), mat, lx, ly + bh / 2, lz, 0, grp, opt);
         if (solid !== false) { const a = CL(lx - bw / 2, lz - bd / 2), b = CL(lx + bw / 2, lz + bd / 2); colBox(a[0], b[0], ly, ly + bh, a[1], b[1], "wood"); } return m; };
       const t = .22, dw = 2.2, dh = 3.1, side = (W - dw) / 2, inW = M({ map: plank("#cfc4b0", [1, 1]), color: 0xb8ae9e });
-      cb(W, Hh, t, wl, 0, 0, -D + t / 2); cb(t, Hh, D, wl, -W / 2 + t / 2, 0, -D / 2); cb(t, Hh, D, wl, W / 2 - t / 2, 0, -D / 2);
+      cb(W, Hh, t, wl, 0, 0, -D + t / 2);
+      { const ops = [0, 1, 2].map(k => { const lz = -4 - k * 3.4; return [lz - .55, lz + .55, 2.0, 4.4]; });
+        [-1, 1].forEach(sd => holes(-D, 0, Hh, ops, (a0, a1, y0, y1) => cb(t, y1 - y0, a1 - a0, wl, sd * (W / 2 - t / 2), y0, (a0 + a1) / 2))); }
       cb(side, Hh, t, wl, -W / 2 + side / 2, 0, -t / 2); cb(side, Hh, t, wl, W / 2 - side / 2, 0, -t / 2); cb(dw, Hh - dh, t, wl, 0, dh, -t / 2);
       cb(W - .1, .15, D - .1, wood("chfl", "#6a4a2e"), 0, 0, -D / 2, true); put(box(W - .3, .1, D - .3), inW, 0, Hh - .05, -D / 2, 0, grp, { ns: 1 });
-      [[W - .5, .02, 0, -D + t + .02], [.02, D - .5, -W / 2 + t + .02, -D / 2], [.02, D - .5, W / 2 - t - .02, -D / 2]].forEach(([a, c, lx, lz]) => put(box(a, Hh - .2, c), inW, lx, .15 + (Hh - .2) / 2, lz, 0, grp, { ns: 1 }));
+      [[W - .5, .02, 0, -D + t + .02]].forEach(([a, c, lx, lz]) => put(box(a, Hh - .2, c), inW, lx, .15 + (Hh - .2) / 2, lz, 0, grp, { ns: 1 }));
       const pew = wood("pew", "#5a3418");
       for (let r = 0; r < 5; r++) { const lz = -3.6 - r * 1.75; [-1, 1].forEach(sd => { cb(3.0, .5, .55, pew, sd * 2.35, .15, lz, true); put(box(3.0, .55, .08), pew, sd * 2.35, .15 + .75, lz + .27, 0, grp); }); }
       cb(2.6, 1.05, 1.0, wood("altar", "#3d2210"), 0, .15, -D + 1.5, true); put(box(2.7, .06, 1.1), MT.white, 0, 1.23, -D + 1.5, 0, grp);
@@ -765,11 +829,14 @@ body.wwon{overflow:hidden}
       [[-1, 1.5, 1.0], [1, 2.1, .8]].forEach(([sd, y, l]) => { const a = put(new T.CylinderGeometry(.18, .2, .7, 8), MT.cactus, sd * .45, y, 0, 0, g); a.rotation.z = Math.PI / 2; a.updateMatrixWorld(true); put(new T.CylinderGeometry(.18, .18, l, 8), MT.cactus, sd * .78, y + l / 2, 0, 0, g); put(new T.SphereGeometry(.18, 8, 6), MT.cactus, sd * .78, y + l, 0, 0, g); });
       colBox(x - .35 * s, x + .35 * s, 0, 3.8 * s, z - .35 * s, z + .35 * s, "dirt"); };
     const lampPost = (x, z) => { blk(.14, 3.4, .14, MT.iron, x, 0, z, true, { snd: "metal" }); put(box(.35, .45, .35), MT.lamp, x, 3.55, z, 0, null, { ns: 1 }); };
-    const wagon = (x, z, ry) => { const g = new T.Group(); g.position.set(x, 0, z); g.rotation.y = ry; sc.add(g); g.updateMatrixWorld(true);
-      put(box(1.7, .5, 3.6), wood("wagon", "#7a5230"), 0, 1.05, 0, 0, g); put(box(1.7, .5, .08), wood("wagon", "#7a5230"), 0, 1.5, 1.76, 0, g); put(box(1.7, .5, .08), wood("wagon", "#7a5230"), 0, 1.5, -1.76, 0, g);
-      [-1, 1].forEach(sd => [1.2, -1.2].forEach(zz => { const wh = put(new T.TorusGeometry(.55, .07, 6, 18), wood("wheel", "#4a2a14"), sd * .95, .6, zz, 0, g); wh.rotation.y = Math.PI / 2; wh.updateMatrixWorld(true); }));
-      const cov = put(new T.CylinderGeometry(1, 1, 3.2, 16, 1, true, 0, Math.PI), M({ color: 0xe8dcc0, side: T.DoubleSide }), 0, 1.45, 0, 0, g); cov.rotation.set(Math.PI / 2, 0, Math.PI / 2); cov.scale.set(1, 1, .9); cov.updateMatrixWorld(true);
-      const c = Math.abs(Math.cos(ry)) > .5; colBox(x - (c ? 1 : 2), x + (c ? 1 : 2), 0, 2.4, z - (c ? 2 : 1), z + (c ? 2 : 1)); };
+    /* wagons can be pushed (owner Oct 28): walk into one and it rolls; in PvP everyone sees where it is */
+    G.wagons = [];
+    const wagon = (x, z, ry) => { const g = new T.Group(); g.position.set(x, 0, z); g.rotation.y = ry; sc.add(g); g.updateMatrixWorld(true); const D = { dyn: 1 };
+      put(box(1.7, .5, 3.6), wood("wagon", "#7a5230"), 0, 1.05, 0, 0, g, D); put(box(1.7, .5, .08), wood("wagon", "#7a5230"), 0, 1.5, 1.76, 0, g, D); put(box(1.7, .5, .08), wood("wagon", "#7a5230"), 0, 1.5, -1.76, 0, g, D);
+      const whs = []; [-1, 1].forEach(sd => [1.2, -1.2].forEach(zz => { const wh = put(new T.TorusGeometry(.55, .07, 6, 18), wood("wheel", "#4a2a14"), sd * .95, .6, zz, 0, g, D); wh.rotation.y = Math.PI / 2; whs.push(wh); }));
+      const cov = put(new T.CylinderGeometry(1, 1, 3.2, 16, 1, true, 0, Math.PI), M({ color: 0xe8dcc0, side: T.DoubleSide }), 0, 1.45, 0, 0, g, D); cov.rotation.set(Math.PI / 2, 0, Math.PI / 2); cov.scale.set(1, 1, .9);
+      const c = Math.abs(Math.cos(ry)) > .5, hx = c ? 1 : 2, hz = c ? 2 : 1, W = { i: G.wagons.length, g, whs, x, z, hx, hz, ax: c ? "z" : "x" };
+      W.col = { x0: x - hx, x1: x + hx, y0: 0, y1: 2.4, z0: z - hz, z1: z + hz, mat: "wood", wg: W }; G.cols.push(W.col); G.wagons.push(W); };
     [[-40, -6.4], [-27.5, 6.3], [-13, -6.5], [6, 6.4], [19.5, -6.4], [33, 6.5], [47, -6.3]].forEach(([x, z]) => hitch(x, z));
     [[-37, -6.6], [9.5, 6.6], [30, -6.6]].forEach(([x, z]) => trough(x, z));
     [[-51.6, -8], [-50.8, -7.4], [-28.5, -8.2], [-13.4, 8.3], [8.4, -8.4], [20.5, 8.4], [33.8, -8.1], [47.5, 8.2], [-39.3, 8.3]].forEach(([x, z]) => barrel(x, z));
@@ -821,7 +888,8 @@ body.wwon{overflow:hidden}
     { const N = G.winSpecs.length, im = new T.InstancedMesh(new T.BoxGeometry(1, 1, 1), M({ color: 0xffffff, roughness: .12, metalness: .55, transparent: true, opacity: .88 }), N), m4 = new T.Matrix4(), col = new T.Color();
       G.winSpecs.forEach((w, i) => { const mtx = new T.Matrix4().multiplyMatrices(w.g.matrixWorld, m4.compose(new T.Vector3(w.lx, w.ly, w.lz), new T.Quaternion(), new T.Vector3(w.wd ? w.ww : w.ww, w.wh, w.wd || .06)));
         im.setMatrixAt(i, mtx); im.setColorAt(i, col.set(w.col || 0x2a3a48)); const b = new T.Box3(new T.Vector3(-.5, -.5, -.5), new T.Vector3(.5, .5, .5)).applyMatrix4(mtx);
-        G.wins.push({ i, mtx, broken: 0, col: w.col || 0x2a3a48, box: { x0: b.min.x, x1: b.max.x, y0: b.min.y, y1: b.max.y, z0: b.min.z, z1: b.max.z }, c: b.getCenter(new T.Vector3()) }); });
+        const W = { i, mtx, broken: 0, col: w.col || 0x2a3a48, box: { x0: b.min.x, x1: b.max.x, y0: b.min.y, y1: b.max.y, z0: b.min.z, z1: b.max.z }, c: b.getCenter(new T.Vector3()) }; G.wins.push(W);
+        G.cols.push(Object.assign({}, W.box, { mat: "glass", gw: W, dr: { get open() { return !!W.broken; } } })); });
       im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true; sc.add(im); G.winMesh = im; }
     buildCar(T, M);
 
@@ -930,8 +998,12 @@ body.wwon{overflow:hidden}
       if (others.length && (dmin < 15 || others.some(o => sees(o, sp)))) return; const sc = dmin + Math.random() * 12; if (sc > bs) { bs = sc; best = i; } });
     if (best == null) best = Math.floor(Math.random() * SPAWNS.length); G.lastSpawn = best; return SPAWNS[best]; }
   function spawnPlayer() { if (G.car && G.car.mine) { G.car.mine = false; G.car.driver = 0; } const sp = G.started ? pickSpawn([]) : SPAWNS[0]; G.p = { x: sp[0], y: 0, z: sp[1], vy: 0, ground: true }; G.yaw = sp[2]; G.pitch = 0; G.ammo = 6; G.reloading = 0; G.aimToggle = false; G.aimHeld = false; }
+  /* the car is solid (owner Oct 28): an oriented box ±1 × ±2.2, roof at 1.55 you can stand on */
+  const CAR_HX = 1.0, CAR_HZ = 2.2, CAR_TOP = 1.55;
+  function carLocal(x, z) { const c = G.car, dx = x - c.x, dz = z - c.z, co = Math.cos(c.yaw), si = Math.sin(c.yaw); return [dx * co - dz * si, dx * si + dz * co]; }
+  function carSolid() { const c = G.car; return c && !c.mine && c.g && c.g.visible !== false; }
   function groundAt(x, z, feet, r) {
-    let g = 0; for (const c of G.cols) { if (c.y1 > feet + .48) continue; if (x + r * .3 < c.x0 || x - r * .3 > c.x1 || z + r * .3 < c.z0 || z - r * .3 > c.z1) continue; if (c.y1 > g) g = c.y1; } return g;
+    let g = 0; if (carSolid() && feet >= CAR_TOP - .5) { const [lx, lz] = carLocal(x, z); if (Math.abs(lx) < CAR_HX && Math.abs(lz) < CAR_HZ) g = CAR_TOP; } for (const c of G.cols) { if (c.y1 > feet + .48) continue; if (x + r * .3 < c.x0 || x - r * .3 > c.x1 || z + r * .3 < c.z0 || z - r * .3 > c.z1) continue; if (c.y1 > g) g = c.y1; } return g;
   }
   function collide(p, r) {
     const feet = p.y; for (let it = 0; it < 2; it++) for (const c of G.cols) {
@@ -941,17 +1013,43 @@ body.wwon{overflow:hidden}
       if (d2 > 1e-8) { const d = Math.sqrt(d2), k = (r - d) / d; p.x += dx * k; p.z += dz * k; }
       else { const pushes = [[c.x0 - r - p.x, 0], [c.x1 + r - p.x, 0], [0, c.z0 - r - p.z], [0, c.z1 + r - p.z]].sort((a, b) => Math.abs(a[0] + a[1]) - Math.abs(b[0] + b[1])); p.x += pushes[0][0]; p.z += pushes[0][1]; }
     }
+    if (carSolid() && feet < CAR_TOP - .46) { const c = G.car, [lx, lz] = carLocal(p.x, p.z), cx = Math.max(-CAR_HX, Math.min(lx, CAR_HX)), cz = Math.max(-CAR_HZ, Math.min(lz, CAR_HZ));
+      let ox = lx - cx, oz = lz - cz, d = Math.hypot(ox, oz), nx = lx, nz = lz;
+      if (d < r) { if (d > 1e-6) { nx = cx + ox / d * r; nz = cz + oz / d * r; } else { const e = [[CAR_HX + r - lx, 0], [-CAR_HX - r - lx, 0], [0, CAR_HZ + r - lz], [0, -CAR_HZ - r - lz]].sort((a, b) => Math.abs(a[0] + a[1]) - Math.abs(b[0] + b[1]))[0]; nx = lx + e[0]; nz = lz + e[1]; }
+        const co = Math.cos(c.yaw), si = Math.sin(c.yaw); p.x = c.x + nx * co + nz * si; p.z = c.z - nx * si + nz * co; } }
     const B = G.bounds; p.x = Math.max(B.x0, Math.min(B.x1, p.x)); p.z = Math.max(B.z0, Math.min(B.z1, p.z));
+  }
+  /* mantle (owner Oct 28): in the air next to a ledge, press jump again to pull yourself up onto it */
+  function tryMantle(p) {
+    const fx = -Math.sin(G.yaw), fz = -Math.cos(G.yaw); let top = -1, lx = 0, lz = 0;
+    for (const f of [.45, .6, .8]) { const qx = p.x + fx * f, qz = p.z + fz * f;
+      for (const c of G.cols) { if (c.dr && c.dr.open) continue; if (qx < c.x0 || qx > c.x1 || qz < c.z0 || qz > c.z1) continue; if (c.y1 > p.y + .35 && c.y1 <= p.y + 2.0 && c.y1 > top) { top = c.y1; lx = qx; lz = qz; } }
+      if (top > 0) break; }
+    if (top < 0) return false;
+    for (const c of G.cols) { if (c.dr && c.dr.open) continue; if (c.y1 > top + .05 && c.y0 < top + 1.75) { if (lx + .28 > c.x0 && lx - .28 < c.x1 && lz + .28 > c.z0 && lz - .28 < c.z1) return false; if (c.y0 > p.y + 1.6 && p.x + .3 > c.x0 && p.x - .3 < c.x1 && p.z + .3 > c.z0 && p.z - .3 < c.z1) return false; } }
+    G.mantle = { t: 0, y0: p.y, y1: top, x0: p.x, z0: p.z, x1: lx, z1: lz }; SFX.step(true); return true;
+  }
+  function setWagon(W, x, z) { const dx = x - W.x, dz = z - W.z; W.x = x; W.z = z; Object.assign(W.col, { x0: x - W.hx, x1: x + W.hx, z0: z - W.hz, z1: z + W.hz }); W.g.position.set(x, 0, z);
+    const roll = (W.ax === "z" ? dz : dx) / .55; W.whs.forEach(h => h.rotation.x += roll); }
+  function pushWagons(p, r, dt) {
+    for (const W of G.wagons || []) { const c = W.col; if (p.y > c.y1 - .3) continue; const cx = Math.max(c.x0, Math.min(p.x, c.x1)), cz = Math.max(c.z0, Math.min(p.z, c.z1)), dx = p.x - cx, dz = p.z - cz, d = Math.hypot(dx, dz);
+      if (d >= r || d < 1e-4) continue; const pen = (r - d) * .7, mx = -dx / d * pen, mz = -dz / d * pen, ox = W.x, oz = W.z; setWagon(W, ox + mx, oz + mz);
+      const B = G.bounds, bad = c.x0 < B.x0 || c.x1 > B.x1 || c.z0 < B.z0 || c.z1 > B.z1 || G.cols.some(o => o !== c && !(o.dr && o.dr.open) && o.y1 > .5 && o.x1 > c.x0 && o.x0 < c.x1 && o.z1 > c.z0 && o.z0 < c.z1);
+      if (bad) { setWagon(W, ox, oz); continue; }
+      if (G.mode === "pvp" && performance.now() - (W.sentAt || 0) > 90) { W.sentAt = performance.now(); nsend({ t: "wagon", i: W.i, x: +W.x.toFixed(3), z: +W.z.toFixed(3) }); } }
   }
   function stepPlayer(dt) {
     const p = G.p, k = G.keys; let fx = 0, fz = 0, run = false;
+    if (G.mantle) { const m = G.mantle; m.t += dt / .34; const q = Math.min(1, m.t), up = Math.min(1, q * 1.6), fw = Math.max(0, (q - .45) / .55);
+      p.y = m.y0 + (m.y1 - m.y0) * up * up * (3 - 2 * up); p.x = m.x0 + (m.x1 - m.x0) * fw; p.z = m.z0 + (m.z1 - m.z0) * fw; p.vx = p.vz = p.vy = 0;
+      if (q >= 1) { G.mantle = null; p.ground = true; SFX.step(true); } G.jumpQ = false; G.moving = 0; return; }
     const A = G.act; if (A.fwd || k.ArrowUp) fz += 1; if (A.back || k.ArrowDown) fz -= 1; if (A.left || k.ArrowLeft) fx -= 1; if (A.right || k.ArrowRight) fx += 1; if (A.run) run = true;
     const st = Object.values(G.touches).find(q => q.kind === "stick"); if (st && st.mx != null) { fx += st.mx; fz -= st.my; if (Math.hypot(st.mx, st.my) > .92) run = true; }
     const ads = G.adsK > .5, len = Math.hypot(fx, fz); if (len > 1) { fx /= len; fz /= len; }
     const sp = ads ? 3.2 : run ? 9 : 5.6, sy = Math.sin(G.yaw), cy = Math.cos(G.yaw);
     const vx = (-sy * fz + cy * fx) * sp, vz = (-cy * fz - sy * fx) * sp;
     p.vx = (p.vx || 0) + (vx - (p.vx || 0)) * Math.min(1, dt * 12); p.vz = (p.vz || 0) + (vz - (p.vz || 0)) * Math.min(1, dt * 12);
-    p.x += p.vx * dt; p.z += p.vz * dt; collide(p, .32);
+    p.x += p.vx * dt; p.z += p.vz * dt; pushWagons(p, .32, dt); collide(p, .32);
     const lad = (G.ladders || []).find(l => p.x > l.x0 && p.x < l.x1 && p.z > l.z0 && p.z < l.z1 && p.y < l.top);
     if (lad && (fz > .2 || (G.onLad && fz < -.2))) {
       const prev = p.y; p.y = Math.max(0, Math.min(lad.top, p.y + (fz > 0 ? 2.8 : -2.8) * dt)); p.vy = 0; p.ground = false; G.onLad = true;
@@ -959,6 +1057,7 @@ body.wwon{overflow:hidden}
     }
     G.onLad = !!lad && G.onLad;
     const g = groundAt(p.x, p.z, p.y, .32);
+    if (G.jumpQ && !p.ground && !G.onLad && tryMantle(p)) { G.jumpQ = false; return; }
     if (G.jumpQ && p.ground) { p.vy = 6.37; p.ground = false; } /* 1.5× the old jump height */ G.jumpQ = false;
     p.vy -= 16 * dt; p.y += p.vy * dt; if (p.y <= g) { if (!p.ground && p.vy < -4) SFX.step(g > .1); p.y = g; p.vy = 0; p.ground = true; } else if (p.y > g + .05) p.ground = false;
     if (p.ground && g - p.y > -.5 && g > p.y) p.y = g;
@@ -983,7 +1082,7 @@ body.wwon{overflow:hidden}
     for (const s of G.shoot) { const t = raySphere(o, dir, s.c, s.r); if (t != null && t < best.t) best = { t, kind: s.kind, s }; }
     for (const b of G.bottles) { if (!b.alive) continue; const t = raySphere(o, dir, b.c, b.r); if (t != null && t < best.t) best = { t, kind: "bottle", b }; }
     for (const w of G.weeds) { const t = raySphere(o, dir, w.g.position, .45); if (t != null && t < best.t) best = { t, kind: "weed", w }; }
-    for (const c of G.cols) { if (c.dr && c.dr.open) continue; const r = rayBox(o, dir, c); if (r && r.t < best.t) best = { t: r.t, kind: "wall", c, n: r.n }; }
+    for (const c of G.cols) { if ((c.dr && c.dr.open) || c.gw) continue; const r = rayBox(o, dir, c); if (r && r.t < best.t) best = { t: r.t, kind: "wall", c, n: r.n }; }
     for (const w of G.wins) { if (w.broken) continue; const r = rayBox(o, dir, w.box); if (r && r.t < best.t) best = { t: r.t, kind: "glass", w }; }
     if (G.car && G.car.alive) { const t = carRay(o, dir); if (t != null && t < best.t) best = { t, kind: "car" }; }
     if (dir.y < 0) { const t = -o.y / dir.y; if (t < best.t) best = { t, kind: "ground", n: new T.Vector3(0, 1, 0) }; }
@@ -1119,7 +1218,7 @@ body.wwon{overflow:hidden}
         N.n = m.n; N.tier = m.tier; N.stack = m.stack; N.bank = m.bank; N.kills = m.kills || 0; N.hp = m.hp; N.leaving = false; N.active = false;
         for (const R of N.pl.values()) rmRemote(R); N.pl.clear(); (m.players || []).forEach(addRemote);
         G.mode = "pvp"; G.chal && G.chal.on && (G.chal.on = false);
-        (m.doors || []).forEach((o, i) => { if (G.doors[i]) G.doors[i].open = !!o; });
+        (m.doors || []).forEach((o, i) => { if (G.doors[i]) G.doors[i].open = !!o; }); (m.wagons || []).forEach((q, i) => { const W = (G.wagons || [])[i]; if (W && q) setWagon(W, q[0], q[1]); });
         G.wins.forEach(w => fixGlass(w.i)); (m.glass || []).forEach(e => { const [i, st, u, v] = Array.isArray(e) ? e : [e, 2, .5, .5]; const w = G.wins[i]; if (!w) return;
           if (st === 1) crackGlass(i, u, v, false); else if (!w.broken) { w.broken = Date.now(); G.winMesh.setMatrixAt(i, new THREE.Matrix4().makeScale(0, 0, 0)); } }); G.winMesh.instanceMatrix.needsUpdate = true;
         if (G.car) { G.car.mine = false; if (m.car) carState(m.car, true); }
@@ -1146,6 +1245,7 @@ body.wwon{overflow:hidden}
       case "door": setDoor(m.i, !!m.open, false); return;
       case "glass": if (m.s === 1) crackGlass(m.i, m.u, m.v, false); else breakGlass(m.i, null, false); return;
       case "glassfix": fixGlass(m.i); return;
+      case "wagon": { const W = (G.wagons || [])[m.i]; if (W && Number.isFinite(m.x) && Number.isFinite(m.z)) setWagon(W, m.x, m.z); return; }
       case "bell": ringBell(); return;
       case "boom": carBoom(m.x, m.z, false); return;
       case "car": { const c = G.car; if (m.on) { c.mine = true; c.driver = N.n; c.tgt = null; banner("", "Driving · run them over"); } else { if (c.mine) carExit(true); if (m.why) banner("", m.why); } return; }
@@ -1277,12 +1377,25 @@ body.wwon{overflow:hidden}
     const back = 3.4, cx = G.p.x + Math.sin(G.yaw) * back, cz = G.p.z + Math.cos(G.yaw) * back; G.cam.position.set(cx, G.p.y + 2.1, cz); G.cam.lookAt(G.p.x, G.p.y + 1.2, G.p.z);
     return true;
   }
+  /* computer (owner Oct 28): hold the emote key → a wheel in the middle of the screen; move the mouse toward one (the camera doesn't turn),
+     let go of the key or click to play it; number keys work too. Aiming isn't touched. */
+  function emoWheel(on) {
+    const el = G.hud.querySelector("#wwEmo"); if (!el) return;
+    if (!on) { G.emoW = null; el.classList.remove("on", "wheel"); return; }
+    const list = API().myEmotes ? API().myEmotes() : []; G.emoW = { list, sel: -1, ax: 0, ay: 0 }; el.classList.add("wheel");
+    const n = list.length, R = 118;
+    el.innerHTML = n ? list.map((e, i) => { const a = -Math.PI / 2 + i / n * Math.PI * 2; return `<button data-wwemo="${e.id}" style="left:${170 + Math.cos(a) * R}px;top:${170 + Math.sin(a) * R}px">${i < 9 ? `${i + 1} · ` : ""}${esc(e.n)}</button>`; }).join("") + `<i>Move the mouse, let go to play</i>`
+      : `<i>No emotes yet · get them in the Aura Shop</i>`; el.classList.add("on");
+  }
+  function emoAim(dx, dy) { const W = G.emoW, n = W.list.length; if (!n) return; W.ax = Math.max(-120, Math.min(120, W.ax + dx)); W.ay = Math.max(-120, Math.min(120, W.ay + dy));
+    let sel = -1; if (Math.hypot(W.ax, W.ay) > 28) { let a = Math.atan2(W.ay, W.ax) + Math.PI / 2; a = (a % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2); sel = Math.round(a / (Math.PI * 2) * n) % n; }
+    if (sel !== W.sel) { W.sel = sel; G.hud.querySelectorAll("#wwEmo button").forEach((b, i) => b.classList.toggle("sel", i === sel)); } }
   function emoteMenu() {
     const list = API().myEmotes ? API().myEmotes() : [], el = G.hud.querySelector("#wwEmo"); if (!el) return;
     if (el.classList.contains("on")) { el.classList.remove("on"); return; }
     el.innerHTML = list.length ? list.map(e => `<button data-wwemo="${e.id}">${esc(e.n)}</button>`).join("") : `<span>No emotes yet · get them in the Aura Shop</span>`; el.classList.add("on");
   }
-  function playEmote(id) { const el = G.hud.querySelector("#wwEmo"); if (el) el.classList.remove("on"); if (G.mode === "pvp") nsend({ t: "emo", id }); else startOwnEmote(id); }
+  function playEmote(id) { const el = G.hud.querySelector("#wwEmo"); if (el) el.classList.remove("on", "wheel"); G.emoW = null; if (G.mode === "pvp") nsend({ t: "emo", id }); else startOwnEmote(id); }
 
   /* ---- PvP HUD bits: health, cash-out, damage direction ---- */
   function hudPvp(on) { G.hud.classList.toggle("pvp", !!on); drawHp(); }
@@ -1315,7 +1428,7 @@ body.wwon{overflow:hidden}
     if (mine) { hitMark(); sesAdd("hits", 1); if (G.mode === "pvp") nsend({ t: "glass", i, s: 2 }); }
   }
   /* first shot: a hole with cracks where you hit it; second shot: the pane shatters */
-  function hitGlass(i, hp, dir) { const w = G.wins[i]; if (!w || w.broken) return; if (!w.crack) { const uv = glassUV(w, hp); crackGlass(i, uv[0], uv[1], true); } else breakGlass(i, dir, true); }
+  function hitGlass(i, hp, dir) { breakGlass(i, dir, true); } /* owner Oct 28: one shot shatters it (the wall behind is a real opening) */
   function glassUV(w, hp) { const b = w.box, thinZ = (b.z1 - b.z0) < (b.x1 - b.x0); const u = thinZ ? (hp.x - b.x0) / (b.x1 - b.x0) : (hp.z - b.z0) / (b.z1 - b.z0); return [Math.max(.08, Math.min(.92, u)), Math.max(.08, Math.min(.92, (hp.y - b.y0) / (b.y1 - b.y0)))]; }
   function crackGlass(i, u, v, mine) {
     const w = G.wins[i]; if (!w || w.broken || w.crack) return; const T = THREE, b = w.box, thinZ = (b.z1 - b.z0) < (b.x1 - b.x0), W = thinZ ? b.x1 - b.x0 : b.z1 - b.z0, H = b.y1 - b.y0;
