@@ -15,7 +15,7 @@
   const ACTS = [["fwd", "Move forward", "KeyW"], ["back", "Move back", "KeyS"], ["left", "Move left", "KeyA"], ["right", "Move right", "KeyD"], ["fire", "Fire", "Mouse0"], ["aim", "Aim down sights", "Mouse2"],
     ["reload", "Reload", "KeyR"], ["jump", "Jump", "Space"], ["run", "Run", "ShiftLeft"], ["use", "Use · doors · car · bell", "KeyF"], ["emote", "Emotes", "KeyB"], ["crouch", "Crouch", "KeyC"], ["swap", "Switch gun (revolver / sniper)", "KeyQ"], ["view", "First / third person", "KeyV"], ["pause", "Pause", "KeyP"]];
   const KEYS0 = Object.fromEntries(ACTS.map(a => [a[0], a[2]]));
-  const SET0 = { sens: 1, ads: 0.6, invert: false, tp: false, crToggle: false, aa: true, fov: 75, sound: 1, keys: KEYS0, btn: 1, lefty: false, aimHold: false, pos: {} };
+  const SET0 = { sens: 1, ads: 0.6, invert: false, tp: false, crToggle: false, aa: true, hiGfx: false, fps: false, fov: 75, sound: 1, keys: KEYS0, btn: 1, lefty: false, aimHold: false, pos: {} };
   const SET = () => { const s = Object.assign({}, SET0, LS("ww-set", {})); s.keys = Object.assign({}, KEYS0, s.keys || {}); s.pos = s.pos || {}; return s; };
   const keyName = c => { if (!c) return "–"; if (c.startsWith("Mouse")) return ["Left click", "Middle click", "Right click", "Mouse 4", "Mouse 5"][+c.slice(5)] || "Mouse " + c.slice(5);
     if (c.startsWith("Key")) return c.slice(3); if (c.startsWith("Digit")) return c.slice(5); if (c.startsWith("Arrow")) return c.slice(5) + " arrow";
@@ -322,8 +322,10 @@ body.wwon{overflow:hidden}
       <label class="ck">Invert look up/down <input type="checkbox" data-wwset="invert" ${s.invert ? "checked" : ""}></label>
       <label class="ck">Toggle crouch (tap instead of hold) <input type="checkbox" data-wwset="crToggle" ${s.crToggle ? "checked" : ""}></label>
       ${TOUCH ? `<label class="ck">Aim assist <input type="checkbox" data-wwset="aa" ${s.aa !== false ? "checked" : ""}></label>` : ""}
+      <label class="ck">High graphics (shadows, sharper; heavier) <input type="checkbox" data-wwset="hiGfx" ${s.hiGfx ? "checked" : ""}></label>
+      <label class="ck">Show FPS and ping <input type="checkbox" data-wwset="fps" ${s.fps ? "checked" : ""}></label>
       <label class="ck">Third-person camera <input type="checkbox" data-wwset="tp" ${s.tp ? "checked" : ""}></label>
-      <p style="text-align:left;opacity:.75;margin:0">Aim-in sensitivity is a multiplier on your look sensitivity while you aim down the sights.</p>
+      <p style="text-align:left;opacity:.75;margin:0">Aim-in sensitivity is a multiplier on your look sensitivity while you aim down the sights. Graphics changes apply the next time you open BiggieTown.</p>
       </div><div class="wwrow"><button data-ww="controls">Controls</button><button data-ww="setreset">Defaults</button><button class="pri" data-ww="setdone">Done</button></div></div></div>`;
   }
   function showControls() {
@@ -356,7 +358,7 @@ body.wwon{overflow:hidden}
     k[a] = code; G.capturing = null; G.capJust = performance.now(); LSset("ww-set", G.set); showControls();
   }
   function setVal(k, v) {
-    const s = G.set; s[k] = k === "invert" || k === "tp" || k === "crToggle" || k === "aa" ? !!v : Number(v); LSset("ww-set", s);
+    const s = G.set; s[k] = k === "invert" || k === "tp" || k === "crToggle" || k === "aa" || k === "hiGfx" || k === "fps" ? !!v : Number(v); LSset("ww-set", s);
     const lab = { btn: ["#wwBv", x => Math.round(x * 100) + "%"], sens: ["#wwSv", x => x.toFixed(2) + "×"], ads: ["#wwAv", x => x.toFixed(2) + "×"], fov: ["#wwFv", x => x + "°"], sound: ["#wwVv", x => Math.round(x * 100) + "%"] }[k];
     if (lab) { const e = G.ui.querySelector(lab[0]); if (e) e.textContent = lab[1](s[k]); }
     if (G.master) G.master.gain.value = s.sound * 0.9;
@@ -560,10 +562,11 @@ body.wwon{overflow:hidden}
   /* colliders: axis-aligned boxes {x0,x1,y0,y1,z0,z1,mat}; boxes no taller than 0.45 above their base are steps you walk onto */
   function buildWorld() {
     const T = THREE, gw = G.gw, gh = G.gh;
-    const R = new T.WebGLRenderer({ canvas: G.cv, antialias: !TOUCH, powerPreference: "high-performance" });
-    R.setPixelRatio(Math.min(TOUCH ? 1.5 : 1.25, window.devicePixelRatio || 1)); /* perf (Oct 28): computers 1.75 → 1.25 */ R.setSize(gw, gh, false);
+    const HI = !!G.set.hiGfx; G.hi = HI; /* owner Oct 28: light graphics by default; "High graphics" in Settings brings back shadows/AA/PBR */
+    const R = new T.WebGLRenderer({ canvas: G.cv, antialias: HI && !TOUCH, powerPreference: "high-performance" });
+    R.setPixelRatio(Math.min(HI ? (TOUCH ? 1.5 : 1.25) : (TOUCH ? 1.25 : 1), window.devicePixelRatio || 1)); R.setSize(gw, gh, false);
     R.outputEncoding = T.sRGBEncoding; R.toneMapping = T.ACESFilmicToneMapping; R.toneMappingExposure = 1.05;
-    const SH = !TOUCH; R.shadowMap.enabled = SH; R.shadowMap.type = T.PCFShadowMap; R.shadowMap.autoUpdate = false; R.shadowMap.needsUpdate = true; /* shadows re-drawn every 3rd frame (perf) */
+    const SH = !TOUCH && HI; R.shadowMap.enabled = SH; R.shadowMap.type = T.PCFShadowMap; R.shadowMap.autoUpdate = false; R.shadowMap.needsUpdate = true; /* shadows re-drawn every 3rd frame (perf) */
     const sc = new T.Scene(), cam = new T.PerspectiveCamera(G.set.fov, gw / gh, .05, 900); sc.add(cam);
     Object.assign(G, { R, scene: sc, cam, cols: [], ladders: [], winSpecs: [], wins: [], shoot: [], dyn: [], decals: [], parts: [], doors: [], bottles: [], weeds: [], fovNow: G.set.fov, adsK: 0 });
     const FOG = new T.Color(0xe9c294); sc.fog = new T.Fog(FOG, 90, 460); sc.background = FOG;
@@ -581,7 +584,7 @@ body.wwon{overflow:hidden}
       for (let i = 0; i < 260; i++) { g.strokeStyle = `rgba(0,0,0,${rnd(.03, .09)})`; g.beginPath(); const y = rnd(0, h); if (vert) { g.moveTo(y, 0); g.lineTo(y + rnd(-4, 4), h); } else { g.moveTo(0, y); g.bezierCurveTo(w * .3, y + rnd(-3, 3), w * .6, y + rnd(-3, 3), w, y + rnd(-2, 2)); } g.stroke(); }
       for (let i = 0; i < 10; i++) { g.fillStyle = "rgba(30,15,5,.5)"; g.beginPath(); g.ellipse(rnd(0, w), rnd(0, h), rnd(2, 5), rnd(1, 3), 0, 0, 7); g.fill(); } }, rep);
     const brickTex = cvT(256, 256, (g, w, h) => { g.fillStyle = "#7a3b28"; g.fillRect(0, 0, w, h); for (let r = 0; r < 16; r++) for (let c = 0; c < 8; c++) { const v = rnd(-20, 20); g.fillStyle = `rgb(${140 + v},${66 + v / 2},${44 + v / 3})`; g.fillRect(c * 32 + (r % 2) * 16 + 1, r * 16 + 1, 30, 14); } }, [2, 2]);
-    const M = (o) => new T.MeshStandardMaterial(Object.assign({ roughness: .9, metalness: 0 }, o));
+    const M = (o) => wmat(Object.assign({ roughness: .9, metalness: 0 }, o));
     const mats = {};
     const wood = (key, base, vert) => mats[key] || (mats[key] = M({ map: plank(base, [1, 1], vert), color: 0xffffff }));
     const MT = {
@@ -1437,7 +1440,7 @@ body.wwon{overflow:hidden}
   function mkBody(R) {
     const T = THREE, root = new T.Group(); G.scene.add(root); const chair = new T.Group(); root.add(chair);
     const A = API().animals ? API().animals() : {}, k = ANIM_K[R.n % 4], spec = (API().skinSpec && API().skinSpec(R.skin)) || { k, c: (A[k] || {}).c || 0x6e4424 };
-    const M = (c, o) => new T.MeshStandardMaterial(Object.assign({ color: c, roughness: .75 }, o || {}));
+    const M = (c, o) => wmat(Object.assign({ color: c, roughness: .75 }, o || {}));
     const add = (geo, mat, x, y, z, par) => { const m = new T.Mesh(geo, mat); m.position.set(x || 0, y || 0, z || 0); (par || root).add(m); return m; };
     const body = API().rrAnimal(T, spec, add, M, chair), u = body.userData;
     u.em = { id: "ww", t0: 0, cp: chair.position.clone(), bp: body.position.clone(), br: body.rotation.clone(), hr: u.head.rotation.clone() };
@@ -1750,9 +1753,17 @@ body.wwon{overflow:hidden}
     const u = G.state === "play" ? useTarget() : null, el = G.hud.querySelector("#wwUse"); if (!el) return; const lab = u ? u.label : "";
     if (el._l !== lab) { el._l = lab; el.style.display = u ? "" : "none"; el.innerHTML = TOUCH ? esc(lab).toUpperCase() : `<b>${esc(keyName(G.set.keys.use))}</b> ${esc(lab)}`; } }
 
+  /* materials: physically based in high graphics, cheap Lambert (per-vertex light) in the default light mode */
+  function wmat(o) { const T = THREE; if (G && G.hi) return new T.MeshStandardMaterial(o); const q = Object.assign({}, o); delete q.roughness; delete q.metalness; delete q.flatShading; delete q.envMapIntensity; return new T.MeshLambertMaterial(q); }
   /* ---------------- loop ---------------- */
   function loop(now) {
     if (!G) return; G.raf = requestAnimationFrame(loop);
+    if (now - (G.lastF || 0) < 15.5) return; /* 60 fps cap: 120/144 Hz screens otherwise do double the work */
+    G.lastF = now;
+    if (G.set.fps) { G.fpsN = (G.fpsN || 0) + 1; if (now - (G.fpsT || 0) > 500) { const f = Math.round(G.fpsN * 1000 / (now - (G.fpsT || now - 500))); G.fpsN = 0; G.fpsT = now;
+        let e = G.hud && G.hud.querySelector("#wwFps"); if (!e && G.hud) { e = document.createElement("div"); e.id = "wwFps"; e.style.cssText = "position:absolute;left:50%;bottom:max(6px,env(safe-area-inset-bottom));transform:translateX(-50%);font:700 11px Barlow;color:#fff;background:rgba(0,0,0,.45);padding:2px 8px;border-radius:6px;pointer-events:none;z-index:5"; G.hud.appendChild(e); }
+        if (e) e.textContent = `${f} fps${G.net && G.net.rtt && G.mode === "pvp" ? ` · ${Math.round(G.net.rtt)} ms` : ""}`; } }
+    else if (G.hud) { const e = G.hud.querySelector("#wwFps"); if (e) e.remove(); }
     const dt = Math.min(.05, (now - G.last) / 1000); G.last = now; G.t += dt;
     const T = THREE, cam = G.cam, play = G.state === "play";
     if (play) {
