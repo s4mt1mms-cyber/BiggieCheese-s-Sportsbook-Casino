@@ -120,7 +120,7 @@ Fantasyland / ChudBootyCheeks. League Moments (`lm`) still works the old way (it
   `prefs.v2pity` cards since the last Dragon, `V2_PITY` 35,000 forces one. `prefs.freeV2` free packs (Paradise every N packs `paraN`, Rotunda
   floor(odds/2 × level mult)). Lunch? and the curse trigger on EVERY pull (dupes too); Dragon bounty only for a new Dragon. Pull log `pulls` (pack "v2").
 - **Levels**: one key per card (`id` or `id@L`), `LV_MAX=[13,11,9,7,5,3,1]`, `craftable` = pool & not curse. Upgrade `v2Up` (card view, `v2UpHtml`):
-  L shards + `TIER_UP[L+1+2r]` BB, one prefs write (old key 0, new key 1, shards, `craftSpent`, `craftLog{c,f,t,fee,n,sh}`). Shard store `v2ShBuy` (prices 600/1,600/3,700/9,200/46,000/172,000 since Oct 29 2:12 AM, owner: a pack's expected shards at the brief's ratios = 10,000, store 10% under)
+  L shards + `TIER_UP[L+1+2r]` BB, one prefs write (old key 0, new key 1, shards, `craftSpent`, `craftLog{c,f,t,fee,n,sh}`). Shard store `v2ShBuy` (prices 1,500/4,000/10,000/25,000/100,000/500,000 since Oct 29 2:31 AM, owner: wildcards)
   (`SHARD_PRICE` 4k/11k/25k/64k/650k/2.4M since Oct 29 1:55 AM, owner: ≈1.25× the pack cost per shard, burned via craftSpent, craftLog `{sh,n,fee,buy:1}`). Dividend `v2Div`: `TIER_DIV[lv+2r-1]`, Dragon 3,000, `V2_X3` Joe Camel/Debbie 3×,
   curse 0; no full-set bonus for pool cards (LM keeps it). Crafting tab removed (`viewCraft` redirects to the collection).
 - **Abilities** `AB2` rewritten (brief Appendix B, `v[level-1]`, C–SR off at LV 1 via `abOff`); code abilities by level `ABV` + `abLv`/`abV`

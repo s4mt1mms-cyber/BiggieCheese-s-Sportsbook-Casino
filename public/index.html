@@ -6370,7 +6370,7 @@ let _AB2=null;function ab2(k,id){id=id||S.me;if(!_AB2){_AB2={};queueMicrotask(()
    Pool cards can't be listed, offered, traded or put up as collateral (only League Moments cards and shards trade). */
 const V2_ODDS=[63.357,22.317,9.830,3.897,.386,.105,.009]/* owner Oct 29 1:48 AM: Elite + Grail halved (were .772/.210), the difference went to Common */,V2_CURSE=.1,V2_WILD=.02,V2_PITY=35000,V2_DRAGON_DIV=3000,V2_X3={"mv-joe-camel":3,"mv-art-65":3};
 const TIER_DIV=[2,3,4,6,10,16,25,40,64,100,160,250,400],TIER_UP=[0,0,50,70,120,180,300,450,750,1200,1800,3000,4500,7500];/* TIER_UP[t] = BB to upgrade INTO tier t */
-const SHARD_PRICE=[600,1600,3700,9200,46000,172000];/* owner Oct 29 2:12 AM: a pack's expected shards (3.17 C, 1.12 U, .49 R, .195 SR, .019 E, .005 G) priced at the brief's rarity ratios add up to the 10,000 pack price; the store sells them 10% below that *//* owner Oct 29 1:55 AM: ≈1.25× what a shard costs through 10,000 BB packs (was 1,000/2,800/6,500/16,000/80,000/300,000) */
+const SHARD_PRICE=[1500,4000,10000,25000,100000,500000];/* owner Oct 29 2:31 AM: shards are wildcards now (was 600/1,600/3,700/9,200/46,000/172,000) *//* owner Oct 29 2:12 AM: a pack's expected shards (3.17 C, 1.12 U, .49 R, .195 SR, .019 E, .005 G) priced at the brief's rarity ratios add up to the 10,000 pack price; the store sells them 10% below that *//* owner Oct 29 1:55 AM: ≈1.25× what a shard costs through 10,000 BB packs (was 1,000/2,800/6,500/16,000/80,000/300,000) */
 const V2_PACK={id:"v2",r:5,name:"BiggieCheese Pack",setName:"All collections",price:10000/* owner Oct 29 1:37 AM: 10,000 (brief: 2,500) */,n:5};
 const v2Tier=c=>Math.min(13,(c.lv||1)+2*c.r);
 function v2Div(c){if(!c||c.abil==="curse")return 0;if(c.r===6)return V2_DRAGON_DIV;return TIER_DIV[v2Tier(c)-1]*(V2_X3[baseOf(c.id)]||1)}
@@ -7332,6 +7332,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:164,d:"Oct 29",t:[["💎","Shards are wildcards now, so the shard store costs more: Common 1,500 · Uncommon 4,000 · Rare 10,000 · Super Rare 25,000 · Elite 100,000 · Grail 500,000"]]},
  {v:163,d:"Oct 29",t:[["🃏","Big card update: duplicates now fill up a bar under the card. Fill the bar to upgrade it; maxed cards say Max"],["💎","Shards are wildcards now: use them for any card of their rarity when you're short on duplicates. A duplicate you pull has a 2% chance to be a shard instead; you also get them from the shard store and trades"],["🤝","Getting a card in a trade or from loan collateral gives you its copies too (half of what went into it)"],["🔄","Beta reset: everyone starts over with no cards and no shards, and every balance is set to 2,000,000 BB"]]},
  {v:162,d:"Oct 29",t:[["💎","Shard store repriced to match what packs give you: Common 600 · Uncommon 1,600 · Rare 3,700 · Super Rare 9,200 · Elite 46,000 · Grail 172,000"],["⬆️","Upgrades take a few more shards per level"]]},
  {v:161,d:"Oct 29",t:[["💠","Platinum Mysterio cards have been retired and cashed in at 3× their quick-sell value. Peter Griffin, Claire and the Evil Witch stay"]]},
