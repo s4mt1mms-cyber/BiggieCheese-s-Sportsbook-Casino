@@ -5737,7 +5737,7 @@ const LUNCH_PCT=10,LUNCH_CAP=50000;
 const CARD_ABIL={
   curse:{n:"Curse · Tithe",ic:"⛪",t:"THANK YOU FOR TITHING. Every time it's pulled from a pack it takes 10% of your balance and splits it among the other players. While you hold it, 10% of all your winnings (casino, sports bets, dividends, Cheese Farm, rat hunt) goes to them too. No dividend, no levels. Pay 5,000 BB to burn it and lift the curse."},
   dean:{n:"Card Counter",ic:"🎲",t:L=>`You play craps with a ${pctTxt(ABV.dean[L-1])} edge over the house: every winning craps bet pays a little extra, so each bet type returns +${pctTxt(ABV.dean[L-1])} on average instead of losing. Craps only.`},
-  hof:{n:"House Money",ic:"🏦",t:L=>`Borrow ${ABV.hof[L-1].toLocaleString()} BB from the House in the Bank for 1 day at 5% (${Math.round(ABV.hof[L-1]*1.05).toLocaleString()} BB back after 24 hours). One loan at a time, and like every loan, your winnings and income go to it first until it's paid.`},
+  hof:{n:"House Money",ic:"🏦",t:L=>`Borrow ${ABV.hof[L-1].toLocaleString()} BB from the House in the Bank for 1 day at 5% (${Math.round(ABV.hof[L-1]*1.05).toLocaleString()} BB back after 24 hours). One House loan at a time.`},
   slop:{n:"Royal Respin",ic:"🎡",t:L=>`${ABV.slop[L-1]} roulette respins a day. After a spin that loses you money, tap Respin: that spin is cancelled and the wheel spins again with the exact same bets. The new result counts, win or lose. Resets at 12:01 AM ET.`},
   shrex:{n:"Swamp Blackjack",ic:"🟢",t:L=>`Every blackjack you're dealt pays ${ABV.shrex[L-1]}× your bet (instead of 3 to 2), and your profile picture gets a green swamp glow.`},
   hilo:{n:"Hot Streak",ic:"🔥",t:L=>`High-Low: get 7 or more right in a row and your whole cash-out pays ×${ABV.hilo[L-1]}. Cash out any time.`},
@@ -7395,13 +7395,14 @@ async function hofTake(){if(S._bkBusy||!S.me)return;if(!hasAb("hof"))return toas
     toast(`The House lent you ${c.P.toLocaleString()} BB. ${c.total.toLocaleString()} BB is due in 24 hours.`);bkChat(`${nm(S.me)} borrowed ${c.P.toLocaleString()} BB from the House (Heart of Finance) 🏦`)}
   catch(e){toast("Couldn't take the House loan. Try again.")}finally{S._bkBusy=false;render()}}
 function hofHtml(){if(!S.me)return "";const ls=hofLoans(S.me),open=ls.find(l=>l.status==="active"||l.status==="late"),own=hasAb("hof");if(!own&&!open)return "";
-  return `<section class="card hofbox"><h3>💗 Heart of Finance · House loan</h3>${open?`<p class="small">Your House loan is open: see it under Your loans below. You can borrow again once it's repaid.</p>`:ls.some(l=>l.status==="defaulted")?`<p class="small neg">You defaulted on a House loan, so the House won't lend to you again.</p>`:`<p class="small muted">Borrow ${hofT().P.toLocaleString()} BB from the House for 1 day at 5%. ${(bkCalc(hofT())||{}).total.toLocaleString()} BB in total, taken from your winnings and income as they come in (anything left comes out after 24 hours). One loan at a time.</p><button type="button" class="btn" data-hoftake>Borrow ${hofT().P.toLocaleString()} BB</button>`}</section>`}
+  return `<section class="card hofbox"><h3>💗 Heart of Finance · House loan</h3>${open?`<p class="small">Your House loan is open: see it under Your loans below. You can borrow again once it's repaid.</p>`:ls.some(l=>l.status==="defaulted")?`<p class="small neg">You defaulted on a House loan, so the House won't lend to you again.</p>`:`<p class="small muted">Borrow ${hofT().P.toLocaleString()} BB from the House for 1 day at 5%. ${(bkCalc(hofT())||{}).total.toLocaleString()} BB in total, collected after 24 hours. One House loan at a time.</p><button type="button" class="btn" data-hoftake>Borrow ${hofT().P.toLocaleString()} BB</button>`}</section>`}
 document.addEventListener("click",e=>{if(e.target.closest("[data-hoftake]"))hofTake()});
 function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=ledger(),owed=tiOwed(q.tiWin,L.tiPaid[me]||0),cur=tiCursed(me);if(!cur&&owed<=0)return "";
   return `<section class="card"><h3>⛪ Tithe</h3><p class="small">${cur?"You hold the cursed Jimmy Scroggins Rookie: 10% of everything you win burns.":"You're no longer cursed."} Tithed from winnings so far: <b class="num">${Math.floor((Number(q.tiWin)||0)/10).toLocaleString()} BB</b>${owed>0?` · <span class="tiowe">${owed.toLocaleString()} BB already taken from your balance, on its way to the league</span>`:""}.</p></section>`}
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:176,d:"Oct 29",t:[["🏦","Loans are back to how they worked before: take as many as you like, and payments only come out on the due dates (no more winnings going straight to your loan)"]]},
  {v:175,d:"Oct 29",t:[["🃏","The BiggieCheese Pack now costs 7,500 BB"],["🎰","Fixed: casino games felt laggy and the slots win lines stopped showing. Both are back to normal"]]},
  {v:174,d:"Oct 29",t:[["🎡","Fixed the Daily Spin freezing when you tap Spin"],["💎","Fixed putting shards into a card's bar looking stuck, and made the collection smoother"]]},
  {v:173,d:"Oct 29",t:[["🐉","Dragon cards now pay 15,000 BB a day"]]},
@@ -7636,9 +7637,8 @@ function v2IntroHtml(){const RC=i=>`<b style="color:${CR[i].c}">${esc(CR[i].n)}<
     <li>Getting a card from someone: a card you don't have arrives at LV 1 plus half of the copies that went into it; a card you already have turns into copies on your bar.</li>
     <li>5% of the BB in every trade is burned.</li></ul></section>
   <section><h3>🏦 Loans</h3><ul>
-    <li>You can only have one loan as a borrower at a time.</li>
-    <li>Paying off early costs the rest of the schedule.</li>
-    <li>While you owe, new money that comes into your balance goes toward the loan automatically.</li>
+    <li>The lender sets the payment schedule. On each due date the payment comes out of your balance; if you're short, everything you have is taken (and cards, if the loan says so).</li>
+    <li>You can pay any amount early, and take out as many loans as you like.</li>
     <li>Collateral can be shards and cards at any level (higher levels are worth more if they get seized).</li></ul></section>
   <section><h3>🎰 Also new</h3><ul>
     <li>Slots pay out a little more often and the jackpot grows faster.</li>
@@ -7804,9 +7804,11 @@ function bkAccrued(l,now){const c=bkCalc(l)||{},i=Number(c.i)||0,pm=Number((l.sc
 /* owner, Oct 24: early payoff is at least the loan amount × 1.1 (a 10% prepayment minimum, less what's been paid); once principal + accrued
    interest is more than that, it's principal + accrued. Still never more than the rest of the schedule, never less than what's overdue. */
 const BK_PRE=1.1,bkPreMin=l=>Math.ceil((Math.floor(Number(l.P))||0)*BK_PRE-1e-9);
-function bkPayoffNow(l,now){return Math.max(0,bkTotalOf(l)-bkPaidTot(l))}/* Card System V2 (owner, Oct 29): the payoff is locked in when the loan starts (principal + on-time interest = the whole schedule) and never grows */
+/* owner Oct 29 8:54 AM: loans back to the pre-V2 rules: no one-at-a-time limit (BK_ONE), no winnings sweep, early payoff = principal + interest so far (min +10%), capped at the schedule */
+const BK_ONE=false;
+function bkPayoffNow(l,now){const paid=bkPaidTot(l);return Math.max(0,Math.min(Math.max(bkAccrued(l,now),bkPreMin(l)-paid),bkTotalOf(l)-paid),bkCumDue(l,now)-paid)}function bkPayoffNowV2(l,now){return Math.max(0,bkTotalOf(l)-bkPaidTot(l))}/* Card System V2 (owner, Oct 29): the payoff is locked in when the loan starts (principal + on-time interest = the whole schedule) and never grows */
 /* one loan at a time (as the borrower): an active/late loan or an open request of yours */
-const bkHasLoan=id=>(S.loans||[]).some(l=>l.borrower===id&&(l.status==="active"||l.status==="late"||(l.req&&l.status==="open")));
+const bkHasLoan=id=>BK_ONE&&(S.loans||[]).some(l=>l.borrower===id&&(l.status==="active"||l.status==="late"||(l.req&&l.status==="open")));
 const bkOverAmt=(l,now)=>Math.max(0,bkCumDue(l,now)-bkPaidTot(l));
 const bkLastDue=l=>bkDue(l,bkAmts(l).length-1);
 /* next due time at which money is still owed (Infinity when chunks already cover the whole schedule) */
@@ -7976,7 +7978,7 @@ async function bkReqPost(){if(S._bkBusy||!S.me)return;if(bkHasLoan(S.me))return 
 async function bkFund(id){if(S._bkBusy||!S.me)return;const l0=(S.loans||[]).find(x=>x.id===id);if(!l0||!l0.req||l0.status!=="open")return;if(l0.borrower===S.me)return toast("You can't lend to yourself.");
   if(!S._bkFundAsk||S._bkFundAsk.id!==id||Date.now()-S._bkFundAsk.at>8000){S._bkFundAsk={id,at:Date.now()};toast("Tap Lend again to confirm.");return render()}S._bkFundAsk=null;
   S._bkBusy=true;try{const s=await db.doc("loans/"+id).get();if(!s.exists)return;const D=s.data();if(D.status!=="open"||!D.req||D.lender)return toast("Someone beat you to it (or it was taken down).");
-    const c=bkCalc(D);if(!c||c.err)return toast("That request has invalid terms.");if(Math.floor(ledger().balOf(S.me))<c.P)return toast("Not enough BiggieBucks to lend that.");if((S.loans||[]).some(x=>x.borrower===D.borrower&&(x.status==="active"||x.status==="late")))return toast(`${nm(D.borrower)} already has a loan. One at a time.`);
+    const c=bkCalc(D);if(!c||c.err)return toast("That request has invalid terms.");if(Math.floor(ledger().balOf(S.me))<c.P)return toast("Not enough BiggieBucks to lend that.");if(BK_ONE&&(S.loans||[]).some(x=>x.borrower===D.borrower&&(x.status==="active"||x.status==="late")))return toast(`${nm(D.borrower)} already has a loan. One at a time.`);
     const now=Date.now();await db.doc("loans/"+id).update({status:"active",lender:S.me,takenAt:now,sched:{payMs:c.payMs,amts:c.amts},payments:[],swBase:Math.floor(ledger().balOf(D.borrower))+c.P});
     await bkWait(700);const s2=await db.doc("loans/"+id).get();const E=s2.exists&&s2.data();
     if(!E||E.lender!==S.me||E.status!=="active"||E.takenAt!==now)return toast("Someone beat you to it.");
@@ -8002,7 +8004,7 @@ function bkTake(id){const l=(S.loans||[]).find(x=>x.id===id);if(!l||l.status!=="
   const items=l.coll||[],L={want:{items}};let pick=items.length?mkCover(L,undefined,true):[];const wsh=trN({sh:l.collSh}).sh;if(Object.entries(wsh).some(([r,n])=>shardsOf(S.me)[r]<n))return toast(`They want ${bkShTxt(wsh)} as collateral and you don't have that many.`);if(items.length&&!pick)return toast("You don't have the collateral they ask for.");
   const own=ownCards();const o=document.createElement("div");o.className="pkov";
   const draw=()=>{o.innerHTML=`<div class="pkview"><h3>Borrow ${c.P.toLocaleString()} BB from ${esc(nm(l.lender))}</h3>
-    <p class="small muted">${c.n} payment${c.n>1?"s":""} of ~${c.amts[0].toLocaleString()} BB every ${esc(bkUT(l.payN,l.payU))}, ${c.total.toLocaleString()} BB total. Payments come out of your balance automatically on each payment date (if you're short, whatever you have is taken and the loan goes late); you can also pay any amount in between. The payoff is locked in now and never grows (${c.total.toLocaleString()} BB). Until it's paid, all your winnings and income go to it first. One loan at a time. ${items.length?`Collateral is locked until the loan ends. ${esc(bkSeizeTxt(l))}, in the order listed.`:(bkGradual(l)?"Unsecured. A missed payment makes you late; catch up within "+esc(bkUT(l.seizeN,l.seizeU))+" of the final payment date or you default.":"Unsecured. A missed payment is a default.")}</p>
+    <p class="small muted">${c.n} payment${c.n>1?"s":""} of ~${c.amts[0].toLocaleString()} BB every ${esc(bkUT(l.payN,l.payU))}, ${c.total.toLocaleString()} BB total. Payments come out of your balance automatically on each payment date (if you're short, whatever you have is taken and the loan goes late); you can also pay any amount in between.${items.length?`Collateral is locked until the loan ends. ${esc(bkSeizeTxt(l))}, in the order listed.`:(bkGradual(l)?"Unsecured. A missed payment makes you late; catch up within "+esc(bkUT(l.seizeN,l.seizeU))+" of the final payment date or you default.":"Unsecured. A missed payment is a default.")}</p>
     ${items.length?items.map((w,i)=>`<label class="mktrow"><span class="small">${esc(mkItemTxt(w))}</span><select data-ti="${i}">${own.filter(x=>mkFits(w,x)).map(x=>`<option value="${x.id}" ${pick[i]===x.id?"selected":""}>${esc(CR[x.r].n)} · ${esc(x.name)} (×${cardCount(x.id)})</option>`).join("")}</select></label>`).join("")+`<div class="cgrid tradepick">${pick.map(g=>cardHtml(cardById(g),{small:true})).join("")}</div>`:`<p class="small">No collateral needed.</p>`}
     <button type="button" class="btn" data-tgo>Take loan${pick.length?` · put up ${pick.length} card${pick.length>1?"s":""}`:""}</button><button type="button" class="btn ghost" data-pkclose>Cancel</button></div>`};
   draw();document.body.appendChild(o);
@@ -8119,7 +8121,7 @@ async function bkSweep(){if(!S.me||!db||S.readOnly||!S.ready||!S.ld||!S.ld.bank|
     await db.doc("loans/"+l.id).update(up);Object.assign(l0,up);BK_SW[l0.id]=bal-amt;
     if(up.status==="repaid"){toast(`✅ Loan paid off from your winnings.${(l.collateral||[]).length?" Your collateral is coming back.":""}`);bkChat(`${nm(S.me)} paid off ${l.lender==="house"?"the House":nm(l.lender)}'s loan ✅`)}}
   catch(_){}finally{bkSweep.busy=false}}
-setInterval(bkSweep,15000);
+/* setInterval(bkSweep,15000); off since Oct 29 8:54 AM (owner): loans only collect on payment dates */
 setInterval(()=>{document.querySelectorAll("[data-bkdue]").forEach(el=>{el.textContent=bkCd(Number(el.dataset.bkdue)-Date.now())})},1000);
 function bkCd(ms){if(ms<=0)return"now";let s=Math.ceil(ms/1000);const d=Math.floor(s/86400);s%=86400;const h=Math.floor(s/3600);s%=3600;const m=Math.floor(s/60);s%=60;return d?`${d}d ${h}h`:h?`${h}h ${m}m`:m?`${m}m ${s}s`:`${s}s`}
 

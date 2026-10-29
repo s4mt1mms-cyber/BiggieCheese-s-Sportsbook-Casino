@@ -134,8 +134,7 @@ Fantasyland / ChudBootyCheeks. League Moments (`lm`) still works the old way (it
 - **Switchover** (`cv2Run`/`cv2One`/`cv2Patch`/`cv2Items`/`cv2Strip`, gate `#cv2Ov`, popup `cv2Pop`): per player once: every pool card anywhere
   (prefs, open listings, unclaimed trades, offer escrow, loan collateral/requests) credited at 3× `qsOld` (the pre-switch quick-sell), prefs keys → 0,
   `prefs.cv2{v,at,amt,n,docs,vd}`, then `bank/cv2_<id>` {from:"house",kind:"cv2"}, then those docs stripped (`vd`). Own page or the admin page for offline players.
-- **Loans** (all, incl. Heart of Finance): one at a time as borrower (`bkHasLoan`), payoff locked = rest of the schedule (`bkPayoffNow`), and `bkSweep`
-  (borrower's page, 15 s) pays every balance rise above the low-water mark (`BK_SW`, `swBase` on the loan) to the loan (payments `sweep:true`).
+- **Loans**: the V2 loan rules were UNDONE Oct 29 8:54 AM (owner): no one-at-a-time limit (`BK_ONE=false` → `bkHasLoan` always false; Heart of Finance keeps its own one-House-loan check), no winnings sweep (`bkSweep` interval commented out), early payoff back to the old formula (`bkPayoffNow`; the V2 one is `bkPayoffNowV2`). Collection only on payment dates, takes everything if short (+ collateral per terms).
 - **Slots**: per-reel strips `SL_WR` (every winning combo ≈2.5% more often, lines 96.35%), jackpot 1% of all-time `slWag` + 0.5% (`SL_JP_ADD`) of `slWag2`
   (wagers since Oct 29) = 1.5% going forward; `node tools/test/slots.test.mjs`.
 - Shard crystals (owner Oct 29): `shardSvg(r,px,cls)` / `SH_ART` (Common light-blue hexagon, Uncommon green pentagon, Rare dark-blue octagon,
