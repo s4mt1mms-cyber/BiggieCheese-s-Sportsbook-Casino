@@ -113,8 +113,8 @@ Fantasyland / ChudBootyCheeks. League Moments (`lm`) still works the old way (it
   `prefs.v2pity` cards since the last Dragon, `V2_PITY` 35,000 forces one. `prefs.freeV2` free packs (Paradise every N packs `paraN`, Rotunda
   floor(odds/2 × level mult)). Lunch? and the curse trigger on EVERY pull (dupes too); Dragon bounty only for a new Dragon. Pull log `pulls` (pack "v2").
 - **Levels**: one key per card (`id` or `id@L`), `LV_MAX=[13,11,9,7,5,3,1]`, `craftable` = pool & not curse. Upgrade `v2Up` (card view, `v2UpHtml`):
-  L shards + `TIER_UP[L+1+2r]` BB, one prefs write (old key 0, new key 1, shards, `craftSpent`, `craftLog{c,f,t,fee,n,sh}`). Shard store `v2ShBuy`
-  (`SHARD_PRICE`, burned via craftSpent, craftLog `{sh,n,fee,buy:1}`). Dividend `v2Div`: `TIER_DIV[lv+2r-1]`, Dragon 3,000, `V2_X3` Joe Camel/Debbie 3×,
+  L shards + `TIER_UP[L+1+2r]` BB, one prefs write (old key 0, new key 1, shards, `craftSpent`, `craftLog{c,f,t,fee,n,sh}`). Shard store `v2ShBuy` (prices 4k/11k/25k/64k/650k/2.4M since Oct 29 1:55 AM, owner: ≈1.25× the pack cost per shard)
+  (`SHARD_PRICE` 4k/11k/25k/64k/650k/2.4M since Oct 29 1:55 AM, owner: ≈1.25× the pack cost per shard, burned via craftSpent, craftLog `{sh,n,fee,buy:1}`). Dividend `v2Div`: `TIER_DIV[lv+2r-1]`, Dragon 3,000, `V2_X3` Joe Camel/Debbie 3×,
   curse 0; no full-set bonus for pool cards (LM keeps it). Crafting tab removed (`viewCraft` redirects to the collection).
 - **Abilities** `AB2` rewritten (brief Appendix B, `v[level-1]`, C–SR off at LV 1 via `abOff`); code abilities by level `ABV` + `abLv`/`abV`
   (dean edge → `crResolve(...,edge)`, hof amount `hofT`, slop `slopN`, shrex, hilo, bers `bersN`, lunch [pct,cap], social). Tiered helpers
@@ -134,7 +134,7 @@ Fantasyland / ChudBootyCheeks. League Moments (`lm`) still works the old way (it
   crystals popping out of the card (`.shfx`, `shPop`). Rules: `freshWrite()` also requires the `v3.` wv prefix (pre-V2 tabs can't write).
 - Collection tabs (owner Oct 29): League Moments · Platinum Mysterio · Multiverse (`cset` "v2" = the whole pool, default); labels `CNM` in viewPacks.
 - Upgrade glow (owner Oct 29): `lvGlow(c)` on pool cards with max > 1: (lv−1)/(max−1) ≥ .5 silver `lvg-s`, ≥ .75 gold `lvg-g`, max neon red `lvg-m` + red MAX badge `.lvb.mxr`.
-  Collection sorts higher levels first within a rarity. Pack opening reads the live prefs copy (no server read first); upgrade animation 3 hits.
+  Collection sorts higher levels first within a rarity; unowned cards = one greyed "Not owned yet" group at the bottom, rarest first. Pack opening reads the live prefs copy (no server read first); upgrade animation 3 hits.
 - **Shop** (side menu, tab `shop`, same viewPacks): sub-tabs Packs · Shards (`v2ShardShopHtml`, one card-sized box per rarity, bulk `S.pk.shq` 1/2/3/5/10) ·
   Marketplace (`trMktHtml`). Card Collections (tab `packs`) is the collection only; active cards list sits under it.
 - **Trades** (Oct 29, replaced the old market for new deals; old listings/offers still settle and show under "Older listings"): `trades/{id}`, see the
