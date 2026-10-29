@@ -1830,5 +1830,5 @@ body.wwon{overflow:hidden}
   }
   /* practice bottles on the fence between runs */
   function chalPractice() { if (!G || !G.chal || G.chal.on) return; G.bottles.filter(b => b.kind === "prac" && b.alive).forEach(b => { b.alive = false; b.g.parent && b.g.parent.remove(b.g); }); G.chal.spots.slice(0, 6).forEach(s => spawnBottle(s, "prac")); }
-  window.WW = { open, close, _g: () => G, spawns: SPAWNS, killFeed: (...a) => G && killFeed(...a), setLive: n => G && setLive(n) };
+  window.WW = { open, close, _g: () => G, _net: m => G && G.net && onNet(m), /* test hook */ spawns: SPAWNS, killFeed: (...a) => G && killFeed(...a), setLive: n => G && setLive(n) };
 })();

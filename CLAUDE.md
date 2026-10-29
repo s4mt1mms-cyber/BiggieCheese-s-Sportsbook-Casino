@@ -374,7 +374,7 @@ only; live tables are only subscribed while at a table. Don't add listeners on w
 - **Oct 24 1 PM (owner):** Cheese Farm upgrade costs ×0.45, then ×0.85 at 2 PM (`FP_PRESS_COST`/`FP_SILO_COST`); `job-fix` `gift20k` = bank doc `gift20k_<id>` {from:"house",amt:20000,kind:"gift"} for every player with a team.
 - **Leveled quick-sell (owner, Oct 24):** `qsVal` × `lvCopies(c)` = product of the recipe card counts up to that level (no fee refund; no arbitrage vs quick-selling the copies).
 
-- **Site perf (Oct 28):** the fall-leaves block in index.html exists twice; the guard `m.querySelector(".leaves")` makes only the first build (7 header + 6 chat leaves, was 2×(12+14)); pumpkin bob off; nav has no backdrop blur; `body.idlefx` (added after 40 s with no input, removed on any input) pauses every CSS animation.
+- **Site perf (Oct 28):** the fall-leaves block in index.html exists twice; the guard `m.querySelector(".leaves")` makes only the first build (7 header + 6 chat leaves, was 2×(12+14)); pumpkin bob off; nav has no backdrop blur; `body.idlefx` (added after 40 s with no input, removed on any input) pauses every CSS animation (after 12 s since the later Oct 28 pass). Later Oct 28: leaves are STATIC (random top/rotation, no keyframes; chat leaves hidden), the filter/blur aura keyframes `auIri`/`auIriB`/`auraPulse` are overridden to static, and while BiggieTown is open everything else on the page is `visibility:hidden` + paused (`body.wwon`). `WW._net(m)` = test hook that feeds a fake server message (used by the scratch soak test: 12 add/move/shoot/kill/reuse rounds, no growth in geometries/textures/objects/DOM).
 
 ## Live multiplayer (server host)
 `config/mp.serverHost = true` → Cloud Functions host Russian Roulette + Hold'em: clients write inputs
