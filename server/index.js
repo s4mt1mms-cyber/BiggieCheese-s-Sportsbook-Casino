@@ -27,6 +27,9 @@ const okBuy = a => Number.isInteger(a) && a >= BUY_MIN && a <= BUY_MAX;
 const HOUSE_CUT = 0;            // share of each kill's BB that goes to the house (0 until the owner decides)
 const HP = 100, BODY = 34, HEAD = 100, FAR = 40, FAR_BODY = 25;
 const FIRE_MS = 230, MAG = 6, RELOAD_MS = 1600;
+/* guns (owner Oct 28): rv = revolver, sn = sniper (5-round, slow bolt, 80 body / 150 head, no falloff) */
+const MAGS = { rv: MAG, sn: 5 }, FIREMS = { rv: FIRE_MS, sn: 1250 }, RLMS = { rv: RELOAD_MS, sn: 2500 }, SN_BODY = 80, SN_HEAD = 150;
+const gunOf = (w) => (w === "sn" ? "sn" : "rv");
 const PROT_MS = 3000;          // spawn protection (ends early when you shoot)
 const CASH_MS = 5000;          // stand at the bank this long to cash out
 const COMBAT_MS = 10000;       // hit within this long = "in a fight": quitting counts as dying to whoever hit you last
@@ -66,20 +69,20 @@ function raySphere(o, d, c, r) { const ox = o.x - c.x, oy = o.y - c.y, oz = o.z 
 function rayCyl(o, d, p) {
   const ox = o.x - p.x, oz = o.z - p.z, a = d.x * d.x + d.z * d.z; if (a < 1e-9) return null;
   const b = ox * d.x + oz * d.z, c = ox * ox + oz * oz - HB.r * HB.r, h = b * b - a * c; if (h < 0) return null;
-  for (const t of [(-b - Math.sqrt(h)) / a, (-b + Math.sqrt(h)) / a]) { if (t <= 0) continue; const y = o.y + d.y * t; if (y >= p.y + HB.y0 && y <= p.y + HB.y1) return t; }
+  for (const t of [(-b - Math.sqrt(h)) / a, (-b + Math.sqrt(h)) / a]) { if (t <= 0) continue; const y = o.y + d.y * t; if (y >= p.y + HB.y0 && y <= p.y + (p.cr ? .95 : HB.y1)) return t; }
   return null;
 }
 function hitTest(o, d, p) {
-  const th = raySphere(o, d, { x: p.x, y: p.y + HB.hy, z: p.z }, HB.hr), tb = rayCyl(o, d, p);
+  const th = raySphere(o, d, { x: p.x, y: p.y + (p.cr ? 1.1 : HB.hy), z: p.z }, HB.hr), tb = rayCyl(o, d, p); /* crouching: head at 1.1, body to 0.95 */
   if (th != null && (tb == null || th <= tb + 0.05)) return { t: th, head: true };
   if (tb != null) return { t: tb, head: false };
   return null;
 }
 function posAt(p, t) {
   const h = p.hist; if (!h.length) return { x: p.x, y: p.y, z: p.z };
-  if (t >= h[h.length - 1][0]) { const l = h[h.length - 1]; return { x: l[1], y: l[2], z: l[3] }; }
-  for (let i = h.length - 1; i > 0; i--) { const a = h[i - 1], b = h[i]; if (t >= a[0]) { const k = (t - a[0]) / Math.max(1, b[0] - a[0]); return { x: a[1] + (b[1] - a[1]) * k, y: a[2] + (b[2] - a[2]) * k, z: a[3] + (b[3] - a[3]) * k }; } }
-  return { x: h[0][1], y: h[0][2], z: h[0][3] };
+  if (t >= h[h.length - 1][0]) { const l = h[h.length - 1]; return { x: l[1], y: l[2], z: l[3], cr: l[4] }; }
+  for (let i = h.length - 1; i > 0; i--) { const a = h[i - 1], b = h[i]; if (t >= a[0]) { const k = (t - a[0]) / Math.max(1, b[0] - a[0]); return { x: a[1] + (b[1] - a[1]) * k, y: a[2] + (b[2] - a[2]) * k, z: a[3] + (b[3] - a[3]) * k, cr: k < .5 ? a[4] : b[4] }; } }
+  return { x: h[0][1], y: h[0][2], z: h[0][3], cr: h[0][4] };
 }
 function sees(a, b) {
   const o = { x: a.x, y: (a.y || 0) + EYE, z: a.z }, d = { x: b.x - a.x, y: ((b.y || 0) + EYE) - o.y, z: b.z - a.z }, L = Math.hypot(d.x, d.y, d.z); if (L < 1e-6) return true;
@@ -193,13 +196,13 @@ async function handle(c, m) {
           tier = b.amt; tx.update(ref, { used: true, usedAt: now() }); }); }
         catch (e) { return send(c.ws, { t: "err", why: "That buy-in couldn't be used." }); }
         P = { conn: c, ws: c.ws, pid: c.pid, name: c.name, skin: c.skin, n: nextN++, tier, buyId: id, stack: tier, kills: 0, x: 0, y: 0, z: 0, yaw: 0, pitch: 0,
-          hp: HP, alive: false, hist: [], ammo: MAG, lastShot: 0, reloadUntil: 0, prot: 0, lastHitBy: null, lastHitAt: 0, cash0: 0, dc: 0, lastIn: 0 };
+          hp: HP, alive: false, hist: [], ammo: MAG, am: { rv: MAG, sn: MAGS.sn }, wpn: "rv", lastShot: 0, reloadUntil: 0, prot: 0, lastHitBy: null, lastHitAt: 0, cash0: 0, dc: 0, lastIn: 0 };
         byPid.set(c.pid, P); c.player = P;
         P.emotes = c.emotes || new Set(); P.lastEmo = 0;
       }
       const room = ROOM;
       if (!room.players.has(P.pid)) { room.players.set(P.pid, P); broadcast(room, { t: "add", ...info(P) }, P); }
-      if (!P.alive) { const sp = pickSpawn(room, P); Object.assign(P, { x: sp[0], y: 0, z: sp[1], yaw: sp[2], alive: true, hp: HP, prot: now() + PROT_MS, ammo: MAG, hist: [[now(), sp[0], 0, sp[1]]] }); }
+      if (!P.alive) { const sp = pickSpawn(room, P); Object.assign(P, { x: sp[0], y: 0, z: sp[1], yaw: sp[2], alive: true, hp: HP, prot: now() + PROT_MS, ammo: MAG, am: { rv: MAG, sn: MAGS.sn }, reloadUntil: 0, hist: [[now(), sp[0], 0, sp[1]]] }); }
       return send(c.ws, { t: "welcome", n: P.n, tier: P.tier, stack: P.stack, kills: P.kills, hp: P.hp, spawn: [P.x, P.y, P.z, P.yaw], prot: Math.max(0, P.prot - now()),
         players: [...room.players.values()].filter(q => q !== P).map(info), bank: BANK, doors, wagons: WAGONS.map(w => [w.x, w.z]), glass: [...glass].map(([i, g]) => [i, g.s, g.u, g.v]), car: carArr(), rules: { cut: HOUSE_CUT, body: BODY, head: HEAD, prot: PROT_MS, cash: CASH_MS } });
     }
@@ -243,28 +246,30 @@ async function handle(c, m) {
       const x = +m.x, y = +m.y, z = +m.z; if (![x, y, z].every(Number.isFinite)) return;
       const B = MAP.bounds, dh = Math.hypot(x - p.x, z - p.z), dv = Math.abs(y - p.y);
       if (dh > 10.5 * dt + 0.6 || dv > 10 * dt + 0.9 || x < B.x0 - 1 || x > B.x1 + 1 || z < B.z0 - 1 || z > B.z1 + 1 || y < -0.5 || y > 12) { send(c.ws, { t: "pos", x: p.x, y: p.y, z: p.z }); return; }
-      p.x = x; p.y = y; p.z = z; p.yaw = +m.yaw || 0; p.pitch = Math.max(-1.6, Math.min(1.6, +m.pitch || 0)); p.moving = dh / dt;
-      p.hist.push([t, x, y, z]); while (p.hist.length && t - p.hist[0][0] > 1000) p.hist.shift();
+      p.x = x; p.y = y; p.z = z; p.yaw = +m.yaw || 0; p.pitch = Math.max(-1.6, Math.min(1.6, +m.pitch || 0)); p.moving = dh / dt; p.cr = m.cr ? 1 : 0;
+      p.hist.push([t, x, y, z, p.cr]); while (p.hist.length && t - p.hist[0][0] > 1000) p.hist.shift();
       if (p.cash0 && !inBank(p)) { p.cash0 = 0; send(c.ws, { t: "cash", on: false }); }
       return;
     }
-    case "rl": { if (p && p.alive && p.ammo < MAG && !p.reloadUntil) p.reloadUntil = now() + RELOAD_MS; return; }
+    case "wpn": { if (!p || !p.alive) return; p.wpn = gunOf(m.w); p.reloadUntil = 0; return; }
+    case "rl": { if (!p || !p.alive) return; const w = gunOf(m.w); if (p.am[w] < MAGS[w] && !p.reloadUntil) { p.reloadUntil = now() + RLMS[w]; p.reloadW = w; } return; }
     /* {t:"shot", d:[dx,dy,dz]}: fired from the server's idea of your eyes; others are rewound to what you saw */
     case "shot": {
       if (!p || !p.alive) return; const t = now();
-      if (p.reloadUntil) { if (t < p.reloadUntil) return; p.reloadUntil = 0; p.ammo = MAG; }
-      if (t - p.lastShot < FIRE_MS || p.ammo <= 0) return; p.lastShot = t; p.ammo--; p.prot = 0;
+      const w = gunOf(m.w); p.wpn = w;
+      if (p.reloadUntil) { if (t < p.reloadUntil) return; p.reloadUntil = 0; p.am[p.reloadW || "rv"] = MAGS[p.reloadW || "rv"]; }
+      if (t - p.lastShot < FIREMS[w] - 30 || p.am[w] <= 0) return; p.lastShot = t; p.am[w]--; p.prot = 0;
       let d = Array.isArray(m.d) ? { x: +m.d[0], y: +m.d[1], z: +m.d[2] } : null; if (!d || ![d.x, d.y, d.z].every(Number.isFinite)) return;
       const L = Math.hypot(d.x, d.y, d.z); if (L < 0.5) return; d.x /= L; d.y /= L; d.z /= L;
-      const o = { x: p.x, y: p.y + EYE, z: p.z }, room = ROOM, rw = t - Math.min(MAX_REWIND, c.rtt / 2 + 100);
+      const o = { x: p.x, y: p.y + (p.cr ? EYE - .57 : EYE), z: p.z }, room = ROOM, rw = t - Math.min(MAX_REWIND, c.rtt / 2 + 100);
       let best = wallT(o, d, 120), hit = null, carHit = false;
       if (car.alive && car.driver !== p) { const tc = carRay(o, d); if (tc != null && tc < best) { best = tc; carHit = true; } }
       for (const q of room.players.values()) { if (q === p || !q.alive || q.inCar) continue; const at = posAt(q, rw), h = hitTest(o, d, at); if (h && h.t < best) { best = h.t; hit = { q, head: h.head }; carHit = false; } }
       broadcast(room, { t: "fx", n: p.n, e: [o.x + d.x * best, o.y + d.y * best, o.z + d.z * best] }, p);
-      if (carHit) { car.hp -= best > FAR ? FAR_BODY : BODY; car.lastHit = p; send(c.ws, { t: "hc", car: true }); if (car.hp <= 0) carBoom(p); return; }
+      if (carHit) { car.hp -= w === "sn" ? SN_BODY : best > FAR ? FAR_BODY : BODY; car.lastHit = p; send(c.ws, { t: "hc", car: true }); if (car.hp <= 0) carBoom(p); return; }
       if (!hit) return;
       const q = hit.q; if (q.prot > t) { send(c.ws, { t: "hc", on: q.n, prot: true }); return; }
-      const dmg = hit.head ? HEAD : best > FAR ? FAR_BODY : BODY; q.hp = Math.max(0, q.hp - dmg); q.lastHitBy = p; q.lastHitAt = t;
+      const dmg = w === "sn" ? (hit.head ? SN_HEAD : SN_BODY) : hit.head ? HEAD : best > FAR ? FAR_BODY : BODY; q.hp = Math.max(0, q.hp - dmg); q.lastHitBy = p; q.lastHitAt = t;
       if (q.cash0) { q.cash0 = 0; send(q.ws, { t: "cash", on: false, why: "hit" }); }
       send(q.ws, { t: "hit", by: p.n, dmg, hp: q.hp, hs: hit.head, from: [p.x, p.z] });
       send(c.ws, { t: "hc", on: q.n, hs: hit.head, kill: q.hp <= 0 });
@@ -297,16 +302,16 @@ setInterval(() => {
     for (const p of [...room.players.values()]) {
       if (p.ended) continue;
       if (p.dc && t - p.dc > DC_MS && p.alive) { const k = p.lastHitBy && !p.lastHitBy.ended && p.lastHitBy.alive && t - p.lastHitAt < 60000 ? p.lastHitBy : null; kill(p, k, false, "quit"); continue; }
-      if (p.reloadUntil && t >= p.reloadUntil) { p.reloadUntil = 0; p.ammo = MAG; }
+      if (p.reloadUntil && t >= p.reloadUntil) { p.reloadUntil = 0; p.am[p.reloadW || "rv"] = MAGS[p.reloadW || "rv"]; }
 
       /* slow heal after 6 s without being hit */
       if (p.alive && p.hp < HP && t - p.lastHitAt > 6000) p.hp = Math.min(HP, p.hp + 0.4);
     }
     const list = [...room.players.values()].filter(p => p.alive).map(p => [p.n, +p.x.toFixed(2), +p.y.toFixed(2), +p.z.toFixed(2), +p.yaw.toFixed(3), +p.pitch.toFixed(3),
-      (p.prot > t ? 1 : 0) | (p.cash0 ? 2 : 0) | (p.dc ? 4 : 0) | (p.reloadUntil ? 8 : 0) | (p.inCar ? 16 : 0), p.stack]);
+      (p.prot > t ? 1 : 0) | (p.cash0 ? 2 : 0) | (p.dc ? 4 : 0) | (p.reloadUntil ? 8 : 0) | (p.inCar ? 16 : 0) | (p.cr ? 32 : 0), p.stack]);
     const live = list.length;
     const ca = carArr();
-    for (const p of room.players.values()) send(p.ws, { t: "s", ts: t, p: list, live, car: ca, hp: Math.floor(p.hp), ammo: p.reloadUntil ? -1 : p.ammo, cash: p.cash0 ? Math.min(1, (t - p.cash0) / CASH_MS) : 0 });
+    for (const p of room.players.values()) send(p.ws, { t: "s", ts: t, p: list, live, car: ca, hp: Math.floor(p.hp), ammo: p.reloadUntil ? -1 : p.am[p.wpn], aw: p.wpn, cash: p.cash0 ? Math.min(1, (t - p.cash0) / CASH_MS) : 0 });
   }
 }, TICK_MS);
 
