@@ -3236,7 +3236,7 @@ async function nflPlace(){if(!S.me)throw{code:"msg",message:"Sign in to bet."};c
     const q=nflQuote(G,l.mkt,l.side);if(!q){delete NFL.slip.legs[l.key];moved.push(`${l.label} is off the board`);continue}
     if(q.odds!==l.odds||q.line!==l.line||F.wk!==l.wid){moved.push(`${l.label} ${nflOdds(l.odds)} → ${q.label} ${nflOdds(q.odds)}`);Object.assign(l,{line:q.line,odds:q.odds,label:q.label,wid:F.wk})}}
   if(moved.length){render();throw{code:"msg",message:"Lines moved: "+moved.join("; ")+". Check your slip and place again."}}
-  const now=Date.now(),wk=Number(F.week)||curWeek(),base={unit:"BB",posterId:S.me,takerId:"house",house:true,status:"live",createdAt:now,acceptedAt:now,...bxOf(P),...(fb?{free:true}:{})};if(fb)freeUse();
+  const now=Date.now(),wk=Number(F.week)||curWeek(),base={unit:"BB",posterId:S.me,takerId:"house",house:true,status:"live",createdAt:now,acceptedAt:now,...bxOf(P),...(fb?{free:true}:{})};
   const gid=l=>`nfl:${l.wid}:${l.eid}:${l.mkt}`;
   const add=d=>db.collection("bets").add(d).catch(e=>{if(e&&(e.code==="not_granted"||/permission/i.test(String(e.code||e.message||""))))throw{code:"msg",message:"That game just kicked off, so its betting is locked."};throw e});
   if(P){const L=legs.map(l=>{const x={gameId:gid(l),side:l.side,odds:l.odds,label:l.label};if(l.line!=null)x.line=l.line;return x});
@@ -3244,6 +3244,7 @@ async function nflPlace(){if(!S.me)throw{code:"msg",message:"Sign in to bet."};c
     try{const dec=L.reduce((x,l)=>x*decOdds(l.odds),1);await db.collection("chat").add({type:"bet",uid:S.me,poster:S.me,at:Date.now(),text:`${nm(S.me)} placed a ${L.length}-leg NFL parlay (${nflOdds(toAmerican(dec))})`,detail:`${L.map(l=>l.label).join(" · ")}. ${stake.toLocaleString()} BB to win ${Math.round(stake*(dec-1)).toLocaleString()} BB.`})}catch(_){}}
   else for(const l of legs){const b={gameId:gid(l),side:l.side,odds:l.odds,stake,takerStake:takerRisk("yes",stake,l.odds),nfl:{wid:l.wid,eid:l.eid,mkt:l.mkt,kick:l.kick,label:l.label},...base};if(l.line!=null)b.line=l.line;
     await add(b);delete NFL.slip.legs[l.key]}
+  if(fb)freeUse();/* only once the bet is saved: a failed bet keeps today's free bet */
   NFL.slip.legs={};NFL.open=false;render()}
 nflPlace=oneAtATime(nflPlace);
 document.addEventListener("input",e=>{if(e.target.id==="nflStake"){NFL.slip.stake=e.target.value;const p=$("#nflPrev");if(p)p.innerHTML=nflPrevTxt()}});
@@ -3382,7 +3383,7 @@ async function nbaPlace(){if(!S.me)throw{code:"msg",message:"Sign in to bet."};c
     const q=nbaQuote(G,l.mkt,l.side);if(!q){delete NBA.slip.legs[l.key];moved.push(`${l.label} is off the board`);continue}
     if(q.odds!==l.odds||q.line!==l.line||(G.wk||F.wk)!==l.wid){moved.push(`${l.label} ${nbaOdds(l.odds)} → ${q.label} ${nbaOdds(q.odds)}`);Object.assign(l,{line:q.line,odds:q.odds,label:q.label,wid:G.wk||F.wk})}}
   if(moved.length){render();throw{code:"msg",message:"Lines moved: "+moved.join("; ")+". Check your slip and place again."}}
-  const now=Date.now(),wk=Number(F.week)||curWeek(),base={unit:"BB",posterId:S.me,takerId:"house",house:true,status:"live",createdAt:now,acceptedAt:now,...bxOf(P,true),...(fb?{free:true}:{})};if(fb)freeUse();
+  const now=Date.now(),wk=Number(F.week)||curWeek(),base={unit:"BB",posterId:S.me,takerId:"house",house:true,status:"live",createdAt:now,acceptedAt:now,...bxOf(P,true),...(fb?{free:true}:{})};
   const gid=l=>`nba:${l.wid}:${l.eid}:${l.mkt}`;
   const add=d=>db.collection("bets").add(d).catch(e=>{if(e&&(e.code==="not_granted"||/permission/i.test(String(e.code||e.message||""))))throw{code:"msg",message:"That game just tipped off, so its betting is locked."};throw e});
   if(P){const L=legs.map(l=>{const x={gameId:gid(l),side:l.side,odds:l.odds,label:l.label};if(l.line!=null)x.line=l.line;return x});
@@ -3390,6 +3391,7 @@ async function nbaPlace(){if(!S.me)throw{code:"msg",message:"Sign in to bet."};c
     try{const dec=L.reduce((x,l)=>x*decOdds(l.odds),1);await db.collection("chat").add({type:"bet",uid:S.me,poster:S.me,at:Date.now(),text:`${nm(S.me)} placed a ${L.length}-leg NBA parlay (${nbaOdds(toAmerican(dec))})`,detail:`${L.map(l=>l.label).join(" · ")}. ${stake.toLocaleString()} BB to win ${Math.round(stake*(dec-1)).toLocaleString()} BB.`})}catch(_){}}
   else for(const l of legs){const b={gameId:gid(l),side:l.side,odds:l.odds,stake,takerStake:takerRisk("yes",stake,l.odds),nba:{wid:l.wid,eid:l.eid,mkt:l.mkt,kick:l.kick,label:l.label},...base};if(l.line!=null)b.line=l.line;
     await add(b);delete NBA.slip.legs[l.key]}
+  if(fb)freeUse();/* only once the bet is saved: a failed bet keeps today's free bet */
   NBA.slip.legs={};NBA.open=false;render()}
 nbaPlace=oneAtATime(nbaPlace);
 document.addEventListener("input",e=>{if(e.target.id==="nbaStake"){NBA.slip.stake=e.target.value;const p=$("#nbaPrev");if(p)p.innerHTML=nbaPrevTxt()}});
@@ -3528,7 +3530,7 @@ async function nhlPlace(){if(!S.me)throw{code:"msg",message:"Sign in to bet."};c
     const q=nhlQuote(G,l.mkt,l.side);if(!q){delete NHL.slip.legs[l.key];moved.push(`${l.label} is off the board`);continue}
     if(q.odds!==l.odds||q.line!==l.line||(G.wk||F.wk)!==l.wid){moved.push(`${l.label} ${nhlOdds(l.odds)} → ${q.label} ${nhlOdds(q.odds)}`);Object.assign(l,{line:q.line,odds:q.odds,label:q.label,wid:G.wk||F.wk})}}
   if(moved.length){render();throw{code:"msg",message:"Lines moved: "+moved.join("; ")+". Check your slip and place again."}}
-  const now=Date.now(),wk=Number(F.week)||curWeek(),base={unit:"BB",posterId:S.me,takerId:"house",house:true,status:"live",createdAt:now,acceptedAt:now,...bxOf(P),...(fb?{free:true}:{})};if(fb)freeUse();
+  const now=Date.now(),wk=Number(F.week)||curWeek(),base={unit:"BB",posterId:S.me,takerId:"house",house:true,status:"live",createdAt:now,acceptedAt:now,...bxOf(P),...(fb?{free:true}:{})};
   const gid=l=>`nhl:${l.wid}:${l.eid}:${l.mkt}`;
   const add=d=>db.collection("bets").add(d).catch(e=>{if(e&&(e.code==="not_granted"||/permission/i.test(String(e.code||e.message||""))))throw{code:"msg",message:"That game just started, so its betting is locked."};throw e});
   if(P){const L=legs.map(l=>{const x={gameId:gid(l),side:l.side,odds:l.odds,label:l.label};if(l.line!=null)x.line=l.line;return x});
@@ -3536,6 +3538,7 @@ async function nhlPlace(){if(!S.me)throw{code:"msg",message:"Sign in to bet."};c
     try{const dec=L.reduce((x,l)=>x*decOdds(l.odds),1);await db.collection("chat").add({type:"bet",uid:S.me,poster:S.me,at:Date.now(),text:`${nm(S.me)} placed a ${L.length}-leg NHL parlay (${nhlOdds(toAmerican(dec))})`,detail:`${L.map(l=>l.label).join(" · ")}. ${stake.toLocaleString()} BB to win ${Math.round(stake*(dec-1)).toLocaleString()} BB.`})}catch(_){}}
   else for(const l of legs){const b={gameId:gid(l),side:l.side,odds:l.odds,stake,takerStake:takerRisk("yes",stake,l.odds),nhl:{wid:l.wid,eid:l.eid,mkt:l.mkt,kick:l.kick,label:l.label},...base};if(l.line!=null)b.line=l.line;
     await add(b);delete NHL.slip.legs[l.key]}
+  if(fb)freeUse();/* only once the bet is saved: a failed bet keeps today's free bet */
   NHL.slip.legs={};NHL.open=false;render()}
 nhlPlace=oneAtATime(nhlPlace);
 document.addEventListener("input",e=>{if(e.target.id==="nhlStake"){NHL.slip.stake=e.target.value;const p=$("#nhlPrev");if(p)p.innerHTML=nhlPrevTxt()}});
@@ -7425,6 +7428,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:185,d:"Oct 30",t:[["🎟️","Fixed: if a free bet from the Logan Dorn card didn't go through, it no longer uses up that day's free bet"]]},
  {v:184,d:"Oct 30",t:[["🎴","Tap Daily dividend in your collection to see exactly how it adds up: every card by rarity and level, then any boosts on top"]]},
  {v:183,d:"Oct 30",t:[["🏆","When you reach an achievement a notice pops up at the top. Tap it to jump to Achievements and collect your reward"]]},
  {v:182,d:"Oct 30",t:[["🏆","New Achievements tab in the menu: goals for every game and for your cards. Reach one and claim BB, wildcard shards or packs"],["💸","Every card dividend is 1.5× higher (Dragons now pay 22,500 BB a day)"],["🎴","Elite cards are 44% more likely to show up in packs"]]},
