@@ -7430,6 +7430,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:188,d:"Oct 30",t:[["🏦","Lenders now set their own prepayment fee on new loans: 0–10%, only if the loan is paid off early within the first 24, 48 or 72 hours. After that, paying off costs just what's owed plus interest so far"],["📜","Loans already running keep the terms they started with"]]},
  {v:187,d:"Oct 30",t:[["🏦","Loans: paying extra now pays down the loan itself. The rest of your payments are recalculated on what you still owe, so each one gets smaller and you pay less interest overall"],["📅","Payments stay due on every payment date (they don't skip ahead anymore when you pay extra)"]]},
  {v:186,d:"Oct 30",t:[["🎟️","Fixed: the \"Use today's free bet\" button on league game bets now works. Tap it, then Place bet"]]},
  {v:185,d:"Oct 30",t:[["🎟️","Fixed: if a free bet from the Logan Dorn card didn't go through, it no longer uses up that day's free bet"]]},
@@ -7918,6 +7919,7 @@ function bkCalc(t){if(!t)return null;const P=Number(t.P),rate=Number(t.rate),n=N
   if(!BK_U[t.rateU]||!BK_U[t.compU]||!BK_U[t.payU])return{err:"Pick valid units."};
   if(!Number.isInteger(cN)||cN<1||cN>100||!Number.isInteger(pN)||pN<1||pN>100)return{err:"Intervals must be whole numbers 1–100."};
   if(!Number.isInteger(n)||n<1||n>100)return{err:"Number of payments must be 1–100."};
+  if(t.preFee!=null&&!(Number(t.preFee)>=0&&Number(t.preFee)<=BK_PREMAX))return{err:`Prepayment fee must be 0–${BK_PREMAX}%.`};
   const comp=BK_U[t.compU]*cN,pay=BK_U[t.payU]*pN,ru=BK_U[t.rateU];if(pay*n>BK_MAXTERM)return{err:"Max loan length is 12 weeks."};
   const rc=rate/100*(comp/ru),i=Math.pow(1+rc,pay/comp)-1;const A=i>1e-12?P*i/(1-Math.pow(1+i,-n)):P/n;
   if(!isFinite(A)||A*n>1e12)return{err:"Those terms are absurd. Lower the rate."};
@@ -7960,10 +7962,16 @@ function bkAccrued(l,now){const c=bkCalc(l)||{},i=Number(c.i)||0,pm=Number((l.sc
   return Math.max(0,Math.ceil(owed-1e-9))}
 /* owner, Oct 24: early payoff is at least the loan amount × 1.1 (a 10% prepayment minimum, less what's been paid); once principal + accrued
    interest is more than that, it's principal + accrued. Still never more than the rest of the schedule, never less than what's overdue. */
-const BK_PRE=1.1,bkPreMin=l=>Math.ceil((Math.floor(Number(l.P))||0)*BK_PRE-1e-9);
+const BK_PRE=1.1,BK_PREMAX=10,BK_PREH=[24,48,72];
+/* owner Oct 30: the lender sets the prepayment fee on new loans: preFee 0–10% for the first preH 24/48/72 hours after the loan starts
+   (paying off inside that window costs at least the loan + preFee%; after it, just principal + interest so far). Loans made before
+   this (no preFee field) keep the old rule: at least the loan + 10%, any time. now == null = the quote shown before the loan starts. */
+const bkPreOn=(l,now)=>l.preFee==null?true:Number(l.preFee)>0&&(now==null||!(Number(l.takenAt)>0)||now-Number(l.takenAt)<(Number(l.preH)||24)*36e5);
+const bkPreMin=(l,now)=>bkPreOn(l,now)?Math.ceil((Math.floor(Number(l.P))||0)*(l.preFee==null?BK_PRE:1+Number(l.preFee)/100)-1e-9):0;
+const bkPreTxt=l=>l.preFee==null?"loan + 10% minimum to pay off early":Number(l.preFee)>0?`${Number(l.preFee)}% prepayment fee if paid off within ${Number(l.preH)||24}h`:"no prepayment fee";
 /* owner Oct 29 8:54 AM: loans back to the pre-V2 rules: no one-at-a-time limit (BK_ONE), no winnings sweep, early payoff = principal + interest so far (min +10%), capped at the schedule */
 const BK_ONE=false;
-function bkPayoffNow(l,now){const paid=bkPaidTot(l);return Math.max(0,Math.min(Math.max(bkAccrued(l,now),bkPreMin(l)-paid),bkTotalOf(l,now)-paid),bkCumDue(l,now,now)-paid)}function bkPayoffNowV2(l,now){return Math.max(0,bkTotalOf(l)-bkPaidTot(l))}/* Card System V2 (owner, Oct 29): the payoff is locked in when the loan starts (principal + on-time interest = the whole schedule) and never grows */
+function bkPayoffNow(l,now){const paid=bkPaidTot(l);return Math.max(0,Math.min(Math.max(bkAccrued(l,now),bkPreMin(l,now)-paid),bkTotalOf(l,now)-paid),bkCumDue(l,now,now)-paid)}function bkPayoffNowV2(l,now){return Math.max(0,bkTotalOf(l)-bkPaidTot(l))}/* Card System V2 (owner, Oct 29): the payoff is locked in when the loan starts (principal + on-time interest = the whole schedule) and never grows */
 /* one loan at a time (as the borrower): an active/late loan or an open request of yours */
 const bkHasLoan=id=>BK_ONE&&(S.loans||[]).some(l=>l.borrower===id&&(l.status==="active"||l.status==="late"||(l.req&&l.status==="open")));
 const bkOverAmt=(l,now)=>Math.max(0,bkCumDue(l,now,now)-bkPaidTot(l));
@@ -7990,7 +7998,7 @@ async function bkSend(){if(S._bkBusy||!S.me)return;const F=S.bkF,to=F.to,amt=Num
 
 function bkSeizeTerms(F){if(F.sm!=="gradual")return{seizeMode:"all"};const n=Number(F.szN);if(!Number.isInteger(n)||n<1||n>100)return{err:"Seizure interval must be 1–100."};if(!BK_U[F.szU])return{err:"Pick a seizure unit."};return{seizeMode:"gradual",seizeN:n,seizeU:F.szU}}
 function bkSeizeTxt(l){return l.seizeMode==="gradual"&&BK_U[l.seizeU]?`on a miss, seize 1 card every ${bkUT(l.seizeN,l.seizeU)} (returned if they catch up)`:"on a miss, all collateral goes to the lender"}
-function bkTerms(F){return{P:Number(F.P),rate:Number(F.rate),rateU:F.rateU,compN:Number(F.compN),compU:F.compU,payN:Number(F.payN),payU:F.payU,n:Number(F.n)}}
+function bkTerms(F){const fee=Math.round((Number(F.preFee)||0)*10)/10;return{P:Number(F.P),rate:Number(F.rate),rateU:F.rateU,compN:Number(F.compN),compU:F.compU,payN:Number(F.payN),payU:F.payU,n:Number(F.n),preFee:fee,preH:BK_PREH.includes(Number(F.preH))?Number(F.preH):24}}
 async function bkPost(){if(S._bkBusy||!S.me)return;const F=S.bkF,t=bkTerms(F),c=bkCalc(t);if(!c||c.err)return toast(c?c.err:"Check the terms.");
   if(c.P>Math.floor(ledger().balOf(S.me)))return toast("You can't lend more than your balance.");
   const coll=(S.bkColl||[]).slice(0,20);const sz=bkSeizeTerms(F);if(sz.err)return toast(sz.err);S._bkBusy=true;
@@ -8148,7 +8156,7 @@ async function bkRqCancel(id){if(S._bkBusy)return;const l=(S.loans||[]).find(x=>
   catch(e){toast("Couldn't take it down. Try again.")}finally{S._bkBusy=false;render()}}
 function bkSzHelp(F,coll){const rq=S.bkForm==="req"&&!S.bkEdit;return coll.length?"Collateral is locked until the loan ends. "+(F.sm==="gradual"?(rq?"Seized cards come back to you if you catch up; once all are seized and you're still behind, it's a default.":"Seized cards go back to the borrower if they catch up; once all are seized and they're still behind, it's a default."):(rq?"Your first missed payment hands all of it to the lender.":"The first missed payment hands all of it to you.")):""}
 function bkEditLoad(id){const l=(S.loans||[]).find(x=>x.id===id);if(!l||l.lender!==S.me||l.status!=="open")return;const F=bkF();
-  Object.assign(F,{P:String(l.P),rate:String(l.rate),rateU:l.rateU,compN:String(l.compN),compU:l.compU,payN:String(l.payN),payU:l.payU,n:String(l.n),title:l.note||"",only:(l.only||[]).slice(),sm:l.seizeMode==="gradual"?"gradual":"all",szN:String(l.seizeN||1),szU:l.seizeU||"day"});
+  Object.assign(F,{P:String(l.P),rate:String(l.rate),rateU:l.rateU,compN:String(l.compN),compU:l.compU,payN:String(l.payN),payU:l.payU,n:String(l.n),preFee:String(l.preFee!=null?l.preFee:0),preH:String(l.preH||24),title:l.note||"",only:(l.only||[]).slice(),sm:l.seizeMode==="gradual"?"gradual":"all",szN:String(l.seizeN||1),szU:l.seizeU||"day"});
   S.bkColl=(l.coll||[]).map(w=>({...w}));S.bkEdit=id;S.bkTab="market";S.bkForm="lend";render();setTimeout(()=>{const f=$("#bkOffer");if(f)f.scrollIntoView({behavior:"smooth",block:"start"})},30)}
 async function bkCancel(id){if(S._bkBusy)return;const l=(S.loans||[]).find(x=>x.id===id);if(!l||l.lender!==S.me||l.status!=="open")return;S._bkBusy=true;
   try{const s=await db.doc("loans/"+id).get();if(!s.exists||s.data().status!=="open")return toast("That offer was already taken.");
@@ -8282,13 +8290,13 @@ async function bkSweep(){if(!S.me||!db||S.readOnly||!S.ready||!S.ld||!S.ld.bank|
 setInterval(()=>{document.querySelectorAll("[data-bkdue]").forEach(el=>{el.textContent=bkCd(Number(el.dataset.bkdue)-Date.now())})},1000);
 function bkCd(ms){if(ms<=0)return"now";let s=Math.ceil(ms/1000);const d=Math.floor(s/86400);s%=86400;const h=Math.floor(s/3600);s%=3600;const m=Math.floor(s/60);s%=60;return d?`${d}d ${h}h`:h?`${h}h ${m}m`:m?`${m}m ${s}s`:`${s}s`}
 
-function bkF(){return S.bkF||(S.bkF={to:"",amt:"",note:"",P:"1000",rate:"5",rateU:"week",compN:"1",compU:"day",payN:"1",payU:"week",n:"4",title:"",cm:"r",cr:"2",cc:"",cq:"1",only:[],sm:"all",szN:"1",szU:"day"})}
+function bkF(){return S.bkF||(S.bkF={to:"",amt:"",note:"",P:"1000",rate:"5",rateU:"week",compN:"1",compU:"day",payN:"1",payU:"week",n:"4",preFee:"0",preH:"24",title:"",cm:"r",cr:"2",cc:"",cq:"1",only:[],sm:"all",szN:"1",szU:"day"})}
 const bkUnitSel=(k,v)=>`<select data-bkf="${k}">${BK_UL.map(u=>`<option value="${u}" ${u===v?"selected":""}>${u}${k==="rateU"?"":"(s)"}</option>`).join("")}</select>`;
 function bkLvMax(F){const x=cardById((F.cc)||"");return craftable(x)?LV_MAX[x.r]:1}
 function bkLvOpts(F){return `<option value="">Any level</option>`+Array.from({length:bkLvMax(F)},(_,i)=>`<option value="${i+1}" ${String(F.cl)===String(i+1)?"selected":""}>LV ${i+1}</option>`).join("")}
 function bkCardOpts(F){return Object.keys(CSETS).filter(setOpen).flatMap(k=>cardsCat(k)).filter(c=>c.r===Number(F.cr)&&pmSeen(c.id)).map(c=>`<option value="${c.id}" ${F.cc===c.id?"selected":""}>${esc(c.name)}</option>`).join("")}
 function bkPrevHtml(){const F=bkF(),c=bkCalc(bkTerms(F));if(!c||c.err)return `<span class="neg small">${esc(c?c.err:"Check the terms.")}</span>`;
-  const bal=Math.floor(ledger().balOf(S.me));return `<div class="bkstats"><div><span>Per payment</span><b class="num">${c.amts[0].toLocaleString()}${c.amts.some(a=>a!==c.amts[0])?"*":""}</b></div><div><span>Total repaid</span><b class="num">${c.total.toLocaleString()}</b></div><div><span>Interest</span><b class="num pos">+${c.interest.toLocaleString()}</b></div><div><span>Length</span><b class="num">${bkCd(c.payMs*c.n)}</b></div><div><span>Early payoff</span><b class="num">${bkPreMin(c).toLocaleString()}+</b></div></div>${c.amts.some(a=>a!==c.amts[0])?`<div class="small muted">* whole-BB rounding: payments range ${Math.min(...c.amts)}–${Math.max(...c.amts)} BB.</div>`:""}${c.P>bal&&!(S.bkForm==="req"&&!S.bkEdit)?`<div class="small neg">You only have ${bal.toLocaleString()} BB.</div>`:""}`}
+  const bal=Math.floor(ledger().balOf(S.me));return `<div class="bkstats"><div><span>Per payment</span><b class="num">${c.amts[0].toLocaleString()}${c.amts.some(a=>a!==c.amts[0])?"*":""}</b></div><div><span>Total repaid</span><b class="num">${c.total.toLocaleString()}</b></div><div><span>Interest</span><b class="num pos">+${c.interest.toLocaleString()}</b></div><div><span>Length</span><b class="num">${bkCd(c.payMs*c.n)}</b></div>${(()=>{const t=bkTerms(F);return t.preFee>0?`<div><span>Early payoff (${t.preH}h)</span><b class="num">${bkPreMin(t).toLocaleString()}+</b></div>`:`<div><span>Prepayment fee</span><b class="num">None</b></div>`})()}</div>${c.amts.some(a=>a!==c.amts[0])?`<div class="small muted">* whole-BB rounding: payments range ${Math.min(...c.amts)}–${Math.max(...c.amts)} BB.</div>`:""}${c.P>bal&&!(S.bkForm==="req"&&!S.bkEdit)?`<div class="small neg">You only have ${bal.toLocaleString()} BB.</div>`:""}`}
 function bkTermsTxt(l){return `${Number(l.rate)}%/${l.rateU}, compounded every ${bkUT(l.compN,l.compU)} · ${l.n} payment${Number(l.n)>1?"s":""} every ${bkUT(l.payN,l.payU)}`}
 function bkRow(l){const c=bkCalc(l)||{},me=S.me,st=l.status,N=l.sched?l.sched.amts.length:c.n,now=Date.now(),live=(st==="active"||st==="late")&&l.sched;
   const chip={open:"Open",active:"Active",late:"Late",repaid:"Repaid",defaulted:"Defaulted",cancelled:"Cancelled"}[st]||st;
@@ -8296,12 +8304,12 @@ function bkRow(l){const c=bkCalc(l)||{},me=S.me,st=l.status,N=l.sched?l.sched.am
   if(live){const paid=bkPaidTot(l),tot=bkTotalOf(l,now),od=bkOverAmt(l,now),po=bkPayoffNow(l,now),nd=bkNextTry(l,now),last=bkLastDue(l),bor=l.borrower===me;
     const cdNext=nd<Infinity?bkCumDue(l,nd,now)-paid:0;
     const stats=`<div class="bkstats bkls"><div><span>Paid so far</span><b class="num">${paid.toLocaleString()}</b></div><div><span>Left on schedule</span><b class="num">${Math.max(0,tot-paid).toLocaleString()}</b></div><div><span>Overdue</span><b class="num ${od?"neg":""}">${od.toLocaleString()}</b></div><div><span>Pay off now</span><b class="num">${po.toLocaleString()}</b></div></div>`;
-    if(st==="active")nxt=stats+(nd<Infinity?`<div class="small">Next payment: <b class="num">${cdNext.toLocaleString()} BB</b> on the payment date in <b class="num" data-bkdue="${nd}">${bkCd(nd-now)}</b> · of ${tot.toLocaleString()} BB total</div>`:`<div class="small">Ahead of schedule — nothing more is owed until the next payment date.</div>`);
+    if(st==="active")nxt=stats+(l.preFee!=null&&bkPreOn(l,now)?`<div class="small muted">${Number(l.preFee)}% prepayment fee if paid off in the next <b class="num">${bkCd(Number(l.takenAt)+(Number(l.preH)||24)*36e5-now)}</b></div>`:"")+(nd<Infinity?`<div class="small">Next payment: <b class="num">${cdNext.toLocaleString()} BB</b> on the payment date in <b class="num" data-bkdue="${nd}">${bkCd(nd-now)}</b> · of ${tot.toLocaleString()} BB total</div>`:`<div class="small">Ahead of schedule — nothing more is owed until the next payment date.</div>`);
     else{const col=(l.collateral||[]).length,sz=(l.seized||[]).length,ev=bkNextEvent(l);
       const what=col&&sz<col?"next seizure":"default";nxt=stats+`<div class="small bklate">⏰ Late since ${ago(l.lateSince)} · <b class="num">${od.toLocaleString()} BB</b> overdue · ${what} in <b class="num" data-bkdue="${ev}">${bkCd(ev-now)}</b>${nd<Infinity?` · next payment date in <b class="num" data-bkdue="${nd}">${bkCd(nd-now)}</b> (collects ${cdNext.toLocaleString()} BB)`:""}${bor?" · pay the overdue amount to catch up":""}</div>`}
     if(bor){const bal=Math.floor(ledger().balOf(me)),open=now<last,v=(S.bkPart||{})[l.id]||"";
       nxt+=`<div class="row bkpay">${open&&po>1?`<input class="n s" type="number" min="1" step="1" max="${Math.min(bal,po)}" inputmode="numeric" placeholder="BB" data-bkpart="${esc(l.id)}" value="${esc(v)}" aria-label="Amount to pay"><button type="button" class="btn ghost small" data-bk="part" data-id="${esc(l.id)}">Pay part</button>`:""}<button type="button" class="btn small" data-bk="payoff" data-id="${esc(l.id)}" data-amt="${po}" ${bal<po?"disabled":""}>Pay off now · ${po.toLocaleString()} BB</button></div>${bal<po?`<div class="small muted">You have ${bal.toLocaleString()} BB.</div>`:""}`}}
-  else if(st==="open"&&c.amts)nxt=`<div class="small muted">Early payoff: <b class="num">${bkPreMin(c).toLocaleString()} BB</b> minimum (loan + 10%), or principal + interest accrued if that's more</div>`;
+  else if(st==="open"&&c.amts)nxt=l.preFee==null?`<div class="small muted">Early payoff: <b class="num">${bkPreMin(l).toLocaleString()} BB</b> minimum (loan + 10%), or principal + interest accrued if that's more</div>`:Number(l.preFee)>0?`<div class="small muted">Prepayment fee: <b class="num">${Number(l.preFee)}%</b> (paying off costs at least <b class="num">${bkPreMin(l).toLocaleString()} BB</b>) for the first ${Number(l.preH)||24} hours, then just principal + interest so far</div>`:`<div class="small muted">No prepayment fee: pay off any time for principal + interest so far</div>`;
   else if(l.sched&&(st==="repaid"||st==="defaulted"))nxt=`<div class="small muted">Paid ${bkPaidTot(l).toLocaleString()} BB in total</div>`;
   const short=st==="open"&&!l.req&&c.P&&Math.floor(ledger().balOf(l.lender))<c.P;
   const seized=new Set();(l.seized||[]).forEach((g,i)=>seized.add(i));
@@ -8382,6 +8390,8 @@ function bkFormHtml(mode){const F=bkF(),RQ=mode==="req"&&!S.bkEdit,coll=RQ?(S.bk
     <div class="row bkform"><label>Compound every<span class="bkpair"><input class="n s" data-bkf="compN" type="number" min="1" max="100" step="1" value="${esc(F.compN)}">${bkUnitSel("compU",F.compU)}</span></label>
     <label>Pay every<span class="bkpair"><input class="n s" data-bkf="payN" type="number" min="1" max="100" step="1" value="${esc(F.payN)}">${bkUnitSel("payU",F.payU)}</span></label>
     <label># payments<input class="n s" data-bkf="n" type="number" min="1" max="100" step="1" value="${esc(F.n)}"></label></div>
+    <div class="row bkform"><label>Prepayment fee %<input class="n s" data-bkf="preFee" type="number" min="0" max="${BK_PREMAX}" step="0.5" value="${esc(F.preFee)}"></label><label>if paid off within<select data-bkf="preH">${BK_PREH.map(h=>`<option value="${h}" ${String(F.preH)===String(h)?"selected":""}>${h} hours</option>`).join("")}</select></label></div>
+    <div class="small muted">Up to ${BK_PREMAX}% of the loan, only if they pay it all off early inside that window. After it, paying off costs just what's owed + interest so far.</div>
     ${collHtml}
     <div class="row bkform"><label>If ${RQ?"you miss":"they miss"} a payment<select data-bkf="sm"><option value="all" ${F.sm!=="gradual"?"selected":""}>${coll.length||RQ?"Seize all at once":"Default immediately"}</option><option value="gradual" ${F.sm==="gradual"?"selected":""}>${coll.length||RQ?"Seize one card at a time":"Allow late payments"}</option></select></label>
     <label ${F.sm==="gradual"?"":"hidden"} id="bkSzw">${coll.length||RQ?"Every":"Grace after final payment date"}<span class="bkpair"><input class="n s" data-bkf="szN" type="number" min="1" max="100" step="1" value="${esc(F.szN)}">${bkUnitSel("szU",F.szU)}</span></label></div>
