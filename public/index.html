@@ -1021,6 +1021,14 @@ body.auspace .auit,body.auspace .auhero{background:transparent!important;backdro
 .updbar{position:fixed!important;left:50%;transform:translateX(-50%);top:calc(10px + env(safe-area-inset-top,0px));z-index:2147483000;border:1px solid #f5cf5d;background:rgba(0,0,0,.92);color:#fff;font:inherit;font-size:15px;padding:10px 16px;border-radius:999px;box-shadow:0 6px 20px rgba(0,0,0,.6);white-space:nowrap;cursor:pointer}.updbar b{color:#f5cf5d}
 .cadraft{width:min(240px,70vw);margin:6px auto 4px}
 .colsum{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 4px}.colsum>div{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid var(--line)}.colsum b{font-size:18px}
+.colsumbtn{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid var(--line);color:inherit;font:inherit;text-align:left;cursor:pointer}.colsumbtn:active{transform:scale(.98)}
+.divinfo{opacity:.7}.divtap{font-size:11px;color:var(--muted,#9aa)}
+.divbd{max-height:86vh;overflow:auto;text-align:left}.dbsec{font-weight:800;font-size:13px;letter-spacing:.02em;margin:14px 2px 6px;color:#f5cf5d}.dbsec .muted{font-weight:500;font-size:11px}
+.dbr{margin:0 0 6px;border-radius:10px;background:rgba(255,255,255,.05)}.dbr summary{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:8px 10px;cursor:pointer;list-style:none}.dbr summary::-webkit-details-marker{display:none}
+.dbr summary span:first-child::before{content:"▸ ";opacity:.6}.dbr[open] summary span:first-child::before{content:"▾ "}
+.dbhow{font-size:12px;color:var(--muted,#9aa);padding:0 12px 6px}.dbc{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:6px 12px;border-top:1px solid rgba(255,255,255,.06);font-size:14px}
+.divbd>.dbc{border-radius:10px;background:rgba(255,255,255,.05);margin:0 0 6px;border:0}.dbsp{color:#f5cf5d;font-size:11px;font-weight:700}
+.dbtot{display:flex;justify-content:space-between;padding:8px 10px;margin:6px 0;border-top:1px dashed var(--line)}.dbtot.big{font-size:17px;font-weight:800;border-top:2px solid #f5cf5d}.dbnote{margin:10px 2px 4px}
 /* Card System V2 summary popup (owner Oct 29 3:27 AM): shown once to everyone, only the red X closes it */
 .v2ibox{position:relative;max-width:560px;width:calc(100vw - 24px);max-height:calc(100dvh - 32px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 18px 22px;text-align:left}
 .v2ibox .v2ihd{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:10px;margin:0 -18px 6px;padding:16px 60px 12px 18px;background:var(--paper);border-bottom:1px solid #ffffff14}
@@ -7263,15 +7271,15 @@ function divCalc(id){const q=S.prefs[id]||{},cards=q.cards||{};
      Levels: for each card only your single highest-level copy pays its level's dividend; every other copy pays the Level 1 dividend. */
   const full=new Set();Object.keys(CSETS).filter(k=>!CSETS[k].special).forEach(set=>{const cat=cardsCat(set);for(let r=0;r<CR.length;r++){const cs=cat.filter(c=>c.r===r&&c.abil!=="curse");if(cs.length&&cs.every(c=>cardCountAll(c.id,id)>0))full.add(set+":"+r)}});
   const grp={};for(const[k,v]of Object.entries(cards)){const n=Number(v)||0;if(n<=0)continue;const b=baseOf(k),g=grp[b]||(grp[b]={n:0,top:1});g.n+=n;g.top=Math.max(g.top,lvOf(k))}
-  const byR=CR.map(()=>({n:0,amt:0})),lvs=[];let amt=0,n=0,bon=0,mono=0;
+  const byR=CR.map(()=>({n:0,amt:0})),lvs=[],per=[];let amt=0,n=0,bon=0,mono=0;
   for(const[b,g]of Object.entries(grp)){const c=cardById(b);if(!c||c.abil==="curse")continue;const x=!inPool(b)&&c.r>=3&&c.r<6&&full.has(cardSet(b)+":"+c.r)?1.25:1;
-    const d1=cardDiv(c),dt=g.top>1?cardDiv(cardById(lvK(b,g.top))):d1,v=(dt+(g.n-1)*d1)*x;amt+=v;n+=g.n;byR[c.r].n+=g.n;byR[c.r].amt+=v;if(x>1)bon++;if(g.top>1)lvs.push({cid:lvK(b,g.top),name:c.name,r:c.r,lv:g.top,amt:dt*x})}
+    const d1=cardDiv(c),dt=g.top>1?cardDiv(cardById(lvK(b,g.top))):d1,v=(dt+(g.n-1)*d1)*x;amt+=v;n+=g.n;byR[c.r].n+=g.n;byR[c.r].amt+=v;per.push({b,name:c.name,r:c.r,lv:g.top,n:g.n,v,x,sp:inPool(b)&&c.r!==6?(V2_X3[b]||1):1});if(x>1)bon++;if(g.top>1)lvs.push({cid:lvK(b,g.top),name:c.name,r:c.r,lv:g.top,amt:dt*x})}
   /* Captain Von Trap (card): +X BB for every upgraded (LV 2+) copy you hold */
   let vt=0;{const x=ab2("vontrap",id);if(x>0){let k=0;for(const[key,v]of Object.entries(cards))if(key.includes("@"))k+=Number(v)||0;vt=x*k;amt+=vt}}
   amt=Math.round(amt);byR.forEach(x=>x.amt=Math.round(x.amt));
   /* Peter Griffin: 1.5x on the whole dividend per copy, capped at 3x */
   const pk=Math.min(3,cardCount("pm-peter",id)),mult=Math.min(3,Math.pow(1.5,pk)),base=amt;amt=Math.round(amt*mult);
-  return {amt,n,byR,full,mono,bon,pk,mult,base,lvs,vt}}
+  return {amt,n,byR,full,mono,bon,pk,mult,base,lvs,vt,per}}
 /* Rich tax (owner, Oct 23): once a day at the 12:01 AM reset, on your balance right after the dividend, marginal:
    5% of the part between 100k and 200k, 10% of 200k–500k, 15% above 500k. The BB is burned (paid to "house"). One bank doc per player per day. */
 const TAX_BR=[[100000,200000,.10],[200000,500000,.20],[500000,Infinity,.30]];/* owner Oct 25: rates ×2 (were 5/10/15%) */
@@ -7417,6 +7425,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:184,d:"Oct 30",t:[["🎴","Tap Daily dividend in your collection to see exactly how it adds up: every card by rarity and level, then any boosts on top"]]},
  {v:183,d:"Oct 30",t:[["🏆","When you reach an achievement a notice pops up at the top. Tap it to jump to Achievements and collect your reward"]]},
  {v:182,d:"Oct 30",t:[["🏆","New Achievements tab in the menu: goals for every game and for your cards. Reach one and claim BB, wildcard shards or packs"],["💸","Every card dividend is 1.5× higher (Dragons now pay 22,500 BB a day)"],["🎴","Elite cards are 44% more likely to show up in packs"]]},
  {v:181,d:"Oct 29",t:[["🟢","Tap the green online count to see what everyone is doing (Blackjack, Roulette, Hold'em …) and jump in to watch or join"]]},
@@ -9780,7 +9789,35 @@ const scOf=id=>{const a=(S.prefs[id]||{}).showcase;return [0,1,2].map(i=>Array.i
 const scLive=id=>{const used={};return scOf(id).map(cid=>{if(!cid||!cardById(cid))return null;used[cid]=(used[cid]||0)+1;return used[cid]<=cardCount(cid,id)?cid:null})};
 /* collection header: what these cards pay every day and what they would quick-sell for */
 function colSumHtml(who){const d=divCalc(who),cs=myCards(who);let qs=0;for(const[cid,v]of Object.entries(cs)){const k=Number(v)||0;if(k>0)qs+=qsVal(cardById(cid))*k}
-  return `<div class="colsum"><div><span class="stlbl">Daily dividend</span><b class="num pos">+${d.amt.toLocaleString()} BB</b></div><div><span class="stlbl">Quick-sell value</span><b class="num">${qs.toLocaleString()} BB</b></div></div>`}
+  return `<div class="colsum"><button type="button" class="colsumbtn" data-divbd="${esc(who)}"><span class="stlbl">Daily dividend <span class="divinfo">ⓘ</span></span><b class="num pos">+${d.amt.toLocaleString()} BB</b><span class="divtap">Tap for breakdown</span></button><div><span class="stlbl">Quick-sell value</span><b class="num">${qs.toLocaleString()} BB</b></div></div>`}
+/* Daily dividend breakdown (owner Oct 30): tap the "Daily dividend" box → by rarity (each card, its level, what it pays), then the boosts on top. Numbers come from divCalc, the same math the 12:01 AM payout uses. */
+function divBdHtml(who){const d=divCalc(who),me=who===S.me,f=x=>Math.round(x).toLocaleString();
+  const grp=CR.map(()=>[]);for(const x of d.per)grp[x.r].push(x);
+  const rare=grp.map((L,r)=>{if(!L.length)return "";L.sort((a,b)=>b.v-a.v||a.name.localeCompare(b.name));const tot=L.reduce((t,x)=>t+x.v,0),M=LV_MAX[r]||1;if(r>6&&!tot)return "";
+    const how=r===6?`Every Dragon pays a flat ${f(v2DivAt(6,1))} BB`:r<6?`LV 1 pays ${f(v2DivAt(r,1))}`+(M>1?` · up to ${f(v2DivAt(r,M))} at LV ${M}`:"")+(V2_RDIV[r]?` (includes the ×${V2_RDIV[r]} ${CR[r].n} bonus)`:""):"";
+    return `<details class="dbr"><summary><span style="color:${CR[r].c}">${CR[r].n}</span><span class="muted">${L.length} card${L.length>1?"s":""}</span><b class="num pos">+${f(tot)}</b></summary>${how?`<div class="dbhow">${how} per day${r<6?" · higher levels pay more":""}</div>`:""}
+      ${L.map(x=>`<div class="dbc"><span>${esc(x.name)}${x.lv>1?` <small class="lvtag">LV ${x.lv}</small>`:""}${x.sp>1?` <small class="dbsp">${x.sp}× special card</small>`:""}${x.x>1?` <small class="dbsp">set ×1.25</small>`:""}${x.n>1?` <span class="muted">×${x.n}</span>`:""}</span><b class="num">+${f(x.v)}</b></div>`).join("")}</details>`}).join("");
+  const cardsSum=d.per.reduce((t,x)=>t+x.v,0);
+  const boosts=[];
+  if(d.bon)boosts.push(["🏆 Full rarity sets","cards above marked set ×1.25","incl."]);
+  {const v=ab2("vontrap",who);if(v>0||d.vt)boosts.push(["🎖️ Captain Von Trap",`+${f(v)} per upgraded (LV 2+) card`,"+"+f(d.vt)])}
+  if(d.pk>0)boosts.push(["👨 Peter Griffin",`×${d.mult} on everything (${d.pk} cop${d.pk>1?"ies":"y"}, 1.5× each, max 3×)`,"+"+f(d.amt-d.base)]);
+  const extra=[];
+  if(cardCount("pm-debby",who)>0)extra.push(["🧙‍♀️ Evil Witch (Debby)",`takes ${f(DEBBY_AMT)} BB a day from a random player`]);
+  {const v=ab2("shine",who);if(v>0)extra.push(["💼 Shine Employee",`Fridays: a ${f(v)} BB paycheck (65% chance)`])}
+  if(d.per.length===0&&!extra.length)return `<p class="small muted">No cards paying a dividend yet. Every card you own pays something each day at 12:01 AM ET.</p>`;
+  let tax="";if(me){const b=Math.floor(ledger().balOf(S.me)),t=taxOf(b+d.amt);if(t>0)tax=`<p class="small muted dbnote">Rich tax is taken right after the payout, on your balance then: about −${f(t)} BB at today's balance.</p>`}
+  const left=divLeft(),hh=Math.floor(left/36e5),mm=Math.floor(left%36e5/6e4);
+  return `<div class="divbig num pos">+${f(d.amt)} BB</div><p class="small muted" style="text-align:center;margin:0 0 10px">a day · next payout 12:01 AM ET (in ${hh}h ${mm}m)</p>
+    <div class="dbsec">1 · Cards by rarity <span class="muted">(tap a rarity to see each card)</span></div>${rare}
+    <div class="dbtot"><span>Cards</span><b class="num">+${f(cardsSum)}</b></div>
+    <div class="dbsec">2 · Boosts on top</div>${boosts.length?boosts.map(([a,b,c])=>`<div class="dbc"><span>${a}<br><small class="muted">${b}</small></span><b class="num pos">${c}</b></div>`).join(""):`<p class="small muted" style="margin:4px 2px">No boosts. Captain Von Trap and Peter Griffin raise this.</p>`}
+    <div class="dbtot big"><span>Daily dividend</span><b class="num pos">+${f(d.amt)}</b></div>
+    ${extra.length?`<div class="dbsec">Other daily card payouts <span class="muted">(not in the total)</span></div>${extra.map(([a,b])=>`<div class="dbc"><span>${a}<br><small class="muted">${b}</small></span></div>`).join("")}`:""}${tax}`}
+function divBdOpen(who){if($("#divBdOv"))return;const o=document.createElement("div");o.id="divBdOv";o.className="overlay";
+  o.innerHTML=`<div class="pickbox recapbox divbd"><h2>🎴 ${who===S.me?"Your daily dividend":esc(nm(who))+"'s daily dividend"}</h2>${divBdHtml(who)}<button class="btn" type="button" data-close>Close</button></div>`;
+  document.body.appendChild(o);o.addEventListener("click",e=>{if(e.target===o||e.target.closest("[data-close]"))o.remove()})}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-divbd]");if(b)divBdOpen(b.dataset.divbd||S.me)});
 function scHtml(who){const mine=who===S.me,sl=scLive(who);if(!mine&&!sl.some(Boolean))return "";
   const slots=mine?sl.map((cid,i)=>cid?`<div class="scslot">${cardHtml(cardById(cid),{click:true,small:true})}</div>`:`<button type="button" class="scslot scadd" data-scedit="${i}" aria-label="Add a card to showcase slot ${i+1}"><span>+</span></button>`):sl.filter(Boolean).map(cid=>`<div class="scslot">${cardHtml(cardById(cid),{click:true,small:true,who})}</div>`);
   return `<div class="scwrap"><div class="schd"><span class="stlbl">⭐ ${mine?"Your showcase":"Showcase"}</span>${mine?`<button type="button" class="btn ghost scedit" data-scedit>Edit showcase</button>`:""}</div><div class="scgrid">${slots.join("")}</div></div>`}
