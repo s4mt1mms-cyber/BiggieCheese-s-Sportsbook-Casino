@@ -2987,8 +2987,8 @@ const HOUSE_VIG=2.1/2.2;
 function hv(ml){ml=Number(ml);if(!isFinite(ml)||ml===0)return ml;const p=ml>0?100/(ml+100):-ml/(-ml+100);let d=HOUSE_VIG/p;if(d<1.01)d=1.01;
   if(d>=2)return Math.floor(+((d-1)*100).toFixed(6));const am=-Math.ceil(+(100/(d-1)).toFixed(6));return am>=-100?-101:am}
 function houseOdds(){const p=S.housePick;if(!p)return 0;if(p.kind==="wk")return hv(p.ml);const s=$("#hSide");return hv(s&&s.value==="no"?-p.ml:p.ml)}
-function housePrev(){const el=$("#hPrev");if(!el||!S.housePick)return;const st=Math.round(Number($("#hStake").value)||0),o=houseOdds();const win=takerRisk("yes",st,o);
-  const oe=$("#hOdds");if(oe)oe.textContent=(o>0?"+":"")+o;el.innerHTML=st>0?`Win <b class="num" style="color:#5cff72">+${win.toLocaleString()} BB</b> · lose <b class="num" style="color:#ff6262">−${st.toLocaleString()} BB</b>`:""}
+function housePrev(){const el=$("#hPrev");if(!el||!S.housePick)return;const fb=!!(S.freeOn&&freeReady()),inp=$("#hStake");if(inp)inp.disabled=fb;const st=fb?freeAmt():Math.round(Number(inp&&inp.value)||0),o=houseOdds();const win=takerRisk("yes",st,o);
+  const oe=$("#hOdds");if(oe)oe.textContent=(o>0?"+":"")+o;if(fb){el.innerHTML=`🎟️ Free ${st.toLocaleString()} BB bet · win <b class="num" style="color:#5cff72">+${win.toLocaleString()} BB</b> · lose nothing`;return}el.innerHTML=st>0?`Win <b class="num" style="color:#5cff72">+${win.toLocaleString()} BB</b> · lose <b class="num" style="color:#ff6262">−${st.toLocaleString()} BB</b>`:""}
 document.addEventListener("input",e=>{if(e.target.id==="pStake"){const P=parlayState();P.stake=e.target.value;const legs=Object.values(P.legs);const dec=legs.reduce((a,l)=>a*decOdds(l.ml),1);const w=$("#pWin");if(w)w.textContent="+"+Math.round((Number(P.stake)||0)*(dec-1)).toLocaleString()+" BB"}});
 ["input","change"].forEach(ev=>document.addEventListener(ev,e=>{if(e.target.closest&&e.target.closest("#houseForm")){if(S.housePick){if(e.target.id==="hStake")S.housePick.stake=e.target.value;if(e.target.id==="hSide")S.housePick.side=e.target.value}setTimeout(housePrev,0)}}));
 /* card abilities in the casino (Oct 23): a winning result d>0 gets Signature Shockwave % (+ extra %, e.g. Darth Slop, The Gooner,
@@ -3000,7 +3000,9 @@ const freeAmt=()=>ab2("logan"),freeReady=()=>freeAmt()>0&&(S.prefs[S.me]||{}).fr
 function freeUse(){const q=S.prefs[S.me]||{};q.freeDay=divDay();S.freeOn=false;db.doc("prefs/"+S.me).update({freeDay:q.freeDay}).catch(()=>{})}
 function freeHtml(one){if(!S.me||!freeReady())return "";const a=freeAmt();if(one===false)return `<div class="freebet"><span class="small muted">🎟️ Your ${a.toLocaleString()} BB free bet works on a single pick.</span></div>`;
   return `<div class="freebet${S.freeOn?" on":""}"><button type="button" class="chip${S.freeOn?" on":""}" data-freebet>🎟️ ${S.freeOn?"Using":"Use"} today's free bet · ${a.toLocaleString()} BB</button>${S.freeOn?`<span class="small">Free ${a.toLocaleString()} BB stake: a win pays the winnings only, a loss costs nothing.</span>`:""}</div>`}
-document.addEventListener("click",e=>{if(!e.target.closest("[data-freebet]"))return;e.preventDefault();S.freeOn=!S.freeOn;render()});
+/* the House bet popup is not redrawn by render() while it is open (it would reset the typed stake), so swap the chip in place (fixed Oct 30: tapping it looked like nothing happened) */
+document.addEventListener("click",e=>{const b=e.target.closest("[data-freebet]");if(!b)return;e.preventDefault();S.freeOn=!S.freeOn;
+  const w=b.closest(".freebet");if(w){const t=document.createElement("div");t.innerHTML=freeHtml();if(t.firstElementChild)w.replaceWith(t.firstElementChild)}housePrev();render()});
 async function placeHouseBet(){const p=S.housePick;if(!p)return;const fb=!!(S.freeOn&&freeReady()),stake=fb?freeAmt():Math.round(Number($("#hStake").value)||0),bal=Math.floor(ledger().balOf(S.me));
   if(!(stake>0))throw{code:"msg",message:"Bet at least 1 BB."};if(!fb&&stake>bal)throw{code:"msg",message:"Not enough BiggieBucks for that bet."};
   let gameId,side,odds;
@@ -7428,6 +7430,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:186,d:"Oct 30",t:[["🎟️","Fixed: the \"Use today's free bet\" button on league game bets now works. Tap it, then Place bet"]]},
  {v:185,d:"Oct 30",t:[["🎟️","Fixed: if a free bet from the Logan Dorn card didn't go through, it no longer uses up that day's free bet"]]},
  {v:184,d:"Oct 30",t:[["🎴","Tap Daily dividend in your collection to see exactly how it adds up: every card by rarity and level, then any boosts on top"]]},
  {v:183,d:"Oct 30",t:[["🏆","When you reach an achievement a notice pops up at the top. Tap it to jump to Achievements and collect your reward"]]},

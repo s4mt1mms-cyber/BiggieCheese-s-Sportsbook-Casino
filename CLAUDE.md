@@ -413,7 +413,7 @@ Fantasyland / ChudBootyCheeks. League Moments (`lm`) still works the old way (it
   the sheet's value for that level from LV 2 ("option A"); Elite/Grail work at LV 1. Wired: `vontrap` (+X BB/day per LV2+ copy, divCalc `vt`), `dwillie`
   (all-in loss refund: roulette/BJ/High-Low, `abWin(d,extra,allin)`), `shock` (+% on casino wins and on bets via `bx`), `luke` (Bank: steal % of a balance 1/day,
   bank kind "luke"), `thanos`/`caked`/`darth` (in `bjSettle`, `r.bonus`), `logan` (daily free bet on NFL/NBA/House straight bets: bet `free:true`, ledger: loser
-  poster pays 0, not in pending; `freeHtml`/`freeUse`, `prefs.freeDay`; since Oct 30 the NFL/NBA/NHL slips call `freeUse` only after the bet is saved), `shabbat` (Bank: lend 25,000, bank kind "shabbat" {back:26250}: ledger repays 1/24 per
+  poster pays 0, not in pending; `freeHtml`/`freeUse`, `prefs.freeDay`; since Oct 30 the NFL/NBA/NHL slips call `freeUse` only after the bet is saved; the `[data-freebet]` click swaps the chip in place + `housePrev` shows the free stake, because render() never redraws the open House bet popup `#houseModal`), `shabbat` (Bank: lend 25,000, bank kind "shabbat" {back:26250}: ledger repays 1/24 per
   full hour), `bucket` (+% on live RR/Hold'em profit), `shine` (Fridays in divCheck: 65% paid, `prefs.shineEarn` in balOf, `shineLog`, popup), `diva` (`divaP`
   skins/emotes), `rinker` (Flappy cap + run bonus), `crew` (parlays via `bx`), `paradise` (`prefs.paraN`/`freePacks`, free Common pack), `crndd` (`crnddKill`/`crnddBO`),
   `rookie` (rat ×2), `gooner` (roulette wins +%), `vail` (`pkPrice`). Bets snapshot bonuses in `bx:{playerId:%}` at create/accept (`bxOf`); the ledger adds
