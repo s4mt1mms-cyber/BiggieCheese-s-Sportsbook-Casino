@@ -7430,6 +7430,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:187,d:"Oct 30",t:[["🏦","Loans: paying extra now pays down the loan itself. The rest of your payments are recalculated on what you still owe, so each one gets smaller and you pay less interest overall"],["📅","Payments stay due on every payment date (they don't skip ahead anymore when you pay extra)"]]},
  {v:186,d:"Oct 30",t:[["🎟️","Fixed: the \"Use today's free bet\" button on league game bets now works. Tap it, then Place bet"]]},
  {v:185,d:"Oct 30",t:[["🎟️","Fixed: if a free bet from the Logan Dorn card didn't go through, it no longer uses up that day's free bet"]]},
  {v:184,d:"Oct 30",t:[["🎴","Tap Daily dividend in your collection to see exactly how it adds up: every card by rarity and level, then any boosts on top"]]},
@@ -7929,8 +7930,26 @@ const bkDue=(l,k)=>Number(l.takenAt)+(k+1)*Number(l.sched.payMs);
    Each payment entry has a unique k (numeric = legacy installment, strings for chunks/auto-collections) and counts once. */
 function bkPaidTot(l){const seen=new Set();let t=0;for(const p of l.payments||[]){if(seen.has(p.k))continue;seen.add(p.k);t+=Math.floor(Number(p.amt))||0}return t}
 const bkAmts=l=>(l.sched&&Array.isArray(l.sched.amts)?l.sched.amts:Array.isArray(l.amts)?l.amts:(bkCalc(l)||{}).amts||[]).map(a=>Number(a)||0);
-const bkTotalOf=l=>bkAmts(l).reduce((a,b)=>a+b,0);
-function bkCumDue(l,now){const a=bkAmts(l);let t=0;for(let k=0;k<a.length;k++)if(now>=bkDue(l,k))t+=a[k];return t}
+/* owner Oct 30: extra payments go to PRINCIPAL and the rest of the schedule is recalculated (was: extra money just paid future installments
+   ahead, so the next due date jumped weeks out and the interest never went down). bkPlan walks the payment dates: the balance grows at the loan's
+   rate (compounding like bkAccrued) and drops with every payment the moment it is made; the payment due at each date is the level payment that
+   pays off the balance at the start of that period over the payments left (interest on what's still owed + a share of the principal); money paid
+   beyond what was due lowers the balance and so every later payment; the last date takes whatever is left. Arrears stay due and keep accruing.
+   Dates still to come assume on-time payment, which gives the projected total. Returns cumulative dues C[k] (what must be paid BY date k) and T. */
+function bkPlan(l,now){now=now==null?Date.now():now;const a=bkAmts(l),n=a.length,c=bkCalc(l)||{},pm=Number((l.sched||{}).payMs)||Number(c.payMs)||0,t0=Number(l.takenAt)||0,P=Math.floor(Number(l.P))||0;
+  const seen=new Set(),ps=[];for(const p of l.payments||[]){if(seen.has(p.k))continue;seen.add(p.k);ps.push({amt:Math.floor(Number(p.amt))||0,at:Number(p.at)||now})}
+  const key=n+"|"+pm+"|"+t0+"|"+P+"|"+ps.map(p=>p.amt+"@"+p.at).join(",")+"|"+Math.floor(now/1000);if(l._bkP&&l._bkP.k===key)return l._bkP.v;
+  let v;if(!n||!pm||!t0||!P){let t=0;const C=a.map(x=>t+=x);v={C,T:t}}
+  else{const i=Number(c.i)||0,g=dt=>i>1e-12?Math.pow(1+i,Math.max(0,dt)/pm):1;ps.sort((x,y)=>x.at-y.at);
+    let B=P,tp=t0,paid=0,j=0,prev=0,base=P;const C=[];
+    for(let k=0;k<n;k++){const tk=t0+(k+1)*pm;B*=g(tk-tp);tp=tk;while(j<ps.length&&ps[j].at<=tk){B-=ps[j].amt*g(tk-ps[j].at);paid+=ps[j].amt;j++}
+      let ck;if(k===n-1)ck=Math.round(paid+(B>1?B:0));else{const m=n-k,pay=base>0?(i>1e-12?base*i/(1-Math.pow(1+i,-m)):base/m):0;ck=Math.round(Math.max(prev+pay,paid))}
+      if(tk>now&&ck>paid){const h=ck-paid;B-=h;paid+=h}
+      base=B-Math.max(0,ck-paid);prev=ck;C.push(ck)}
+    v={C,T:C[n-1]}}
+  try{Object.defineProperty(l,"_bkP",{value:{k:key,v},writable:true,configurable:true,enumerable:false})}catch(_){}return v}
+const bkTotalOf=(l,now)=>bkPlan(l,now).T;
+function bkCumDue(l,t,now){const C=bkPlan(l,now).C;let x=0;for(let k=0;k<C.length;k++)if(t>=bkDue(l,k))x=C[k];return x}
 /* owner's rule: paying off early costs the principal + interest accrued so far (at the loan's rate and compounding),
    less what's been paid (payments stop accruing from the moment they're made). Never more than the rest of the schedule,
    never less than what's already overdue. */
@@ -7944,13 +7963,13 @@ function bkAccrued(l,now){const c=bkCalc(l)||{},i=Number(c.i)||0,pm=Number((l.sc
 const BK_PRE=1.1,bkPreMin=l=>Math.ceil((Math.floor(Number(l.P))||0)*BK_PRE-1e-9);
 /* owner Oct 29 8:54 AM: loans back to the pre-V2 rules: no one-at-a-time limit (BK_ONE), no winnings sweep, early payoff = principal + interest so far (min +10%), capped at the schedule */
 const BK_ONE=false;
-function bkPayoffNow(l,now){const paid=bkPaidTot(l);return Math.max(0,Math.min(Math.max(bkAccrued(l,now),bkPreMin(l)-paid),bkTotalOf(l)-paid),bkCumDue(l,now)-paid)}function bkPayoffNowV2(l,now){return Math.max(0,bkTotalOf(l)-bkPaidTot(l))}/* Card System V2 (owner, Oct 29): the payoff is locked in when the loan starts (principal + on-time interest = the whole schedule) and never grows */
+function bkPayoffNow(l,now){const paid=bkPaidTot(l);return Math.max(0,Math.min(Math.max(bkAccrued(l,now),bkPreMin(l)-paid),bkTotalOf(l,now)-paid),bkCumDue(l,now,now)-paid)}function bkPayoffNowV2(l,now){return Math.max(0,bkTotalOf(l)-bkPaidTot(l))}/* Card System V2 (owner, Oct 29): the payoff is locked in when the loan starts (principal + on-time interest = the whole schedule) and never grows */
 /* one loan at a time (as the borrower): an active/late loan or an open request of yours */
 const bkHasLoan=id=>BK_ONE&&(S.loans||[]).some(l=>l.borrower===id&&(l.status==="active"||l.status==="late"||(l.req&&l.status==="open")));
-const bkOverAmt=(l,now)=>Math.max(0,bkCumDue(l,now)-bkPaidTot(l));
+const bkOverAmt=(l,now)=>Math.max(0,bkCumDue(l,now,now)-bkPaidTot(l));
 const bkLastDue=l=>bkDue(l,bkAmts(l).length-1);
 /* next due time at which money is still owed (Infinity when chunks already cover the whole schedule) */
-function bkNextDue(l){const a=bkAmts(l),paid=bkPaidTot(l);let c=0;for(let k=0;k<a.length;k++){c+=a[k];if(c>paid)return bkDue(l,k)}return Infinity}
+function bkNextDue(l){const C=bkPlan(l).C,paid=bkPaidTot(l);for(let k=0;k<C.length;k++)if(C[k]>paid)return bkDue(l,k);return Infinity}
 const bkKey=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 const bkCardsTxt=cids=>(cids||[]).map(g=>{const c=cardById(g);return c?c.name:"a card"}).join(", ");
 const bkChat=text=>{try{db.collection("chat").add({type:"bet",kind:"bank",uid:S.me,poster:S.me,at:Date.now(),text})}catch(_){}};
@@ -8202,11 +8221,11 @@ function bkNextEvent(l){const last=bkLastDue(l),col=(l.collateral||[]).length,sz
 const bkLatestK=(l,now)=>{const N=bkAmts(l).length;let j=-1;for(let k=0;k<N;k++)if(now>=bkDue(l,k))j=k;return j};
 const bkTryK=(l,now)=>l.tryK!=null?Number(l.tryK):(l.status==="late"?bkLatestK(l,now):-1);
 /* next due time that will trigger a collection attempt */
-function bkNextTry(l,now){const a=bkAmts(l),paid=bkPaidTot(l),t=bkTryK(l,now);let c=0;for(let k=0;k<a.length;k++){c+=a[k];if(k>t&&c>paid)return bkDue(l,k)}return Infinity}
+function bkNextTry(l,now){const C=bkPlan(l,now).C,paid=bkPaidTot(l),t=bkTryK(l,now);for(let k=0;k<C.length;k++)if(k>t&&C[k]>paid)return bkDue(l,k);return Infinity}
 function bkStep(l,now,balOverride){/* pure: returns an update object, or null when nothing to do */
   const bal0=balOverride!=null?balOverride:Math.floor(ledger().balOf(l.borrower));const up={},pays=[...(l.payments||[])];
-  const paidOf=()=>bkPaidTot({payments:pays}),cd=bkCumDue(l,now),tgt=bkTarget(l);
-  const fin=()=>{const pd=paidOf();if((pd>=bkTotalOf(l)||pays.some(p=>p.early))&&pd>=cd){up.status="repaid";up.repaidAt=now;up.seized=[];up.lateSince=null;up.lastSeizeAt=null;return true}return false};
+  const paidOf=()=>bkPaidTot({payments:pays}),cd=bkCumDue(l,now,now),tgt=bkTarget(l);
+  const fin=()=>{const pd=paidOf();if((pd>=bkTotalOf({...l,payments:pays},now)||pays.some(p=>p.early))&&pd>=cd){up.status="repaid";up.repaidAt=now;up.seized=[];up.lateSince=null;up.lastSeizeAt=null;return true}return false};
   const cure=()=>{up.status="active";up.seized=[];up.lateSince=null;up.lastSeizeAt=null;up.curedAt=now};
   const j=bkLatestK(l,now),fresh=j>bkTryK(l,now);let od=Math.max(0,cd-paidOf()),late=l.status==="late";
   if(fresh){up.tryK=j;const take=Math.min(od,Math.max(0,Math.floor(bal0)));if(take>0){pays.push({k:bkKey("d"),amt:take,at:now,...(late?{late:true}:{}),...(take<od?{partial:true}:{})});up.payments=pays;od-=take}}
@@ -8274,8 +8293,8 @@ function bkTermsTxt(l){return `${Number(l.rate)}%/${l.rateU}, compounded every $
 function bkRow(l){const c=bkCalc(l)||{},me=S.me,st=l.status,N=l.sched?l.sched.amts.length:c.n,now=Date.now(),live=(st==="active"||st==="late")&&l.sched;
   const chip={open:"Open",active:"Active",late:"Late",repaid:"Repaid",defaulted:"Defaulted",cancelled:"Cancelled"}[st]||st;
   let nxt="";
-  if(live){const paid=bkPaidTot(l),tot=bkTotalOf(l),od=bkOverAmt(l,now),po=bkPayoffNow(l,now),nd=bkNextTry(l,now),last=bkLastDue(l),bor=l.borrower===me;
-    const cdNext=nd<Infinity?bkCumDue(l,nd)-paid:0;
+  if(live){const paid=bkPaidTot(l),tot=bkTotalOf(l,now),od=bkOverAmt(l,now),po=bkPayoffNow(l,now),nd=bkNextTry(l,now),last=bkLastDue(l),bor=l.borrower===me;
+    const cdNext=nd<Infinity?bkCumDue(l,nd,now)-paid:0;
     const stats=`<div class="bkstats bkls"><div><span>Paid so far</span><b class="num">${paid.toLocaleString()}</b></div><div><span>Left on schedule</span><b class="num">${Math.max(0,tot-paid).toLocaleString()}</b></div><div><span>Overdue</span><b class="num ${od?"neg":""}">${od.toLocaleString()}</b></div><div><span>Pay off now</span><b class="num">${po.toLocaleString()}</b></div></div>`;
     if(st==="active")nxt=stats+(nd<Infinity?`<div class="small">Next payment: <b class="num">${cdNext.toLocaleString()} BB</b> on the payment date in <b class="num" data-bkdue="${nd}">${bkCd(nd-now)}</b> · of ${tot.toLocaleString()} BB total</div>`:`<div class="small">Ahead of schedule — nothing more is owed until the next payment date.</div>`);
     else{const col=(l.collateral||[]).length,sz=(l.seized||[]).length,ev=bkNextEvent(l);
