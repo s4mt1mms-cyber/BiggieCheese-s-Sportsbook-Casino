@@ -1015,6 +1015,9 @@ html:has(body.auspace){background:#000!important}
 body.auspace{background:transparent!important;background-image:none!important}
 body.auspace main,body.auspace main .wrap{background:transparent!important}
 body.auspace .auit,body.auspace .auhero{background:transparent!important;backdrop-filter:none;-webkit-backdrop-filter:none}
+.acntc{position:fixed;left:50%;transform:translateX(-50%);top:calc(10px + env(safe-area-inset-top,0px));z-index:2147482990;display:flex;align-items:center;width:max-content;max-width:calc(100vw - 24px);border:1px solid #f5cf5d;background:rgba(0,0,0,.94);color:#fff;border-radius:16px;box-shadow:0 6px 20px rgba(0,0,0,.6),0 0 14px rgba(245,207,93,.45)}
+.acntc.low{top:calc(62px + env(safe-area-inset-top,0px))}.acntc button{background:none;border:0;color:inherit;font:inherit;cursor:pointer}
+.acntc .acbgo{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;font-size:15px;padding:10px 4px 10px 16px;min-width:0}.acntc .acbgo b{color:#f5cf5d}.acntc .acbgo span{font-size:14px;line-height:1.3}.acntc .acbgo u{color:#f5cf5d;white-space:nowrap}.acntc .acbx{padding:10px 14px 10px 8px;font-size:15px;opacity:.7}
 .updbar{position:fixed!important;left:50%;transform:translateX(-50%);top:calc(10px + env(safe-area-inset-top,0px));z-index:2147483000;border:1px solid #f5cf5d;background:rgba(0,0,0,.92);color:#fff;font:inherit;font-size:15px;padding:10px 16px;border-radius:999px;box-shadow:0 6px 20px rgba(0,0,0,.6);white-space:nowrap;cursor:pointer}.updbar b{color:#f5cf5d}
 .cadraft{width:min(240px,70vw);margin:6px auto 4px}
 .colsum{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 4px}.colsum>div{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid var(--line)}.colsum b{font-size:18px}
@@ -7414,6 +7417,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:183,d:"Oct 30",t:[["🏆","When you reach an achievement a notice pops up at the top. Tap it to jump to Achievements and collect your reward"]]},
  {v:182,d:"Oct 30",t:[["🏆","New Achievements tab in the menu: goals for every game and for your cards. Reach one and claim BB, wildcard shards or packs"],["💸","Every card dividend is 1.5× higher (Dragons now pay 22,500 BB a day)"],["🎴","Elite cards are 44% more likely to show up in packs"]]},
  {v:181,d:"Oct 29",t:[["🟢","Tap the green online count to see what everyone is doing (Blackjack, Roulette, Hold'em …) and jump in to watch or join"]]},
  {v:180,d:"Oct 29",t:[["⛪","BiggieTown: the church is a classic western chapel again (steeple and white cross). The upstairs loft is still there"]]},
@@ -7660,6 +7664,23 @@ function acInit(){const q=S.prefs[S.me];if(!q||q.acI||!q.cv3||!S.ld||!S.ld.bank|
   const patch={acI:Date.now(),ac,acB:{ww:Math.floor(Number((q.wwStats||{}).kills)||0)}};Object.assign(q,{acI:patch.acI,acB:patch.acB});q.ac={...a,...ac};
   db.doc("prefs/"+S.me).update(patch).then(()=>renderSoon()).catch(()=>{S._acInit=false})}
 setInterval(acInit,4000);
+/* achievement reached → a tap-to-collect pill at the top (like the update pill); tap = Achievements tab. Seen tiers per device in localStorage sb-acseen {key: to}. */
+function acNewList(){const out=[];if(!S.me||!(S.prefs[S.me]||{}).acI)return out;
+  for(const C of ACH)for(const x of acPend(C))out.push({key:x.key,to:x.to,n:C.n+(x.key===C.id?"":" (new best)"),ic:C.ic});
+  for(const B of ACB){const x=acBPend(B);if(x)out.push({key:x.key,to:x.to,n:B[2],ic:B[1]})}return out}
+function acSeenGet(){try{return JSON.parse(localStorage.getItem("sb-acseen")||"{}")||{}}catch(_){return{}}}
+function acSeenAll(){const m=acSeenGet();for(const x of acNewList())m[x.key]=Math.max(Number(m[x.key])||0,x.to);try{localStorage.setItem("sb-acseen",JSON.stringify(m))}catch(_){}}
+function acNotify(){if(!S.ready||!S.me||S.readOnly||document.hidden)return;if(S.tab==="ach"){acSeenAll();const b=$("#acBar");if(b)b.remove();return}
+  if($("#acBar")||document.body.classList.contains("wwon")||$("#newsOv")||$("#cv2Ov")||$("#dflOv"))return;
+  const m=acSeenGet(),fresh=acNewList().filter(x=>x.to>(Number(m[x.key])||0));if(!fresh.length)return;
+  const b=document.createElement("div");b.id="acBar";b.className="acntc"+($("#updBar")?" low":"");
+  const txt=fresh.length===1?`<b>${fresh[0].ic} Achievement unlocked</b><span>${esc(fresh[0].n)} · <u>tap to collect</u></span>`:`<b>🏆 ${fresh.length} achievements unlocked</b><span><u>Tap to collect</u></span>`;
+  b.innerHTML=`<button type="button" class="acbgo">${txt}</button><button type="button" class="acbx" aria-label="Dismiss">✕</button>`;
+  const done=()=>{const m2=acSeenGet();for(const x of fresh)m2[x.key]=Math.max(Number(m2[x.key])||0,x.to);try{localStorage.setItem("sb-acseen",JSON.stringify(m2))}catch(_){}clearTimeout(b._t);b.remove()};
+  b.querySelector(".acbgo").onclick=()=>{done();if($("#tbjOv")&&typeof tbjClose==="function")tbjClose();S.tab="ach";try{localStorage.setItem("sab-tab","ach")}catch(_){}render();window.scrollTo(0,0)};
+  b.querySelector(".acbx").onclick=done;b._t=setTimeout(()=>{if(b.isConnected)done()},15000);
+  document.body.appendChild(b);try{if(typeof sfx==="function")sfx("win")}catch(_){}}
+setInterval(acNotify,3000);
 /* Claim: BB first (a fixed doc id per claim, so a retry can't pay twice), then one prefs write (claimed counts, shards, free packs); packs open right away */
 async function acClaim(key){if(S._acBusy||!S.me||!db)return;if(S.readOnly)return toast("View only. Ask the commish for access.");const q=S.prefs[S.me];if(!q||!q.acI)return;
   let P=null,title="";for(const C of ACH){for(const p of acPend(C))if(p.key===key){P=p;title=C.n}}for(const B of ACB){const p=acBPend(B);if(p&&p.key===key){P=p;title=B[2]}}
