@@ -3686,7 +3686,7 @@ function revengeStart(){const p=S.prefs[S.me]||{},earned=revEarned(p);if(!p.dfl|
   let lastT=0,acc=0;function frame(now){now=now||performance.now();if(!lastT)lastT=now;acc+=Math.min(100,now-lastT);lastT=now;
     /* fixed 60 steps a second, so the rat moves at the same speed on any phone or refresh rate */
     let steps=0;while(acc>=16.67&&steps<6){acc-=16.67;steps++;t++;
-    if(state==="hunt"){const SPD=(MOUSE?.4:1)*2;/* Oct 23: rat runs twice as fast */rat.a+=rat.va*SPD;rat.d+=rat.vd*SPD;if(Math.abs(rat.a)>60||Math.random()<.012){rat.va*=-1}/* runs deep into the field and back toward you: far = small, near = big */
+    if(state==="hunt"){const SPD=(MOUSE?.4:1)*1.5;/* Oct 23: rat runs twice as fast; owner Oct 31: ×.75 of that */rat.a+=rat.va*SPD;rat.d+=rat.vd*SPD;if(Math.abs(rat.a)>60||Math.random()<.012){rat.va*=-1}/* runs deep into the field and back toward you: far = small, near = big */
       if(rat.d>32)rat.vd=-Math.abs(rat.vd);if(rat.d<6)rat.vd=Math.abs(rat.vd);if(Math.random()<.008)rat.vd*=-1;if(Math.random()<.015)rat.vd=Math.sign(rat.vd||1)*(.06+Math.random()*.18);if(Math.random()<.02)rat.va=(Math.random()<.5?-1:1)*(.25+Math.random()*.45);rat.face=rat.va>0?1:-1}
     if(state==="dance"){rat.face=1;rat.a+=(yaw-rat.a)*.06;rat.d+=(6.5-rat.d)*.05;pitch*=.94}
       recoil*=.85;if(flash>0)flash=Math.max(0,flash-.12)}
@@ -7484,6 +7484,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:195,d:"Oct 31",t:[["🐀","The blackjack rat runs a bit slower (75% of its old speed)"],["🤠","BiggieTown looks a little sharper on phones"]]},
  {v:194,d:"Oct 31",t:[["🪑","United We Sit pays a little less: ×1.05 / 1.1 / 1.15 / 1.2 by level"]]},
  {v:193,d:"Oct 31",t:[["🖼️","New card art: Zyn Tower and Caf Monster"]]},
  {v:192,d:"Oct 31",t:[["🖼️","New card art: Dr Snyder, Hurricane Harbinger, Moscow Impressed, MU University, Ball Knowledge Required, Rage Baiter, United We Sit and The Rotunda Rumble Disaster"]]},

@@ -564,7 +564,7 @@ body.wwon{overflow:hidden}
     const T = THREE, gw = G.gw, gh = G.gh;
     const HI = !!G.set.hiGfx; G.hi = HI; /* owner Oct 28: light graphics by default; "High graphics" in Settings brings back shadows/AA/PBR */
     const R = new T.WebGLRenderer({ canvas: G.cv, antialias: HI && !TOUCH, powerPreference: "high-performance" });
-    R.setPixelRatio(Math.min(HI ? (TOUCH ? 1.5 : 1.25) : (TOUCH ? 1.25 : .9), window.devicePixelRatio || 1)); R.setSize(gw, gh, false);
+    R.setPixelRatio(Math.min(HI ? (TOUCH ? 1.5 : 1.25) : (TOUCH ? 1.4 : .9), window.devicePixelRatio || 1)); /* owner Oct 31: phones 1.25 → 1.4 */ R.setSize(gw, gh, false);
     R.outputEncoding = T.sRGBEncoding; R.toneMapping = T.ACESFilmicToneMapping; R.toneMappingExposure = 1.05;
     const SH = !TOUCH && HI; R.shadowMap.enabled = SH; R.shadowMap.type = T.PCFShadowMap; R.shadowMap.autoUpdate = false; R.shadowMap.needsUpdate = true; /* shadows re-drawn every 3rd frame (perf) */
     const sc = new T.Scene(), cam = new T.PerspectiveCamera(G.set.fov, gw / gh, .05, G.set.hiGfx ? 900 : 470); /* light mode: nothing past the fog is drawn */ sc.add(cam);
