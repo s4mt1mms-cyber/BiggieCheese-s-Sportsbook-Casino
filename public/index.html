@@ -643,7 +643,8 @@ html,body,*{-webkit-tap-highlight-color:transparent}
 .gwdice{display:flex;gap:14px;justify-content:center;padding:8px}.gwrow{display:flex;gap:8px;align-items:baseline;justify-content:center;flex-wrap:wrap}.gwrow b{font-size:18px;margin-right:10px}
 .gwchips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}.gwchips span{background:#1a160a;border:1px solid #3a3115;border-radius:99px;padding:3px 10px;font-size:12px}
 .gwcard{display:flex;gap:18px;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 30%,#1f6b3a,#0d3b20);border:2px solid #c9a227;border-radius:16px;padding:14px}
-.gwmsg{text-align:center;font-size:14px;min-height:20px}.gwseats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.gwmsg{text-align:center;font-size:14px;min-height:20px}
+.gw-hilo .gwscreen{background:none;border:0;padding:26px 0 0}.gwhl{display:flex;flex-direction:column;gap:10px}.gwhl .hlcardv{position:relative;width:96px;height:134px}.gwhl .btn:disabled{opacity:.75}.gwhl .hlg{cursor:default}.gwseats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .gwseat{display:flex;flex-direction:column;align-items:center;gap:3px;background:#1a160a;border:1px solid #3a3115;border-radius:12px;padding:8px 4px;font-size:12px;text-align:center}
 .gwseat.cur{border-color:#ffd84a;box-shadow:0 0 12px #ffd84a66}.gwseat.dead{opacity:.45}.gwsi{font-size:28px}.gwcd{color:#ffd84a;font-weight:800}
 .gwbox .pos{color:#5cff72}.gwbox .neg{color:#ff6262}
@@ -4833,9 +4834,13 @@ function gwView(g,q,who){
     return `<div class="gwdice">${dieHtml(d[0],"d1")}${dieHtml(d[1],"d2")}</div><div class="gwrow"><span class="stlbl">Rolled</span><b class="num">${d[0]+d[1]}</b><span class="stlbl">Point</span><b class="num">${q.crPoint||"OFF"}</b></div>
       <div class="gwchips">${ks.length?ks.map(k=>`<span>${esc(CR_SPOTS[k]||k)} <b class="num">${Number(bets[k]).toLocaleString()}</b></span>`).join(""):'<span class="muted">No chips on the table</span>'}</div>
       <div class="gwrow"><span class="stlbl">Craps overall</span><b class="num ${crPL(stq(q))>0?"pos":crPL(stq(q))<0?"neg":""}">${crPL(stq(q))>0?"+":crPL(stq(q))<0?"−":""}${Math.abs(crPL(stq(q))).toLocaleString()} BB</b></div>`}
-  if(g==="hilo"){const L=q.hlLive||{},c=L.card||q.hlCard||{r:1,s:0};
-    return `<div class="gwcard"><div style="position:relative;width:96px;height:134px">${hlCard(c)}</div><div class="hlside"><div class="stlbl">${L.run?"Riding":"Bet"}</div><b class="num">${Math.floor((L.stake||0)*(L.run?L.mult||1:1)).toLocaleString()} BB</b><div class="stlbl">Multiplier</div><b class="num">${(L.mult||1).toFixed(2)}×</b></div></div>
-      <div class="gwmsg">${esc(L.msg||"")}</div><div class="hlhist">${(L.hist||[]).map(x=>`<span class="${x.w?"pos":"neg"}">${HL_R[x.r-1]}</span>`).join("")}</div>`}
+  if(g==="hilo"){/* owner Oct 31: the same table, buttons and bet bar the player sees (read-only) */
+    const L=q.hlLive||{},c=L.card||q.hlCard||{r:1,s:0},run=!!L.run,stake=Math.floor(Number(L.stake)||0),mult=Number(L.mult)||1,pay=Math.floor(stake*mult),mh=hlMult(c.r,"hi"),ml=hlMult(c.r,"lo"),net=(Number(q.hlNet)||0)-sbB(q,"hlNet");
+    return `<div class="hlwrap gwhl"><div class="hltable"><div class="eyebrow">Ties lose · 97% return</div><div class="hlrow"><div class="hlcardv">${hlCard(c)}</div><div class="hlside"><div class="stlbl">Riding</div><b class="num">${(run?pay:0).toLocaleString()} BB</b><div class="stlbl">Multiplier</div><b class="num">${mult.toFixed(2)}×</b></div></div>
+      <div class="crmsg">${esc(L.msg||(run?"Guessing…":"Placing a bet…"))}</div><div class="hlhist">${(L.hist||[]).slice(0,12).map(x=>`<span class="${x.w?"pos":"neg"}">${HL_R[x.r-1]}</span>`).join("")}</div></div>
+      <div class="hlbtns"><button type="button" class="btn hlg" disabled>▲ Higher<small>${mh?mh.toFixed(2)+"×":"—"}</small></button><button type="button" class="btn hlg" disabled>▼ Lower<small>${ml?ml.toFixed(2)+"×":"—"}</small></button></div>
+      <div class="hlbet"><div class="stlbl">Bet <b class="num">${stake.toLocaleString()} BB</b>${run?` · Streak <b class="num">${Number(L.n)||0}</b>`:""}</div><div class="hlbtns"><button type="button" class="btn" disabled>${run?`Cash out ${pay.toLocaleString()}`:"Cash out"}</button></div></div>
+      <p class="small muted bjfoot">${esc(nm(who))} is ${net>=0?"up":"down"} <strong class="num ${net>0?"pos":net<0?"neg":""}">${net>0?"+":net<0?"−":""}${Math.abs(net).toLocaleString()} BB</strong> at High-Low · ${Number(stq(q).hlRounds)||0} rounds.</p></div>`}
   if(g==="rr"){const L=q.rrLive||{};const al=L.alive||[1,1,1,1];
     return `<div class="gwseats">${RR_SEATS.map((s,i)=>`<div class="gwseat${al[i]?"":" dead"}${L.turn===i&&L.phase==="play"?" cur":""}"><div class="gwsi">${al[i]?["🧑","🐻","🐀","🦊"][i]:"💀"}</div><b>${i?esc(s.n.split(" ")[0]):esc(nm(who||S.gw&&S.gw.who))}</b>${L.cards&&L.cards[i]?`<span class="gwcd">${L.cards[i]}</span>`:""}</div>`).join("")}</div>
       <div class="gwmsg">${L.log||""}</div><div class="gwrow"><span class="stlbl">In for</span><b class="num">${(L.paid||0).toLocaleString()} BB</b><span class="stlbl">Pot</span><b class="num pos">${((L.paid||0)*RR_MULT).toLocaleString()} BB</b></div>`}
@@ -7436,6 +7441,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:189,d:"Oct 31",t:[["👁","Watching someone play High-Low now looks just like the real table: their card, Higher/Lower odds, bet, streak and cash-out amount"]]},
  {v:188,d:"Oct 30",t:[["🏦","Lenders now set their own prepayment fee on new loans: 0–10%, only if the loan is paid off early within the first 24, 48 or 72 hours. After that, paying off costs just what's owed plus interest so far"],["📜","Loans already running keep the terms they started with"]]},
  {v:187,d:"Oct 30",t:[["🏦","Loans: paying extra now pays down the loan itself. The rest of your payments are recalculated on what you still owe, so each one gets smaller and you pay less interest overall"],["📅","Payments stay due on every payment date (they don't skip ahead anymore when you pay extra)"]]},
  {v:186,d:"Oct 30",t:[["🎟️","Fixed: the \"Use today's free bet\" button on league game bets now works. Tap it, then Place bet"]]},
