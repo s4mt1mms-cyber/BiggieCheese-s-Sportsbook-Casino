@@ -366,6 +366,7 @@ Fantasyland / ChudBootyCheeks. League Moments (`lm`) still works the old way (it
   curse shows everywhere). Add new abilities there too.
 - **Presence**: "● N online" pill, green avatar rings — from existing prefs stamps (no extra writes). Since Oct 29 (owner) `prefs.act` {t: tab or "ww", at} (`actTick` writes after 4 s on a page + with the minute `mineAt` stamp; `actOf`, `ACT_LBL`) → the online list shows "● 🃏 Playing Blackjack" with a Watch/Join button (`data-actgo`: sets `bjWatch`/`rlWatch`/`gwSet`, or opens the live table tab).
 - **Admin tab**: invite codes, data import, card tools (per-card Preview + Add/Change image; a live preview of a card being added), previews.
+  Card tools (owner Oct 31, `cardsAdminHtml`, tab `setup`): ONE list "Cards in the game" = every pack-pool card (`v2Pool().all`, all sets, set shown per row), rarity filter chips `S.caR` (all / 0–6 / curse) + order `S.caO` (rarest first / commons first); the collection switcher, bulk paste, rarity mix and auto-assign UI are gone; "Add a card" always adds to Multiverse (`S.cardAdminSet="mv"`); the rarity select (meta cards) saves to the card's own set (`cardSet`).
   Uploading an image for a code-defined card (MV_ADD) writes `cardimg/<id>` and flags `imgOver.<id>` on that collection's meta doc,
   so the upload overrides the static WebP for everyone.
 
