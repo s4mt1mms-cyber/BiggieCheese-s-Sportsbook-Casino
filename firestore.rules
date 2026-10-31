@@ -216,6 +216,9 @@ service cloud.firestore {
     // Each player writes only their own docs; only admins read them (the Analytics tab).
     match /usage/{docId} {
       allow read, delete: if isAdmin();
+      /* each player reads back their OWN day doc on load (owner Oct 31: without this a non-admin's page couldn't load it, started at 0 and
+         overwrote the day's total on every app open, so players showed only their last session) */
+      allow get: if member() && docId.matches(myPlayerId() + '_[0-9]{4}-[0-9]{2}-[0-9]{2}_[a-z0-9]{4,12}');
       allow create, update: if member() && freshWrite()
         && request.resource.data.id == myPlayerId()
         && docId.matches(myPlayerId() + '_[0-9]{4}-[0-9]{2}-[0-9]{2}_[a-z0-9]{4,12}')
