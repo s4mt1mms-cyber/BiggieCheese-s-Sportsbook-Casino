@@ -5748,8 +5748,8 @@ const MV_ADD=[
   ["joe-camel",4,"Joe Camel",{div:700,img:false}],
   ["king-slop",5,"King Slop",{abil:"slop"}],["shrex",5,"Shrex",{abil:"shrex",img:false}],
   /* owner Oct 31 patch brief: 4 Elites + 2 Grails, abilities from LV 1 (AB2), art to be uploaded (Admin "Add image") */
-  ["moscow-impressed",4,"Moscow Impressed"],["mu-university",4,"MU University"],["dr-snyder",4,"Dr Snyder: A Strange Man"],["zyn-tower",4,"Zyn Tower",{img:false}],
-  ["caf-monster",5,"Caf Monster",{img:false}],["hurricane-harbinger",5,"Hurricane Harbinger"],
+  ["moscow-impressed",4,"Moscow Impressed"],["mu-university",4,"MU University"],["dr-snyder",4,"Dr Snyder: A Strange Man"],["zyn-tower",4,"Zyn Tower"],
+  ["caf-monster",5,"Caf Monster"],["hurricane-harbinger",5,"Hurricane Harbinger"],
   /* owner Oct 31: placeholder Grail, name + art set from the Admin tab (meta/cards_mv nameOver / cardimg); ability bjsave by card id, so a rename never breaks it */
   ["grail-x",5,"Mystery Grail",{img:false,abil:"bjsave",rn:1}]];
 /* ===== Fantasyland (Oct 23 2026, owner): a code-defined collection, rainbow themed, in place of the old "Based PBA Moments" slot.
@@ -7484,6 +7484,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:193,d:"Oct 31",t:[["🖼️","New card art: Zyn Tower and Caf Monster"]]},
  {v:192,d:"Oct 31",t:[["🖼️","New card art: Dr Snyder, Hurricane Harbinger, Moscow Impressed, MU University, Ball Knowledge Required, Rage Baiter, United We Sit and The Rotunda Rumble Disaster"]]},
  {v:191,d:"Oct 31",t:[["😇","A new mystery Grail joined the BiggieCheese Pack: lose 5 blackjack hands in a row and it pays back 2 of those 5 bets (3 at LV 2, 4 at max)"]]},
  {v:190,d:"Oct 31",t:[["🎴","Six new cards in the BiggieCheese Pack: Moscow Impressed, MU University, Dr Snyder and Zyn Tower (Elites), Caf Monster and Hurricane Harbinger (Grails). Art is coming soon"],["🎲","Craps has hardway bets now (Hard 4, 6, 8, 10). Summer 2024 is a craps card now: every roll in a row that isn't a 7 makes your wins bigger"],["⚖️","Buffs: BiggieCheese Rookie rat pays ×4/×5/×6, Shine Employee paycheck +50%. Nerfs: United We Sit, The Rinker Rizzler, Swole Jesus"],["🛠️","Fixed: Another Day in Paradise never loses a free pack (achievement packs count too), free packs all open at once, and shard buys are instant (new Buy 50)"],["🧀","New achievement: three cheeses on the slots"]]},
