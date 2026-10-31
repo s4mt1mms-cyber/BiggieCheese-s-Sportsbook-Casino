@@ -5748,8 +5748,8 @@ const MV_ADD=[
   ["joe-camel",4,"Joe Camel",{div:700,img:false}],
   ["king-slop",5,"King Slop",{abil:"slop"}],["shrex",5,"Shrex",{abil:"shrex",img:false}],
   /* owner Oct 31 patch brief: 4 Elites + 2 Grails, abilities from LV 1 (AB2), art to be uploaded (Admin "Add image") */
-  ["moscow-impressed",4,"Moscow Impressed",{img:false}],["mu-university",4,"MU University",{img:false}],["dr-snyder",4,"Dr Snyder: A Strange Man",{img:false}],["zyn-tower",4,"Zyn Tower",{img:false}],
-  ["caf-monster",5,"Caf Monster",{img:false}],["hurricane-harbinger",5,"Hurricane Harbinger",{img:false}],
+  ["moscow-impressed",4,"Moscow Impressed"],["mu-university",4,"MU University"],["dr-snyder",4,"Dr Snyder: A Strange Man"],["zyn-tower",4,"Zyn Tower",{img:false}],
+  ["caf-monster",5,"Caf Monster",{img:false}],["hurricane-harbinger",5,"Hurricane Harbinger"],
   /* owner Oct 31: placeholder Grail, name + art set from the Admin tab (meta/cards_mv nameOver / cardimg); ability bjsave by card id, so a rename never breaks it */
   ["grail-x",5,"Mystery Grail",{img:false,abil:"bjsave",rn:1}]];
 /* ===== Fantasyland (Oct 23 2026, owner): a code-defined collection, rainbow themed, in place of the old "Based PBA Moments" slot.
@@ -5778,8 +5778,8 @@ let _FLC=null;const flCards=()=>_FLC||(_FLC=FL_ADD.map(([k,r,name,o])=>{o=o||{};
    img:false = placeholder face. Faces blurred: Chad Baby (mv, the baby), Light Bearers + Tasting Flight (bystanders). */
 const CB_IMGV=2,CB_LIM=[Infinity,100,25,7,3,2,1];
 const CB_ADD=[
-  ["united-we-sit",0,"United We Sit",{img:false}],["wraparound-warrior",0,"Wraparound Warrior"],["porch-rave",0,"Porch Rave"],["late-night-sip",0,"Late Night Sip"],
-  ["safari-squad",0,"Safari Squad"],["rage-baiter",0,"Rage Baiter",{img:false}],["ball-knowledge-required",0,"Ball Knowledge Required",{img:false}],["campfire-coma",0,"Campfire Coma"],
+  ["united-we-sit",0,"United We Sit"],["wraparound-warrior",0,"Wraparound Warrior"],["porch-rave",0,"Porch Rave"],["late-night-sip",0,"Late Night Sip"],
+  ["safari-squad",0,"Safari Squad"],["rage-baiter",0,"Rage Baiter"],["ball-knowledge-required",0,"Ball Knowledge Required"],["campfire-coma",0,"Campfire Coma"],
   ["site-supervisor",0,"Site Supervisor"],["tiger-squat",0,"Tiger Squat"],["couch-commander",0,"Couch Commander"],["road-trip-menaces",0,"Road Trip Menaces"],
   ["crumb-catcher",0,"Crumb Catcher"],["after-hours",0,"After Hours"],["suit-and-smoke",0,"Suit & Smoke"],["durag-diplomacy",0,"Durag Diplomacy"],
   ["suspicious-floof",0,"Suspicious Floof"],["light-bearers",0,"Light Bearers"],["good-boy-up-close",0,"Good Boy, Up Close"],["shift-crew",0,"Shift Crew"],
@@ -5790,7 +5790,7 @@ const CB_ADD=[
   ["on-the-big-screen",2,"On the Big Screen"],["dark-knights",2,"The Dark Knights"],["chris-from-tinder",2,"Chris from Tinder"],["tasting-flight",2,"Tasting Flight"],
   ["crab-impersonator",3,"Crab Impersonator"],["gigachad",3,"Gigachad"],["zartog-the-merman",3,"Zartog the Merman"],["the-call",3,"The Call"],
   ["lunch",4,"Lunch?",{abil:"lunch"}],["james-hamilton",4,"James Hamilton Supremacy"],["caleb-lynady",4,"Caleb Lynady"],["zartog-vs-mcqueen",4,"Zartog vs McQueen"],
-  ["rotunda-rumble",5,"The Rotunda Rumble Disaster",{img:false}],["summer-2024",5,"Summer 2024",{fx:"emo",emo:"🌴"}],["bitcoin-to-zero",5,"Bitcoin to Zero",{fx:"emo",emo:"📉"}],
+  ["rotunda-rumble",5,"The Rotunda Rumble Disaster"],["summer-2024",5,"Summer 2024",{fx:"emo",emo:"🌴"}],["bitcoin-to-zero",5,"Bitcoin to Zero",{fx:"emo",emo:"📉"}],
   ["beowulf-wages",6,"Beowulf Wages",{img:false}]];
 let _CBC=null;const cbCards=()=>_CBC||(_CBC=CB_ADD.map(([k,r,name,o])=>{o=o||{};return{id:"cb-"+k,r,name,sub:"ChudBootyCheeks",desc:o.desc||(o.img===false?"Art coming soon. Part of the ChudBootyCheeks collection.":"Part of the ChudBootyCheeks collection."),full:true,code:true,limF:CB_LIM[r],img:o.img===false?null:`/cards/cb/${k}.webp?v=${CB_IMGV}`,...(o.abil?{abil:o.abil}:{}),...(o.fx?{fx:o.fx,cfx:true}:{}),...(o.emo?{emo:o.emo}:{})}}));
 /* abilities shown on the card back under the description (heading "Ability · name") */
@@ -7484,6 +7484,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:192,d:"Oct 31",t:[["🖼️","New card art: Dr Snyder, Hurricane Harbinger, Moscow Impressed, MU University, Ball Knowledge Required, Rage Baiter, United We Sit and The Rotunda Rumble Disaster"]]},
  {v:191,d:"Oct 31",t:[["😇","A new mystery Grail joined the BiggieCheese Pack: lose 5 blackjack hands in a row and it pays back 2 of those 5 bets (3 at LV 2, 4 at max)"]]},
  {v:190,d:"Oct 31",t:[["🎴","Six new cards in the BiggieCheese Pack: Moscow Impressed, MU University, Dr Snyder and Zyn Tower (Elites), Caf Monster and Hurricane Harbinger (Grails). Art is coming soon"],["🎲","Craps has hardway bets now (Hard 4, 6, 8, 10). Summer 2024 is a craps card now: every roll in a row that isn't a 7 makes your wins bigger"],["⚖️","Buffs: BiggieCheese Rookie rat pays ×4/×5/×6, Shine Employee paycheck +50%. Nerfs: United We Sit, The Rinker Rizzler, Swole Jesus"],["🛠️","Fixed: Another Day in Paradise never loses a free pack (achievement packs count too), free packs all open at once, and shard buys are instant (new Buy 50)"],["🧀","New achievement: three cheeses on the slots"]]},
  {v:189,d:"Oct 31",t:[["👁","Watching someone play High-Low now looks just like the real table: their card, Higher/Lower odds, bet, streak and cash-out amount"]]},
