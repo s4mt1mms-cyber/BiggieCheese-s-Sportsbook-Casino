@@ -3923,6 +3923,18 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-rlrespin]"
 /* perf (Oct 28): pause decorative animations after 40 s without input; any input resumes them */
 (function(){let t=0;const go=()=>{if(document.body.classList.contains("idlefx"))document.body.classList.remove("idlefx");clearTimeout(t);t=setTimeout(()=>document.body.classList.add("idlefx"),12000)};
   ["pointerdown","pointermove","keydown","wheel","touchstart","scroll"].forEach(e=>window.addEventListener(e,go,{passive:true,capture:true}));go()})();
+/* perf (owner Oct 31, "feels slow and laggy"): looping animations that are off screen (auras in leaderboards below the fold, hidden menus) still cost
+   a style recalc + repaint every frame (~60-85% of idle CPU on game pages). Mark their elements data-offp (CSS pauses them, ::before/::after too);
+   unmarked again as soon as they scroll into view. Only infinite animations; uses a CSS attribute so the idle pause (body.idlefx) keeps working. */
+(function(){if(!document.getAnimations)return;let busy=0;const scan=()=>{busy=0;if(document.hidden)return;let as;try{as=document.getAnimations()}catch(_){return}
+  const H=innerHeight,W=innerWidth,seen=new Set();
+  for(const a of as){const tg=a.effect&&a.effect.target;if(!tg||seen.has(tg))continue;let inf=false;try{inf=a.effect.getComputedTiming().iterations===Infinity}catch(_){}if(!inf&&!tg.hasAttribute("data-offp"))continue;seen.add(tg);
+    const r=tg.getBoundingClientRect(),on=r.width>0&&r.bottom>-40&&r.top<H+40&&r.right>-40&&r.left<W+40;
+    if(on){if(tg.hasAttribute("data-offp"))tg.removeAttribute("data-offp")}else if(!tg.hasAttribute("data-offp"))tg.setAttribute("data-offp","")}
+  /* paused elements are not returned by getAnimations() once paused? they are (state "paused"), so re-checks above unpause them; also sweep stale marks */
+  document.querySelectorAll("[data-offp]").forEach(el=>{if(seen.has(el))return;const r=el.getBoundingClientRect();if(r.width>0&&r.bottom>-40&&r.top<H+40)el.removeAttribute("data-offp")})};
+  const soon=()=>{if(!busy)busy=setTimeout(scan,150)};setInterval(scan,1000);addEventListener("scroll",soon,{passive:true,capture:true});addEventListener("resize",soon,{passive:true});
+  const st=document.createElement("style");st.textContent="[data-offp],[data-offp]::before,[data-offp]::after{animation-play-state:paused!important}";document.head.appendChild(st)})();
 const RAT2_SVG=`<svg viewBox="0 0 160 140" aria-hidden="true"><defs><radialGradient id="wfur" cx="45%" cy="35%" r="70%"><stop offset="0" stop-color="#ffffff"/><stop offset=".6" stop-color="#ece6dc"/><stop offset="1" stop-color="#bdb4a6"/></radialGradient><radialGradient id="wear" cx="50%" cy="55%" r="60%"><stop offset="0" stop-color="#e9b3b0"/><stop offset=".7" stop-color="#c98d8d"/><stop offset="1" stop-color="#7d6a62"/></radialGradient><linearGradient id="wsnout" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3eee6"/><stop offset="1" stop-color="#fffaf2"/></linearGradient><radialGradient id="weyeg" cx="35%" cy="30%" r="70%"><stop offset="0" stop-color="#ff5a7a"/><stop offset="1" stop-color="#8a0f2e"/></radialGradient><linearGradient id="wvest" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5a0f1a"/><stop offset="1" stop-color="#2a0509"/></linearGradient></defs><g class="rbody"><path d="M42 128 C10 126 4 104 20 96 C30 91 34 100 26 104" fill="none" stroke="#c99a92" stroke-width="4" stroke-linecap="round"/><path d="M42 128 C10 126 4 104 20 96" fill="none" stroke="#a5776f" stroke-width="4" stroke-dasharray="1 3" stroke-linecap="round"/><path d="M36 140 C36 112 50 98 80 98 C110 98 124 112 124 140Z" fill="url(#wfur)"/><path d="M44 140 C46 116 60 104 80 104 C100 104 114 116 116 140Z" fill="url(#wvest)"/><path d="M68 104 L80 128 L92 104Z" fill="#efe8da"/><path d="M71 115 L80 120 L89 115 L89 124 L80 120 L71 124Z" fill="#c8102e"/><circle cx="80" cy="129" r="1.6" fill="#c8102e"/><circle cx="80" cy="132" r="1.6" fill="#c8102e"/><g><ellipse cx="44" cy="40" rx="20" ry="22" fill="#d8d0c4" transform="rotate(-20 44 40)"/><ellipse cx="45" cy="41" rx="14" ry="16" fill="url(#wear)" transform="rotate(-20 45 41)"/><path d="M40 32 Q46 42 44 52M48 30 Q52 40 50 50" stroke="#b07a78" stroke-width=".7" fill="none" opacity=".7"/></g><g><ellipse cx="116" cy="40" rx="20" ry="22" fill="#d8d0c4" transform="rotate(20 116 40)"/><ellipse cx="115" cy="41" rx="14" ry="16" fill="url(#wear)" transform="rotate(20 115 41)"/><path d="M120 32 Q114 42 116 52M112 30 Q108 40 110 50" stroke="#b07a78" stroke-width=".7" fill="none" opacity=".7"/></g><path d="M50 62 C50 40 64 32 80 32 C96 32 110 40 110 62 C110 76 100 84 92 90 C88 98 84 104 80 104 C76 104 72 98 68 90 C60 84 50 76 50 62Z" fill="url(#wfur)"/><path d="M66 74 C70 70 90 70 94 74 C94 88 86 100 80 102 C74 100 66 88 66 74Z" fill="url(#wsnout)"/><g stroke="#b8ae9f" stroke-width=".8" stroke-linecap="round" opacity=".6"><path d="M62 44l2 4M70 38l1 4M90 38l-1 4M98 44l-2 4M58 56l3 2M102 56l-3 2"/></g><ellipse cx="80" cy="40" rx="30" ry="6" fill="#111"/><path d="M64 39 L66 8 Q80 4 94 8 L96 39Z" fill="#161616"/><rect x="64.6" y="30" width="30.8" height="6" fill="#c8102e"/><ellipse cx="80" cy="8" rx="14" ry="3" fill="#222"/><ellipse class="reye" cx="68" cy="66" rx="5" ry="5.6" fill="url(#weyeg)"/><ellipse class="reye" cx="92" cy="66" rx="5" ry="5.6" fill="url(#weyeg)"/><circle cx="69.6" cy="64" r="1.6" fill="#fff" opacity=".9"/><circle cx="93.6" cy="64" r="1.6" fill="#fff" opacity=".9"/><path d="M75 96 C75 92 85 92 85 96 C85 99 82 101 80 101 C78 101 75 99 75 96Z" fill="#d97f8a"/><ellipse cx="78" cy="96" rx="1" ry=".8" fill="#7a3a42"/><ellipse cx="82" cy="96" rx="1" ry=".8" fill="#7a3a42"/><circle cx="92" cy="66" r="8.5" fill="rgba(255,255,255,.12)" stroke="#d4a62a" stroke-width="1.6"/><path d="M100 68 Q108 88 104 104" fill="none" stroke="#d4a62a" stroke-width=".8"/><path d="M80 99 C74 97 68 99 66 103 C70 101 74 102 76 101 M80 99 C86 97 92 99 94 103 C90 101 86 102 84 101" fill="#3a2a22" stroke="#3a2a22" stroke-width="1.6" stroke-linecap="round"/><g class="rwh" stroke="#f1ece4" stroke-width=".8" stroke-linecap="round" fill="none" opacity=".9"><path d="M74 94 Q56 86 36 84M74 96 Q54 94 34 96M75 98 Q56 102 38 108M86 94 Q104 86 124 84M86 96 Q106 94 126 96M85 98 Q104 102 122 108"/></g><g class="brow" stroke="#2a201c" stroke-width="2.4" stroke-linecap="round"><path d="M61 57 L74 61M99 57 L86 61"/></g><path class="mfrown" d="M75 106 Q80 102 85 106" fill="none" stroke="#ff5a7a" stroke-width="1.8" stroke-linecap="round"/><path class="msmirk" d="M74 104 Q81 108 87 101" fill="none" stroke="#ff5a7a" stroke-width="1.8" stroke-linecap="round"/><path class="mshut" d="M76 103 Q80 106 84 103" fill="none" stroke="#ff5a7a" stroke-width="1.4" stroke-linecap="round"/><g class="mopen"><path d="M69 100 Q80 124 91 100 Q80 105 69 100Z" fill="#3a0d13" stroke="#5c4a42" stroke-width="1"/><path d="M77 102.5 h2.8 v7 q-1.4 1.2-2.8 0Z M80.2 102.5 h2.8 v7 q-1.4 1.2-2.8 0Z" fill="#f4ecd0"/><path d="M74 113 Q80 119 86 113 Q80 116 74 113Z" fill="#d0606f"/></g><g class="larm"><path d="M50 112 C40 120 42 132 52 136" fill="none" stroke="#e2dbcf" stroke-width="10" stroke-linecap="round"/><ellipse class="lpaw" cx="53" cy="137" rx="5" ry="4" fill="#d9a3a0" opacity="0"/></g><g class="rarm"><path d="M110 112 C116 118 118 126 118 132" stroke="#e2dbcf" stroke-width="10" stroke-linecap="round" fill="none"/><ellipse cx="118" cy="135" rx="5" ry="4" fill="#d9a3a0"/><path d="M118 137 L118 148" stroke="#d9a3a0" stroke-width="2.6" stroke-linecap="round"/><path d="M115 137 l-2 4M121 137 l2 4M114 135 l-3 2" stroke="#c48f8c" stroke-width="2" stroke-linecap="round"/><path d="M118 148 l0 1.5" stroke="#efe6dc" stroke-width="2" stroke-linecap="round"/></g></g><text class="ha" x="136" y="22" fill="#f5cf5d" font-size="17" font-weight="800" font-family="Barlow,sans-serif" text-anchor="middle">HA HA!</text><text class="hmph" x="80" y="16" fill="#ff8a6a" font-size="16" font-weight="800" font-family="Barlow,sans-serif" text-anchor="middle">HMPH.</text><text class="say" x="80" y="16" font-size="16" font-weight="800" font-family="Barlow,sans-serif" text-anchor="middle"></text><text class="meh" x="80" y="16" fill="#e8e2d4" font-size="15" font-weight="800" font-family="Barlow,sans-serif" text-anchor="middle">meh.</text></svg>`;
 
 /* MV-PURE-BEGIN: pure helpers for the Multiverse card abilities (unit-tested by tools/test/mv-abilities.test.mjs) */
@@ -6390,7 +6402,8 @@ document.addEventListener("click",e=>{const v=e.target.closest("[data-profcoll]"
 /* daily card dividend: first visit after 12:01 AM Eastern pays per copy owned, by rarity */
 const CARD_DIV=[0,0,3,20,100,500,10000,25,0]/* Oct 23 deflation: ÷10, none for Common/Uncommon */;
 /* owner, Oct 24 11 PM: the daily reset moved from 1 AM to 12:01 AM Eastern */
-function divDay(t){const d=new Date((t==null?Date.now():t)-6e4);return d.toLocaleDateString("en-CA",{timeZone:"America/New_York"})}
+/* perf Oct 31: one shared formatter + a per-minute cache (toLocaleDateString with options built a new Intl formatter on every call; divDay runs many times per render) */
+let _DDF=null,_DDC={};function divDay(t){const ms=(t==null?Date.now():t)-6e4,k=Math.floor(ms/6e4);const c=_DDC[k];if(c)return c;_DDF=_DDF||new Intl.DateTimeFormat("en-CA",{timeZone:"America/New_York",year:"numeric",month:"2-digit",day:"2-digit"});const p={};for(const x of _DDF.formatToParts(new Date(ms)))p[x.type]=x.value;const v=`${p.year}-${p.month}-${p.day}`;if(Object.keys(_DDC).length>200)_DDC={};_DDC[k]=v;return v}
 /* every daily thing (dividends, Debby, King Slop respins, Cheese Farm cap, Vector boost) resets at 12:01 AM Eastern; ms until the next reset */
 function divLeft(){const p=Object.fromEntries(new Intl.DateTimeFormat("en-US",{timeZone:"America/New_York",hour12:false,hour:"2-digit",minute:"2-digit",second:"2-digit"}).formatToParts(new Date()).map(x=>[x.type,x.value]));
   const h=Number(p.hour)%24,m=Number(p.minute),sec=Number(p.second),since=((h*3600+m*60+sec)-60+86400)%86400;return Math.max(6e4,(86400-since)*1000)}
@@ -6447,7 +6460,7 @@ const AB2={
   "mv:cafmonster":{k:"caf",v:[25,35,50],t:v=>`Craps: losing a Pass Line or Come bet to a 2, 3 or 12 gives back ${pctTxt(v)} of it`},
   "mv:hurricaneharbinger":{k:"hurr",v:[2,3,3.6],t:v=>v>=3.6?"A wildcard shard from a pack comes as 3 shards (70%) or 5 shards (30%)":`A wildcard shard from a pack comes as ${v} shards`}};
 /* United We Sit multiplier by level: ×1.15 from LV 2, ×1.2 at LV 7, ×1.25 at LV 11, ×1.3 at LV 13; Chris from Tinder shards by level */
-const hlUwsX=L=>L>=13?1.2:L>=11?1.15:L>=7?1.1:1.05;/* owner Oct 31: −0.05 at every level twice (was 1.15/1.2/1.25/1.3, then 1.1/1.15/1.2/1.25) */
+const hlUwsX=L=>L>=13?1.175:L>=11?1.125:L>=7?1.075:1.025;/* owner Oct 31: −0.05 twice, then −0.025 at 6:55 PM (was 1.15/1.2/1.25/1.3 → 1.1/1.15/1.2/1.25 → 1.05/1.1/1.15/1.2) */
 const chrisSh=L=>L>=9?[2,1]:L>=8?[1,2]:L>=6?[1,1]:L>=4?[0,2]:[0,1];
 /* the AB2 entry for a card (any level key), or null */
 const AB2_G={moscow:["hl"],snyder:["sl"],zyn:["cr"],caf:["cr"],hurr:["packs"],shock:["bj","rl","cr","hl","sl","mp"],giga:["bj","rl","cr","hl","sl"],chad:["rl"],summer:["cr"],swole:["fp"],cody:["fp"],unitedsit:["hl"],floof:["hl"],gun:["sl"],bigscreen:["sl"],caleb:["bj"],ballk:["sb"],rotunda:["sb"],crab:["wheel"],newfriend:["bank"],chris:["bank"],btc:["bank"],dwillie:["bj","rl","hl"],thanos:["bj"],caked:["bj"],darth:["bj"],rookie:["bj"],gooner:["rl"],rinker:["fp"],vontrap:["div"],shine:["div"],luke:["bank"],shabbat:["bank"],logan:["sb"],crew:["sb"],bucket:["mp"],crndd:["mp"],vail:["packs"],paradise:["packs"],diva:["shop"]};
@@ -6472,7 +6485,7 @@ let _AB2=null;function ab2(k,id){id=id||S.me;if(!_AB2){_AB2={};queueMicrotask(()
 const V2_ODDS=[63.357,22.317,9.830,3.732,.556,.1,.009]/* owner Oct 30: Elite ×1.44 (.386→.556), Grail ×.95 (.105→.1), Super Rare took the difference (3.897→3.732) *//* owner Oct 29 1:48 AM: Elite + Grail halved (were .772/.210), the difference went to Common */,V2_CURSE=.1,V2_WILD=.02,V2_PITY=35000,V2_DRAGON_DIV=15000/* owner Oct 29 3:13 AM (was 3,000) */,V2_X3={"mv-joe-camel":3,"mv-art-65":3};
 const TIER_DIV=[2,3,4,6,10,16,25,40,64,100,160,250,400],TIER_UP=[0,0,50,70,120,180,300,450,750,1200,1800,3000,4500,7500];/* TIER_UP[t] = BB to upgrade INTO tier t */
 const SHARD_PRICE=[1500,4000,10000,25000,150000,1000000];/* owner Oct 29 2:51 AM: Elite 150,000, Grail 1,000,000 *//* owner Oct 29 2:31 AM: shards are wildcards now (was 600/1,600/3,700/9,200/46,000/172,000) *//* owner Oct 29 2:12 AM: a pack's expected shards (3.17 C, 1.12 U, .49 R, .195 SR, .019 E, .005 G) priced at the brief's rarity ratios add up to the 10,000 pack price; the store sells them 10% below that *//* owner Oct 29 1:55 AM: ≈1.25× what a shard costs through 10,000 BB packs (was 1,000/2,800/6,500/16,000/80,000/300,000) */
-const V2_PACK={id:"v2",r:5,name:"BiggieCheese Pack",setName:"All collections",price:7500/* owner Oct 29 8:54 AM: 7,500 (was 10,000 since 1:37 AM; brief: 2,500) */,n:5};
+const V2_PACK={id:"v2",r:5,name:"BiggieCheese Pack",setName:"All collections",price:10000/* owner Oct 31 6:54 PM: 10,000 (7,500 since Oct 29 8:54 AM; 10,000 from 1:37 AM; brief: 2,500) */,n:5};
 const v2Tier=c=>Math.min(13,(c.lv||1)+2*c.r);
 function v2Div(c){if(!c||c.abil==="curse")return 0;if(c.r===6)return Math.ceil(V2_DRAGON_DIV*V2_DIVX);return Math.ceil(TIER_DIV[v2Tier(c)-1]*(V2_RDIV[c.r]||1)*(V2_X3[baseOf(c.id)]||1)*V2_DIVX)}
 const V2_DIVX=1.5;/* owner Oct 30 (Achievements spec): every dividend ×1.5, rounded up (Dragon 22,500) */
@@ -6737,7 +6750,7 @@ const trPatch=W=>{const p={};if(Object.keys(W.d.c).length)p.cards=W.d.c;if(Objec
 function trResolve(W,ids){const used={},out=[];for(const id of ids){const b=baseOf(id);const k=Object.keys(W.cards).filter(e=>baseOf(e)===b&&(Number(W.cards[e])||0)-(used[e]||0)>0).sort((a,c)=>lvOf(c)-lvOf(a))[0];if(!k)return null;used[k]=(used[k]||0)+1;out.push(k)}return out}
 const trBal=()=>Math.floor(ledger().balOf(S.me));
 const trSys=(a,b,text)=>{try{dmPost(dmPair(a,b),{kind:"sys",text},text)}catch(_){}};
-async function trBank(id,doc){const ref=db.doc("bank/"+id);if((S.bank||[]).some(t=>t.id===id))return;if((await ref.get()).exists)return;await ref.set({kind:"trade",at:Date.now(),...doc})}
+async function trBank(id,doc){const ref=db.doc("bank/"+id);if(!!bankById(id))return;if((await ref.get()).exists)return;await ref.set({kind:"trade",at:Date.now(),...doc})}
 const trId=()=>"t"+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 /* make an offer (to a player) or a listing (to = null) */
 async function trMake(kind,to,give,want,note,listingId){if(!S.me||!db||S._trBusy)return false;if(S.readOnly){toast("View only. Ask the commish for access.");return false}
@@ -6789,7 +6802,7 @@ async function trTick(){if(!S.me||!db||S.readOnly||!S.ready||!S.ld||!S.ld.bank||
       if(t0.from===S.me&&t0.status==="open"&&t0.listingId){const l=S.trades.find(x=>x.id===t0.listingId);if(!l||l.status!=="open"){const ls=await db.doc("trades/"+t0.listingId).get(),ld=ls.exists?ls.data():null;if(!ld||(ld.status!=="open"&&ld.usedBy!==t0.id)){await trSetSt(t0.id,"declined");continue}}}
       if(t0.from===S.me&&["declined","cancelled","expired","failed"].includes(t0.status)&&!t0.returned){const ref=db.doc("trades/"+t0.id),d=(await ref.get()).data()||{};if(d.returned)continue;
         if(mk==="e"){const D=(await db.doc("prefs/"+S.me).get()).data()||{};if((D.trDone||{})[t0.id]==="e"){const W=trW(D);trGive(W,d.give,"back");const p=trPatch(W);p.trDone={[t0.id]:"r"};await db.doc("prefs/"+S.me).update(p);if(p.cards)q.cards={...(q.cards||{}),...p.cards};if(p.shards)q.shards={...(q.shards||{}),...p.shards};q.trDone={...(q.trDone||{}),[t0.id]:"r"}}}
-        const g=trN(d.give);if(g.bb>0&&(S.bank||[]).some(x=>x.id==="trE_"+t0.id))await trBank("trR_"+t0.id,{from:"house",to:S.me,amt:g.bb,note:"Trade escrow back",tr:t0.id});
+        const g=trN(d.give);if(g.bb>0&&!!bankById("trE_"+t0.id))await trBank("trR_"+t0.id,{from:"house",to:S.me,amt:g.bb,note:"Trade escrow back",tr:t0.id});
         await ref.update({returned:true,live:false});t0.returned=true;if(!trEmpty(d.give)&&mk==="e")toast(`${trTxt(d.give)} back with you.`);continue}
       if(t0.from===S.me&&t0.status==="accepted"&&mk!=="f"&&!t0.fromDone){const ref=db.doc("trades/"+t0.id),d=(await ref.get()).data()||{};if(d.status!=="accepted"||d.fromDone)continue;
         const D=(await db.doc("prefs/"+S.me).get()).data()||{};if((D.trDone||{})[t0.id]!=="f"){const W=trW(D),w=trN(d.want);trGive(W,{...w,cards:d.wantGiven||w.cards});const p=trPatch(W);p.trDone={[t0.id]:"f"};await db.doc("prefs/"+S.me).update(p);if(p.cards)q.cards={...(q.cards||{}),...p.cards};if(p.shards)q.shards={...(q.shards||{}),...p.shards};q.trDone={...(q.trDone||{}),[t0.id]:"f"};
@@ -6946,7 +6959,7 @@ async function cv2Strip(id,p,P){P=P||cardOld;const ref=db.doc(p),s=await ref.get
   if(Object.keys(u).length)await ref.update(u)}
 async function cv2One(id){const ref=db.doc("prefs/"+id),f=await ref.get();if(!f.exists)return false;let D=f.data()||{};
   if(!D.cv2){const patch=cv2Patch(id);await ref.update(patch);S.prefs[id]=S.prefs[id]||{};S.prefs[id].cards={...(S.prefs[id].cards||{}),...patch.cards};S.prefs[id].cv2=patch.cv2;D={...D,cv2:patch.cv2}}
-  const X=D.cv2;if(X.amt>0&&!(S.bank||[]).some(t=>t.id==="cv2_"+id)){const b=db.doc("bank/cv2_"+id);if(!(await b.get()).exists){const doc={from:"house",to:id,amt:Math.floor(X.amt),kind:"cv2",note:`Card system switch: 3× quick-sell of ${X.n} card${X.n===1?"":"s"}`,at:X.at||Date.now()};await b.set(doc);S.bank=S.bank||[];if(!S.bank.some(t=>t.id==="cv2_"+id))S.bank.push({id:"cv2_"+id,...doc})}}
+  const X=D.cv2;if(X.amt>0&&!!!bankById("cv2_"+id)){const b=db.doc("bank/cv2_"+id);if(!(await b.get()).exists){const doc={from:"house",to:id,amt:Math.floor(X.amt),kind:"cv2",note:`Card system switch: 3× quick-sell of ${X.n} card${X.n===1?"":"s"}`,at:X.at||Date.now()};await b.set(doc);S.bank=S.bank||[];if(!!!bankById("cv2_"+id))S.bank.push({id:"cv2_"+id,...doc})}}
   if(!X.vd){for(const p of X.docs||[]){try{await cv2Strip(id,p)}catch(e){console.warn("cv2 strip",p,e)}}await ref.update({cv2:{vd:true}});X.vd=true}
   return true}
 /* ===== Platinum Mysterio cleanup (owner, Oct 29 2:08 AM): the Platinum cards (rarity 7) leave the game; the Legendaries (Peter Griffin, Claire,
@@ -6959,7 +6972,7 @@ async function pmxOne(id){const ref=db.doc("prefs/"+id),f=await ref.get();if(!f.
     const tr=(S.trades||[]).filter(t=>t.from===id&&t.status==="open"&&(t.give&&t.give.cards||[]).some(pmGone));for(const t of tr)for(const g of t.give.cards.filter(pmGone)){amt+=qsOld(cardById(g));n++}
     const X={at:Date.now(),amt:amt*CV2_X,n,docs:[...it.map(x=>x.p),...tr.map(t=>"trades/"+t.id)],vd:false};const p={pmx:X};if(Object.keys(ch).length)p.cards=ch;await ref.update(p);
     S.prefs[id]=S.prefs[id]||{};if(p.cards)S.prefs[id].cards={...(S.prefs[id].cards||{}),...ch};S.prefs[id].pmx=X;D={...D,pmx:X}}
-  const X=D.pmx;if(X.amt>0&&!(S.bank||[]).some(t=>t.id==="pmx_"+id)){const b=db.doc("bank/pmx_"+id);if(!(await b.get()).exists){const doc={from:"house",to:id,amt:Math.floor(X.amt),kind:"cv2",note:`Platinum cards retired: 3× quick-sell of ${X.n} card${X.n===1?"":"s"}`,at:X.at};await b.set(doc);S.bank=S.bank||[];if(!S.bank.some(t=>t.id==="pmx_"+id))S.bank.push({id:"pmx_"+id,...doc})}}
+  const X=D.pmx;if(X.amt>0&&!!!bankById("pmx_"+id)){const b=db.doc("bank/pmx_"+id);if(!(await b.get()).exists){const doc={from:"house",to:id,amt:Math.floor(X.amt),kind:"cv2",note:`Platinum cards retired: 3× quick-sell of ${X.n} card${X.n===1?"":"s"}`,at:X.at};await b.set(doc);S.bank=S.bank||[];if(!!!bankById("pmx_"+id))S.bank.push({id:"pmx_"+id,...doc})}}
   if(!X.vd){for(const p of X.docs||[]){try{if(p.startsWith("trades/")){const r=db.doc(p),t=(await r.get()).data()||{};if(t.status==="open"){const g=trN(t.give);await r.update({give:{...g,cards:g.cards.filter(k=>!pmGone(k))},status:"cancelled",endAt:Date.now()})}}else await cv2Strip(id,p,pmGone)}catch(e){console.warn("pmx strip",p,e)}}await ref.update({pmx:{vd:true}});X.vd=true}
   if(id===S.me&&X.amt>0&&X.n)setTimeout(()=>toast(`💠 Platinum cards were retired: +${Math.floor(X.amt).toLocaleString()} BB for your ${X.n} card${X.n===1?"":"s"}`),1500)}
 async function pmxRun(){if(pmxRun.busy||!db||!S.me||!S.ready||S.readOnly||!cv2Loaded())return;pmxRun.busy=true;try{const q=S.prefs[S.me];if(q&&q.cv2&&q.cv2.vd&&(!q.pmx||!q.pmx.vd))await pmxOne(S.me);
@@ -6970,11 +6983,11 @@ setInterval(pmxRun,5000);
    (pulls log, pack "v2", its price) + upgrades + shard store (craftLog entries with `sh`, at ≥ cv2.at). bank/cv3_<id> {from:"house",kind:"cv2"}.
    Open trades / old shard listings / loan collateral holding pool cards or shards are stripped (no return) before the wipe. Own page; admin does offline players. */
 const CV3_BAL=2000000;
-async function cv3Bank(id,X){if(!X||!X.amt)return;const bid="cv3_"+id;if((S.bank||[]).some(t=>t.id===bid))return;const b=db.doc("bank/"+bid);if((await b.get()).exists)return;
-  const doc=X.amt>0?{from:"house",to:id,amt:X.amt}:{from:id,to:"house",amt:-X.amt};Object.assign(doc,{kind:"cv2",note:`Beta reset: balance set to ${CV3_BAL.toLocaleString()} BB`,at:X.at});await b.set(doc);S.bank=S.bank||[];if(!S.bank.some(t=>t.id===bid))S.bank.push({id:bid,...doc})}
+async function cv3Bank(id,X){if(!X||!X.amt)return;const bid="cv3_"+id;if(!!bankById(bid))return;const b=db.doc("bank/"+bid);if((await b.get()).exists)return;
+  const doc=X.amt>0?{from:"house",to:id,amt:X.amt}:{from:id,to:"house",amt:-X.amt};Object.assign(doc,{kind:"cv2",note:`Beta reset: balance set to ${CV3_BAL.toLocaleString()} BB`,at:X.at});await b.set(doc);S.bank=S.bank||[];if(!!!bankById(bid))S.bank.push({id:bid,...doc})}
 async function cv3Spend(id){const q=S.prefs[id]||{},t0=(q.cv2&&q.cv2.at)||0;let packs=0,n=0;const sn=await db.collection("pulls").where("uid","==",id).get();sn.docs.forEach(d=>{const x=d.data()||{};if(x.pack==="v2"&&(Number(x.at)||0)>=t0){packs+=Math.floor(Number(x.price)||0);n++}});
   let up=0;for(const [at,x] of Object.entries(q.craftLog||{}))if(Number(at)>=t0&&x&&x.sh!=null)up+=Math.floor(Number(x.fee)||0);return{packs,up,n}}
-async function cv3One(id){const ref=db.doc("prefs/"+id),f=await ref.get();if(!f.exists)return;const D=f.data()||{};if(D.cv3){await cv3Bank(id,D.cv3);return}if(!D.cv2||!D.cv2.vd||!D.pmx||!D.pmx.vd)return;/* after the Platinum payout, so it lands before the balance is set */if((D.pmx.amt>0&&!(S.bank||[]).some(t=>t.id==="pmx_"+id))||(D.cv2.amt>0&&!(S.bank||[]).some(t=>t.id==="cv2_"+id)))return;S.prefs[id]={...(S.prefs[id]||{}),...D};
+async function cv3One(id){const ref=db.doc("prefs/"+id),f=await ref.get();if(!f.exists)return;const D=f.data()||{};if(D.cv3){await cv3Bank(id,D.cv3);return}if(!D.cv2||!D.cv2.vd||!D.pmx||!D.pmx.vd)return;/* after the Platinum payout, so it lands before the balance is set */if((D.pmx.amt>0&&!!!bankById("pmx_"+id))||(D.cv2.amt>0&&!!!bankById("cv2_"+id)))return;S.prefs[id]={...(S.prefs[id]||{}),...D};
   /* strip docs first */
   for(const t of (S.trades||[]).filter(t=>t.status==="open"&&(t.from===id||t.to===id))){const g=trN(t.give),w=trN(t.want);if(![...g.cards,...w.cards].some(inPool)&&!Object.keys(g.sh).length&&!Object.keys(w.sh).length)continue;
     try{if(t.from===id)await db.doc("trades/"+t.id).update({give:{...g,cards:g.cards.filter(k=>!inPool(k)),sh:{}},status:"cancelled",endAt:Date.now()});else await trSetSt(t.id,"declined")}catch(_){}}
@@ -6988,7 +7001,7 @@ async function cv3One(id){const ref=db.doc("prefs/"+id),f=await ref.get();if(!f.
   await ref.update(p);const q=S.prefs[id];q.cards={...(q.cards||{}),...ch};q.cp={...(q.cp||{}),...cp};q.shards={...p.shards};q.cv3=p.cv3;q.v2pity=0;
   await cv3Bank(id,p.cv3);
   if(id===S.me)setTimeout(()=>{const o=document.createElement("div");o.className="overlay";o.innerHTML=`<div class="pickbox recapbox"><h3>🃏 Card reset</h3><p>Duplicates now fill a card's bar instead of turning into shards, so everyone starts fresh: no cards, no shards.</p><div class="tiamt num pos">${CV3_BAL.toLocaleString()} BB</div><p class="small muted">Everyone's balance has been set to ${CV3_BAL.toLocaleString()} BB for a fresh start.</p><button type="button" class="btn">Let's go</button></div>`;document.body.appendChild(o);o.querySelector("button").onclick=()=>{o.remove();render()}},800)}
-async function cv3Run(){if(cv3Run.busy||!db||!S.me||!S.ready||S.readOnly||!cv2Loaded()||!S.trades)return;cv3Run.busy=true;try{const q=S.prefs[S.me];if(q&&q.cv2&&q.cv2.vd&&(!q.cv3||(q.cv3.amt&&S.ld.bank&&!(S.bank||[]).some(t=>t.id==="cv3_"+S.me))))await cv3One(S.me);
+async function cv3Run(){if(cv3Run.busy||!db||!S.me||!S.ready||S.readOnly||!cv2Loaded()||!S.trades)return;cv3Run.busy=true;try{const q=S.prefs[S.me];if(q&&q.cv2&&q.cv2.vd&&(!q.cv3||(q.cv3.amt&&S.ld.bank&&!!!bankById("cv3_"+S.me))))await cv3One(S.me);
   if(S.canEdit)for(const id of members()){const p=S.prefs[id];if(!p||p.cv3||!p.cv2||!p.cv2.vd||!p.pmx||!p.pmx.vd||id===S.me||isOnline(id))continue;try{await cv3One(id)}catch(e){console.warn("cv3",id,e)}}}catch(e){console.warn("cv3",e)}finally{cv3Run.busy=false;cv2Gate()}}
 setInterval(cv3Run,3000);
 /* Admin card gifts (owner): prefs.cardGift {id,cid,n,note} (written by job-fix, e.g. drew10) → the player's own page, after the card reset, adds n
@@ -7015,11 +7028,11 @@ setInterval(lmxRun,4000);
 /* anyone's page: pending offers that point at an old card (a listing's or a direct one) are declined so the offerer's escrow goes back */
 async function cv2OfSweep(){for(const o of S.offers||[]){if(o.status!=="pending"||!cardOld(o.cid||""))continue;if(o.from!==S.me&&o.to!==S.me)continue;try{await ofSetStatus(o.id,"declined","Cards switched to the new system.")}catch(_){}}}
 async function cv2Run(){if(S._cv2Busy||!db||!S.me||!cv2Loaded())return;S._cv2Busy=true;
-  try{const q=S.prefs[S.me];if(q&&(!q.cv2||!q.cv2.vd||(q.cv2.amt>0&&!(S.bank||[]).some(t=>t.id==="cv2_"+S.me)))){const first=!q.cv2;await cv2One(S.me);if(first){renderSoon();setTimeout(()=>cv2Pop(),600)}}
+  try{const q=S.prefs[S.me];if(q&&(!q.cv2||!q.cv2.vd||(q.cv2.amt>0&&!!!bankById("cv2_"+S.me)))){const first=!q.cv2;await cv2One(S.me);if(first){renderSoon();setTimeout(()=>cv2Pop(),600)}}
     if(!S._cv2Of){S._cv2Of=1;cv2OfSweep()}
     if(S.canEdit)for(const id of members()){const p=S.prefs[id];if(!p||(p.cv2&&p.cv2.vd)||id===S.me||isOnline(id))continue;try{await cv2One(id)}catch(e){console.warn("cv2",id,e)}}}
   catch(e){console.warn("cv2",e)}finally{S._cv2Busy=false;cv2Gate()}}
-function cv2Gate(){const q=S.me&&S.prefs[S.me];const need=!!(db&&S.me&&S.ready&&q&&q.dfl&&(!q.cv2||!q.cv3||(q.cv2.amt>0&&S.ld.bank&&!(S.bank||[]).some(t=>t.id==="cv2_"+S.me))));let o=document.getElementById("cv2Ov");
+function cv2Gate(){const q=S.me&&S.prefs[S.me];const need=!!(db&&S.me&&S.ready&&q&&q.dfl&&(!q.cv2||!q.cv3||(q.cv2.amt>0&&S.ld.bank&&!!!bankById("cv2_"+S.me))));let o=document.getElementById("cv2Ov");
   if(need&&!o){o=document.createElement("div");o.id="cv2Ov";o.className="dflov";o.innerHTML=`<div><b>🃏 Switching your cards over…</b><span>New card system: one moment.</span></div>`;document.body.appendChild(o)}else if(!need&&o)o.remove()}
 setInterval(()=>{cv2Gate();cv2Run()},1500);
 function cv2Pop(){const q=S.prefs[S.me]||{},X=q.cv2;if(!X||$("#cv2Pop"))return;try{if(localStorage.getItem("sab-cv2pop")===String(X.at))return;localStorage.setItem("sab-cv2pop",String(X.at))}catch(_){}
@@ -7072,15 +7085,17 @@ const cfHasAb=k=>{const c=cardById(k);return c&&(ab2Of(c)||c.abil||c.div!=null)?
    marks the spin as used). The ledger treats it like any House payment. The wheel pops up on its own when a spin is ready. */
 /* owner, Oct 24 2:30 PM: 5% "shop item" slice (taken from the 1k slice): a random aura/emote/skin you don't own, odds ∝ 1/price */
 const WHEEL=[{a:0,p:20,c:"#3a3a46",t:"Nothing"},{a:0,p:5,c:"#d63384",t:"Shop item",shop:1},{a:1000,p:29.5,c:"#2f8f5b"},{a:2500,p:18,c:"#2f6fb5"},{a:5000,p:15,c:"#8a4fd0"},{a:10000,p:7,c:"#d0632f"},{a:20000,p:4.5,c:"#c9302c"},{a:50000,p:1,c:"#e8b423"}];/* 50k 0.5% → 1% (owner 6 PM, from the 1k slice) */
+/* perf Oct 31: bank doc lookup by id in O(1) (S.bank has thousands of docs; these checks ran many times per render). Rebuilt when the array or its length changes (local pushes append). */
+let _BKI={a:null,n:-1,m:null};function bankById(id){const B=S.bank||[];if(_BKI.a!==B||_BKI.n!==B.length){const m=new Map();for(const t of B)m.set(t.id,t);_BKI={a:B,n:B.length,m}}return _BKI.m.get(id)}
 const _WHF=()=>_WHF.f||(_WHF.f=new Intl.DateTimeFormat("en-CA",{timeZone:"America/New_York",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",hourCycle:"h23"}));/* one formatter (building one per call was slow on iPhone) */
-function wheelSlot(t){t=t==null?Date.now():t;const p=Object.fromEntries(_WHF().formatToParts(new Date(t)).map(x=>[x.type,x.value]));return `${p.year}-${p.month}-${p.day}${Number(p.hour)<12?"am":"pm"}`}
+let _WSC={};function wheelSlot(t){t=t==null?Date.now():t;const k=Math.floor(t/6e4);if(_WSC[k])return _WSC[k];const p=Object.fromEntries(_WHF().formatToParts(new Date(t)).map(x=>[x.type,x.value]));const v=`${p.year}-${p.month}-${p.day}${Number(p.hour)<12?"am":"pm"}`;if(Object.keys(_WSC).length>200)_WSC={};return _WSC[k]=v}
 /* bonus spins (owner, Oct 24): prefs.whFree = free spins granted (admin fix job); each one used = bank doc wheel_<me>_free<n> */
 const wheelFreeUsed=()=>(S.bank||[]).filter(t=>String(t.id||"").startsWith("wheel_"+S.me+"_free")).length;
 const wheelFreeLeft=()=>Math.max(0,(Number((S.prefs[S.me]||{}).whFree)||0)-wheelFreeUsed());
 /* Crab Impersonator (Card System V2, by level): n spins every 24/n hours (LV 2: 2 every 12 h, LV 5: 3 every 8 h, LV 7: 4 every 6 h); 12 h windows keep the old ids */
 const wheelCrab=()=>{const n=ab2("crab");return n>0?n:1},wheelWin=t=>{const n=wheelCrab();if(n<=2)return wheelSlot(t);const p=Object.fromEntries(_WHF().formatToParts(new Date(t==null?Date.now():t)).map(x=>[x.type,x.value])),h=24/n;return `${p.year}-${p.month}-${p.day}w${h}-${Math.floor(Number(p.hour)%24/h)}`};
-const wheelId=()=>{const has=x=>(S.bank||[]).some(t=>t.id===x),sid="wheel_"+S.me+"_"+wheelWin(),n=wheelCrab(),sf=["","_b","_c","_d"];for(let i=0;i<n;i++)if(!has(sid+sf[i]))return sid+sf[i];return wheelFreeLeft()>0?"wheel_"+S.me+"_free"+(wheelFreeUsed()+1):sid};
-const wheelReady=()=>!!S.me&&!!S.ld&&!!S.ld.bank&&!(S.bank||[]).some(t=>t.id===wheelId());
+const wheelId=()=>{const has=x=>!!bankById(x),sid="wheel_"+S.me+"_"+wheelWin(),n=wheelCrab(),sf=["","_b","_c","_d"];for(let i=0;i<n;i++)if(!has(sid+sf[i]))return sid+sf[i];return wheelFreeLeft()>0?"wheel_"+S.me+"_free"+(wheelFreeUsed()+1):sid};
+const wheelReady=()=>!!S.me&&!!S.ld&&!!S.ld.bank&&!!!bankById(wheelId());
 function wheelNextMs(){const now=Date.now(),s=wheelWin(now);let lo=now,hi=now+13*36e5;for(let i=0;i<40;i++){const m=(lo+hi)/2;if(wheelWin(m)===s)lo=m;else hi=m}return Math.max(0,hi-now)}
 /* the shop-item prize: every aura/emote/skin for sale that you don't own yet, chance ∝ 1/price (cheapest most likely) */
 function wheelShopPool(me){const out=[];AURAS.filter(a=>a.p>0&&!a.card&&!auOwns(me,a.id)).forEach(a=>out.push({kind:"aura",id:a.id,n:a.n+" aura",p:a.p}));
@@ -7113,7 +7128,7 @@ function wheelOpen(auto){if(!S.me||$("#whOv"))return;if(auto&&($("#recapOv")||$(
    Close locked, so a slow/stuck connection (or a busy admin page queueing migration writes) left a frozen popup. Now the wheel spins at once while the
    prize saves in the background; the result shows when the save lands (or "still saving" after 20 s), and Close always works. */
 async function wheelSpin(o,paid){if(S._whSpin||(!paid&&!wheelReady()))return;if(S.readOnly)return toast("View only. Ask the commish for access.");if(paid&&Math.floor(ledger().balOf(S.me))<WHEEL_PAID)return toast(`You need ${WHEEL_PAID.toLocaleString()} BB to spin.`);
-  const slot=wheelSlot(),at0=Date.now(),id=paid?`wheel_${S.me}_paid${at0}`:wheelId(),ref=db.doc("bank/"+id);if((S.bank||[]).some(t=>t.id===id)){toast("You already spun this one.");o.remove();return}
+  const slot=wheelSlot(),at0=Date.now(),id=paid?`wheel_${S.me}_paid${at0}`:wheelId(),ref=db.doc("bank/"+id);if(!!bankById(id)){toast("You already spun this one.");o.remove();return}
   S._whSpin=true;const go=o.querySelector("#whGo"),pay=o.querySelector("#whPay");go.disabled=true;pay.disabled=true;
   const k=wheelPick(),w=WHEEL[k],item=w.shop?wheelShopPick(S.me):null,amt=w.shop&&!item?WHEEL_SHOP_FALLBACK:w.a;
   const nt=(paid?"Paid spin":"Daily spin")+(item?" · "+item.n:paid?" · won "+amt.toLocaleString():"");
@@ -7188,12 +7203,14 @@ function slDraw(wins){const box=$(".slreels");if(!box)return;let sv=box.querySel
 /* reel strips: each reel shows 3 symbols (above, payline, below); a spin scrolls a long strip and stops with the result on the payline */
 const slCells=a=>a.map(k=>`<div class="slcell">${slIco(k)}</div>`).join("");
 function slRand(){const T=SL_W.reduce((a,b)=>a+b,0);let x=Math.random()*T;for(let k=0;k<SL_W.length;k++){x-=SL_W[k];if(x<0)return k}return 0}
-function slReelSpin(el,from,to,ms,calm){return new Promise(res=>{const strip=el.firstElementChild,ch=el.clientHeight/3,K=calm?0:16+Math.round(ms/90);
+function slReelSpin(el,from,to,ms,calm){return new Promise(res=>{let done=false,tk=0;const strip=el.firstElementChild,ch=el.clientHeight/3,K=calm?0:16+Math.round(ms/90);
   const seq=[...from,...Array.from({length:K},slRand),to[0],to[1],to[2]];strip.style.transition="none";strip.innerHTML=slCells(seq);strip.style.transform="translateY(0)";void strip.offsetHeight;
   const end=-(seq.length-3)*ch;if(calm){strip.style.transform=`translateY(${end}px)`;return setTimeout(fin,30)}
   strip.style.transition=`transform ${ms}ms cubic-bezier(.15,.65,.2,1)`;strip.style.transform=`translateY(${end}px)`;
-  let last=0;const tk=setInterval(()=>{const m=new DOMMatrixReadOnly(getComputedStyle(strip).transform),c=Math.floor(-m.m42/ch);if(c!==last){last=c;slTone(420+Math.random()*80,.03)}},40);
-  function fin(){clearInterval(tk);strip.style.transition="none";strip.innerHTML=slCells(to);strip.style.transform="translateY(0)";res()}
+  /* perf Oct 31: the tick sound follows the same easing worked out in JS (reading getComputedStyle every 40 ms forced a style recalc per reel and made spins stutter on phones) */
+  let last=0;const t0=performance.now(),dist=-end,bz=(a,b,t)=>3*a*t*(1-t)*(1-t)+3*b*t*t*(1-t)+t*t*t,ease=x=>{let lo=0,hi=1;for(let i=0;i<18;i++){const m=(lo+hi)/2;if(bz(.15,.2,m)<x)lo=m;else hi=m}return bz(.65,1,(lo+hi)/2)};
+  tk=setInterval(()=>{const x=Math.min(1,(performance.now()-t0)/ms),c=Math.floor(dist*ease(x)/ch);if(c!==last){last=c;slTone(420+Math.random()*80,.03)}},40);
+  function fin(){if(done)return;done=true;clearInterval(tk);strip.style.transition="none";strip.innerHTML=slCells(to);strip.style.transform="translateY(0)";res()}
   strip.addEventListener("transitionend",fin,{once:true});setTimeout(()=>{fin()},ms+400)})}
 /* the lever: drag it down (or tap it) to spin */
 function slLeverPull(){const lv=$("#slLever");if(!lv)return;lv.classList.remove("pull");void lv.offsetWidth;lv.classList.add("pull");setTimeout(()=>lv.classList.remove("pull"),700)}
@@ -7343,8 +7360,8 @@ function divCalc(id){const q=S.prefs[id]||{},cards=q.cards||{};
    5% of the part between 100k and 200k, 10% of 200k–500k, 15% above 500k. The BB is burned (paid to "house"). One bank doc per player per day. */
 const TAX_BR=[[100000,200000,.10],[200000,500000,.20],[500000,Infinity,.30]];/* owner Oct 25: rates ×2 (were 5/10/15%) */
 const taxOf=b=>Math.floor(TAX_BR.reduce((t,[lo,hi,r])=>t+Math.max(0,Math.min(b,hi)-lo)*r,0));
-async function richTax(day){const id="tax_"+S.me+"_"+day,ref=db.doc("bank/"+id);if((S.bank||[]).some(t=>t.id===id))return;const bal=Math.floor(ledger().balOf(S.me)),amt=taxOf(bal);if(!(amt>0))return;
-  const ex=await ref.get();if(ex.exists)return;const doc={from:S.me,to:"house",amt,kind:"tax",note:`${day} · on ${bal.toLocaleString()} BB`,day,bal,at:Date.now()};await ref.set(doc);S.bank=S.bank||[];if(!S.bank.some(t=>t.id===id))S.bank.push({id,...doc});renderSoon()}
+async function richTax(day){const id="tax_"+S.me+"_"+day,ref=db.doc("bank/"+id);if(!!bankById(id))return;const bal=Math.floor(ledger().balOf(S.me)),amt=taxOf(bal);if(!(amt>0))return;
+  const ex=await ref.get();if(ex.exists)return;const doc={from:S.me,to:"house",amt,kind:"tax",note:`${day} · on ${bal.toLocaleString()} BB`,day,bal,at:Date.now()};await ref.set(doc);S.bank=S.bank||[];if(!!!bankById(id))S.bank.push({id,...doc});renderSoon()}
 /* ===== Oct 23 deflation (owner): every balance ÷15 with a 10,000 minimum, Flappy Cheese upgrades reset, rat hunt counter moved to 1 per 6 dealer 21s.
    One-time per player, stored on prefs: rb15 = new − old balance (added in ledger().balOf), rbFrom/rbTo, dfl, dflAt. A player's own page does it
    as soon as everything that feeds the balance has loaded (UI blocked until then); the admin's page also does it for players who are offline. */
@@ -7484,6 +7501,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:196,d:"Oct 31",t:[["🃏","The BiggieCheese Pack now costs 10,000 BB"],["🪑","United We Sit pays a little less: ×1.025 / 1.075 / 1.125 / 1.175 by level"],["⚡","Casino games run smoother: slot spins no longer stutter and the app uses much less battery while you play"],["🎯","BiggieTown: the sniper drops out of the scope after every shot. Aim again to scope back in"]]},
  {v:195,d:"Oct 31",t:[["🐀","The blackjack rat runs a bit slower (75% of its old speed)"],["🤠","BiggieTown looks a little sharper on phones"]]},
  {v:194,d:"Oct 31",t:[["🪑","United We Sit pays a little less: ×1.05 / 1.1 / 1.15 / 1.2 by level"]]},
  {v:193,d:"Oct 31",t:[["🖼️","New card art: Zyn Tower and Caf Monster"]]},
@@ -7875,7 +7893,7 @@ setTimeout(chatPrune,15000);
 /* one-time 50,000 BB dev fee to Chancellor Zartog (owner, Oct 22), paid by the house. Written once by the owner's page; the fixed
    doc id makes it impossible to pay twice. */
 const ZB_ONCE={id:"devfee_zartog_once",to:"u_jzH6I8emDBcqWaXJhIX_HA",amt:50000};
-async function zbOnce(){if(!db||S.me!=="u_IfmXeDmDg1B3W4naCzVbSA"||!S.ready||!Array.isArray(S.bank))return;if(S.bank.some(t=>t.id===ZB_ONCE.id))return;
+async function zbOnce(){if(!db||S.me!=="u_IfmXeDmDg1B3W4naCzVbSA"||!S.ready||!Array.isArray(S.bank))return;if(!!bankById(ZB_ONCE.id))return;
   try{const ref=db.doc("bank/"+ZB_ONCE.id);const ex=await ref.get();if(ex.exists)return;await ref.set({from:"house",to:ZB_ONCE.to,amt:ZB_ONCE.amt,note:"Dev fee · one-time",kind:"shopfee",at:Date.now()});
     try{db.collection("chat").add({type:"bet",kind:"bank",uid:S.me,poster:S.me,at:Date.now(),text:`🏦 The house paid ${nm(ZB_ONCE.to)} a one-time 50,000 BB dev fee`})}catch(_){}}catch(_){}}
 /* one-time (owner, Oct 22): give back today's King Slop respins after the respin bet mix-up */
@@ -8083,7 +8101,7 @@ const SHAB_AMT_0=25000,shabAmt=()=>ab2("shabbat")||SHAB_AMT_0,shabBack=a=>Math.r
 const BTC_AMT=10000;
 async function cbAuto(){if(!S.ready||!S.me||!db||S.readOnly||!S.ld||!S.ld.bank||cbAuto.busy)return;cbAuto.busy=true;
   try{const day=divDay(),q=S.prefs[S.me]||{};
-    if(ab2("btc")>0&&Math.floor(ledger().balOf(S.me))<1){const BTC_AMT=ab2("btc");const id="btc_"+S.me+"_"+day;if(!(S.bank||[]).some(t=>t.id===id)){const ref=db.doc("bank/"+id);if(!(await ref.get()).exists){await ref.set({from:"house",to:S.me,amt:BTC_AMT,kind:"gift",note:"Bitcoin to Zero stimulus",at:Date.now()});toast(`📉 Bitcoin to Zero: the House sent you a ${BTC_AMT.toLocaleString()} BB stimulus check.`);try{db.collection("chat").add({type:"bet",kind:"bank",uid:S.me,poster:S.me,at:Date.now(),text:`📉 ${nm(S.me)} went to zero and cashed a ${BTC_AMT.toLocaleString()} BB Bitcoin to Zero stimulus`})}catch(_){}}}}
+    if(ab2("btc")>0&&Math.floor(ledger().balOf(S.me))<1){const BTC_AMT=ab2("btc");const id="btc_"+S.me+"_"+day;if(!!!bankById(id)){const ref=db.doc("bank/"+id);if(!(await ref.get()).exists){await ref.set({from:"house",to:S.me,amt:BTC_AMT,kind:"gift",note:"Bitcoin to Zero stimulus",at:Date.now()});toast(`📉 Bitcoin to Zero: the House sent you a ${BTC_AMT.toLocaleString()} BB stimulus check.`);try{db.collection("chat").add({type:"bet",kind:"bank",uid:S.me,poster:S.me,at:Date.now(),text:`📉 ${nm(S.me)} went to zero and cashed a ${BTC_AMT.toLocaleString()} BB Bitcoin to Zero stimulus`})}catch(_){}}}}
     if(ab2("rotunda")>0){const WR=ledger().wr[S.me]||{},ids=Object.keys(WR);
       if(!Array.isArray(q.rrbSeen)){q.rrbSeen=ids;await db.doc("prefs/"+S.me).update({rrbSeen:ids})}
       else{const seen=new Set(q.rrbSeen),nw=ids.filter(i=>!seen.has(i));if(nw.length){const fp={...(q.freePk||{})},got=[];
@@ -8115,7 +8133,7 @@ async function stealProc(){if(stealProc.busy||!S.me||S.readOnly)return;stealProc
 function cbBankHtml(){const day=divDay(),q=S.prefs[S.me]||{},out=[],L=ledger(),ppl=members().filter(id=>id!==S.me&&teamOf(id));
   const ch=ab2("chris");if(ch>0){const [sr,sn]=chrisSh(ch),used=q.chrisDay===day,opts=ppl.map(id=>({id,n:shardsOf(id)[sr]})).filter(x=>x.n>0).sort((a,b)=>b.n-a.n);
     out.push(`<section class="card"><h3>🕵️ Chris from Tinder</h3><p class="small muted">Once a day, steal ${shTxt(sr,sn)} from another player.</p>${used?`<p class="small">Used today. Back at 12:01 AM.</p>`:opts.length?`<div class="row bkform"><label class="grow">Player<select id="chrisWho">${opts.map(x=>`<option value="${esc(x.id)}">${esc(nm(x.id))} · has ${x.n.toLocaleString()}</option>`).join("")}</select></label><button type="button" class="btn" data-abbk="chris">Steal</button></div>`:`<p class="small muted">Nobody has ${esc(CR[sr].n)} shards to take right now.</p>`}</section>`)}
-  const nf=ab2("newfriend");if(nf>0){const used=(S.bank||[]).some(t=>t.id==="nf_"+S.me+"_"+day),amt=Math.floor(Math.floor(L.balOf(S.me))*nf/100);
+  const nf=ab2("newfriend");if(nf>0){const used=!!bankById("nf_"+S.me+"_"+day),amt=Math.floor(Math.floor(L.balOf(S.me))*nf/100);
     out.push(`<section class="card"><h3>🦭 New Friend</h3><p class="small muted">Once a day, the House sends a player of your choice a stimulus worth ${pctTxt(nf)} of your balance (${amt.toLocaleString()} BB right now). It doesn't cost you anything.</p>${used?`<p class="small">Sent today. Back at 12:01 AM.</p>`:`<div class="row bkform"><label class="grow">Player<select id="nfWho">${ppl.map(id=>`<option value="${esc(id)}">${esc(nm(id))}</option>`).join("")}</select></label><button type="button" class="btn" data-abbk="newfriend" ${amt>0?"":"disabled"}>Send ${amt.toLocaleString()} BB</button></div>`}</section>`)}
   return out.join("")}
 document.addEventListener("change",e=>{const t=e.target.closest("[data-chriswho]");if(t){S.chrisWho=t.value;render()}});
@@ -8569,7 +8587,7 @@ const TOUR={fp:{n:"Flappy",fee:3000,what:"score",ic:"🧀"},hl:{n:"High-Low",fee
 const tourRef=()=>{if($("#tbjOv"))tbjDraw();if(S.tab==="blackjack"){const el=$("#tourBj");if(el){const x=tourHtml("bj");if(el._x!==x){el._x=x;el.innerHTML=x}}return}if(S.tab==="hilo"&&typeof hlRefresh==="function")hlRefresh();else if(S.tab==="flappy")fpStats();else render()};
 const tourId=(g,day,id)=>`tour_${g}_${day}_${id||S.me}`;
 const tourEntries=(g,day)=>(S.bank||[]).filter(t=>t.kind==="tourney"&&t.g===g&&t.day===day&&t.from);
-const tourMine=g=>(S.bank||[]).find(t=>t.id===tourId(g,divDay()));
+const tourMine=g=>bankById(tourId(g,divDay()));
 /* pot from what each entry actually paid (the fee changed 2,500 → 3,000 on Oct 25) */const tourPaid=(g,day)=>tourEntries(g,day).reduce((a,t)=>a+(Math.floor(Number(t.amt))||0),0);
 const tourPot=(g,day)=>Math.floor(tourPaid(g,day)*TOUR_CUT);
 const tourRank=E=>E.slice().sort((a,b)=>(Number(b.best)||0)-(Number(a.best)||0)||(Number(a.bestAt)||9e15)-(Number(b.bestAt)||9e15)||String(a.from).localeCompare(String(b.from)));
@@ -8582,10 +8600,10 @@ async function tourEnter(g){if(S.readOnly)return toast("View only. Ask the commi
   catch(e){toast("Couldn't enter. Check your connection.")}finally{S._tourBusy=false;tourRef()}}
 /* use one try (true = ok) */
 async function tourTry(g){const e=tourMine(g);if(!e||tourLeft(g)<=0)return false;const n=(Number(e.tries)||0)+1;e.tries=n;try{await db.doc("bank/"+e.id).update({tries:n})}catch(_){}return true}
-async function tourScore(g,v,day){const e=(S.bank||[]).find(t=>t.id===tourId(g,day));if(!e||day!==divDay())return;if(!(v>(Number(e.best)||0)))return;e.best=v;e.bestAt=Date.now();try{await db.doc("bank/"+e.id).update({best:v,bestAt:e.bestAt})}catch(_){}}
+async function tourScore(g,v,day){const e=bankById(tourId(g,day));if(!e||day!==divDay())return;if(!(v>(Number(e.best)||0)))return;e.best=v;e.bestAt=Date.now();try{await db.doc("bank/"+e.id).update({best:v,bestAt:e.bestAt})}catch(_){}}
 async function tourSettle(){if(!S.ready||!S.ld||!S.ld.bank||tourSettle.busy)return;tourSettle.busy=true;const today=divDay();
   try{const days={};for(const t of S.bank||[])if(t.kind==="tourney"&&t.day&&t.day<today&&TOUR[t.g])days[t.g+"|"+t.day]=1;
-    for(const k of Object.keys(days)){const[g,day]=k.split("|"),pid="tourpay_"+g+"_"+day;if((S.bank||[]).some(t=>t.id===pid))continue;const E=tourEntries(g,day);if(!E.length)continue;const w=tourRank(E)[0];
+    for(const k of Object.keys(days)){const[g,day]=k.split("|"),pid="tourpay_"+g+"_"+day;if(!!bankById(pid))continue;const E=tourEntries(g,day);if(!E.length)continue;const w=tourRank(E)[0];
       const ref=db.doc("bank/"+pid);if((await ref.get()).exists)continue;
       /* owner, Oct 25: 1 player → refund. Tie for first: 2 players → both refunded; 3+ players → the pot split evenly among the tied (whole BB). */
       const top=Number(w.best)||0,tied=E.filter(t=>(Number(t.best)||0)===top),N=TOUR[g].n,pays={};let note;

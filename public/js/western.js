@@ -1141,7 +1141,7 @@ body.wwon{overflow:hidden}
   function swapGun() { if (G.state !== "play" || (G.car && G.car.mine)) return; G.amm[G.wpn] = G.ammo; G.wpn = G.wpn === "rv" ? "sn" : "rv"; G.ammo = G.amm[G.wpn]; G.reloading = 0;
     G.aimToggle = false; G.gun.visible = G.wpn === "rv"; G.gunS.visible = G.wpn === "sn"; G.recoil = .6; SFX.reload(); drawAmmo(); banner("", G.wpn === "sn" ? "Sniper · aim in to scope (5×)" : "Revolver");
     if (G.mode === "pvp") nsend({ t: "wpn", w: G.wpn }); const b = G.hud.querySelector("#wwBW"); if (b) b.textContent = "SWAP"; }
-  function reload() { if (G.reloading || G.ammo >= MAGS[G.wpn]) return; G.reloading = RLS[G.wpn]; SFX.reload(); if (G.mode === "pvp") nsend({ t: "rl", w: G.wpn }); }
+  function reload() { if (G.reloading || G.ammo >= MAGS[G.wpn]) return; G.reloading = RLS[G.wpn]; if (G.wpn === "sn") { G.aimHeld = false; G.aimToggle = false; } /* owner Oct 31: the sniper drops out of the scope on every bolt/reload; aim again to scope back in */ SFX.reload(); if (G.mode === "pvp") nsend({ t: "rl", w: G.wpn }); }
   function fire() {
     if (G.state !== "play" || G.dead || (G.car && G.car.mine)) return; const now = performance.now();
     if (G.reloading) return; if (now - G.lastShot < FIRE_GAP[G.wpn]) return; if (G.ammo <= 0) { SFX.click(); reload(); return; }
