@@ -7502,6 +7502,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:198,d:"Oct 31",t:[["🖼️","Fixed: picking a photo (profile picture, chat photo) sometimes did nothing if the page updated while your photo library was open"]]},
  {v:197,d:"Oct 31",t:[["⚡","Taps respond faster: the slot machine starts spinning sooner and the app does less work after every spin"]]},
  {v:196,d:"Oct 31",t:[["🃏","The BiggieCheese Pack now costs 10,000 BB"],["🪑","United We Sit pays a little less: ×1.025 / 1.075 / 1.125 / 1.175 by level"],["⚡","Casino games run smoother: slot spins no longer stutter and the app uses much less battery while you play"],["🎯","BiggieTown: the sniper drops out of the scope after every shot. Aim again to scope back in"]]},
  {v:195,d:"Oct 31",t:[["🐀","The blackjack rat runs a bit slower (75% of its old speed)"],["🤠","BiggieTown looks a little sharper on phones"]]},
@@ -9118,7 +9119,7 @@ function render(){if(S._rTab!==S.tab){const was=S._rTab;S._rTab=S.tab;if(was==="
     bjReactScan();const vw=$("#bjViewers");if(vw){const x=bjViewersHtml();if(x!==S._bjVw){S._bjVw=x;vw.innerHTML=x}}
     {const tb=$("#tourBj");if(tb){const x=tourHtml("bj");if(tb._x!==x){tb._x=x;tb.innerHTML=x}}}
     const lb=$("#bjLB");if(lb){const x=bjLiveStrip()+bjBoard();if(S._bjLB==null)S._bjLB=x;else if(x!==S._bjLB){S._bjLB=x;lb.innerHTML=x}}}
-  else if((S.housePick&&v.querySelector("#houseModal"))||(S.futPick&&v.querySelector("#futModal"))||(document.activeElement&&v.contains(document.activeElement)&&/^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName))){
+  else if((S._fpAt&&Date.now()-S._fpAt<9e4&&v.querySelector('input[type="file"]'))||(S.housePick&&v.querySelector("#houseModal"))||(S.futPick&&v.querySelector("#futModal"))||(document.activeElement&&v.contains(document.activeElement)&&/^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName))){
     /* Someone is filling in a form: don't redraw the page under them (that reset bet amounts to 100) */
     if(S.housePick)housePrev()}
   else{mountChat(false);S._bjSig=null;const x=({usage:viewUsage,news:viewNews,guide:viewGuide,ach:viewAch,craft:viewCraft,bank:viewBank,aura:viewAura,home:viewHome,board:viewBoard,futures:viewFutures,nfl:viewNfl,nba:viewNba,nhl:viewNhl,mine:viewMine,standings:viewStandings,setup:viewSetup}[S.tab]||viewBoard)();
@@ -9652,6 +9653,11 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape")closeReact()});
 /* Images ride inside the database: small ones in the message, big ones split into ~600 KB pieces in "media" docs and stitched back together */
 const MEDIA={},MEDIA_LOADING={};const PIECE=240000;
 const fileToDataURL=f=>new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=no;r.readAsDataURL(f)});
+/* owner Oct 31 ("can't put an image in for a card"): a background redraw while the phone's photo picker was open replaced the file input, so the
+   picked photo landed on a detached input and its change event never reached the page. Now: no redraw of the page under an open picker (S._fpAt,
+   cleared on change / 90 s), and if the input was replaced anyway it is put back into the page and the change is sent again. Covers every file input. */
+document.addEventListener("click",e=>{const i=e.target;if(!(i instanceof HTMLInputElement)||i.type!=="file")return;S._fpAt=Date.now();if(i._fpw)return;i._fpw=1;
+  i.addEventListener("change",()=>{S._fpAt=0;if(i.isConnected)return;const h=document.createElement("div");h.hidden=true;h.appendChild(i);document.body.appendChild(h);i.dispatchEvent(new Event("change",{bubbles:true}));setTimeout(()=>h.remove(),12e4)})},true);
 async function toJpeg(f,max=1000){let img=null;
   /* decode any picture the browser can read (big phone photos, HEIC on iPhone, PNG, WebP, GIF); try three ways */
   const viaImg=src=>new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=src});
