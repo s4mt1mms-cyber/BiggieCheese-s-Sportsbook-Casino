@@ -7170,7 +7170,7 @@ const SL_SYM=["▫️","🍒","🍋","🔔","🧀","💎","7️⃣"],SL_WR=[[116
 /* Progressive jackpot (owner, Oct 24): 1% of every bet (slWag) feeds a shared pot; three 7s win pot × bet/SL_MAX on top of the ×391 line pay
    (777 was ×750; the 359× cut is exactly the 1% that funds the pot, so base 94.0% + pot 1% ≈ 95% RTP). The pot is derived, not stored:
    SL_JP_SEED + floor(1% × Σ prefs.slWag) − Σ prefs.slJP (jackpots paid). Jackpot BB is part of slNet like any slots win. */
-const SL_JP_SEED=10000,SL_JP_RATE=.01,SL_JP_ADD=.005/* from Oct 29: 1.5% of every bet (slWag2 = wagers since then) */,SL_NM=["Blank","Cherry","Lemon","Bell","Cheese","Diamond","Seven"];
+const SL_JP_SEED=100000,SL_JP_RATE=.01,SL_JP_ADD=.005/* from Oct 29: 1.5% of every bet (slWag2 = wagers since then) */,SL_NM=["Blank","Cherry","Lemon","Bell","Cheese","Diamond","Seven"];
 function slOdds(){if(slOdds.c)return slOdds.c;const T=SL_WR.map(w=>w.reduce((a,b)=>a+b,0)),o={};let rtp=0;for(let a=0;a<7;a++)for(let b=0;b<7;b++)for(let c=0;c<7;c++){const p=SL_WR[0][a]/T[0]*SL_WR[1][b]/T[1]*SL_WR[2][c]/T[2],[m,k]=slRule([a,b,c]);if(k)o[k]=(o[k]||0)+p;rtp+=p*m}return slOdds.c={o,rtp}}
 function slPayHtml(){const{o,rtp}=slOdds(),odd=k=>{const p=o[k]||0;return p?`<small class="slodd">${p>=.01?(p*100).toFixed(1):(p*100).toFixed(p>=.001?2:3)}% · 1 in ${Math.round(1/p).toLocaleString()}</small>`:""},i3=(k,n)=>Array.from({length:n||3},()=>slIco(k,"slpic")).join(""),
     row=(lbl,m,k)=>`<div><span class="slpi">${lbl}</span><span class="slpr"><b class="num">×${m}</b>${odd(k)}</span></div>`,any=o3=>Object.values(o).reduce((a,b)=>a+b,0);
@@ -7507,6 +7507,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:205,d:"Oct 31",t:[["🎰","The slots jackpot now starts at 100,000 BB (was 10,000), so it's 90,000 bigger right now"]]},
  {v:204,d:"Oct 31",t:[["🎰","Slots max bet is now 10,000 BB a spin (2,000 per line). The jackpot share follows it: a max bet wins the whole pot"]]},
  {v:203,d:"Oct 31",t:[["⬆️","Upgrading cards is much smoother: the animation starts right away"],["⚡","New collection sort: “Abilities first” puts your ability cards that are ready to upgrade on top"]]},
  {v:202,d:"Oct 31",t:[["🪑","United We Sit bonus set to ×1.06 / 1.11 / 1.16 / 1.21 by level"]]},
