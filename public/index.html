@@ -6459,7 +6459,7 @@ const AB2={
   "cb:gigachad":{k:"giga",v:abOff(abLn(1,.4,6)),t:v=>`Casino wins pay ${pctTxt(v)} more while someone is watching your table`},
   "cb:caleblynady":{k:"caleb",v:abLn(5,1.25,5),t:v=>`Blackjack: busting gives back ${pctTxt(v)} of that hand's bet`},
   "cb:therotundarumbledisaster":{k:"rotunda",v:[1,1.5,2],t:v=>`Winning a sports bet at +200 or longer earns free BiggieCheese Packs: ${v===1?"1":v+"×"} per +200 of odds (+200 = ${Math.floor(v)}, +400 = ${Math.floor(2*v)}, +600 = ${Math.floor(3*v)} …)`},
-  "cb:summer2024":{k:"summer",v:[2,2.5,3],t:v=>`Craps: every roll in a row that isn't a 7 adds ${pctTxt(v)} to all your winning bets (1 roll +${pctTxt(v)}, 2 rolls +${pctTxt(+(2*v).toFixed(2))} …). A 7 or leaving the table resets it`},/* owner Oct 31: new ability (was Red/Black refunds on green) */
+  "cb:summer2024":{k:"summer",v:[.5,.75,1]/* owner Nov 1: nerf (was 2/2.5/3) */,t:v=>`Craps: every roll in a row that isn't a 7 adds ${pctTxt(v)} to all your winning bets (1 roll +${pctTxt(v)}, 2 rolls +${pctTxt(+(2*v).toFixed(2))} …). A 7 or leaving the table resets it`},/* owner Oct 31: new ability (was Red/Black refunds on green) */
   "cb:bitcointozero":{k:"btc",v:[10000,15000,20000],t:v=>`Once a day, if your balance hits zero the House sends a ${v.toLocaleString()} BB stimulus check`},
   "fl:thevailgrail":{k:"vail",v:[2,3.5,5],t:v=>`Card packs are ${pctTxt(v)} off`},
   /* owner Oct 31 patch brief: new Elites/Grails (work from LV 1) */
@@ -7512,6 +7512,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:208,d:"Nov 1",t:[["🌴","Summer 2024 nerfed: each non-7 roll in a row now adds 0.5% / 0.75% / 1% (LV 1 / 2 / 3) to your craps wins"]]},
  {v:207,d:"Nov 1",t:[["🎖️","Captain Von Trap pays much more: up to +20 BB a day for every upgraded card you own (+2 at LV 2 up to +20 at max)"]]},
  {v:206,d:"Oct 31",t:[["🔍","Card collections now have a search box: find cards by name, rarity, collection or ability"]]},
  {v:205,d:"Oct 31",t:[["🎰","The slots jackpot now starts at 100,000 BB (was 10,000), so it's 90,000 bigger right now"]]},
