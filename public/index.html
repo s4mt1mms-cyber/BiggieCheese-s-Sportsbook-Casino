@@ -303,7 +303,7 @@ td.r,th.r{text-align:right}
 .bkstats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.bkstats>div{background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:8px;padding:6px 8px;display:flex;flex-direction:column}.bkstats span{font-size:11px;color:var(--muted)}.bkstats b{font-size:16px}
 @media (max-width:480px){.bkstats{grid-template-columns:repeat(2,1fr)}}
 .bkcoll{display:flex;flex-wrap:wrap;gap:6px}.bkcoll>span{font-size:12px;padding:3px 8px;border-radius:99px;border:1px solid var(--c);color:var(--c);cursor:pointer;display:inline-flex;gap:4px;align-items:center}.bkcoll button{background:none;border:0;color:inherit;cursor:pointer;padding:0 2px}
-.bkrow{border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:6px}.bkadm{margin:6px 0 4px;padding:8px 10px;border:1px dashed #ff5c5c66;border-radius:10px;display:flex;flex-direction:column;gap:6px}.bkrh{display:flex;gap:8px;align-items:center}.bkchip{font-size:11px;font-family:var(--mono);padding:2px 8px;border-radius:99px;border:1px solid var(--muted);color:var(--muted);white-space:nowrap}
+.drewcl:empty{display:none}.drewcl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;margin:6px 0}.bkrow{border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:6px}.bkadm{margin:6px 0 4px;padding:8px 10px;border:1px dashed #ff5c5c66;border-radius:10px;display:flex;flex-direction:column;gap:6px}.bkrh{display:flex;gap:8px;align-items:center}.bkchip{font-size:11px;font-family:var(--mono);padding:2px 8px;border-radius:99px;border:1px solid var(--muted);color:var(--muted);white-space:nowrap}
 .bkchip.late{border-color:#ff9f1a;color:#ff9f1a}.bklate{color:#ffb347}
 .bkls b{font-size:14px}.bkpay{align-items:center;gap:6px}.bkpay input{width:110px}.bkcoll>span.seized{border-style:dashed;opacity:.75}
 .bkcl{display:flex;flex-direction:column;gap:4px}.bkcl>div{display:flex;align-items:center;gap:6px;border:1px solid var(--c);border-radius:8px;padding:3px 6px;font-size:13px}.bkcl span{flex:1;color:var(--c);min-width:0}.bkcl button{background:none;border:1px solid var(--line);border-radius:5px;color:var(--ink);cursor:pointer;width:28px;height:26px}.bkcl button:disabled{opacity:.3}
@@ -1114,7 +1114,7 @@ body.idlefx .bjsvov *,body.idlefx .bjsvov{animation-play-state:running!important
 .felt>.streak{position:absolute;top:36px;left:14px;font-size:11px;font-weight:800;color:#f5cf5d;z-index:3}
 .reactbar{position:fixed;left:max(14px,env(safe-area-inset-left,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:14;display:flex;flex-direction:column;gap:10px}
 .reactbar button{width:52px;height:52px;border-radius:50%;border:1px solid #3a3420;background:rgba(0,0,0,.8);font-size:26px;line-height:1;cursor:pointer;display:grid;place-items:center;transition:transform .1s}
-.reactbar button:active{transform:scale(.85)}
+.reactbar button:active{transform:scale(.85)}.reactbar.rxw{display:grid;grid-template-columns:repeat(2,44px);gap:8px}.reactbar.rxw button{width:44px;height:44px;font-size:21px}
 #floats{position:fixed;left:max(14px,env(safe-area-inset-left,0px));bottom:calc(84px + env(safe-area-inset-bottom,0px));width:80px;height:0;z-index:40;pointer-events:none}
 .floater{position:absolute;bottom:0;line-height:1;animation:floatUp 2.8s ease-out forwards;will-change:transform,opacity}
 @keyframes floatUp{0%{transform:translate(0,0) scale(.4);opacity:0}10%{transform:translate(calc(var(--dx)*.1),-30px) scale(1.1);opacity:1}100%{transform:translate(var(--dx),-62vh) scale(.9);opacity:0}}
@@ -3748,7 +3748,7 @@ function viewRoulette(){if(!S.me)return `<div class="empty">Sign in to play.</di
     const am=(i*seg-90)*Math.PI/180,tx=(150+122*Math.cos(am)).toFixed(2),ty=(150+122*Math.sin(am)).toFixed(2);wedges+=`<text x="${tx}" y="${ty}" transform="rotate(${(i*seg).toFixed(2)} ${tx} ${ty})" class="wn">${n}</text>`});
   let cells="";for(let c=0;c<12;c++)for(let r=0;r<3;r++){const n=c*3+(3-r);cells+=`<button type="button" class="rlcell ${rlColor(n)}" style="grid-column:${c+2};grid-row:${r+1}" data-rl="n${n}">${n}<i></i></button>`}
   ["c3","c2","c1"].forEach((k,r)=>cells+=`<button type="button" class="rlout col" style="grid-column:14;grid-row:${r+1}" data-rl="${k}">2:1<i></i></button>`);
-  return `<div class="rlwrap">${watching?"":actBar("rl")}${watching?`<div class="reactbar"><button type="button" data-react="❤️" aria-label="Send a heart">❤️</button><button type="button" data-react="🔥" aria-label="Send fire">🔥</button><button type="button" data-react="😭" aria-label="Send crying">😭</button></div>
+  return `<div class="rlwrap">${watching?"":actBar("rl")}${watching?`${rxBar("rl")}
     <div class="bjwatchbar"><span>${pic(who)}<span><span class="eyebrow">${rlIsLive(who)?'<span class="livedot"></span>Watching live':"Watching"}</span><b>${esc(nm(who))}</b></span></span><button type="button" class="btn ghost" data-rlwatch="">Back to my table</button></div>`:`<div id="rlViewers"></div>`}
   <section class="rlstage"><div class="rltop"><div class="ratdealer rat2" id="rlRat" style="--rd:0s">${RAT2_SVG}</div><div class="rlside"><span class="eyebrow muted">Balance</span><span class="bjbal num" id="rlBal"></span>${watching?"":sessChip("rl")}<div class="rlhist" id="rlHist"></div></div></div>
     <div class="wheelbox"><div class="wheelptr"></div><svg viewBox="0 0 300 300" class="wheel" id="rlWheel"><circle cx="150" cy="150" r="148" class="wrim"/>${wedges}<circle cx="150" cy="150" r="70" class="whub"/><circle cx="150" cy="150" r="62" class="whub2"/>
@@ -3816,6 +3816,9 @@ async function rlSpin(rs){const st=rlState();if(st.spinning||rlWho()!==S.me)retu
   if(tot<10)return toast("Minimum total bet is 10 BB.");if(tot>bal){if(rs){st.bets={};st.cnt={}}return toast("Not enough BiggieBucks for those bets.")}
   const u=new Uint32Array(1);crypto.getRandomValues(u);const n=RL_ORDER[u[0]%37];
   let win=0;{const chb=ab2("chad"),sum=ab2("summer");for(const[k,v]of Object.entries(st.bets)){const s=rlSpot(k);if(s&&s.win(n)){win+=v*(s.pay+1);if(k==="d1"&&chb>0)win+=Math.floor(v*s.pay*chb/100)}}}/* Summer 2024 is a craps card since Oct 31 (its roulette refund is gone) */
+  /* Don't Jump In (owner Nov 1): wins on the same color (red/black) spins in a row; the k-th in a row pays (k−1)·v % of that color bet extra (not compounded) */
+  {const dj=ab2("djump"),col=n===0?null:RL_RED.has(n)?"red":"black",c0=rs?S.rlCs0:S.rlCs;if(!rs)S.rlCs0=S.rlCs;
+    if(col&&(st.bets[col]||0)>0){S.rlCs=c0&&c0.c===col?{c:col,k:c0.k+1}:{c:col,k:1};if(dj>0&&S.rlCs.k>1){const x=Math.floor(st.bets[col]*dj*(S.rlCs.k-1)/100);if(x>0){win+=x;S.rlDj=x}}}else S.rlCs=null}
   const delta=win-tot+abWin(win-tot,ab2("gooner"),tot>=bal),now=Date.now(),bets={...st.bets};S.balHold={v:Math.round(ledger().balOf(S.me)+back)-tot,until:now+12000};st.lastBets=bets;st.lastCnt={...(st.cnt||{})};try{localStorage.setItem("sab-rllast",JSON.stringify({b:bets,c:st.lastCnt}))}catch(_){}
   /* tell watchers right away so their wheel spins with ours */
   const p=S.prefs[S.me]||{};S.rlNetHold={v:Number(p.rlNet)||0,n:Number(p.rlSpins)||0,until:now+12000};/* the all-time + session numbers wait for the ball too */const patch={rlNet:rlRespinNet(Number(p.rlNet)||0,-back,delta),rlSpins:(Number(p.rlSpins)||0)+(rs?0:1)};tiAdd(patch,delta);if(delta>0)acInc(patch,"wrl",delta);
@@ -4084,7 +4087,7 @@ async function crRoll(){const st=crState();if(st.rolling)return;if(crSum(st.bets
   const gained=r.cash-(crSum(st.saved)>=0?0:0);
   crMsg(`<b>${r.s}</b> · ${esc(r.msg)} <b class="num ${delta>0?"pos":delta<0?"neg":""}">${delta>0?"+":delta<0?"−":""}${Math.abs(delta).toLocaleString()}</b>${r.wins.length?`<span class="pos"> ${esc(r.wins.join(" · "))}</span>`:""}${r.losses.length?`<span class="neg"> Lost: ${esc(r.losses.join(", "))}</span>`:""}`,r.wins.length?"win":r.losses.length?"lose":"");
   if(r.wins.length)haptic&&haptic();
-  const patch={crBets:crFull(r.B),crPoint:r.np,crNet:net,crRolls:(Number(p.crRolls)||0)+1,crLast:{d:[a,b],at:Date.now()}};tiAdd(patch,delta);if(delta>0)acInc(patch,"wcr",delta);if(a+b===7)acInc(patch,"cr7",1);Object.assign(S.prefs[S.me]=S.prefs[S.me]||{},patch);crRefresh();
+  const patch={crBets:crFull(r.B),crPoint:r.np,crNet:net,crRolls:(Number(p.crRolls)||0)+1,crLast:{d:[a,b],at:Date.now(),net:delta}};tiAdd(patch,delta);if(delta>0)acInc(patch,"wcr",delta);if(a+b===7)acInc(patch,"cr7",1);Object.assign(S.prefs[S.me]=S.prefs[S.me]||{},patch);crRefresh();
   try{await db.doc("prefs/"+S.me).update(patch)}catch(_){toast("That roll didn't save. Check your connection.")}}
 
 /* ---------- High-Low vs the house: 3% edge, ties lose, cash out any time ---------- */
@@ -4135,7 +4138,7 @@ async function hlGuess(g){const st=hlSt();if(st.busy)return;const m=hlMultX(st,g
   else{const fb0=nx.r===old.r&&ab2("floof")>0?Math.floor(st.stake*st.mult*ab2("floof")/100):0;const lost=st.stake;st.run=false;st.mult=1;st.n=0;hlMsg(`<span class="neg">${HL_R[nx.r-1]}${nx.r===old.r?", same rank, house wins":""}. Lost <b class="num">−${lost.toLocaleString()} BB</b>.</span>`,"lose");
     {const back=abWin(-lost,0,st.allin);hlSave({hlCard:nx,hlRounds:(Number(q.hlRounds)||0)+1,...(back+fb0>0?{hlNet:(Number(q.hlNet)||0)+back+fb0}:{})});if(back>0)setTimeout(()=>toast(`💸 Dwillie's Revenge: +${back.toLocaleString()} BB back`),900);if(fb0>0)setTimeout(()=>toast(`🐶 Suspicious Floof: +${fb0.toLocaleString()} BB back`),1200)}if(st.stake>Math.floor(ledger().balOf(S.me)))st.stake=0}
   hlRefresh()}
-async function hlCash(){const st=hlSt();if(!st.run||st.busy)return;const pay0=hlPayNow(st),pay=pay0+abWin(pay0-st.stake),p=S.prefs[S.me]||{};st.run=false;st.mult=1;st.n=0;
+async function hlCash(){const st=hlSt();if(!st.run||st.busy)return;const pay0=hlPayNow(st),pay=pay0+abWin(pay0-st.stake),p=S.prefs[S.me]||{};st.run=false;st.mult=1;st.n=0;st.co={at:Date.now(),p:pay-st.stake};
   hlMsg(`<span class="pos">Cashed out <b class="num">+${(pay-st.stake).toLocaleString()} BB</b> profit.</span>`,"win");
   await hlSave(acInc(tiAdd({hlNet:(Number(p.hlNet)||0)+pay,hlRounds:(Number(p.hlRounds)||0)+1},pay-st.stake),"whl",pay-st.stake));if(st.stake>Math.floor(ledger().balOf(S.me)))st.stake=0;hlRefresh()}
 document.addEventListener("click",e=>{const t=e.target.closest("[data-hl],[data-hlchip],[data-hlact]");if(!t||S.tab!=="hilo")return;const st=hlSt();
@@ -4860,7 +4863,7 @@ function gwSet(g,id,ready){if(g==="rr"&&id&&S.rr&&S.rr.phase==="play")return toa
 function gwLiveStrip(g){const ids=gwLiveIds(g),f=GW_GAMES[g].live;return `<section class="card bjlive"><h3>Live tables</h3>${ids.length?`<div class="livelist">${ids.map(id=>`<button type="button" class="livechip" data-gwwatch="${g}:${esc(id)}">${pic(id)}<span><span class="eyebrow"><span class="livedot"></span>Live · ${gwAgo(f(S.prefs[id]))}</span><b>${esc(nm(id))}</b></span><span class="watchtag">Watch</span></button>`).join("")}</div>`:`<p class="small muted">Nobody else is at a table right now.</p>`}</section>`}
 function gwStage(g){const who=gwWho(g),q=S.prefs[who]||{},f=GW_GAMES[g].live,live=Date.now()-(f(q)||0)<60000;
   return `<div class="gwstage gw-${g}"><div class="bjwatchbar"><span>${pic(who)}<span><span class="eyebrow">${live?'<span class="livedot"></span>Watching live':"Watching · idle "+gwAgo(f(q)||0)}</span><b>${esc(nm(who))}</b></span></span><button type="button" class="btn ghost" data-gwwatch="${g}:">Back to my table</button></div>
-    <div class="gwscreen">${gwView(g,q,who)}</div><div class="reactbar"><button type="button" data-react="❤️" aria-label="Send a heart">❤️</button><button type="button" data-react="🔥" aria-label="Send fire">🔥</button><button type="button" data-react="😭" aria-label="Send crying">😭</button></div>${gwLiveStrip(g)}</div>`}
+    <div class="gwscreen">${gwView(g,q,who)}</div>${rxBar(g)}${gwLiveStrip(g)}</div>`}
 function gwPaint(v,g){bjReactScan();const x=gwStage(g);if(v._gw!==x||!v.querySelector(".gwstage")){v._gw=x;v.innerHTML=x}}
 function gwOwn(g){bjReactScan();const vw=$("#gwViewers");if(vw){const x=bjViewersHtml(g);if(vw.innerHTML!==x)vw.innerHTML=x}const lv=$("#gwLive");if(lv){const x=gwLiveStrip(g);if(lv._x!==x){lv._x=x;lv.innerHTML=x}}}
 function gwOpen(g){S.gw={g,who:null};gwRender()}
@@ -4893,7 +4896,7 @@ function gwRender(){if(!S.gw)return;const g=S.gw.g;let o=$("#gwOv");if(!o){o=doc
 function gwBtn(g){return `<button type="button" class="gwbtn" data-gwopen="${g}">👁 Watch</button>`}
 document.addEventListener("click",e=>{if(e.target.closest("[data-chatopen]")){chatOpen(true);return}const b=e.target.closest("[data-gwopen]");if(b){e.preventDefault();gwOpen(b.dataset.gwopen);return}const w=e.target.closest("[data-gwwatch]");if(w){const[g,id]=w.dataset.gwwatch.split(":");gwSet(g,id)}});
 /* publishing my live state */
-function hlSnap(){const st=hlSt();let msg="";const m=$("#hlMsg");if(m)msg=m.textContent;return{card:st.card,stake:st.stake,mult:st.mult,n:st.n||0,run:st.run,hist:st.hist.slice(0,10),msg:msg.slice(0,140),at:Date.now()}}
+function hlSnap(){const st=hlSt();let msg="";const m=$("#hlMsg");if(m)msg=m.textContent;return{co:st.co||null,card:st.card,stake:st.stake,mult:st.mult,n:st.n||0,run:st.run,hist:st.hist.slice(0,10),msg:msg.slice(0,140),at:Date.now()}}
 function rrPub(now){if(S.rrSpec||RL.on)return;const st=rrSt();if(!S.me)return;const tmp=document.createElement("div");tmp.innerHTML=st.log||"";
   const L={phase:st.phase,alive:st.alive,turn:st.turn,paid:st.paid||0,cards:st.cards?st.cards.map(c=>c?c.t:null):null,log:esc(tmp.textContent.slice(0,160)),ev:S.rrEv||[],at:Date.now()};
   const sig=JSON.stringify({...L,at:0});if(sig===rrPub.sig&&!now)return;rrPub.sig=sig;clearTimeout(rrPub.t);const go=()=>{rrPub.last=Date.now();Object.assign(S.prefs[S.me]=S.prefs[S.me]||{},{rrLive:L});db.doc("prefs/"+S.me).update({rrLive:L}).catch(()=>{})};
@@ -5822,12 +5825,13 @@ const CARD_ABIL={
   hilo:{n:"Hot Streak",ic:"🔥",t:L=>`High-Low: get 7 or more right in a row and your whole cash-out pays ×${ABV.hilo[L-1]}. Cash out any time.`},
   bers:{n:"Berserk Mode",ic:"🪓",t:L=>`${ABV.bers[L-1]} auto-kills a day in the Blackjack rat hunt (Revenge): tap AUTO KILL and the rat goes down, no aiming needed (a normal kill). Resets at 12:01 AM ET.`},
   social:{n:"Social Credit",ic:"📣",t:L=>L<2?"Turns on at LV 2: every time you pull it, league chat announces +10 million social credit score. No money involved.":`Every time you pull it, league chat announces +${ABV.social[Math.min(L,ABV.social.length)-1]} million social credit score! No money involved.`},
+  drew:{n:"Ringside Cut",ic:"🎟️",t:L=>`While you watch someone play High-Low, Craps, Blackjack or Roulette, tap Claim after each win of theirs: the House sends you ${pctTxt(ABV.drew[L-1])} of what they won. Also unlocks extra reaction emojis.`},
   lunch:{n:"Lunch?",ic:"🦖",t:L=>{const [p,c]=ABV.lunch[L-1];return `Every time you pull it (a duplicate too), you take ${pctTxt(p)} of the balance of every player richer than you (up to ${c.toLocaleString()} BB each).`}}};
 /* a code ability's text at a level (the holder's level of that card) */
 const abTxt=(c,L)=>{const A=c&&c.abil&&CARD_ABIL[c.abil];if(!A)return "";if(typeof A.t!=="function")return A.t;const n=(ABV[c.abil]||[1]).length;return A.t(Math.max(1,Math.min(L||c.lv||1,n)))};
 const mvAddCards=()=>MV_ADD.map(([k,r,name,o])=>{o=o||{};const nmo=(((S.cardMeta||{}).mv||{}).nameOver||{})["mv-"+k];if(nmo)name=String(nmo);return{id:"mv-"+k,r,name,...(o.rn?{rn:1}:{}),sub:"Multiverse",desc:o.desc||(o.img===false?"Art coming soon. Part of the Multiverse collection.":"Part of the Multiverse collection."),full:true,code:true,img:o.img===false?null:`/cards/mv/${k}.webp?v=${MV_IMGV}`,...(o.abil?{abil:o.abil}:{}),...(o.lim?{lim:o.lim}:{}),...(o.pw!=null?{pw:o.pw}:{}),...(o.div!=null?{div:o.div}:{})}});
 /* abilities for cards that live in meta/cards_mv (made with the Admin tools, so they carry no abil field) */
-const MV_ABIL={"mv-art-63":"hilo"};
+const MV_ABIL={"mv-art-63":"hilo","mv-art-1":"drew"};
 const MV_DIV={"mv-art-65":750};/* owner, Oct 23: Debbie · Dynasty Grail pays 1.5× the Grail dividend */
 function mvMerge(list){const ids=new Set(list.map(c=>c.id));list=list.map(c=>MV_ABIL[c.id]&&!c.abil?{...c,abil:MV_ABIL[c.id]}:c).map(c=>MV_DIV[c.id]!=null&&c.div==null?{...c,div:MV_DIV[c.id]}:c).map(c=>c.id==="mv-art-72"?{...c,desc:"⚡ FLAPPY BOOST: own this card and you get a Use Boost button on Cheese Farm. Once a day, a run pays 5× per pipe, up to your full Silo (it fills your Silo by half of what it pays). Resets at 12:01 AM ET."}:c);return[...list,...mvAddCards().filter(c=>!ids.has(c.id))]}
 /* daily dividend for one copy: a card's own div overrides the rarity table; the curse card pays nothing */
@@ -5848,6 +5852,7 @@ function activeCards(id){id=id||S.me;const cs=myCards(id),out=[],seen=new Set(),
     else if(c.abil==="slop")add(k,"🎡",me?`${slopLeft()} of ${slopN()} roulette respins left today`:`${slopN(id)} roulette respins a day`,["rl"]);
     else if(c.abil==="bjsave")add(k,"😇",`Blackjack: 5 losses in a row → ${abV("bjsave",id)} of those 5 buy-ins back`,["bj"]);
     else if(c.abil==="shrex")add(k,"🟢",`Blackjacks pay ${abV("shrex",id)}× your bet + swamp glow`,["bj"]);
+    else if(c.abil==="drew")add(k,"🎟️",`Watching a winner: claim ${pctTxt(abV("drew",id))} of their win from the House`,["bj","rl","cr","hl"]);
     else if(c.abil==="hilo")add(k,"🔥",`High-Low: ${HL_CHR_AFTER+1}+ right in a row pays your cash-out ×${abV("hilo",id)}`,["hl"]);
     else if(c.abil==="hof")add(k,"🏦",`Borrow ${abV("hof",id).toLocaleString()} BB from the House (Bank)`,["bank"]);
     else if(c.abil==="bers")add(k,"🪓",me?`${bersLeft()} of ${bersN()} rat-hunt auto-kills left today`:`${bersN(id)} rat-hunt auto-kills a day`,["bj"]);
@@ -6262,7 +6267,7 @@ function viewPacks(){if(!S.me)return `<div class="empty">Sign in to collect card
     /* owner Oct 29 2:47 AM: within a rarity, highest level first, then the most copies stacked; "Ready to upgrade first" (S.pk.csort) puts every card with
      enough copies for its next level in its own group on top (same order), the rest below */
     /* perf Oct 31: cpS is memoized per render (the sort called it ~2·n·log n times, each scanning the whole collection: upgrades felt laggy) */
-    const _cps=new Map(),cpS=c=>{let v=_cps.get(c.id);if(v)return v;const L=topLv(c.id,who),M=LV_MAX[c.r]||1,need=L<M?V2_SH[L-1]||0:0;v={L,have:cpOf(c.id,who),need,ready:inPool(c.id)&&c.abil!=="curse"&&L<M&&cpOf(c.id,who)>=need};_cps.set(c.id,v);return v};
+    const _cps=new Map(),cpS=c=>{let v=_cps.get(c.id);if(v)return v;const L=topLv(c.id,who),M=LV_MAX[c.r]||1,need=L<M?v2Sh(c.r,L):0;v={L,have:cpOf(c.id,who),need,ready:inPool(c.id)&&c.abil!=="curse"&&L<M&&cpOf(c.id,who)>=need};_cps.set(c.id,v);return v};
     const hasAbl=c=>!!(c&&c.abil!=="curse"&&(ab2Of(c)||c.abil));
     const ord=(a,b)=>{const x=cpS(a),y=cpS(b);return b.r-a.r||y.L-x.L||y.have-x.have||(y.need?y.have/y.need:0)-(x.need?x.have/x.need:0)||a.name.localeCompare(b.name)};
     const rdy=(st.csort==="ready"||st.csort==="ab")&&cs_==="v2"?cat.filter(c=>cardCountAll(c.id,who)>0&&cpS(c).ready&&(st.csort!=="ab"||hasAbl(c))).sort(ord):[],rdyS=new Set(rdy.map(c=>c.id));
@@ -6445,15 +6450,17 @@ const AB2={
   "fl:crnddparttwo":{k:"crndd",v:[1,2,3,4,5],t:v=>`Russian Roulette: a kill while 10 beers deep adds ${20+5*v}% of your buy-in; blacking out gives back ${45+5*v}% of your buy-in`},
   "fl:biggiecheeserookie":{k:"rookie",v:[4,5,6]/* owner Oct 31: ×2 (was 2/2.5/3) */,t:v=>`Shooting the rat in the blackjack rat hunt pays ${v}×`},
   "fl:thegooner":{k:"gooner",v:[1.5,2.25,3],t:v=>`Roulette wins pay you an extra ${pctTxt(v)}`},
-  "mv:chadbaby":{k:"chad",v:abOff(abLn(5,1,6)),t:v=>`Roulette bets on the 1st 12 pay you an extra ${pctTxt(v)}`},
+  "mv:dontjumpin":{k:"djump",v:abOff(abLn(2,.5,6)),t:v=>`Roulette: win on the same color (red or black) spins in a row and each extra win in the streak pays ${pctTxt(v)} more of that bet than the last (2nd in a row +${pctTxt(v)}, 3rd +${pctTxt(+(2*v).toFixed(2))}, …)`},
+"mv:dieforthewhale":{k:"whale",lv1:1/* owner Nov 1: works from LV 1 */,v:abLn(5,1,7),t:v=>`Shards from the shard store cost ${pctTxt(v)} less`},
+"mv:chadbaby":{k:"chad",v:abOff(abLn(5,1,6)),t:v=>`Roulette bets on the 1st 12 pay you an extra ${pctTxt(v)}`},
   "fl:swolejesus":{k:"swole",v:abOff(abLn(1,.25,12))/* owner Oct 31: −0.5% */,t:v=>`Cheese Farm runs pay ${pctTxt(v)} more for every 20 pipes cleared (20–39: ${pctTxt(v)}, 40–59: ${pctTxt(+(2*v).toFixed(4))} …)`},
   "cb:unitedwesit":{k:"unitedsit",v:abL(13),t:v=>`High-Low: on a 10 or higher, a right Higher guess, or on a 4 or lower, a right Lower guess, multiplies your ride by an extra ×${hlUwsX(v)}`},
   "cb:ballknowledgerequired":{k:"ballk",v:abOff(abLn(2,.5,12)),t:v=>`NBA bets and NBA parlays pay an extra ${pctTxt(v)}`},
   "cb:suspiciousfloof":{k:"floof",v:abOff(abLn(12,2,12)),t:v=>`High-Low: losing on the same rank twice in a row gives back ${pctTxt(v)} of what you were riding`},
-  "cb:newfriend":{k:"newfriend",v:abOff(abLn(1.5,.2,10)),t:v=>`Once a day, the House sends a player you pick a stimulus worth ${pctTxt(v)} of your balance`},
-  "cb:gunshow":{k:"gun",v:abOff(abLn(1.35,.04,10)),t:v=>`Slots: cherry wins pay ×${v}`},
+  "cb:newfriend":{k:"newfriend",v:abOff(abLn(2,.2,10))/* owner Nov 1: starts .5% higher (was 1.5) */,t:v=>`Once a day, the House sends a player you pick a stimulus worth ${pctTxt(v)} of your balance`},
+  "cb:gunshow":{k:"gun",v:abOff(abLn(1.2,.04,10))/* owner Nov 1: −0.15× (was 1.35) */,t:v=>`Slots: cherry wins pay ×${v}`},
   "cb:codymaverick":{k:"cody",v:abOff(abLn(100,-7,8)),t:v=>`Cheese Farm: after ${v} pipes in a run, the rest of the run doesn't count toward your daily cap`},
-  "cb:onthebigscreen":{k:"bigscreen",v:abOff(abLn(1,.3,8)),t:v=>`Every slots payout is ${pctTxt(v)} bigger (rounded up)`},
+  "cb:onthebigscreen":{k:"bigscreen",v:abOff(abLn(1,.2,8))/* owner Nov 1: +.2% per level (was .3) */,t:v=>`Every slots payout is ${pctTxt(v)} bigger (rounded up)`},
   "cb:chrisfromtinder":{k:"chris",v:abL(9),t:v=>{const [r,n]=chrisSh(v);return `Once a day, steal ${shTxt(r,n)} from another player (Bank page)`}},
   "cb:crabimpersonator":{k:"crab",v:[null,2,2,2,3,3,4],t:v=>`${v} Daily Spins every ${24/v} hours (instead of one every 12 hours)`},
   "cb:gigachad":{k:"giga",v:abOff(abLn(1,.4,6)),t:v=>`Casino wins pay ${pctTxt(v)} more while someone is watching your table`},
@@ -6469,13 +6476,13 @@ const AB2={
   "mv:cafmonster":{k:"caf",v:[25,35,50],t:v=>`Craps: losing a Pass Line or Come bet to a 2, 3 or 12 gives back ${pctTxt(v)} of it`},
   "mv:hurricaneharbinger":{k:"hurr",v:[2,3,3.6],t:v=>v>=3.6?"A wildcard shard from a pack comes as 3 shards (70%) or 5 shards (30%)":`A wildcard shard from a pack comes as ${v} shards`}};
 /* United We Sit multiplier by level: ×1.15 from LV 2, ×1.2 at LV 7, ×1.25 at LV 11, ×1.3 at LV 13; Chris from Tinder shards by level */
-const hlUwsX=L=>L>=13?1.21:L>=11?1.16:L>=7?1.11:1.06;/* owner Oct 31 10:11 PM: player edge on a boosted guess ≈ +17% at max (0.97 × 1.21), .05 steps below (≈ +3/+8/+12%). Was 1.35–1.5 for a few minutes (+31–45%). Only 10–K Higher / A–4 Lower. *//* owner Oct 31: −0.05 twice, then −0.025 at 6:55 PM (was 1.15/1.2/1.25/1.3 → 1.1/1.15/1.2/1.25 → 1.05/1.1/1.15/1.2) */
+const hlUwsX=L=>L>=13?1.25:L>=11?1.2:L>=7?1.15:1.1;/* owner Nov 1: +0.04 at every level (was 1.06/1.11/1.16/1.21) *//* owner Oct 31 10:11 PM: player edge on a boosted guess ≈ +17% at max (0.97 × 1.21), .05 steps below (≈ +3/+8/+12%). Was 1.35–1.5 for a few minutes (+31–45%). Only 10–K Higher / A–4 Lower. *//* owner Oct 31: −0.05 twice, then −0.025 at 6:55 PM (was 1.15/1.2/1.25/1.3 → 1.1/1.15/1.2/1.25 → 1.05/1.1/1.15/1.2) */
 const chrisSh=L=>L>=9?[2,1]:L>=8?[1,2]:L>=6?[1,1]:L>=4?[0,2]:[0,1];
 /* the AB2 entry for a card (any level key), or null */
-const AB2_G={moscow:["hl"],snyder:["sl"],zyn:["cr"],caf:["cr"],hurr:["packs"],shock:["bj","rl","cr","hl","sl","mp"],giga:["bj","rl","cr","hl","sl"],chad:["rl"],summer:["cr"],swole:["fp"],cody:["fp"],unitedsit:["hl"],floof:["hl"],gun:["sl"],bigscreen:["sl"],caleb:["bj"],ballk:["sb"],rotunda:["sb"],crab:["wheel"],newfriend:["bank"],chris:["bank"],btc:["bank"],dwillie:["bj","rl","hl"],thanos:["bj"],caked:["bj"],darth:["bj"],rookie:["bj"],gooner:["rl"],rinker:["fp"],vontrap:["div"],shine:["div"],luke:["bank"],shabbat:["bank"],logan:["sb"],crew:["sb"],bucket:["mp"],crndd:["mp"],vail:["packs"],paradise:["packs"],diva:["shop"]};
+const AB2_G={moscow:["hl"],snyder:["sl"],zyn:["cr"],caf:["cr"],hurr:["packs"],shock:["bj","rl","cr","hl","sl","mp"],giga:["bj","rl","cr","hl","sl"],chad:["rl"],djump:["rl"],whale:["shop"],summer:["cr"],swole:["fp"],cody:["fp"],unitedsit:["hl"],floof:["hl"],gun:["sl"],bigscreen:["sl"],caleb:["bj"],ballk:["sb"],rotunda:["sb"],crab:["wheel"],newfriend:["bank"],chris:["bank"],btc:["bank"],dwillie:["bj","rl","hl"],thanos:["bj"],caked:["bj"],darth:["bj"],rookie:["bj"],gooner:["rl"],rinker:["fp"],vontrap:["div"],shine:["div"],luke:["bank"],shabbat:["bank"],logan:["sb"],crew:["sb"],bucket:["mp"],crndd:["mp"],vail:["packs"],paradise:["packs"],diva:["shop"]};
 const ab2Of=c=>c?AB2[cardSet(c.id)+":"+nmKey(c.name)]||null:null;
 /* value of a card's level ability at level lv; null = not active at that level */
-function ab2Val(c,lv){const A=ab2Of(c);if(!A)return null;lv=lv||1;if(lv<2&&c.r<=3)return null;const i=Math.min(lv,A.v.length)-1;return A.v[i]}
+function ab2Val(c,lv){const A=ab2Of(c);if(!A)return null;lv=lv||1;if(lv<2&&c.r<=3&&!A.lv1)return null;const i=Math.min(lv,A.v.length)-1;return A.v[i]}
 /* ability text for a card at a level (sheet abilities and the older code abilities), for card backs and the crafting preview */
 function abLvTxt(c,lv){const A=ab2Of(c);if(A){const v=ab2Val(c,lv);return v==null?`Unlocks at LV 2: ${A.t(A.v[Math.min(2,A.v.length)-1])}`:A.t(v)}return abTxt(c,lv)}
 /* a player's strongest value of an AB2 ability (their highest-level copy of that card counts); 0 = none */
@@ -6492,22 +6499,29 @@ let _AB2=null;function ab2(k,id){id=id||S.me;if(!_AB2){_AB2={};queueMicrotask(()
    Dragon pity: V2_PITY cards in a row without a Dragon → the next card is one (prefs.v2pity = cards since your last Dragon).
    Pool cards can't be listed, offered, traded or put up as collateral (only League Moments cards and shards trade). */
 const V2_ODDS=[63.357,22.317,9.830,3.732,.556,.1,.009]/* owner Oct 30: Elite ×1.44 (.386→.556), Grail ×.95 (.105→.1), Super Rare took the difference (3.897→3.732) *//* owner Oct 29 1:48 AM: Elite + Grail halved (were .772/.210), the difference went to Common */,V2_CURSE=.1,V2_WILD=.02,V2_PITY=35000,V2_DRAGON_DIV=15000/* owner Oct 29 3:13 AM (was 3,000) */,V2_X3={"mv-joe-camel":3,"mv-art-65":3};
-const TIER_DIV=[2,3,4,6,10,16,25,40,64,100,160,250,400],TIER_UP=[0,0,50,70,120,180,300,450,750,1200,1800,3000,4500,7500];/* TIER_UP[t] = BB to upgrade INTO tier t */
+const TIER_DIV=[2,3,4,6,10,16,25,40,64,100,160,250,400],TIER_UP=[0,0,50,70,120,180,300,450,750,1200,1800,3000,4500,7500].map(x=>Math.round(x*3.5));/* TIER_UP[t] = BB to upgrade INTO tier t. owner Nov 1: every upgrade costs 250% more (×3.5) */
+/* Die for the Whale (owner Nov 1): the shard store is ab2("whale") % off, rounded up per purchase */
+const shPrice=(r,n)=>Math.ceil(SHARD_PRICE[r]*n*(1-(ab2("whale")||0)/100));
 const SHARD_PRICE=[1500,4000,10000,25000,150000,1000000];/* owner Oct 29 2:51 AM: Elite 150,000, Grail 1,000,000 *//* owner Oct 29 2:31 AM: shards are wildcards now (was 600/1,600/3,700/9,200/46,000/172,000) *//* owner Oct 29 2:12 AM: a pack's expected shards (3.17 C, 1.12 U, .49 R, .195 SR, .019 E, .005 G) priced at the brief's rarity ratios add up to the 10,000 pack price; the store sells them 10% below that *//* owner Oct 29 1:55 AM: ≈1.25× what a shard costs through 10,000 BB packs (was 1,000/2,800/6,500/16,000/80,000/300,000) */
 const V2_PACK={id:"v2",r:5,name:"BiggieCheese Pack",setName:"All collections",price:10000/* owner Oct 31 6:54 PM: 10,000 (7,500 since Oct 29 8:54 AM; 10,000 from 1:37 AM; brief: 2,500) */,n:5};
 const v2Tier=c=>Math.min(13,(c.lv||1)+2*c.r);
-function v2Div(c){if(!c||c.abil==="curse")return 0;if(c.r===6)return Math.ceil(V2_DRAGON_DIV*V2_DIVX);return Math.ceil(TIER_DIV[v2Tier(c)-1]*(V2_RDIV[c.r]||1)*(V2_X3[baseOf(c.id)]||1)*V2_DIVX)}
+function v2Div(c){if(!c||c.abil==="curse")return 0;if(c.r===6)return Math.ceil(V2_DRAGON_DIV*V2_DIVX);return v2DivL(c.r,c.lv||1,(V2_RDIV[c.r]||1)*(V2_X3[baseOf(c.id)]||1))}
+/* owner Nov 1: the dividend GAINED per level is 25% bigger, each level's step rounded up (LV 1 unchanged): LV L = LV 1 + Σ ceil(1.25 × old step) */
+const V2_DIVSTEP=1.25;function v2DivL(r,L,m){const raw=l=>TIER_DIV[Math.min(13,l+2*r)-1]*m*V2_DIVX;let v=Math.ceil(raw(1));for(let l=2;l<=L;l++)v+=Math.ceil(V2_DIVSTEP*(raw(l)-raw(l-1)));return v}
 const V2_DIVX=1.5;/* owner Oct 30 (Achievements spec): every dividend ×1.5, rounded up (Dragon 22,500) */
-const v2DivAt=(r,L)=>Math.ceil((r===6?V2_DRAGON_DIV:TIER_DIV[Math.min(13,L+2*r)-1]*(V2_RDIV[r]||1))*V2_DIVX);
+const v2DivAt=(r,L)=>r===6?Math.ceil(V2_DRAGON_DIV*V2_DIVX):v2DivL(r,L,V2_RDIV[r]||1);
 const V2_RDIV={4:3,5:6};/* owner Oct 29 3:08 AM: Elite dividends ×3 (192–1,200), Grail ×6 (960–2,400), roughly in line with how rare they are; Dragon 15,000 since 3:13 AM */
 /* owner Oct 29 1:41 AM: shard cost per level step is tiered (Fibonacci-like, then easing), not 1,2,3…: LV L → L+1 costs V2_SH[L-1] shards */
 const V2_SH=[1,3,5,8,13,21,33,46,60,75,92,115];/* owner Oct 29 2:12 AM: ~15% more per level (was 1,3,4,7,11,18,29,40,52,65,80,100) */
-const v2UpCost=c=>{const L=c.lv||1;return{sh:V2_SH[Math.min(L,V2_SH.length)-1],bb:TIER_UP[Math.min(13,L+1+2*c.r)]||0}};
+/* owner Nov 1: more copies for the top levels of Commons (into LV 9–13 +10%), Uncommons (into LV 8–11 +15%) and Rares (into LV 8–9 +10%), each rounded up */
+const V2_SHR=[[9,13,1.1],[8,11,1.15],[8,9,1.1]].map(([a,b,f])=>V2_SH.map((x,i)=>i+2>=a&&i+2<=b?Math.ceil(x*f):x));
+const v2Sh=(r,L)=>{const A=V2_SHR[r]||V2_SH;return A[Math.min(L,A.length)-1]||0};
+const v2UpCost=c=>{const L=c.lv||1;return{sh:v2Sh(c.r,L),bb:TIER_UP[Math.min(13,L+1+2*c.r)]||0}};
 /* copies collected toward a card's next level (owner Oct 29 2:18 AM): prefs.cp {cardId:n}. An upgrade LV L → L+1 needs V2_SH[L-1] copies; shards are
    wildcards (1 shard = 1 copy of any card of that rarity) used only for what the copies don't cover. */
 const cpOf=(cid,id)=>Math.max(0,Math.floor(Number((((S.prefs[id||S.me]||{}).cp)||{})[baseOf(cid)])||0));
 function cpBarHtml(c,who){if(!c||!inPool(c.id)||c.abil==="curse")return "";const M=LV_MAX[c.r]||1,L=c.lv||1;if(L>=M)return `<div class="cpbar max"><span>Max</span></div>`;
-  const need=V2_SH[L-1]||0,have=cpOf(c.id,who),ok=have>=need;return `<div class="cpbar${ok?" ready":""}"><i style="width:${Math.min(100,need?have/need*100:100)}%"></i>${ok?`<b class="cpup">⬆</b>`:""}<span class="num">${have}/${need}</span></div>`}
+  const need=v2Sh(c.r,L),have=cpOf(c.id,who),ok=have>=need;return `<div class="cpbar${ok?" ready":""}"><i style="width:${Math.min(100,need?have/need*100:100)}%"></i>${ok?`<b class="cpup">⬆</b>`:""}<span class="num">${have}/${need}</span></div>`}
 /* one-time reset (owner Oct 29 1:41 AM): every upgraded pool card goes back to LV 1 and its owner gets back the shards the old 1-per-level costs
    took (L·(L−1)/2 for a card at LV L). prefs.upr = done. Own page; the admin's page does offline players. BB upgrade fees aren't refunded. */
 const UPR_V=1;
@@ -6529,7 +6543,7 @@ const shardsOf=id=>{const s=((S.prefs[id||S.me]||{}).shards)||{};return [0,1,2,3
 const shTxt=(r,n)=>`${n.toLocaleString()} ${CR[r].n} shard${n===1?"":"s"}`;
 const v2Price=()=>{const v=ab2("vail");return v>0?Math.ceil(V2_PACK.price*(1-v/100)):V2_PACK.price};
 /* level values of the older code abilities (CARD_ABIL), by the holder's level of that card (index = level − 1) */
-const ABV={bjsave:[2,3,4],dean:[1.5,1.75,2,2.25,2.5],hof:[10000,15000,20000,25000,30000],slop:[2,3,4],shrex:[3,3.25,3.5],hilo:[1.25,1.35,1.5],bers:[3,3,4,4,5],
+const ABV={drew:abLn(1,.5,13),bjsave:[2,3,4],dean:[1.5,1.75,2,2.25,2.5],hof:[10000,15000,20000,25000,30000],slop:[2,3,4],shrex:[3,3.25,3.5],hilo:[1.25,1.35,1.5],bers:[3,3,4,4,5],
   lunch:[[10,50000],[11.25,56250],[12.5,62500],[13.75,68750],[15,75000]],social:[null,10,20,30,40,50,60,70,80],curse:[1]};
 function abLv(k,id){let t=0;const cs=myCards(id||S.me);for(const x in cs){if(!(Number(cs[x])>0))continue;const c=cardById(x);if(c&&c.abil===k)t=Math.max(t,lvOf(x))}return t}
 const abV=(k,id)=>{const L=abLv(k,id);if(!L)return 0;const a=ABV[k]||[];const v=a[Math.min(L,a.length)-1];return v==null?0:v};
@@ -6547,9 +6561,9 @@ function v2Open(D){const P=v2Pool(),cs=(D&&D.cards)||{},own=new Set(Object.keys(
     const had=own.has(c.id),m=c.abil==="curse"?1:v2Mult(),kind=had?(c.abil==="curse"?"curse2":m===0?"wild":"shard"):"new";/* "shard" = more copies of the card; "wild" (V2_MULT shard roll, duplicates only) = a wildcard shard of its rarity instead */if(!had)own.add(c.id);
     out.push({cid:c.id,r:c.r,kind,n:Math.max(1,m)})}
   out.sort((a,b)=>a.r-b.r);return{out,pity}}
-async function v2Buy1(lab){let done=null;if(S._pkBusy||!S.me||!db)return;if(S.readOnly)return toast("View only. Ask the commish for access.");if(!v2Ready())return toast("Cards are still loading. Try again in a second.");
+async function v2Buy1(lab,noFree){let done=null;if(S._pkBusy||!S.me||!db)return;if(S.readOnly)return toast("View only. Ask the commish for access.");if(!v2Ready())return toast("Cards are still loading. Try again in a second.");
   const q=S.prefs[S.me]=S.prefs[S.me]||{};if(!q.cv2||!q.cv3)return toast("Your cards are still switching over. One moment.");
-  const free=(Number(q.freeV2)||0)>0,price=free?0:v2Price();if(Math.floor(ledger().balOf(S.me))<price)return toast("Not enough BiggieBucks for that pack.");
+  const free=!noFree&&(Number(q.freeV2)||0)>0,price=free?0:v2Price();if(Math.floor(ledger().balOf(S.me))<price)return toast("Not enough BiggieBucks for that pack.");
   S._pkBusy=true;try{
     /* owner Oct 29: no extra server read before opening (it made the button lag); the live prefs copy decides what you own */
     const D=q;const {out,pity}=v2Open(D);if(!out.length){S._pkBusy=false;return toast("Cards are still loading. Try again in a second.")}
@@ -6587,8 +6601,12 @@ async function v2Buy1(lab){let done=null;if(S._pkBusy||!S.me||!db)return;if(S.re
     {const nw=out.filter(x=>x.kind==="new"&&x.r>=4&&x.r<=6);const best=nw.length?Math.max(...nw.map(x=>x.r)):-1;if(best>=4&&!(best===6&&S._drgPosted)){const c=cardById(nw.find(x=>x.r===best).cid);try{db.collection("chat").add({type:"bet",uid:S.me,poster:S.me,at:Date.now(),text:`${best===6?"🐉🐉🐉 ":best===5?"🏆 ":"🔥 "}${nm(S.me)} pulled ${best===6?"A DRAGON":CR[best].n}: ${c.name}!${best===6?" 🐉🐉🐉":" 🎴"}`})}catch(_){}}}}
   catch(e){console.warn("v2 pack",e);toast("Couldn't open that pack. Check your connection.")}finally{S._pkBusy=false;render()}return done}
 async function v2Buy(){if(S._pkChain)return;const q=S.prefs[S.me]||{},fr=Math.floor(Number(q.freeV2)||0),n=fr>0?Math.min(50,fr):Math.max(1,Number((S.pk||{}).qty)||1);/* owner Oct 31: free packs all open at once */S._pkChain=true;
-  try{for(let i=0;i<n;i++){if(i>0&&Math.floor(ledger().balOf(S.me))<v2Price()){toast("Out of BiggieBucks. Opened "+i+" of "+n+".");break}
-    const d=await v2Buy1(i<n-1?`Next pack (${i+2} of ${n})`:null);if(!d)break;await d}}finally{S._pkChain=false;render()}}
+  /* owner Nov 1 (Another Day in Paradise bug): buying N packs opens N PAID packs; free packs earned on the way no longer stand in for one of them.
+     They open right after as bonus packs (and are not counted toward the next free one) */
+  const paid=fr<=0,fq=()=>Math.floor(Number((S.prefs[S.me]||{}).freeV2)||0);
+  try{let ok=true;for(let i=0;i<n;i++){if(paid&&Math.floor(ledger().balOf(S.me))<v2Price()){if(i>0)toast("Out of BiggieBucks. Opened "+i+" of "+n+".");ok=false;break}
+      const more=i<n-1||(paid&&fq()>0);const d=await v2Buy1(more?(i<n-1?`Next pack (${i+2} of ${n})`:`🎁 Open your free pack`):null,paid);if(!d){ok=false;break}await d}
+    if(paid&&ok)for(let j=0;j<50&&fq()>0;j++){const d=await v2Buy1(fq()>1?`🎁 Next free pack (${fq()-1} left)`:null);if(!d)break;await d}}finally{S._pkChain=false;render()}}
 /* Upgrade one card a level: one prefs write (old key → 0, new key → 1, shards, craftSpent, craftLog) checked against the saved copy */
 /* owner Oct 29 1:57 AM: upgrades are instant: checked against the live prefs copy, applied locally and animated right away; the save runs in
    the background (rolled back with a toast if it fails). Several upgrades in a row queue up in order. */
@@ -6607,7 +6625,7 @@ function v2Up(cid){if(!S.me||!db)return;if(!(S.prefs[S.me]||{}).cv3)return toast
 /* Shard store: n shards of rarity r, paid to the house (burned like upgrades: craftSpent + craftLog {sh,n,fee,buy}) */
 /* owner Oct 31 fix: instant. Checked against the live prefs copy, applied locally at once (shards + the BB charge in ONE prefs write, so a failure
    leaves neither), saved through the same queue as upgrades; rolled back with a toast if the save fails. No server read first (that froze it). */
-function v2ShBuy(r,n){if(!S.me||!db)return;if(Date.now()-(S._shT||0)<350)return;S._shT=Date.now();if(S.readOnly)return toast("View only. Ask the commish for access.");r=Number(r);n=Math.max(1,Math.floor(Number(n)||1));const price=SHARD_PRICE[r];if(!price)return;const fee=price*n;
+function v2ShBuy(r,n){if(!S.me||!db)return;if(Date.now()-(S._shT||0)<350)return;S._shT=Date.now();if(S.readOnly)return toast("View only. Ask the commish for access.");r=Number(r);n=Math.max(1,Math.floor(Number(n)||1));const price=SHARD_PRICE[r];if(!price)return;const fee=shPrice(r,n);
   if(Math.floor(ledger().balOf(S.me))<fee)return toast(`You need ${fee.toLocaleString()} BB.`);
   const q=S.prefs[S.me]=S.prefs[S.me]||{},have=Math.floor(Number((q.shards||{})[r])||0),cs0=Number(q.craftSpent)||0;let at=Date.now();while(q.craftLog&&q.craftLog[at])at++;
   const patch={shards:{[r]:have+n},craftSpent:cs0+fee,craftLog:{[at]:{sh:r,n,fee,buy:1}}};
@@ -6671,7 +6689,7 @@ function v2ShardShopHtml(){const bal=Math.floor(ledger().balOf(S.me)),sh=shardsO
   return `<p class="small muted">Shards upgrade any card of their rarity. Buy the ones you need to aim at a card (packs are the cheaper way to get them).</p>
   <div class="pkqty"><span class="stlbl">How many</span><div class="seg">${[1,2,3,5,10,50].map(k=>`<button type="button" data-shq="${k}" aria-pressed="${n===k}">${k}×</button>`).join("")}</div></div>
   <div class="shgrid">${SHARD_PRICE.map((p,r)=>`<div class="shbox" style="--rc:${CR[r].c};--rg:${CR[r].g}"><div class="shbart">${shardSvg(r,92,"live")}</div><b class="shbnm">${esc(CR[r].n)}</b><small class="muted">You have ${sh[r].toLocaleString()}</small>
-    <button type="button" class="shbbuy" data-shbuy="${r}" data-n="${n}" ${bal<p*n?"disabled":""}><span>${n>1?`Buy ${n}`:"Buy 1"}</span><b class="num">${(p*n).toLocaleString()} BB</b></button></div>`).join("")}</div>`}
+    <button type="button" class="shbbuy" data-shbuy="${r}" data-n="${n}" ${bal<shPrice(r,n)?"disabled":""}><span>${n>1?`Buy ${n}`:"Buy 1"}</span><b class="num">${shPrice(r,n)<p*n?`<s class="muted">${(p*n).toLocaleString()}</s> `:""}${shPrice(r,n).toLocaleString()} BB</b></button></div>`).join("")}</div>`}
 /* ---- V2 screens ---- */
 const v2PullTag=x=>{if(!x)return "";const k=Math.max(1,x.n||1),mx=k>1?`<div class="pkmult m${k>=10?10:k}">×${k}</div>`:"";
   if(x.kind==="wild")return `${mx}<div class="pkover v2sh"><div class="shfx">${[0,1,2].map(()=>shardSvg(x.r,40,"live")).join("")}</div><b>WILDCARD!${(x.ws||1)>1?" 🌀":""}</b><span>+${x.ws||1} ${esc(CR[x.r].n)} shard${(x.ws||1)>1?"s":""}${k>1?` · +${k-1} card${k>2?"s":""}`:""}</span></div>`;
@@ -6714,7 +6732,7 @@ function v2ShFill(cid){if(!S.me||!db)return;if(!(S.prefs[S.me]||{}).cv3)return t
   _V2UQ=_V2UQ.then(()=>db.doc("prefs/"+S.me).update(patch)).catch(e=>{console.warn("shfill",e);db.doc("prefs/"+S.me).get().then(f=>{const D=f.data()||{};Object.assign(q,{cp:D.cp||{},shards:D.shards||{}});v2ViewRefresh(cid);render()}).catch(()=>{});toast("That didn't save (connection?). Nothing was used. Try again.")})}
 document.addEventListener("click",e=>{const t=e.target.closest("[data-v2buy],[data-shbuy],[data-v2up],[data-shbuyl],[data-shcancel],[data-shfill]");if(!t||!S.me)return;
   if(t.dataset.shfill!=null){if(!t.dataset.arm){t.dataset.arm=1;t.textContent="Tap again to use the shards";return}t.disabled=true;return v2ShFill(t.dataset.shfill)}
-  if(t.dataset.v2buy!=null)return v2Buy();if(t.dataset.shbuy!=null){if(!t.dataset.arm){t.dataset.arm=1;const r=Number(t.dataset.shbuy),n=Number(t.dataset.n);t.textContent=`Tap to pay ${(SHARD_PRICE[r]*n).toLocaleString()} BB`;setTimeout(()=>{if(t.isConnected){delete t.dataset.arm;render()}},4000);return}return v2ShBuy(t.dataset.shbuy,t.dataset.n)}
+  if(t.dataset.v2buy!=null)return v2Buy();if(t.dataset.shbuy!=null){if(!t.dataset.arm){t.dataset.arm=1;const r=Number(t.dataset.shbuy),n=Number(t.dataset.n);t.textContent=`Tap to pay ${shPrice(r,n).toLocaleString()} BB`;setTimeout(()=>{if(t.isConnected){delete t.dataset.arm;render()}},4000);return}return v2ShBuy(t.dataset.shbuy,t.dataset.n)}
   if(t.dataset.v2up!=null){if(!t.dataset.arm){t.dataset.arm=1;t.textContent="Tap again to upgrade";return}t.disabled=true;return v2Up(t.dataset.v2up)}
   if(t.dataset.shbuyl!=null)return shBuy(t.dataset.shbuyl);if(t.dataset.shcancel!=null)return shCancel(t.dataset.shcancel)});
 document.addEventListener("submit",e=>{const f=e.target.closest("[data-shform]");if(!f)return;e.preventDefault();shList(f.r.value,f.n.value,f.p.value)});
@@ -7513,7 +7531,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
- {v:211,d:"Nov 1",t:[["🏦","The admin can now close or cancel loans from the Bank if something goes wrong"]]},{v:210,d:"Nov 1",t:[["💎","Pulling a card you already have at max level now gives you shards of its rarity instead of copies you can't use"]]},{v:209,d:"Nov 1",t:[["🌴","Summer 2024 adjusted again: each non-7 roll in a row adds 0.25% / 0.35% / 0.5% (LV 1 / 2 / 3) to your craps wins"]]},
+ {v:212,d:"Nov 1",t:[["⬆️","Card upgrades cost 250% more BB. Commons (LV 9–13), Uncommons (LV 8–11) and Rares (LV 8–9) need a few more cards at the top levels"],["🌴","Another Day in Paradise fixed: buying several packs now gives you every free pack you earn, on top of the packs you bought"],["🃏","United We Sit and New Friend got a boost; Gun Show and On the Big Screen were toned down"],["💰","Card dividends grow 25% faster with every level you upgrade"],["🎟️","New abilities: Drew PBA Chrome Auto (claim a cut of the wins of players you watch, plus new reactions), Don't Jump In (roulette color streaks) and Die for the Whale (cheaper shards)"]]},{v:211,d:"Nov 1",t:[["🏦","The admin can now close or cancel loans from the Bank if something goes wrong"]]},{v:210,d:"Nov 1",t:[["💎","Pulling a card you already have at max level now gives you shards of its rarity instead of copies you can't use"]]},{v:209,d:"Nov 1",t:[["🌴","Summer 2024 adjusted again: each non-7 roll in a row adds 0.25% / 0.35% / 0.5% (LV 1 / 2 / 3) to your craps wins"]]},
  {v:208,d:"Nov 1",t:[["🌴","Summer 2024 nerfed: each non-7 roll in a row now adds 0.5% / 0.75% / 1% (LV 1 / 2 / 3) to your craps wins"]]},
  {v:207,d:"Nov 1",t:[["🎖️","Captain Von Trap pays much more: up to +20 BB a day for every upgraded card you own (+2 at LV 2 up to +20 at max)"]]},
  {v:206,d:"Oct 31",t:[["🔍","Card collections now have a search box: find cards by name, rarity, collection or ability"]]},
@@ -7865,7 +7883,7 @@ function v2IntroHtml(){const RC=i=>`<b style="color:${CR[i].c}">${esc(CR[i].n)}<
     <p>Extra copies fill the bar under the card: <b style="color:#4f82ff">blue</b> = filling, <b style="color:#2fbf6b">green ⬆</b> = ready to upgrade, <b style="color:#c27bff">purple Max</b> = fully upgraded.</p></section>
   <section><h3>⬆️ Upgrading</h3>
     <p>Open a card in your collection and tap <b>Upgrade</b>. Each level costs copies of that card plus a small BB fee (${f(TIER_UP[2])} to ${f(TIER_UP[13])} BB):</p>
-    <p class="small">Copies for each next level: ${V2_SH.join(" · ")}</p>
+    <p class="small">Copies for each next level: ${V2_SH.join(" · ")} (Commons into LV 9–13, Uncommons into LV 8–11 and Rares into LV 8–9 need a few more: ${[0,1,2].map(r=>`${esc(CR[r].n)} ${V2_SHR[r].join(" · ")}`).join("; ")})</p>
     <ul><li>Higher levels pay bigger dividends and make abilities stronger.</li><li>Upgraded cards glow: <b>silver</b> halfway, <b style="color:#ffd54a">gold</b> three quarters of the way, <b style="color:#ff3b3b">neon red + MAX</b> when maxed.</li>
     <li>Sort your collection with <b>Ready to upgrade first</b> to see what you can level up right now.</li></ul></section>
   <section><h3>💎 Shards (wildcards)</h3><ul>
@@ -8847,6 +8865,28 @@ function floatEmoji(e){let box=document.getElementById("floats");if(!box){box=do
   const s=document.createElement("span");s.className="floater";s.textContent=e;s.style.left=(8+Math.random()*30)+"px";s.style.setProperty("--dx",(Math.random()*90-45)+"px");s.style.fontSize=(26+Math.random()*14)+"px";s.style.animationDuration=(2.2+Math.random()*1.2)+"s";
   box.appendChild(s);setTimeout(()=>s.remove(),3600)}
 let RX_N=0;
+/* Drew · PBA Chrome Auto, "Ringside Cut" (owner Nov 1): while watching someone's High-Low / Craps / Blackjack / Roulette, extra reaction emojis and a
+   Claim button after each of their wins: the House pays you abV("drew") % of that win, once per win (bank doc drew_<me>_<who>_<event>, fixed id).
+   The claim box lives in its own [data-drewg] slot, refreshed every second by drewTick (the game views redraw in different ways). */
+const RX_X={rl:["🔴","⚫️","🟢"],bj:["❌","✅"],hilo:["⬆️","⬇️"]};
+function rxBar(g){const x=hasAb("drew")?RX_X[g]||[]:[];return `<div class="reactbar${x.length?" rxw":""}">${["❤️","🔥","😭",...x].map(e=>`<button type="button" data-react="${e}" aria-label="Send ${e}">${e}</button>`).join("")}</div><div class="drewcl" data-drewg="${g}"></div>`}
+const DREW_WIN=180000;
+function drewEv(g,q){q=q||{};
+  if(g==="rl"){const L=q.rlLast;return L&&L.at?{k:"rl"+L.at,at:Number(L.at)+6500,w:Math.floor(Number(L.delta)||0)}:null}
+  if(g==="craps"){const L=q.crLast;return L&&L.at&&L.net!=null?{k:"cr"+L.at,at:Number(L.at),w:Math.floor(Number(L.net)||0)}:null}
+  if(g==="hilo"){const c=(q.hlLive||{}).co;return c&&c.at?{k:"hl"+c.at,at:Number(c.at),w:Math.floor(Number(c.p)||0)}:null}
+  if(g==="bj"){const h=q.bjHand;if(!h||!h.done||!h.at)return null;return{k:"bj"+h.at,at:Number(h.at),w:Math.floor((h.results||[]).reduce((a,x)=>a+(Number(x.delta)||0),0))}}
+  return null}
+function drewCur(g){const v=abV("drew"),who=tableWho();if(!v||!who||who===S.me)return null;const e=drewEv(g,S.prefs[who]);const now=Date.now();
+  if(!e||e.w<=0||now<e.at||now-e.at>DREW_WIN)return null;const amt=Math.floor(e.w*v/100);if(amt<1)return null;return{...e,v,who,amt,id:`drew_${S.me}_${who}_${e.k}`}}
+function drewTick(){const els=document.querySelectorAll("[data-drewg]");if(!els.length)return;for(const el of els){const c=drewCur(el.dataset.drewg);
+  const h=!c?"":bankById(c.id)?`<span>🎟️ You claimed <b class="num pos">+${c.amt.toLocaleString()} BB</b> of ${esc(nm(c.who))}'s win</span>`:`<button type="button" class="btn small" data-drew="${esc(el.dataset.drewg)}">🎟️ Claim ${c.amt.toLocaleString()} BB</button><span class="small muted">${pctTxt(c.v)} of ${esc(nm(c.who))}'s +${c.w.toLocaleString()} BB win</span>`;
+  if(el._h!==h){el._h=h;el.innerHTML=h}}}
+setInterval(drewTick,1000);
+async function drewClaim(g){const c=drewCur(g);if(!c)return toast("Nothing to claim right now.");if(bankById(c.id))return;if(S._drewB===c.id)return;S._drewB=c.id;
+  try{const ref=db.doc("bank/"+c.id),x=await ref.get();if(x.exists)return;await ref.set({kind:"drew",from:"house",to:S.me,amt:c.amt,at:Date.now(),who:c.who,g,ev:c.k,note:`Ringside Cut · ${nm(c.who)}'s win`});toast(`🎟️ +${c.amt.toLocaleString()} BB from the House`);haptic&&haptic()}
+  catch(_){toast("Couldn't claim that. Try again.")}finally{S._drewB=null;drewTick()}}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-drew]");if(!b)return;e.preventDefault();drewClaim(b.dataset.drew)});
 async function sendReact(e){const to=tableWho();if(to===S.me||!db)return;const now=Date.now();if(now-(S._rxTap||0)<120)return;S._rxTap=now;
   RX_N=Math.max(RX_N,Number(((S.prefs[S.me]||{}).bjReact||{}).n)||0)+1;floatEmoji(e);
   S._rxSeen=S._rxSeen||{};S._rxSeen[S.me]=RX_N;try{await db.doc("prefs/"+S.me).update({bjReact:{to,e,n:RX_N,at:now}})}catch(_){}}
@@ -8886,7 +8926,7 @@ function viewBJ(){
   const shufAt=Number(p.bjShuffleAt)||0;if(S.bjShufSeen===undefined)S.bjShufSeen=shufAt;
   const shuffling=shufAt>S.bjShufSeen;if(shuffling)S.bjShufSeen=shufAt;const OFF=replay?A.off-(NOW-A.t0)/1000:(shuffling?1.9:0);
   const left=Array.isArray(p.bjShoe)&&p.bjShoe.length<=104?p.bjShoe.length:104;
-  let html=`<div class="bjwrap">${watching?"":actBar("bj")}${watching?`<div class="reactbar"><button type="button" data-react="❤️" aria-label="Send a heart">❤️</button><button type="button" data-react="🔥" aria-label="Send fire">🔥</button><button type="button" data-react="😭" aria-label="Send crying">😭</button></div>`:""}${watching?`<div class="bjwatchbar"><span>${pic(me)}<span><span class="eyebrow">${bjIsLive(me)?'<span class="livedot"></span>Watching live':"Watching"}</span><b>${esc(nm(me))}</b></span></span><button type="button" class="btn ghost" data-bjwatch="">Back to my table</button></div>`:""}${watching?"":`<div id="bjViewers">${bjViewersHtml()}</div>`}<div class="bjtop"><span class="eyebrow muted">Balance</span> <span class="bjbal num">${bal.toLocaleString()} BB</span>${watching?"":sessChip("bj")}</div><section class="felt">${shuffling?`<div class="shufov"><div class="riffle"><span class="rc l1"></span><span class="rc l2"></span><span class="rc l3"></span><span class="rc r1"></span><span class="rc r2"></span><span class="rc r3"></span></div><div class="shuftxt">New shoe</div><div class="shufsub">Shuffling…</div></div>`:""}<div class="shoemeter" title="Cards left in the shoe"><span style="width:${Math.round(left/104*100)}%"></span></div><div class="small shoeleft">${left} cards left in the shoe</div>`;
+  let html=`<div class="bjwrap">${watching?"":actBar("bj")}${watching?`${rxBar("bj")}`:""}${watching?`<div class="bjwatchbar"><span>${pic(me)}<span><span class="eyebrow">${bjIsLive(me)?'<span class="livedot"></span>Watching live':"Watching"}</span><b>${esc(nm(me))}</b></span></span><button type="button" class="btn ghost" data-bjwatch="">Back to my table</button></div>`:""}${watching?"":`<div id="bjViewers">${bjViewersHtml()}</div>`}<div class="bjtop"><span class="eyebrow muted">Balance</span> <span class="bjbal num">${bal.toLocaleString()} BB</span>${watching?"":sessChip("bj")}</div><section class="felt">${shuffling?`<div class="shufov"><div class="riffle"><span class="rc l1"></span><span class="rc l2"></span><span class="rc l3"></span><span class="rc r1"></span><span class="rc r2"></span><span class="rc r3"></span></div><div class="shuftxt">New shoe</div><div class="shufsub">Shuffling…</div></div>`:""}<div class="shoemeter" title="Cards left in the shoe"><span style="width:${Math.round(left/104*100)}%"></span></div><div class="small shoeleft">${left} cards left in the shoe</div>`;
   const ratFresh=!!(round&&round.done&&!(A.key===key&&A.flipped));
   /* Each result has a few reactions; the hand's timestamp picks one, so redraws of the same hand keep the same reaction */
   /* You lose: he mocks you. You win: 25% a shrug, otherwise nothing. */
