@@ -6460,7 +6460,7 @@ const AB2={
   "mv:cafmonster":{k:"caf",v:[25,35,50],t:v=>`Craps: losing a Pass Line or Come bet to a 2, 3 or 12 gives back ${pctTxt(v)} of it`},
   "mv:hurricaneharbinger":{k:"hurr",v:[2,3,3.6],t:v=>v>=3.6?"A wildcard shard from a pack comes as 3 shards (70%) or 5 shards (30%)":`A wildcard shard from a pack comes as ${v} shards`}};
 /* United We Sit multiplier by level: ×1.15 from LV 2, ×1.2 at LV 7, ×1.25 at LV 11, ×1.3 at LV 13; Chris from Tinder shards by level */
-const hlUwsX=L=>L>=13?1.5:L>=11?1.45:L>=7?1.4:1.35;/* owner Oct 31 10:07 PM: max 1.5, same .05 steps below (10:06 PM it was 1.2/1.25/1.3/1.35); only triggers on 10–K Higher / A–4 Lower *//* owner Oct 31: −0.05 twice, then −0.025 at 6:55 PM (was 1.15/1.2/1.25/1.3 → 1.1/1.15/1.2/1.25 → 1.05/1.1/1.15/1.2) */
+const hlUwsX=L=>L>=13?1.21:L>=11?1.16:L>=7?1.11:1.06;/* owner Oct 31 10:11 PM: player edge on a boosted guess ≈ +17% at max (0.97 × 1.21), .05 steps below (≈ +3/+8/+12%). Was 1.35–1.5 for a few minutes (+31–45%). Only 10–K Higher / A–4 Lower. *//* owner Oct 31: −0.05 twice, then −0.025 at 6:55 PM (was 1.15/1.2/1.25/1.3 → 1.1/1.15/1.2/1.25 → 1.05/1.1/1.15/1.2) */
 const chrisSh=L=>L>=9?[2,1]:L>=8?[1,2]:L>=6?[1,1]:L>=4?[0,2]:[0,1];
 /* the AB2 entry for a card (any level key), or null */
 const AB2_G={moscow:["hl"],snyder:["sl"],zyn:["cr"],caf:["cr"],hurr:["packs"],shock:["bj","rl","cr","hl","sl","mp"],giga:["bj","rl","cr","hl","sl"],chad:["rl"],summer:["cr"],swole:["fp"],cody:["fp"],unitedsit:["hl"],floof:["hl"],gun:["sl"],bigscreen:["sl"],caleb:["bj"],ballk:["sb"],rotunda:["sb"],crab:["wheel"],newfriend:["bank"],chris:["bank"],btc:["bank"],dwillie:["bj","rl","hl"],thanos:["bj"],caked:["bj"],darth:["bj"],rookie:["bj"],gooner:["rl"],rinker:["fp"],vontrap:["div"],shine:["div"],luke:["bank"],shabbat:["bank"],logan:["sb"],crew:["sb"],bucket:["mp"],crndd:["mp"],vail:["packs"],paradise:["packs"],diva:["shop"]};
@@ -7502,6 +7502,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:202,d:"Oct 31",t:[["🪑","United We Sit bonus set to ×1.06 / 1.11 / 1.16 / 1.21 by level"]]},
  {v:201,d:"Oct 31",t:[["🪑","United We Sit bonus raised again: ×1.35 / 1.4 / 1.45 / 1.5 by level"]]},
  {v:200,d:"Oct 31",t:[["🪑","United We Sit now works on any card 10 or higher when you guess Higher, or any card 4 or lower when you guess Lower (and you're right). Its bonus is now ×1.2 / 1.25 / 1.3 / 1.35 by level"]]},
  {v:199,d:"Oct 31",t:[["🪑","United We Sit now only kicks in on a 10 when you guess Higher, or on a 4 when you guess Lower (and you're right)"]]},
