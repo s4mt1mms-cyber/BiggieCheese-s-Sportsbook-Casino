@@ -303,7 +303,7 @@ td.r,th.r{text-align:right}
 .bkstats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.bkstats>div{background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:8px;padding:6px 8px;display:flex;flex-direction:column}.bkstats span{font-size:11px;color:var(--muted)}.bkstats b{font-size:16px}
 @media (max-width:480px){.bkstats{grid-template-columns:repeat(2,1fr)}}
 .bkcoll{display:flex;flex-wrap:wrap;gap:6px}.bkcoll>span{font-size:12px;padding:3px 8px;border-radius:99px;border:1px solid var(--c);color:var(--c);cursor:pointer;display:inline-flex;gap:4px;align-items:center}.bkcoll button{background:none;border:0;color:inherit;cursor:pointer;padding:0 2px}
-.bkrow{border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:6px}.bkrh{display:flex;gap:8px;align-items:center}.bkchip{font-size:11px;font-family:var(--mono);padding:2px 8px;border-radius:99px;border:1px solid var(--muted);color:var(--muted);white-space:nowrap}
+.bkrow{border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:6px}.bkadm{margin:6px 0 4px;padding:8px 10px;border:1px dashed #ff5c5c66;border-radius:10px;display:flex;flex-direction:column;gap:6px}.bkrh{display:flex;gap:8px;align-items:center}.bkchip{font-size:11px;font-family:var(--mono);padding:2px 8px;border-radius:99px;border:1px solid var(--muted);color:var(--muted);white-space:nowrap}
 .bkchip.late{border-color:#ff9f1a;color:#ff9f1a}.bklate{color:#ffb347}
 .bkls b{font-size:14px}.bkpay{align-items:center;gap:6px}.bkpay input{width:110px}.bkcoll>span.seized{border-style:dashed;opacity:.75}
 .bkcl{display:flex;flex-direction:column;gap:4px}.bkcl>div{display:flex;align-items:center;gap:6px;border:1px solid var(--c);border-radius:8px;padding:3px 6px;font-size:13px}.bkcl span{flex:1;color:var(--c);min-width:0}.bkcl button{background:none;border:1px solid var(--line);border-radius:5px;color:var(--ink);cursor:pointer;width:28px;height:26px}.bkcl button:disabled{opacity:.3}
@@ -2133,7 +2133,7 @@ function ledger0(){
     /* Shabbat Shalom (card, Oct 23): 25,000 lent to the House comes back as 26,250, 1/24 of it each full hour */
     if(t.kind==="shabbat"){if(!t.from)continue;const a=Math.floor(Number(t.amt))||0,h=Math.min(24,Math.floor((Date.now()-(Number(t.at)||0))/36e5));bkA(t.from,-a+Math.floor((Math.floor(Number(t.back))||0)*h/24));continue}
     const a=Math.floor(Number(t.amt));if(!(a>0)||!t.from||!t.to||t.from===t.to)continue;bkA(t.from,-a);bkA(t.to,a)}
-  for(const l of S.loans||[]){if(!l.borrower||!l.takenAt||!["active","late","repaid","defaulted"].includes(l.status))continue;const P=Math.floor(Number(l.P))||0;bkA(l.lender,-P);bkA(l.borrower,P);
+  for(const l of S.loans||[]){if(!l.borrower||!l.takenAt||!["active","late","repaid","defaulted","closed"].includes(l.status))continue;const P=Math.floor(Number(l.P))||0;bkA(l.lender,-P);bkA(l.borrower,P);
     const seen=new Set();for(const p of l.payments||[]){if(seen.has(p.k))continue;seen.add(p.k);const a=Math.floor(Number(p.amt))||0;bkA(l.borrower,-a);bkA(l.lender,a)}}
   return{rec,net:net0,byWeek,wagered:wagered0,bal,refills,pending,bkNet,wins,wr,tiPaid,tiLast,balOf:id=>(bkNet[id]||0)+B(id)+(Number(S.prefs[id]&&S.prefs[id].rb15)||0)+(Number(S.prefs[id]&&S.prefs[id].topUp)||0)-(Number(S.prefs[id]&&S.prefs[id].curseFee)||0)-(Number(S.prefs[id]&&S.prefs[id].auraSpent)||0)-(Number(S.prefs[id]&&S.prefs[id].emoteSpent)||0)-(Number(S.prefs[id]&&S.prefs[id].skinSpent)||0)-(Number(S.prefs[id]&&S.prefs[id].farmSpent)||0)-(Number(S.prefs[id]&&S.prefs[id].craftSpent)||0)+(Number(S.prefs[id]&&S.prefs[id].shineEarn)||0)-Math.floor((Number(S.prefs[id]&&S.prefs[id].tiWin)||0)/10)+cardMoney(id)-(pending[id]||0)+(Number(S.prefs[id]&&S.prefs[id].bjNet)||0)+(Number(S.prefs[id]&&S.prefs[id].gift)||0)+(Number(S.prefs[id]&&S.prefs[id].flapEarn)||0)+(Number(S.prefs[id]&&S.prefs[id].mineEarn)||0)+(Number(S.prefs[id]&&S.prefs[id].rlNet)||0)+(Number(S.prefs[id]&&S.prefs[id].revengeEarn)||0)+((S.adjust&&S.adjust[id])||0)+(Number(S.prefs[id]&&S.prefs[id].bjBonus)||0)+(Number(S.prefs[id]&&S.prefs[id].crNet)||0)+(Number(S.prefs[id]&&S.prefs[id].hlNet)||0)+(Number(S.prefs[id]&&S.prefs[id].rrNet)||0)+(Number(S.prefs[id]&&S.prefs[id].thNet)||0)+(Number(S.prefs[id]&&S.prefs[id].slNet)||0)+(Number(S.prefs[id]&&S.prefs[id].divEarn)||0),inPlay:id=>pending[id]||0};
 }
@@ -7513,7 +7513,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
- {v:210,d:"Nov 1",t:[["💎","Pulling a card you already have at max level now gives you shards of its rarity instead of copies you can't use"]]},{v:209,d:"Nov 1",t:[["🌴","Summer 2024 adjusted again: each non-7 roll in a row adds 0.25% / 0.35% / 0.5% (LV 1 / 2 / 3) to your craps wins"]]},
+ {v:211,d:"Nov 1",t:[["🏦","The admin can now close or cancel loans from the Bank if something goes wrong"]]},{v:210,d:"Nov 1",t:[["💎","Pulling a card you already have at max level now gives you shards of its rarity instead of copies you can't use"]]},{v:209,d:"Nov 1",t:[["🌴","Summer 2024 adjusted again: each non-7 roll in a row adds 0.25% / 0.35% / 0.5% (LV 1 / 2 / 3) to your craps wins"]]},
  {v:208,d:"Nov 1",t:[["🌴","Summer 2024 nerfed: each non-7 roll in a row now adds 0.5% / 0.75% / 1% (LV 1 / 2 / 3) to your craps wins"]]},
  {v:207,d:"Nov 1",t:[["🎖️","Captain Von Trap pays much more: up to +20 BB a day for every upgraded card you own (+2 at LV 2 up to +20 at max)"]]},
  {v:206,d:"Oct 31",t:[["🔍","Card collections now have a search box: find cards by name, rarity, collection or ability"]]},
@@ -8373,7 +8373,7 @@ async function bkProcess(){if(!S.me||!db||_bkProc||S.readOnly||!S.ready)return;_
     /* collateral settles on the receiving side's own page, once */
     const claim=async flag=>{const s=await db.doc("loans/"+l0.id).get();if(!s.exists||s.data()[flag])return;await db.doc("loans/"+l0.id).update({[flag]:true});l0[flag]=true;await bkGive(s.data().collateral||[],flag==="collateralClaimed"?"xfer":"back",s.data().collSh);return s.data()};
     if(l0.status==="defaulted"&&l0.lender===S.me&&!l0.collateralClaimed){const d=await claim("collateralClaimed");if(d&&(d.collateral||[]).length||Object.keys(d.collSh||{}).length)toast(`${nm(d.borrower)} defaulted. You got ${bkCollTxt(d)}.`)}
-    if((l0.status==="repaid"||l0.status==="cancelled")&&l0.borrower===S.me&&!l0.collateralBackClaimed){const d=await claim("collateralBackClaimed");if(d&&(d.collateral||[]).length)toast("Loan settled. Your collateral is back.")}
+    if((l0.status==="repaid"||l0.status==="cancelled"||l0.status==="closed")&&l0.borrower===S.me&&!l0.collateralBackClaimed){const d=await claim("collateralBackClaimed");if(d&&(d.collateral||[]).length)toast("Loan settled. Your collateral is back.")}
   }catch(_){}}}finally{_bkProc=false}}
 setInterval(bkProcess,5000);
 /* Card System V2 loan rule (owner, Oct 29): until a loan is paid, all winnings and income go to it first. The borrower's page keeps a low-water mark
@@ -8405,7 +8405,7 @@ function bkPrevHtml(){const F=bkF(),c=bkCalc(bkTerms(F));if(!c||c.err)return `<s
   const bal=Math.floor(ledger().balOf(S.me));return `<div class="bkstats"><div><span>Per payment</span><b class="num">${c.amts[0].toLocaleString()}${c.amts.some(a=>a!==c.amts[0])?"*":""}</b></div><div><span>Total repaid</span><b class="num">${c.total.toLocaleString()}</b></div><div><span>Interest</span><b class="num pos">+${c.interest.toLocaleString()}</b></div><div><span>Length</span><b class="num">${bkCd(c.payMs*c.n)}</b></div>${(()=>{const t=bkTerms(F);return t.preFee>0?`<div><span>Early payoff (${t.preH}h)</span><b class="num">${bkPreMin(t).toLocaleString()}+</b></div>`:`<div><span>Prepayment fee</span><b class="num">None</b></div>`})()}</div>${c.amts.some(a=>a!==c.amts[0])?`<div class="small muted">* whole-BB rounding: payments range ${Math.min(...c.amts)}–${Math.max(...c.amts)} BB.</div>`:""}${c.P>bal&&!(S.bkForm==="req"&&!S.bkEdit)?`<div class="small neg">You only have ${bal.toLocaleString()} BB.</div>`:""}`}
 function bkTermsTxt(l){return `${Number(l.rate)}%/${l.rateU}, compounded every ${bkUT(l.compN,l.compU)} · ${l.n} payment${Number(l.n)>1?"s":""} every ${bkUT(l.payN,l.payU)}`}
 function bkRow(l){const c=bkCalc(l)||{},me=S.me,st=l.status,N=l.sched?l.sched.amts.length:c.n,now=Date.now(),live=(st==="active"||st==="late")&&l.sched;
-  const chip={open:"Open",active:"Active",late:"Late",repaid:"Repaid",defaulted:"Defaulted",cancelled:"Cancelled"}[st]||st;
+  const chip={open:"Open",active:"Active",late:"Late",repaid:"Repaid",defaulted:"Defaulted",cancelled:l.adminVoid?"Voided":"Cancelled",closed:"Closed"}[st]||st;
   let nxt="";
   if(live){const paid=bkPaidTot(l),tot=bkTotalOf(l,now),od=bkOverAmt(l,now),po=bkPayoffNow(l,now),nd=bkNextTry(l,now),last=bkLastDue(l),bor=l.borrower===me;
     const cdNext=nd<Infinity?bkCumDue(l,nd,now)-paid:0;
@@ -8416,7 +8416,7 @@ function bkRow(l){const c=bkCalc(l)||{},me=S.me,st=l.status,N=l.sched?l.sched.am
     if(bor){const bal=Math.floor(ledger().balOf(me)),open=now<last,v=(S.bkPart||{})[l.id]||"";
       nxt+=`<div class="row bkpay">${open&&po>1?`<input class="n s" type="number" min="1" step="1" max="${Math.min(bal,po)}" inputmode="numeric" placeholder="BB" data-bkpart="${esc(l.id)}" value="${esc(v)}" aria-label="Amount to pay"><button type="button" class="btn ghost small" data-bk="part" data-id="${esc(l.id)}">Pay part</button>`:""}<button type="button" class="btn small" data-bk="payoff" data-id="${esc(l.id)}" data-amt="${po}" ${bal<po?"disabled":""}>Pay off now · ${po.toLocaleString()} BB</button></div>${bal<po?`<div class="small muted">You have ${bal.toLocaleString()} BB.</div>`:""}`}}
   else if(st==="open"&&c.amts)nxt=l.preFee==null?`<div class="small muted">Early payoff: <b class="num">${bkPreMin(l).toLocaleString()} BB</b> minimum (loan + 10%), or principal + interest accrued if that's more</div>`:Number(l.preFee)>0?`<div class="small muted">Prepayment fee: <b class="num">${Number(l.preFee)}%</b> (paying off costs at least <b class="num">${bkPreMin(l).toLocaleString()} BB</b>) for the first ${Number(l.preH)||24} hours, then just principal + interest so far</div>`:`<div class="small muted">No prepayment fee: pay off any time for principal + interest so far</div>`;
-  else if(l.sched&&(st==="repaid"||st==="defaulted"))nxt=`<div class="small muted">Paid ${bkPaidTot(l).toLocaleString()} BB in total</div>`;
+  else if(l.sched&&(st==="repaid"||st==="defaulted"||st==="closed"))nxt=`<div class="small muted">Paid ${bkPaidTot(l).toLocaleString()} BB in total</div>`;
   const short=st==="open"&&!l.req&&c.P&&Math.floor(ledger().balOf(l.lender))<c.P;
   const seized=new Set();(l.seized||[]).forEach((g,i)=>seized.add(i));
   const has=(l.collateral&&l.collateral.length),want=l.coll&&l.coll.length,shT=bkShTxt(l.collSh),shH=shT?`<div class="small">💎 Shard collateral: <b>${esc(shT)}</b>${l.borrower?"":" (the borrower puts these up)"}</div>`:"";
@@ -8445,7 +8445,7 @@ function bkActivity(me){const out=[],E=(at,v,h,bad)=>{if(at)out.push({at:Number(
     if(t.kind==="luke"){if(t.to===me)E(t.at,a,`🪦 The Luke Henry Curse · stole from ${esc(nm(t.from))}`);else if(t.from===me)E(t.at,-a,`🪦 The Luke Henry Curse · ${esc(nm(t.to))} stole from you`);continue}
     if(t.kind==="debby"){if(t.to===me)E(t.at,a,`🦹 Via Debby · stole from ${esc(nm(t.from))}`);else if(t.from===me)E(t.at,-a,`🦹 Via Debby · ${esc(nm(t.to))} stole from you`);continue}
     if(t.to===me)E(t.at,a,`← ${t.kind==="platfee"||t.kind==="packfee"||t.kind==="shopfee"||t.from==="house"?"The House":esc(nm(t.from))}${note}`);else if(t.from===me&&t.from!=="house")E(t.at,-a,`→ ${esc(nm(t.to))}${note}`)}
-  for(const l of S.loans||[]){if(!l.borrower||!l.takenAt||!["active","late","repaid","defaulted"].includes(l.status))continue;const L=l.lender===me,B=l.borrower===me;if(!L&&!B)continue;
+  for(const l of S.loans||[]){if(!l.borrower||!l.takenAt||!["active","late","repaid","defaulted","closed"].includes(l.status))continue;const L=l.lender===me,B=l.borrower===me;if(!L&&!B)continue;
     const P=Math.floor(Number(l.P))||0,who=esc(nm(L?l.borrower:l.lender));
     E(l.takenAt,L?-P:P,L?`🏦 Loan to ${who}`:`🏦 Loan from ${who}`);
     const seen=new Set();for(const p of l.payments||[]){if(seen.has(p.k))continue;seen.add(p.k);const a=Math.floor(Number(p.amt))||0;if(!a)continue;
@@ -8453,7 +8453,8 @@ function bkActivity(me){const out=[],E=(at,v,h,bad)=>{if(at)out.push({at:Number(
       E(p.at,L?a:-a,L?`💵 ${kind} from ${who}`:`💵 ${kind} to ${who}`)}
     if(l.status==="defaulted")E(l.defaultedAt,0,L?`💀 ${who} defaulted${bkCollTxt(l)?` · you get ${esc(bkCollTxt(l))}`:" · unsecured"}`:`💀 Defaulted on ${who}'s loan${bkCollTxt(l)?` · lost ${esc(bkCollTxt(l))}`:""}`,B);
     else if(l.status==="late"&&(l.seized||[]).length)E(l.lastSeizeAt,0,L?`🔒 Holding ${esc(bkCardsTxt(l.seized))} from ${who}`:`🔒 Seized: ${esc(bkCardsTxt(l.seized))} (returns if you catch up)`,B);
-    if(l.status==="repaid")E(l.repaidAt,0,`✅ ${L?`${who} repaid your loan`:`Repaid ${who}'s loan`}`)}
+    if(l.status==="repaid")E(l.repaidAt,0,`✅ ${L?`${who} repaid your loan`:`Repaid ${who}'s loan`}`);if(l.status==="closed")E(l.closedAt,0,`🛡️ The admin closed ${L?`your loan to ${who}`:`${who}'s loan`} · nothing more is owed`)}
+  for(const l of S.loans||[]){if(!l.adminVoid||(l.lender!==me&&l.borrower!==me))continue;E(l.cancelledAt,0,`🛡️ The admin voided ${l.lender===me?`your loan to ${esc(nm(l.borrower))}`:`${esc(nm(l.lender))}'s loan`} · all its money was undone`)}
   {const q=S.prefs[me]||{};if(q.dfl&&q.dflAt)E(q.dflAt,Math.round(Number(q.rb15)||0),`📉 Deflation reset · balance ÷15 (${(Number(q.rbFrom)||0).toLocaleString()} → ${(Number(q.rbTo)||0).toLocaleString()} BB, 10,000 minimum)`,(Number(q.rb15)||0)<0)
     for(const[d,v]of Object.entries(q.shineLog||{})){const at=Date.parse(d+"T05:00:00Z");E(at,Number(v)||0,Number(v)>0?`💼 Shine Employee paycheck`:`💼 Shine Employee · they missed your payment`,!(Number(v)>0))}
     /* card crafting / upgrade / shard store fees (burned) */for(const[at,x]of Object.entries(q.craftLog||{})){if(x.buy){E(Number(at),-(Number(x.fee)||0),`💎 Shard store: ${esc(shTxt(Number(x.sh)||0,Number(x.n)||0))}`);continue}const c=cardById(x.c);E(Number(at),-(Number(x.fee)||0),x.sh!=null?`⬆️ Upgrade: ${esc(c?c.name:"a card")} LV ${x.f}→${x.t}`:`🔨 Craft: ${esc(c?c.name:"a card")} L${x.f}→L${x.t}`)}}
@@ -8466,7 +8467,7 @@ function viewBank(){if(!S.me)return `<div class="empty">Sign in to use the bank.
   const live=x=>x.filter(l=>l.status==="active"||l.status==="late"),done=x=>x.filter(l=>!(l.status==="active"||l.status==="late"));
   const sec=(t,a,e,id)=>`<section class="card"${id?` id="${id}"`:""}><h3>${t}${a.length?` <span class="small muted">${a.length}</span>`:""}</h3>${a.length?a.map(bkRow).join(""):`<div class="small muted">${e}</div>`}</section>`;
   const tab=S.bkTab||"home",nMine=live(lend).length+live(borr).length,late=live(borr).some(l=>l.status==="late");
-  const tabs=`<div class="seg bktabs" role="tablist">${[["home","💸 Money"],["market",`🤝 Loans${reqs.length+open.length?` · ${reqs.length+open.length}`:""}`],["mine",`📒 My loans${nMine?` · ${nMine}`:""}${late?" ⏰":""}`]].map(([k,t])=>`<button type="button" data-bk="tab" data-t="${k}" aria-pressed="${tab===k}">${t}</button>`).join("")}</div>`;
+  const tabs=`<div class="seg bktabs" role="tablist">${[["home","💸 Money"],["market",`🤝 Loans${reqs.length+open.length?` · ${reqs.length+open.length}`:""}`],["mine",`📒 My loans${nMine?` · ${nMine}`:""}${late?" ⏰":""}`],...(S.canEdit?[["adm","🛡️ All loans"]]:[])].map(([k,t])=>`<button type="button" data-bk="tab" data-t="${k}" aria-pressed="${tab===k}">${t}</button>`).join("")}</div>`;
   let body="";
   if(tab==="home")body=`${hofHtml()}${abBankHtml()}${tiBankHtml()}
   <section class="card"><h3>💸 Send BB</h3><div class="row bkform"><label>To<select data-bkf="to"><option value="">Pick someone</option>${ppl.map(id=>`<option value="${esc(id)}" ${F.to===id?"selected":""}>${esc(nm(id))}</option>`).join("")}</select></label>
@@ -8477,8 +8478,24 @@ function viewBank(){if(!S.me)return `<div class="empty">Sign in to use the bank.
     body=`<div class="bkacts"><button type="button" class="btn${fm==="lend"?"":" ghost"}" data-bk="form" data-m="lend">🤝 Offer a loan</button><button type="button" class="btn${fm==="req"?"":" ghost"}" data-bk="form" data-m="req">🙏 Ask for a loan</button></div>
     ${fm?bkFormHtml(fm):""}
     ${sec("🙏 Loan requests",reqs,"Nobody is asking for a loan right now. Lend to someone here and their cards are your collateral.")}${sec("🤝 Loan offers",open,"No open loan offers.")}`}
+  else if(tab==="adm"&&S.canEdit)body=bkAdmHtml(L);
   else body=`${sec("📥 Borrowing",live(borr),"You aren't borrowing anything right now.")}${sec("📤 Lending",live(lend),"You aren't lending anything right now.")}${done(borr).length+done(lend).length?sec("🗂 Past loans",done(borr).concat(done(lend)).sort((a,b)=>(b.takenAt||0)-(a.takenAt||0)),""):""}`;
   return `<div class="bkwrap"><div class="bkhead"><h2>🏦 Bank</h2><div class="small">Balance <b class="num" style="color:#5cff72">${bal.toLocaleString()} BB</b></div></div>${tabs}${body}</div>`}
+/* Admin (owner Nov 1): Bank → 🛡️ All loans lists every loan; Close = stop collecting, money stays as it is (status "closed", counted in the ledger like repaid);
+   Void = status "cancelled" + adminVoid, so the ledger drops the loan entirely (principal and every payment undone). Both send collateral not yet taken back to the borrower. */
+function bkAdmHtml(L){const g=[["⏰ Late",l=>l.status==="late"],["🟢 Active",l=>l.status==="active"],["🙏 Open requests",l=>l.status==="open"&&l.req],["🤝 Open offers",l=>l.status==="open"&&!l.req],["🗂 Ended",l=>["repaid","defaulted","closed"].includes(l.status)],["✖ Cancelled / voided",l=>l.status==="cancelled"]];
+  const A=S._bkAdm&&Date.now()-S._bkAdm.at<8000?S._bkAdm:null,b=(l,m,t,cls)=>`<button type="button" class="btn small${cls||""}" data-bk="adm" data-m="${m}" data-id="${esc(l.id)}">${A&&A.id===l.id&&A.m===m?"Tap again to confirm":t}</button>`;
+  const row=l=>{const st=l.status,ran=["active","late","repaid","defaulted"].includes(st),opn=st==="open";let x="";
+    if(ran)x=(st==="active"||st==="late"?b(l,"close","🛑 Close (keep money as is)"," ghost"):"")+b(l,"void","↩️ Void (undo all money)"," ghost");else if(opn)x=b(l,"void",l.req?"✖ Take down request":"✖ Cancel offer"," ghost");
+    const nt=ran?`<div class="small muted">Close: ${esc(nm(l.borrower))} keeps the ${(Math.floor(Number(l.P))||0).toLocaleString()} BB, ${esc(l.lender==="house"?"the House":nm(l.lender))} keeps the ${bkPaidTot(l).toLocaleString()} BB paid, nothing more is collected. Void: the loan never happened (${esc(nm(l.borrower))} gives back ${(Math.floor(Number(l.P))||0).toLocaleString()}, gets ${bkPaidTot(l).toLocaleString()} back).${st==="defaulted"&&l.collateralClaimed?" Collateral already taken stays with the lender.":""}</div>`:"";
+    return bkRow(l)+(x?`<div class="bkadm">${nt}<div class="row">${x}</div></div>`:"")};
+  return g.map(([t,f])=>{const a=L.filter(f);return `<section class="card"><h3>${t} <span class="small muted">${a.length}</span></h3>${a.length?a.map(row).join(""):`<div class="small muted">None.</div>`}</section>`}).join("")}
+async function bkAdmDo(id,m){if(!S.canEdit||!db)return;const A=S._bkAdm;if(!A||A.id!==id||A.m!==m||Date.now()-A.at>8000||Date.now()-A.at<400){S._bkAdm={id,m,at:Date.now()};return render()}S._bkAdm=null;
+  try{const s=await db.doc("loans/"+id).get();if(!s.exists)return toast("That loan is gone.");const l={id,...s.data()},st=l.status,now=Date.now();
+    if(m==="close"){if(st!=="active"&&st!=="late")return toast("Only active or late loans can be closed.");await db.doc("loans/"+id).update({status:"closed",closedAt:now,closedBy:S.me,seized:[],lateSince:null,lastSeizeAt:null})}
+    else{if(st==="cancelled")return toast("Already cancelled.");await db.doc("loans/"+id).update({status:"cancelled",cancelledAt:now,adminVoid:st!=="open",prevStatus:st,closedBy:S.me,...((st==="open"&&!l.borrower)||l.collateralClaimed?{collateralBackClaimed:true}:{})})}
+    const ll=(S.loans||[]).find(x=>x.id===id);if(ll)Object.assign(ll,m==="close"?{status:"closed",closedAt:now}:{status:"cancelled",cancelledAt:now,adminVoid:st!=="open"});
+    toast(m==="close"?"Loan closed. Nothing more will be collected.":st==="open"?"Taken down.":"Loan voided. Its money is undone.");render()}catch(e){console.warn(e);toast("Couldn't change that loan. Try again.")}}
 /* the offer / request form (Loans tab). mode "lend" = offer a loan (wanted collateral, optional); "req" = ask for one (your own cards, required) */
 function bkFormHtml(mode){const F=bkF(),RQ=mode==="req"&&!S.bkEdit,coll=RQ?(S.bkRq||[]).map(cid=>({cid})):(S.bkColl||[]);
   const own=RQ?ownCards().filter(x=>cardCount(x.id)-(S.bkRq||[]).filter(g=>g===x.id).length>0).sort((a,b)=>b.r-a.r||a.name.localeCompare(b.name)):[];
@@ -8515,7 +8532,7 @@ document.addEventListener("change",e=>{if(e.target.closest("[data-bkf]"))e.targe
 document.addEventListener("click",e=>{const t=e.target.closest("[data-bk]");if(!t)return;const k=t.dataset.bk,F=bkF();
   if(k==="tab"){S.bkTab=t.dataset.t;window.scrollTo(0,0);return render()}if(k==="form"){const m=t.dataset.m||null;if(S.bkEdit&&m!=="lend"){S.bkEdit=null;S.bkColl=[]}S.bkForm=S.bkForm===m&&!S.bkEdit?null:m;return render()}
   if(S.readOnly&&!["rmc","addc","upc","dnc","rqadd","rqup","rqdn","rqrm"].includes(k))return toast("View only. Ask the commish for access.");
-  if(k==="rqpost")return bkReqPost();if(k==="fund")return bkFund(t.dataset.id);if(k==="rqcancel")return bkRqCancel(t.dataset.id);
+  if(k==="adm")return bkAdmDo(t.dataset.id,t.dataset.m);if(k==="rqpost")return bkReqPost();if(k==="fund")return bkFund(t.dataset.id);if(k==="rqcancel")return bkRqCancel(t.dataset.id);
   if(k==="rqadd"){const sl=$("#bkRqC"),cid=sl&&sl.value;if(!cid||!cardById(cid))return toast("Pick a card.");S.bkRq=S.bkRq||[];if(S.bkRq.length>=20)return toast("Up to 20 collateral cards.");if(S.bkRq.filter(g=>g===cid).length>=cardCount(cid))return toast("You don't have another copy.");S.bkRq.push(cid);return render()}
   if(k==="rqup"||k==="rqdn"){const a=S.bkRq||[],i=Number(t.dataset.i),j=k==="rqup"?i-1:i+1;if(a[i]&&a[j]){[a[i],a[j]]=[a[j],a[i]]}return render()}
   if(k==="rqrm"){(S.bkRq||[]).splice(Number(t.dataset.i),1);return render()}
