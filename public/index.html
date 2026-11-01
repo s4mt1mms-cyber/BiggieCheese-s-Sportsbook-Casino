@@ -6555,7 +6555,7 @@ async function v2Buy1(lab){let done=null;if(S._pkBusy||!S.me||!db)return;if(S.re
     const D=q;const {out,pity}=v2Open(D);if(!out.length){S._pkBusy=false;return toast("Cards are still loading. Try again in a second.")}
     const add={},shAdd={};let lunchN=0,nCurse=0;
     /* owner Oct 29 2:18 AM: a duplicate is one more COPY of that card (prefs.cp {cardId:n}, the bar under the card), not a shard */
-    const cpAdd={},cpA=(b,k)=>{if(k>0)cpAdd[b]=(cpAdd[b]||0)+k};for(const x of out){const c=cardById(x.cid),k=Math.max(1,x.n||1);if(x.kind==="new"){add[x.cid]=1;cpA(x.cid,k-1)}else if(x.kind==="shard")cpA(x.cid,k);else if(x.kind==="wild"){/* Hurricane Harbinger (owner Oct 31): a wildcard comes as 2 / 3 / (70% 3, 30% 5) shards */const hv=ab2("hurr"),ws=hv>=3.6?(pkRand()<.7?3:5):hv>0?hv:1;x.ws=ws;shAdd[x.r]=(shAdd[x.r]||0)+ws;cpA(x.cid,k-1)}if(c.abil==="lunch")lunchN++;if(c.abil==="curse")nCurse++}
+    const cpAdd={},cpA0=(b,k)=>{if(k>0)cpAdd[b]=(cpAdd[b]||0)+k};let x=null;/* owner Nov 1: copies of a card already at max level become shards of its rarity (1 per copy) */const cpA=(b,k)=>{if(k<=0)return;const c=cardById(b);if(craftable(c)&&Math.max(topLv(b,S.me),add[b]?1:0)>=LV_MAX[c.r]){shAdd[c.r]=(shAdd[c.r]||0)+k;x.mxs=(x.mxs||0)+k}else cpA0(b,k)};for(x of out){const c=cardById(x.cid),k=Math.max(1,x.n||1);if(x.kind==="new"){add[x.cid]=1;cpA(x.cid,k-1)}else if(x.kind==="shard")cpA(x.cid,k);else if(x.kind==="wild"){/* Hurricane Harbinger (owner Oct 31): a wildcard comes as 2 / 3 / (70% 3, 30% 5) shards */const hv=ab2("hurr"),ws=hv>=3.6?(pkRand()<.7?3:5):hv>0?hv:1;x.ws=ws;shAdd[x.r]=(shAdd[x.r]||0)+ws;cpA(x.cid,k-1)}if(c.abil==="lunch")lunchN++;if(c.abil==="curse")nCurse++}
     const shards={},cpP={};for(const r in shAdd)shards[r]=(Math.floor(Number((D.shards||{})[r]))||0)+shAdd[r];for(const b in cpAdd)cpP[b]=(Math.floor(Number((D.cp||{})[b]))||0)+cpAdd[b];
     const patch={packSpent:(Number(D.packSpent)||0)+price,packsOpened:(Number(D.packsOpened)||0)+1,v2pity:pity,v2packs:(Number(D.v2packs)||0)+1};
     acInc(patch,"dr",out.filter(x=>x.r===6).length);
@@ -6675,8 +6675,9 @@ function v2ShardShopHtml(){const bal=Math.floor(ledger().balOf(S.me)),sh=shardsO
 /* ---- V2 screens ---- */
 const v2PullTag=x=>{if(!x)return "";const k=Math.max(1,x.n||1),mx=k>1?`<div class="pkmult m${k>=10?10:k}">×${k}</div>`:"";
   if(x.kind==="wild")return `${mx}<div class="pkover v2sh"><div class="shfx">${[0,1,2].map(()=>shardSvg(x.r,40,"live")).join("")}</div><b>WILDCARD!${(x.ws||1)>1?" 🌀":""}</b><span>+${x.ws||1} ${esc(CR[x.r].n)} shard${(x.ws||1)>1?"s":""}${k>1?` · +${k-1} card${k>2?"s":""}`:""}</span></div>`;
+  if(x.kind==="shard"&&x.mxs)return `${mx}<div class="pkover v2sh"><div class="shfx">${[0,1,2].map(()=>shardSvg(x.r,40,"live")).join("")}</div><b>MAXED</b><span>+${x.mxs} ${esc(CR[x.r].n)} shard${x.mxs>1?"s":""}</span></div>`;
   if(x.kind==="shard")return `${mx}<div class="pkover v2sh"><b>+${k} CARD${k>1?"S":""}</b></div>`;
-  if(x.kind==="new")return `${mx}<div class="pknew">NEW</div>${k>1?`<div class="pkover v2sh"><b>NEW</b><span>+${k-1} extra card${k>2?"s":""}</span></div>`:""}`;return v2PullTag0(x)};
+  if(x.kind==="new")return `${mx}<div class="pknew">NEW</div>${k>1?`<div class="pkover v2sh"><b>NEW</b><span>${x.mxs?`+${x.mxs} ${esc(CR[x.r].n)} shard${x.mxs>1?"s":""} (max level)`:`+${k-1} extra card${k>2?"s":""}`}</span></div>`:""}`;return v2PullTag0(x)};
 const v2PullTag0=x=>!x?"":x.kind==="shard"?"":x.kind==="curse2"?`<div class="pkover"><b>⛪ CURSED AGAIN</b><span>Tithed · no shard</span></div>`:`<div class="pknew">NEW</div>`;
 function v2Odds(){return [[CR[0],V2_ODDS[0]],[CR[1],V2_ODDS[1]],[CR[2],V2_ODDS[2]],[CR[3],V2_ODDS[3]],[CR_CURSE,V2_CURSE],[CR[4],V2_ODDS[4]],[CR[5],V2_ODDS[5]],[CR[6],V2_ODDS[6]]]}
 const v2Per=p=>{const k=100/(V2_PACK.n*p);return k<=1.05?"every pack":`1 in ${k>=100?Math.round(k).toLocaleString():+k.toFixed(1)} packs`};
@@ -7512,7 +7513,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
- {v:209,d:"Nov 1",t:[["🌴","Summer 2024 adjusted again: each non-7 roll in a row adds 0.25% / 0.35% / 0.5% (LV 1 / 2 / 3) to your craps wins"]]},
+ {v:210,d:"Nov 1",t:[["💎","Pulling a card you already have at max level now gives you shards of its rarity instead of copies you can't use"]]},{v:209,d:"Nov 1",t:[["🌴","Summer 2024 adjusted again: each non-7 roll in a row adds 0.25% / 0.35% / 0.5% (LV 1 / 2 / 3) to your craps wins"]]},
  {v:208,d:"Nov 1",t:[["🌴","Summer 2024 nerfed: each non-7 roll in a row now adds 0.5% / 0.75% / 1% (LV 1 / 2 / 3) to your craps wins"]]},
  {v:207,d:"Nov 1",t:[["🎖️","Captain Von Trap pays much more: up to +20 BB a day for every upgraded card you own (+2 at LV 2 up to +20 at max)"]]},
  {v:206,d:"Oct 31",t:[["🔍","Card collections now have a search box: find cards by name, rarity, collection or ability"]]},
