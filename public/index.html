@@ -7190,7 +7190,7 @@ setInterval(()=>{if(S.ready&&wheelReady()&&S._whShown!==wheelId()&&!document.hid
    Every reel uses the same weighted strip SL_W (blank 12, cherry 6, lemon 5, bell 4, cheese 3, diamond 2, seven 1 = 33 stops).
    Pays are TOTAL returns (bet × mult): three of a kind per SL_PAY; otherwise any two cherries ×3, one cherry ×1 (stake back).
    RTP = Σ P(line)·mult = 0.94999… (checked in tools/test/slots.test.mjs). Money: prefs.slNet / slSpins (LV batched like the other casino nets). */
-const SL_SYM=["▫️","🍒","🍋","🔔","🧀","💎","7️⃣"],SL_WR=[[1166,610,500,392,302,198,104],[1201,607,510,411,304,207,99],[1186,601,505,409,303,201,100]]/* Card System V2 brief (owner, Oct 29): per-reel strips, every winning combo ≈2.5% more often, lines ≈96.35% */,SL_W=SL_WR[0],SL_PAY=[0,15,25,50,120,300,1140],SL_GEMS=40,SL_BARS=5,SL_FRUIT=3,SL_TWO_CH=5,SL_ONE_CH=1,SL_MIN=1,SL_MAX=10000;
+const SL_SYM=["▫️","🍒","🍋","🔔","🧀","💎","7️⃣"],SL_WR=[[1311,610,500,392,302,198,104],[1346,607,510,411,304,207,99],[1331,601,505,409,303,201,100]]/* owner Nov 2: line return cut 10% (96.35% → 86.69%) by adding 145 blanks per reel; pay table unchanged, odds table reads these strips. Oct 29 (V2 brief): per-reel strips, every winning combo ≈2.5% more often, lines ≈96.35% */,SL_W=SL_WR[0],SL_PAY=[0,15,25,50,120,300,1140],SL_GEMS=40,SL_BARS=5,SL_FRUIT=3,SL_TWO_CH=5,SL_ONE_CH=1,SL_MIN=1,SL_MAX=10000;
 /* Progressive jackpot (owner, Oct 24): 1% of every bet (slWag) feeds a shared pot; three 7s win pot × bet/SL_MAX on top of the ×391 line pay
    (777 was ×750; the 359× cut is exactly the 1% that funds the pot, so base 94.0% + pot 1% ≈ 95% RTP). The pot is derived, not stored:
    SL_JP_SEED + floor(1% × Σ prefs.slWag) − Σ prefs.slJP (jackpots paid). Jackpot BB is part of slNet like any slots win. */
