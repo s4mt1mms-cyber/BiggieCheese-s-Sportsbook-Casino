@@ -1,44 +1,57 @@
-name: Live scores and odds (hourly, fantasy + NFL + NBA)
+name: Live scores and odds (always-on loop, fantasy + NFL + NBA + NHL)
 
+# Nov 2 (owner): GitHub only fired the 15-min cron every 3-10 hours, so NBA/NFL/NHL betting kept locking as stale.
+# Now ONE long run loops: NFL/NBA/NHL lines + results every 5 minutes, fantasy scoreboard every 15 minutes,
+# for ~5h40m, then it starts the next run itself (workflow_dispatch with GITHUB_TOKEN is allowed to trigger runs).
+# The hourly cron and pushes to this file only restart the chain if it ever breaks; the concurrency group keeps
+# at most one loop running and one waiting. The repo is public, so Actions minutes are free.
 on:
   schedule:
-    - cron: "1,16,31,46 * * * *"   # every 15 min (Oct 29, owner: GitHub was only firing the hourly schedule every 3-7 h, so NFL/NBA/NHL betting kept pausing as stale)
+    - cron: "7 * * * *"
   workflow_dispatch: {}
+  push:
+    branches: [main]
+    paths: [".github/workflows/job-scoreboard.yml", "tools/jobs/**"]
 
 concurrency:
   group: job-scoreboard
   cancel-in-progress: false
 
+permissions:
+  contents: read
+  actions: write
+
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 355
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - run: pip install --quiet google-cloud-firestore==2.19.0
-      - name: Run scoreboard job
+      - name: Loop (lines every 5 min, fantasy every 15 min)
         working-directory: tools/jobs
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-        run: python scoreboard.py
-      - name: NFL lines and results
+        run: |
+          end=$(( $(date +%s) + 340*60 ))
+          i=0
+          while [ "$(date +%s)" -lt "$end" ]; do
+            t0=$(date +%s)
+            echo "::group::pass $i $(date -u +%H:%M:%S)"
+            if [ $((i % 3)) -eq 0 ]; then timeout 240 python scoreboard.py || echo "scoreboard failed"; fi
+            timeout 180 python nfl.py || echo "nfl failed"
+            timeout 180 python nba.py || echo "nba failed"
+            timeout 180 python nhl.py || echo "nhl failed"
+            echo "::endgroup::"
+            i=$((i+1))
+            left=$(( 300 - ($(date +%s) - t0) ))
+            [ "$left" -gt 0 ] && sleep "$left"
+          done
+      - name: Start the next loop
         if: always()
-        working-directory: tools/jobs
         env:
-          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-        run: python nfl.py
-      - name: NBA lines and results
-        if: always()
-        working-directory: tools/jobs
-        env:
-          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-        run: python nba.py
-      - name: NHL lines and results
-        if: always()
-        working-directory: tools/jobs
-        env:
-          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-        run: python nhl.py
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run job-scoreboard.yml --repo "${{ github.repository }}" --ref main
