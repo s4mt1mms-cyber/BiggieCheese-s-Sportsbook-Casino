@@ -1,5 +1,5 @@
 // Slot machine return-to-player, computed exactly from the constants in public/index.html.
-// Nov 2 (owner): lines cut 10% → ≈86.7% (+1.5% jackpot ≈ 88.2%).
+// Nov 2 6:46 PM (owner): lines back to ≈95.5% (+1.5% jackpot ≈ 97%) after the 82.37% nerf.
 // Oct 29 (Card System V2 brief): per-reel strips SL_WR make every winning combo ≈2.5% more often (lines ≈96.4%) and 1.5% of every bet
 // feeds the progressive pot (was 1%): ≈97.9% in total.
 import fs from "node:fs";
@@ -18,7 +18,7 @@ console.log(`lines RTP ${(now.rtp * 100).toFixed(4)}% (was ${(old.rtp * 100).toF
 for (const k of Object.keys(old.o)) { const f = now.o[k] / old.o[k]; console.log(`  ${k.padEnd(5)} 1 in ${Math.round(1 / now.o[k]).toLocaleString().padStart(7)} (×${f.toFixed(4)})`); assert.ok(f > 0.75 && f < 1.03, k + " frequency vs the Oct 24 strips") }
 const jr = Number(html.match(/SL_JP_RATE=([.\d]+)/)[1]) + Number(html.match(/SL_JP_ADD=([.\d]+)/)[1]);
 console.log(`lines ${(now.rtp * 100).toFixed(4)}% + jackpot ${(jr * 100).toFixed(2)}% = ${((now.rtp + jr) * 100).toFixed(4)}%`);
-assert.ok(Math.abs(now.rtp - 0.95 * 0.9 * 0.9634821757) < 0.001, "lines RTP = 95% × 90% of the Oct 29 96.35% (owner Nov 2)");
+assert.ok(Math.abs(now.rtp - 0.955) < 0.001, "lines RTP ≈ 95.5% (owner Nov 2 6:46 PM, buffed back from 82.37%)");
 console.log("slots ok");
 // 5 paylines: Monte Carlo of how often a spin wins something / makes a profit (RTP per line is the exact number above)
 { const pick = i => { let x = Math.random() * T[i]; for (let k = 0; k < 7; k++) { x -= SL_WR[i][k]; if (x < 0) return k } return 0 };
