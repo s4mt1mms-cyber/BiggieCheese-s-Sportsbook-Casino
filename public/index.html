@@ -9353,7 +9353,10 @@ let RX_N=0;
    Claim button after each of their wins: the House pays you abV("drew") % of that win, once per win (bank doc drew_<me>_<who>_<event>, fixed id).
    The claim box lives in its own [data-drewg] slot, refreshed every second by drewTick (the game views redraw in different ways). */
 const RX_X={rl:["🔴","⚫️","🟢"],bj:["❌","✅"],hilo:["⬆️","⬇️"]};
-function rxBar(g){const x=hasAb("drew")?RX_X[g]||[]:[];return `<div class="reactbar${x.length?" rxw":""}">${["❤️","🔥","😭",...x].map(e=>`<button type="button" data-react="${e}" aria-label="Send ${e}">${e}</button>`).join("")}</div><div class="drewcl" data-drewg="${g}"></div>`}
+/* owner Nov 3 1:24 PM: the Ringside Cut is back for #CTESPN only (team-name match DREW_TEAM), card or not; % = his Drew · PBA Chrome Auto level (LV 1 if none) */
+const DREW_TEAM="ctespn";
+function drewV(){if(!S.me||!String(teamOf(S.me)||"").toLowerCase().includes(DREW_TEAM))return 0;const L=Math.max(1,Math.min(ABV.drew.length,topLv("mv-art-1",S.me)||1));return ABV.drew[L-1]}
+function rxBar(g){const x=drewV()?RX_X[g]||[]:[];return `<div class="reactbar${x.length?" rxw":""}">${["❤️","🔥","😭",...x].map(e=>`<button type="button" data-react="${e}" aria-label="Send ${e}">${e}</button>`).join("")}</div><div class="drewcl" data-drewg="${g}"></div>`}
 const DREW_WIN=180000;
 function drewEv(g,q){q=q||{};
   if(g==="rl"){const L=q.rlLast;return L&&L.at?{k:"rl"+L.at,at:Number(L.at)+6500,w:Math.floor(Number(L.delta)||0)}:null}
@@ -9361,13 +9364,13 @@ function drewEv(g,q){q=q||{};
   if(g==="hilo"){const c=(q.hlLive||{}).co;return c&&c.at?{k:"hl"+c.at,at:Number(c.at),w:Math.floor(Number(c.p)||0)}:null}
   if(g==="bj"){const h=q.bjHand;if(!h||!h.done||!h.at)return null;return{k:"bj"+h.at,at:Number(h.at),w:Math.floor((h.results||[]).reduce((a,x)=>a+(Number(x.delta)||0),0))}}
   return null}
-function drewCur(g){const v=abV("drew"),who=tableWho();if(!v||!who||who===S.me)return null;const e=drewEv(g,S.prefs[who]);const now=Date.now();
+function drewCur(g){const v=drewV(),who=tableWho();if(!v||!who||who===S.me)return null;const e=drewEv(g,S.prefs[who]);const now=Date.now();
   if(!e||e.w<=0||now<e.at||now-e.at>DREW_WIN)return null;const amt=Math.floor(e.w*v/100);if(amt<1)return null;return{...e,v,who,amt,id:`drew_${S.me}_${who}_${e.k}`}}
 function drewTick(){const els=document.querySelectorAll("[data-drewg]");if(!els.length)return;for(const el of els){const c=drewCur(el.dataset.drewg);
   const h=!c?"":bankById(c.id)?`<span>🎟️ You claimed <b class="num pos">+${c.amt.toLocaleString()} BB</b> of ${esc(nm(c.who))}'s win</span>`:`<button type="button" class="btn small" data-drew="${esc(el.dataset.drewg)}">🎟️ Claim ${c.amt.toLocaleString()} BB</button><span class="small muted">${pctTxt(c.v)} of ${esc(nm(c.who))}'s +${c.w.toLocaleString()} BB win</span>`;
   if(el._h!==h){el._h=h;el.innerHTML=h}}}
 setInterval(drewTick,1000);
-async function drewClaim(g){return toast("That ability was removed.");const c=drewCur(g);if(!c)return toast("Nothing to claim right now.");if(bankById(c.id))return;if(S._drewB===c.id)return;S._drewB=c.id;
+async function drewClaim(g){const c=drewCur(g);if(!c)return toast("Nothing to claim right now.");if(bankById(c.id))return;if(S._drewB===c.id)return;S._drewB=c.id;
   try{const ref=db.doc("bank/"+c.id),x=await ref.get();if(x.exists)return;await ref.set({kind:"drew",from:"house",to:S.me,amt:c.amt,at:Date.now(),who:c.who,g,ev:c.k,note:`Ringside Cut · ${nm(c.who)}'s win`});toast(`🎟️ +${c.amt.toLocaleString()} BB from the House`);haptic&&haptic()}
   catch(_){toast("Couldn't claim that. Try again.")}finally{S._drewB=null;drewTick()}}
 document.addEventListener("click",e=>{const b=e.target.closest("[data-drew]");if(!b)return;e.preventDefault();drewClaim(b.dataset.drew)});
