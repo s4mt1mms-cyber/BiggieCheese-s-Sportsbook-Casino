@@ -1970,6 +1970,22 @@ html.lite .aw.fx.au-zap::before{filter:url(#auZap) drop-shadow(0 0 calc(var(--s)
 .ui2 .bnavbg{display:block;position:fixed;left:0;right:0;bottom:0;height:calc(70px + max(12px,calc(env(safe-area-inset-bottom,0px) - 2px)));background:linear-gradient(rgba(11,11,13,0),#0b0b0d 38%);z-index:69;pointer-events:none}.bnavbg{display:none}
 .ui2 body.rrmode .bnav,.ui2 body.chatmode .bnav,.ui2 body.wwon .bnav,.ui2.u2chat .bnav,.ui2 body.rrmode .bnavbg,.ui2 body.chatmode .bnavbg,.ui2 body.wwon .bnavbg,.ui2.u2chat .bnavbg{display:none}
 .ui2 body.rrmode .hd2{display:none}
+.mesh{position:fixed;inset:0;z-index:2147482000;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center;animation:meshF .18s ease-out}
+.mesh[hidden]{display:none}
+@keyframes meshF{from{opacity:0}}@keyframes meshU{from{transform:translateY(40px);opacity:.4}}
+.meshp{width:min(560px,100%);max-height:calc(100dvh - 40px - env(safe-area-inset-top,0px));overflow:auto;background:#141417;border:1px solid var(--u2line);border-bottom:0;border-radius:24px 24px 0 0;padding:10px 16px calc(18px + env(safe-area-inset-bottom,0px));animation:meshU .22s cubic-bezier(.2,.8,.2,1);box-sizing:border-box}
+.meshg{width:42px;height:5px;border-radius:3px;background:#3a3a42;margin:2px auto 12px}
+.meshh{display:flex;align-items:center;gap:14px;padding:4px 4px 16px;border-bottom:1px solid var(--u2line);margin-bottom:14px}
+.meshh .pw{flex:none}.meshh .pw img,.meshh .pw .av{width:62px!important;height:62px!important}
+.meshh b{display:block;font:800 20px/1.15 Barlow,system-ui,sans-serif;color:#fff}
+.meshh span.bb{display:block;color:var(--u2gold);font:800 17px Barlow,system-ui,sans-serif;margin-top:3px}
+.meshh .x{all:unset;cursor:pointer;margin-left:auto;align-self:flex-start;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:#1f1f24;color:#ddd;font-size:18px}
+.meshgr{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mesht{all:unset;cursor:pointer;position:relative;display:flex;align-items:center;gap:12px;padding:14px;border-radius:16px;background:#1b1b20;border:1px solid var(--u2line);color:#fff;font:700 16px/1.15 Barlow,system-ui,sans-serif;min-width:0}
+.mesht i{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--tc);color:#fff}
+.mesht i svg{width:23px;height:23px}
+.mesht em{position:absolute;top:8px;right:8px;font-style:normal;background:#3fd17a;color:#04140a;border-radius:10px;padding:1px 7px;font:800 12px Barlow,system-ui,sans-serif}
+.meshw{grid-column:1/-1}
 #subbar:empty{display:none}.ui2 main #subbar{padding-bottom:0!important;display:block!important}.ui2 main #subbar:not(:empty)+#view{padding-top:8px!important}
 .ui2 #subbar{padding-top:14px}
 .pgt{font:800 40px/1.05 Barlow,system-ui,sans-serif;color:#fff;margin:4px 0 12px;letter-spacing:-.01em}
@@ -2541,11 +2557,26 @@ function uiBoot(){if(uiBoot.done)return;const nav=$("#bnav");if(!nav||!$("#sideN
   document.addEventListener("click",e=>{const b=e.target.closest("[data-bn]");if(b){e.preventDefault();const t=UI_BN[b.dataset.bn];if(b.closest("#bnav")){document.querySelectorAll("#bnav [data-bn]").forEach(x=>x.classList.toggle("on",x===b))}requestAnimationFrame(()=>setTimeout(()=>uiGo(t),0));return}
     const g=e.target.closest("[data-seg]");if(g){uiGo(g.dataset.seg);return}
     if(e.target.closest("#hd2Chat")){if(!S.me)return toast("Sign in to chat.");chatOpen(true);return}
-    if(e.target.closest("#hd2Me")){sideOpen(true);return}
+    if(e.target.closest("#hd2Me")){meSheet(true);return}
     const f=e.target.closest("[data-csf]");if(f){S.csF=f.dataset.csf;render();return}
     const o=e.target.closest("[data-uichat]");if(o){if(S.me)chatOpen(true);return}});
   document.addEventListener("input",e=>{if(e.target&&e.target.id==="csQ"){S.csQ=e.target.value;csFilter()}});
   setInterval(()=>{const d=$("#hd2Dot");if(!d)return;const on=!($("#chatDot")||{hidden:true}).hidden||!($("#dmDot")||{hidden:true}).hidden;if(d.hidden===on)d.hidden=!on},1000)}
+
+/* "Me" sheet (owner Nov 3: the avatar opened the old side menu). Every tile just clicks the matching side-menu item, so the actions are the old ones. */
+const ME_ICO={ach:'<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 3h10v2h3a1 1 0 0 1 1 1v2a5 5 0 0 1-4.6 5A5 5 0 0 1 13 15.9V18h3v3H8v-3h3v-2.1A5 5 0 0 1 7.6 13 5 5 0 0 1 3 8V6a1 1 0 0 1 1-1h3zm10 4v4a3 3 0 0 0 2-3V7zM5 7v1a3 3 0 0 0 2 3V7z"/></svg>',
+  prof:'<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="8" r="4.2"/><path d="M3.5 20.5c.8-4.3 4.2-6.7 8.5-6.7s7.7 2.4 8.5 6.7a1 1 0 0 1-1 1.2h-15a1 1 0 0 1-1-1.2z"/></svg>'};
+const ME_T=[["profile","Profile","prof","#3a6bd6"],["bank","Bank","bank","#1f9a55"],["ach","Achievements","ach","#c9940f"],["aura","Aura Shop","aura","#8a4ad9"],["wheel","Daily Spin","wheel","#d9468f"],["standings","Standings","standings","#e0373a"],["guide","Card Guidebook","guide","#11744a"],["news","What's new","news","#2fa3ee"],["setup","Admin","setup","#5b6270"]];
+function meSheet(open){let o=$("#meSheet");if(!open){if(o)o.hidden=true;return}
+  if(!o){o=document.createElement("div");o.id="meSheet";o.className="mesh";document.body.appendChild(o);
+    o.addEventListener("click",e=>{if(e.target===o||e.target.closest(".x")){meSheet(false);return}const t=e.target.closest("[data-mesh]");if(!t)return;meSheet(false);const k=t.dataset.mesh,b=document.querySelector(`#sideNav [data-side="${k}"]`);if(b)b.click();else uiGo(k)})}
+  const adm=!!($("#sideAdmin")&&!$("#sideAdmin").hidden);let n=0;try{n=acWaiting()}catch(_){}
+  o.innerHTML=`<div class="meshp" role="dialog" aria-label="Your menu"><div class="meshg"></div><div class="meshh"><span class="pw">${pic(S.me)}</span><div style="min-width:0"><b>${esc(nm(S.me))}</b><span class="bb">${myBalShow().toLocaleString()} BB</span></div><button type="button" class="x" aria-label="Close">✕</button></div>
+    <div class="meshgr">${ME_T.filter(([k])=>k!=="setup"||adm).map(([k,l,ic,c])=>`<button type="button" class="mesht" data-mesh="${k}"><i style="--tc:${c}">${ME_ICO[ic]||uiIco(ic)}</i><span>${l}</span>${k==="ach"&&n?`<em>${n}</em>`:""}</button>`).join("")}
+    <button type="button" class="mesht meshw" data-mesh="more"><i style="--tc:#2a2a30">${uiIco("#menuBtn")||"☰"}</i><span>Everything else (full menu)</span></button></div></div>`;
+  o.hidden=false}
+document.addEventListener("click",e=>{if(e.target.closest('#meSheet [data-mesh="more"]')){e.stopPropagation();meSheet(false);sideOpen(true)}},true);
+
 function ui2Render(){if(!UI2)return;uiBoot();const g=UI_GRP[S.tab]||"";document.querySelectorAll("#bnav [data-bn]").forEach(b=>b.classList.toggle("on",b.dataset.bn===g));
   const hb=$("#hd2Bal");if(hb&&S.me){const t=myBalShow().toLocaleString()+" BB";if(hb.textContent!==t)hb.textContent=t}
   const me=$("#hd2Me");if(me&&S.me){const x=av(S.me);if(me._x!==x){me._x=x;me.innerHTML=x}}
