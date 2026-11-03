@@ -7123,7 +7123,7 @@ setInterval(cv3Run,3000);
    1) trades / old listings / offers / loan collateral holding cards are stripped or shut without returns; every loan of theirs is CLOSED
       (ledger keeps it as it is; nothing more collected, no collateral comes back, dividend collateral off); open loan offers/requests cancelled
    2) ONE prefs write (cards/cp/shards 0, showcase [], pity 0, rdWin 0, sb0, flapBestS 0, rs5) then bank/rs5_<id> for the difference (fixed id). */
-const RS5_AT=Date.parse("2026-11-03T13:50:00Z"),RS5_BAL=250000;
+const RS5_AT=Date.parse("2026-11-03T13:50:00Z"),RS5_BAL=500000;/* owner Nov 3 8:58 AM: 500,000 (was 250,000 for the first few minutes; rs5Top tops those players up) */
 async function rs5Bank(id,X){if(!X||!X.amt)return;const bid="rs5_"+id;if(bankById(bid))return;const b=db.doc("bank/"+bid);if((await b.get()).exists)return;
   const doc=X.amt>0?{from:"house",to:id,amt:X.amt}:{from:id,to:"house",amt:-X.amt};Object.assign(doc,{kind:"rs5",note:`Game reset: balance set to ${RS5_BAL.toLocaleString()} BB`,at:X.at});await b.set(doc);S.bank=S.bank||[];if(!bankById(bid))S.bank.push({id:bid,...doc})}
 async function rs5One(id){const ref=db.doc("prefs/"+id);if(id===S.me){try{await lvFlush()}catch(_){}await new Promise(r=>setTimeout(r,1200))}
@@ -7145,10 +7145,14 @@ async function rs5One(id){const ref=db.doc("prefs/"+id);if(id===S.me){try{await 
   await ref.update(p);const q=S.prefs[id];Object.assign(q,{cards:{...(q.cards||{}),...ch},cp:{...(q.cp||{}),...cp},shards:{...p.shards},rs5:p.rs5,v2pity:0,showcase:[],rdWin:0,sb0,flapBestS:0,ac:p.ac,acC:p.acC,acB:p.acB,auras:p.auras,aura:null,emotes:p.emotes,skins:p.skins,skin:null});
   await rs5Bank(id,p.rs5);
   /* owner Nov 3 8:56 AM: no announcement (no popup, no NEWS entry) */}
+/* players reset while the target was 250,000 get the other 250,000 once (fixed id bank/rs5b_<id>) */
+async function rs5Top(id){const X=(S.prefs[id]||{}).rs5;if(!X||Number(X.to)!==250000)return;const bid="rs5b_"+id;if(bankById(bid))return;const b=db.doc("bank/"+bid);if((await b.get()).exists)return;
+  const doc={from:"house",to:id,amt:RS5_BAL-250000,kind:"rs5",note:`Game reset: balance set to ${RS5_BAL.toLocaleString()} BB`,at:Date.now()};await b.set(doc);S.bank=S.bank||[];if(!bankById(bid))S.bank.push({id:bid,...doc})}
 function rs5Gate(){const q=S.me&&S.prefs[S.me];const need=!!(db&&S.me&&S.ready&&q&&!q.rs5&&!S.readOnly);let o=document.getElementById("rs5Ov");
   if(need&&!o){o=document.createElement("div");o.id="rs5Ov";o.className="overlay";o.style.zIndex=2147483100;o.innerHTML=`<div class="pickbox recapbox"><h3>Loading…</h3><p class="small muted">One moment.</p></div>`;document.body.appendChild(o)}else if(!need&&o)o.remove()}
 async function rs5Run(){if(rs5Run.busy||!db||!S.me||!S.ready||S.readOnly||!cv2Loaded()||!S.trades)return;rs5Run.busy=true;try{const q=S.prefs[S.me];if(q&&(!q.rs5||(q.rs5.amt&&!bankById("rs5_"+S.me))))await rs5One(S.me);
-  if(S.canEdit)for(const id of members()){const p=S.prefs[id];if(!p||p.rs5||id===S.me||isOnline(id))continue;try{await rs5One(id)}catch(e){console.warn("rs5",id,e)}}}catch(e){console.warn("rs5",e)}finally{rs5Run.busy=false;rs5Gate()}}
+  if(S.canEdit)for(const id of members()){const p=S.prefs[id];if(!p||p.rs5||id===S.me||isOnline(id))continue;try{await rs5One(id)}catch(e){console.warn("rs5",id,e)}}
+  for(const id of members()){if(id!==S.me&&!S.canEdit)continue;try{await rs5Top(id)}catch(e){console.warn("rs5b",id,e)}}}catch(e){console.warn("rs5",e)}finally{rs5Run.busy=false;rs5Gate()}}
 setInterval(rs5Run,3000);setInterval(rs5Gate,1000);
 /* Admin card gifts (owner): prefs.cardGift {id,cid,n,note} (written by job-fix, e.g. drew10) → the player's own page, after the card reset, adds n
    copies like pulls (the first unlocks the card if they don't have it, the rest fill its bar), once (prefs.cardGiftDone = id). */
