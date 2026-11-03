@@ -9497,10 +9497,10 @@ function viewBJ(){
 /* Owner Nov 3 12:28 PM: penalty for "The 1000 year dynasty" (owner: an exploit penalty the player agreed to). The shown odds and payouts stay the same;
    the RNG redraws some of his winning outcomes so the house edge is about 15 points higher on Blackjack, Roulette, Craps, Slots and High-Low.
    Turn off: PEN_ON=false. Not in NEWS (owner). */
-const ZG_ID="u_jzH6I8emDBcqWaXJhIX_HA",ZG_P=.7;const PEN_ON=true,PEN_TEAM="1000 year dynasty",PEN_E=.15,PEN_BJQ=.53,PEN_HLF=.94;
+const ZG_ID="u_jzH6I8emDBcqWaXJhIX_HA",ZG_P=0/* Nov 3: off (was .7) — every card plays only its own animation */;const PEN_ON=true,PEN_TEAM="1000 year dynasty",PEN_E=.15,PEN_BJQ=.53,PEN_HLF=.94;
 /* owner Nov 3 1:20 PM (owner-locked, not in NEWS): every FT_EVERY-th pack (prefs.v2packs) for Zartog, the 1000 year dynasty and King Julian,
    the LAST card plays the full Grail charge + suspense, then flips into what was really pulled. Visual only, pulls unchanged. */
-const FT_ON=true,FT_EVERY=15;
+const FT_ON=false/* Nov 3: off — no fake Grail build-up on non-Grail cards */,FT_EVERY=15;
 function ftTease(pulls){try{if(!FT_ON||!S.me||!pulls||!pulls.v2||!pulls.length)return -1;if(!(S.me===ZG_ID||penOn()||gnIsTarget()))return -1;
   const n=Math.floor(Number((S.prefs[S.me]||{}).v2packs)||0);if(n<=0||n%FT_EVERY)return -1;const i=pulls.length-1,c=cardById(pulls[i]);return c&&c.r<5?i:-1}catch(_){return -1}}
 const penOn=()=>{if(!PEN_ON||!S.me)return false;const t=String(teamOf(S.me)||"").toLowerCase();return t.includes(PEN_TEAM)};
