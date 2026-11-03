@@ -15,10 +15,10 @@ const ev = R => { const T = R.map(w => w.reduce((a, b) => a + b, 0)), o = {}; le
   return { rtp, hit, o } };
 const now = ev(SL_WR), old = ev([[12,6,5,4,3,2,1],[12,6,5,4,3,2,1],[12,6,5,4,3,2,1]]);
 console.log(`lines RTP ${(now.rtp * 100).toFixed(4)}% (was ${(old.rtp * 100).toFixed(4)}%) · hit rate ${(now.hit * 100).toFixed(2)}% (was ${(old.hit * 100).toFixed(2)}%)`);
-for (const k of Object.keys(old.o)) { const f = now.o[k] / old.o[k]; console.log(`  ${k.padEnd(5)} 1 in ${Math.round(1 / now.o[k]).toLocaleString().padStart(7)} (×${f.toFixed(4)})`); assert.ok(f > 0.75 && f < 1.03, k + " frequency vs the Oct 24 strips") }
+for (const k of Object.keys(old.o)) { const f = now.o[k] / old.o[k]; console.log(`  ${k.padEnd(5)} 1 in ${Math.round(1 / now.o[k]).toLocaleString().padStart(7)} (×${f.toFixed(4)})`); assert.ok(f > 0.6 && f < 1.03, k + " frequency vs the Oct 24 strips") }
 const jr = Number(html.match(/SL_JP_RATE=([.\d]+)/)[1]) + Number(html.match(/SL_JP_ADD=([.\d]+)/)[1]);
 console.log(`lines ${(now.rtp * 100).toFixed(4)}% + jackpot ${(jr * 100).toFixed(2)}% = ${((now.rtp + jr) * 100).toFixed(4)}%`);
-assert.ok(Math.abs(now.rtp - 0.955) < 0.001, "lines RTP ≈ 95.5% (owner Nov 2 6:46 PM, buffed back from 82.37%)");
+assert.ok(Math.abs(now.rtp - 0.885) < 0.001, "lines RTP ≈ 88.5% = 90% with the jackpot (owner Nov 3 9:13 AM: maxed slot cards return 97%)");
 console.log("slots ok");
 // 5 paylines: Monte Carlo of how often a spin wins something / makes a profit (RTP per line is the exact number above)
 { const pick = i => { let x = Math.random() * T[i]; for (let k = 0; k < 7; k++) { x -= SL_WR[i][k]; if (x < 0) return k } return 0 };
