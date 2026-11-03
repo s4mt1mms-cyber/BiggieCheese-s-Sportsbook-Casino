@@ -2017,7 +2017,7 @@ html.lite .aw.fx.au-zap::before{filter:url(#auZap) drop-shadow(0 0 calc(var(--s)
 .cstile b{font:800 20px/1.1 Barlow,system-ui,sans-serif;color:#fff}
 .cstile small{display:block;color:var(--u2mut);font:500 14px/1.2 Barlow,system-ui,sans-serif;margin-top:2px}
 /* Home dashboard */
-.h2grid{display:grid;gap:16px;margin-bottom:18px}
+.h2grid{display:grid;gap:16px;margin-bottom:18px}.h2grid.one{grid-template-columns:1fr!important}.h2q{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 16px}@media (min-width:760px){.h2q{grid-template-columns:repeat(4,1fr)}}.h2qt{background:var(--u2card)}
 @media (min-width:860px){.h2grid{grid-template-columns:1fr 1.75fr}.h2grid.b{grid-template-columns:1.45fr 1fr}}
 .h2c{background:var(--u2card);border:1px solid var(--u2line);border-radius:18px;padding:18px 20px;min-width:0}
 .h2c h3{font:800 22px/1.15 Barlow,system-ui,sans-serif;color:#fff;margin:0 0 4px;display:flex;align-items:center;gap:10px}
@@ -2560,7 +2560,7 @@ function uiBoot(){if(uiBoot.done)return;const nav=$("#bnav");if(!nav||!$("#sideN
     if(e.target.closest("#hd2Chat")){if(!S.me)return toast("Sign in to chat.");chatOpen(true);return}
     if(e.target.closest("#hd2Me")){meSheet(true);return}
     const f=e.target.closest("[data-csf]");if(f){S.csF=f.dataset.csf;render();return}
-    const o=e.target.closest("[data-uichat]");if(o){if(S.me)chatOpen(true);return}if(e.target.closest("[data-uionl]")){const b=$("#onlPill");if(b)b.click();return}});
+    const o=e.target.closest("[data-uichat]");if(o){if(S.me)chatOpen(true);return}{const q=e.target.closest("[data-mesh2]");if(q){const b=document.querySelector(`#sideNav [data-side="${q.dataset.mesh2}"]`);if(b)b.click();else uiGo(q.dataset.mesh2);return}}if(e.target.closest("[data-uionl]")){const b=$("#onlPill");if(b)b.click();return}});
   document.addEventListener("input",e=>{if(e.target&&e.target.id==="csQ"){S.csQ=e.target.value;csFilter()}});
   setInterval(()=>{const d=$("#hd2Dot");if(!d)return;const on=!($("#chatDot")||{hidden:true}).hidden||!($("#dmDot")||{hidden:true}).hidden;if(d.hidden===on)d.hidden=!on},1000)}
 
@@ -2608,7 +2608,8 @@ function viewHome(){if(!UI2||!S.me)return viewHomeOld();const bal=myBalShow(),sb
   const act=ms2.length?ms2.map(x=>`<div class="row">${av(x.uid)}<div class="tx"><b>${esc(nm(x.uid))}</b><span>${esc(String(x.text).replace(/\s+/g," ").slice(0,90))}</span></div><time>${esc(ago(x.at))}</time></div>`).join(""):`<p class="muted small">Nothing yet today.</p>`;
   const fl=CS_ART.flappy||uiIco("flappy");
   return `<h1 class="pgt">Home</h1><p class="pgsub">Your league. Your collection. Your games.</p>
-  <div class="h2grid"><section class="h2c h2bal"><div class="lab">Balance</div><div class="amt2">${bal.toLocaleString()} BB</div><div class="bbo">BiggieBucks only</div><button type="button" class="lnk" data-tab="bank">Open bank ›</button></section>
+  <div class="h2q">${[["ach","Achievements","ach","#c9940f"],["bank","Bank","bank","#1f9a55"],["wheel","Daily Spin","wheel","#d9468f"],["aura","Aura Shop","aura","#8a4ad9"]].map(([k,l,ic,c])=>{let n=0;if(k==="ach"){try{n=acWaiting()}catch(_){}}return `<button type="button" class="mesht h2qt" data-mesh2="${k}"><i style="--tc:${c}">${ME_ICO[ic]||uiIco(ic)}</i><span>${l}</span>${n?`<em>${n}</em>`:""}</button>`}).join("")}</div>
+  <div class="h2grid one">
     <section class="h2c"><h3>Matchup of the week${sb&&sb.week?`<span class="lnk" style="color:var(--u2mut);cursor:default">Week ${esc(String(sb.week))}</span>`:""}</h3>${mu}</section></div>
   ${(()=>{const on=members().filter(id=>teamOf(id)&&isOnline(id)&&id!==S.me);return `<button type="button" class="h2onl" data-uionl><span class="dot"></span><span>${on.length?`${on.length} other${on.length>1?"s":""} online`:"Only you online right now"}</span>${on.length?`<span class="avs">${on.slice(0,6).map(id=>av(id)).join("")}</span>`:""}<span class="go">See who ›</span></button>`})()}
   <div class="h2grid b"><section class="h2c">${scHtml(S.me)}</section>
