@@ -2079,7 +2079,7 @@ function gradeParlay(b){let pending=false,mult=1;for(const L of b.legs||[]){cons
   if(pending)return null;if(mult===1)return "push";b._mult=mult;return "poster"}
 function parlayWin(b){const m=b._mult||((b.legs||[]).reduce((a,L)=>a*decOdds(L.odds),1));return Math.round(Number(b.stake)*(m-1))}
 /* ledger is reused within one synchronous pass (a render calls it dozens of times), then recomputed fresh */
-const STAT_RESET_AT=Date.parse("2026-10-29T14:00:00Z");/* owner Oct 29 9:49 AM: all scoreboards reset again (10 AM ET; casino baselines by job-fix statreset2). Was 2026-10-23T19:45:00Z *//* owner: leaderboards/stats start over (3:45 PM ET Oct 23) */
+const STAT_RESET_AT=Date.parse("2026-11-03T13:50:00Z");/* owner Nov 3: full reset (RS5) *//* owner Oct 29 9:49 AM: all scoreboards reset again (10 AM ET; casino baselines by job-fix statreset2). Was 2026-10-23T19:45:00Z *//* owner: leaderboards/stats start over (3:45 PM ET Oct 23) */
 let _LG=null;function ledger(){if(_LG)return _LG;_LG=ledger0();queueMicrotask(()=>{_LG=null});return _LG}
 function ledger0(){
   const rec={},net0={},byWeek={},wagered0={},events=[],wins={},wr={};
@@ -6564,7 +6564,7 @@ function cpBarHtml(c,who){if(!c||!inPool(c.id)||c.abil==="curse"||c.abil==="rand
 const UPR_V=1;
 function uprPatch(id){const cs=(S.prefs[id]||{}).cards||{},ch={},add={};for(const k in cs){if(!(Number(cs[k])>0)||!inPool(k))continue;const L=lvOf(k);if(L<2)continue;const c=cardById(k);if(!c)continue;
   ch[k]=0;ch[baseOf(k)]=1;add[c.r]=(add[c.r]||0)+L*(L-1)/2}const sh={},have=shardsOf(id);for(const r in add)sh[r]=have[r]+add[r];const p={upr:UPR_V};if(Object.keys(ch).length)p.cards=ch;if(Object.keys(sh).length)p.shards=sh;return{p,add}}
-async function uprOne(id){const ref=db.doc("prefs/"+id),f=await ref.get();if(!f.exists)return;const D=f.data()||{};if(D.upr||!D.cv2||!D.cv2.vd)return;S.prefs[id]={...(S.prefs[id]||{}),cards:D.cards||{},shards:D.shards||{}};const {p,add}=uprPatch(id);await ref.update(p);
+async function uprOne(id){const ref=db.doc("prefs/"+id),f=await ref.get();if(!f.exists)return;const D=f.data()||{};if(D.rs5)return;/* after the Nov 3 reset the old migrations never run */if(D.upr||!D.cv2||!D.cv2.vd)return;S.prefs[id]={...(S.prefs[id]||{}),cards:D.cards||{},shards:D.shards||{}};const {p,add}=uprPatch(id);await ref.update(p);
   const q=S.prefs[id];if(p.cards)q.cards={...(q.cards||{}),...p.cards};if(p.shards)q.shards={...(q.shards||{}),...p.shards};q.upr=UPR_V;
   if(id===S.me&&Object.keys(add).length)setTimeout(()=>toast(`⬆️ Upgrades got harder, so your upgraded cards are back to LV 1 and you got your shards back: ${Object.entries(add).map(([r,n])=>shTxt(Number(r),n)).join(", ")}`),1200)}
 async function uprRun(){if(uprRun.busy||!db||!S.me||!S.ready||S.readOnly)return;uprRun.busy=true;try{const q=S.prefs[S.me];if(q&&q.cv2&&q.cv2.vd&&!q.upr)await uprOne(S.me);
@@ -6582,13 +6582,13 @@ function rlvPatch(id){const q=S.prefs[id]||{},cs=q.cards||{},cpm=q.cp||{},ch={},
     if(L2===L&&left===cp0&&!toSh)continue;
     for(const x of Object.keys(cs))if(baseOf(x)===b&&Number(cs[x])>0)ch[x]=0;ch[lvK(b,L2)]=1;if(left!==cp0)cpP[b]=left;if(toSh)shAdd[c.r]=(shAdd[c.r]||0)+toSh;log[b]=[L,L2,cp0,left,toSh]}
   const p={rlv:{v:RLV_V,at:Date.now(),ch:log}};if(Object.keys(ch).length)p.cards=ch;if(Object.keys(cpP).length)p.cp=cpP;if(Object.keys(shAdd).length){const have=shardsOf(id),sh={};for(const r in shAdd)sh[r]=(have[r]||0)+shAdd[r];p.shards=sh}return p}
-async function rlvOne(id){const ref=db.doc("prefs/"+id),f=await ref.get();if(!f.exists)return;const D=f.data()||{};if(D.rlv||!D.cv3)return;
+async function rlvOne(id){const ref=db.doc("prefs/"+id),f=await ref.get();if(!f.exists)return;const D=f.data()||{};if(D.rs5)return;if(D.rlv||!D.cv3)return;
   S.prefs[id]={...(S.prefs[id]||{}),cards:D.cards||{},cp:D.cp||{},shards:D.shards||{}};const p=rlvPatch(id);await ref.update(p);
   const q=S.prefs[id];if(p.cards)q.cards={...(q.cards||{}),...p.cards};if(p.cp)q.cp={...(q.cp||{}),...p.cp};if(p.shards)q.shards={...(q.shards||{}),...p.shards};q.rlv=p.rlv}
 async function rlvRun(){if(rlvRun.busy||!db||!S.me||!S.ready||S.readOnly||!v2Ready())return;rlvRun.busy=true;try{const q=S.prefs[S.me];if(q&&q.cv3&&!q.rlv){await rlvOne(S.me);render()}
   if(S.canEdit)for(const id of members()){const p=S.prefs[id];if(!p||p.rlv||!p.cv3||id===S.me||isOnline(id))continue;try{await rlvOne(id)}catch(e){console.warn("rlv",id,e)}}rlvPop()}catch(e){console.warn("rlv",e)}finally{rlvRun.busy=false}}
 setInterval(rlvRun,3000);
-const rlvDone=id=>{const q=S.prefs[id||S.me]||{};return !!q.rlv||!q.cv3};
+const rlvDone=id=>{const q=S.prefs[id||S.me]||{};return !!q.rlv||!q.cv3||!!q.rs5};
 /* one-time summary of every changed card (owner: "show each player a one-time summary of every card's old and new level") */
 function rlvPop(){const q=S.prefs[S.me]||{};if(!q.rlv||q.rlvSeen||$("#rlvOv")||$("#newsOv")||$("#v2iOv"))return;try{if(localStorage.getItem("sb-rlv-"+S.me))return}catch(_){}
   const ch=Object.entries(q.rlv.ch||{}).map(([b,a])=>({c:cardById(b),a})).filter(x=>x.c).sort((x,y)=>y.c.r-x.c.r||(y.a[1]-y.a[0])-(x.a[1]-x.a[0]));
@@ -7070,7 +7070,7 @@ async function cv2Strip(id,p,P){P=P||cardOld;const ref=db.doc(p),s=await ref.get
     if(d.sEsc&&!d.sReturned&&d.to===id&&P(d.cid)){u.sReturned=true;u.sEsc=false;if(d.status==="pending"){u.status="declined";u.why="Cards switched to the new system.";u.decidedAt=Date.now()}}}
   else if(p.startsWith("loans/")){const col=d.collateral||[],k=col.filter(x=>!P(x));if(k.length!==col.length){u.collateral=k;u.seized=(d.seized||[]).filter(x=>!P(x));u.cv2Coll=col.filter(P);if(d.req&&d.status==="open"&&!k.length){u.status="cancelled";u.endAt=Date.now()}}}
   if(Object.keys(u).length)await ref.update(u)}
-async function cv2One(id){const ref=db.doc("prefs/"+id),f=await ref.get();if(!f.exists)return false;let D=f.data()||{};
+async function cv2One(id){const ref=db.doc("prefs/"+id),f=await ref.get();if(!f.exists)return false;let D=f.data()||{};if(D.rs5)return false;
   if(!D.cv2){const patch=cv2Patch(id);await ref.update(patch);S.prefs[id]=S.prefs[id]||{};S.prefs[id].cards={...(S.prefs[id].cards||{}),...patch.cards};S.prefs[id].cv2=patch.cv2;D={...D,cv2:patch.cv2}}
   const X=D.cv2;if(X.amt>0&&!!!bankById("cv2_"+id)){const b=db.doc("bank/cv2_"+id);if(!(await b.get()).exists){const doc={from:"house",to:id,amt:Math.floor(X.amt),kind:"cv2",note:`Card system switch: 3× quick-sell of ${X.n} card${X.n===1?"":"s"}`,at:X.at||Date.now()};await b.set(doc);S.bank=S.bank||[];if(!!!bankById("cv2_"+id))S.bank.push({id:"cv2_"+id,...doc})}}
   if(!X.vd){for(const p of X.docs||[]){try{await cv2Strip(id,p)}catch(e){console.warn("cv2 strip",p,e)}}await ref.update({cv2:{vd:true}});X.vd=true}
@@ -7079,7 +7079,7 @@ async function cv2One(id){const ref=db.doc("prefs/"+id),f=await ref.get();if(!f.
    Evil Witch "Debby") stay. Per player once (prefs.pmx): every Platinum copy they hold anywhere (collection, listings, offers, loans, open trades) is
    credited at CV2_X × its quick-sell value (the same rule as the card switch), the keys go to 0, then bank/pmx_<id> pays it and docs are stripped. */
 const pmGone=k=>cardSet(baseOf(k))==="pm"&&(cardById(baseOf(k))||{}).r===7;
-async function pmxOne(id){const ref=db.doc("prefs/"+id),f=await ref.get();if(!f.exists)return;let D=f.data()||{};
+async function pmxOne(id){const ref=db.doc("prefs/"+id),f=await ref.get();if(!f.exists)return;let D=f.data()||{};if(D.rs5)return;
   if(!D.pmx){const cs=D.cards||{},ch={};let amt=0,n=0;for(const k in cs){if(!pmGone(k))continue;ch[k]=0;const k1=Number(cs[k])||0;if(k1>0){amt+=k1*qsOld(cardById(k));n+=k1}}
     const it=cv2Items(id,pmGone);for(const x of it)for(const g of x.cids){amt+=qsOld(cardById(g));n++}
     const tr=(S.trades||[]).filter(t=>t.from===id&&t.status==="open"&&(t.give&&t.give.cards||[]).some(pmGone));for(const t of tr)for(const g of t.give.cards.filter(pmGone)){amt+=qsOld(cardById(g));n++}
@@ -7100,7 +7100,7 @@ async function cv3Bank(id,X){if(!X||!X.amt)return;const bid="cv3_"+id;if(!!bankB
   const doc=X.amt>0?{from:"house",to:id,amt:X.amt}:{from:id,to:"house",amt:-X.amt};Object.assign(doc,{kind:"cv2",note:`Beta reset: balance set to ${CV3_BAL.toLocaleString()} BB`,at:X.at});await b.set(doc);S.bank=S.bank||[];if(!!!bankById(bid))S.bank.push({id:bid,...doc})}
 async function cv3Spend(id){const q=S.prefs[id]||{},t0=(q.cv2&&q.cv2.at)||0;let packs=0,n=0;const sn=await db.collection("pulls").where("uid","==",id).get();sn.docs.forEach(d=>{const x=d.data()||{};if(x.pack==="v2"&&(Number(x.at)||0)>=t0){packs+=Math.floor(Number(x.price)||0);n++}});
   let up=0;for(const [at,x] of Object.entries(q.craftLog||{}))if(Number(at)>=t0&&x&&x.sh!=null)up+=Math.floor(Number(x.fee)||0);return{packs,up,n}}
-async function cv3One(id){const ref=db.doc("prefs/"+id),f=await ref.get();if(!f.exists)return;const D=f.data()||{};if(D.cv3){await cv3Bank(id,D.cv3);return}if(!D.cv2||!D.cv2.vd||!D.pmx||!D.pmx.vd)return;/* after the Platinum payout, so it lands before the balance is set */if((D.pmx.amt>0&&!!!bankById("pmx_"+id))||(D.cv2.amt>0&&!!!bankById("cv2_"+id)))return;S.prefs[id]={...(S.prefs[id]||{}),...D};
+async function cv3One(id){const ref=db.doc("prefs/"+id),f=await ref.get();if(!f.exists)return;const D=f.data()||{};if(D.rs5&&!D.cv3)return;if(D.cv3){await cv3Bank(id,D.cv3);return}if(!D.cv2||!D.cv2.vd||!D.pmx||!D.pmx.vd)return;/* after the Platinum payout, so it lands before the balance is set */if((D.pmx.amt>0&&!!!bankById("pmx_"+id))||(D.cv2.amt>0&&!!!bankById("cv2_"+id)))return;S.prefs[id]={...(S.prefs[id]||{}),...D};
   /* strip docs first */
   for(const t of (S.trades||[]).filter(t=>t.status==="open"&&(t.from===id||t.to===id))){const g=trN(t.give),w=trN(t.want);if(![...g.cards,...w.cards].some(inPool)&&!Object.keys(g.sh).length&&!Object.keys(w.sh).length)continue;
     try{if(t.from===id)await db.doc("trades/"+t.id).update({give:{...g,cards:g.cards.filter(k=>!inPool(k)),sh:{}},status:"cancelled",endAt:Date.now()});else await trSetSt(t.id,"declined")}catch(_){}}
@@ -7117,6 +7117,39 @@ async function cv3One(id){const ref=db.doc("prefs/"+id),f=await ref.get();if(!f.
 async function cv3Run(){if(cv3Run.busy||!db||!S.me||!S.ready||S.readOnly||!cv2Loaded()||!S.trades)return;cv3Run.busy=true;try{const q=S.prefs[S.me];if(q&&q.cv2&&q.cv2.vd&&(!q.cv3||(q.cv3.amt&&S.ld.bank&&!!!bankById("cv3_"+S.me))))await cv3One(S.me);
   if(S.canEdit)for(const id of members()){const p=S.prefs[id];if(!p||p.cv3||!p.cv2||!p.cv2.vd||!p.pmx||!p.pmx.vd||id===S.me||isOnline(id))continue;try{await cv3One(id)}catch(e){console.warn("cv3",id,e)}}}catch(e){console.warn("cv3",e)}finally{cv3Run.busy=false;cv2Gate()}}
 setInterval(cv3Run,3000);
+/* ===== Full reset (owner Nov 3 8:50 AM): every player's cards (all collections), copies and shards are taken away, every balance is set to exactly
+   RS5_BAL, game winnings stats + leaderboards start over (sb0 baselines, like statreset2) and bank/loan history is hidden before RS5_AT.
+   Per player once (prefs.rs5 {at,amt,from,to}), own page or the admin's page for offline players:
+   1) trades / old listings / offers / loan collateral holding cards are stripped or shut without returns; every loan of theirs is CLOSED
+      (ledger keeps it as it is; nothing more collected, no collateral comes back, dividend collateral off); open loan offers/requests cancelled
+   2) ONE prefs write (cards/cp/shards 0, showcase [], pity 0, rdWin 0, sb0, flapBestS 0, rs5) then bank/rs5_<id> for the difference (fixed id). */
+const RS5_AT=Date.parse("2026-11-03T13:50:00Z"),RS5_BAL=250000;
+async function rs5Bank(id,X){if(!X||!X.amt)return;const bid="rs5_"+id;if(bankById(bid))return;const b=db.doc("bank/"+bid);if((await b.get()).exists)return;
+  const doc=X.amt>0?{from:"house",to:id,amt:X.amt}:{from:id,to:"house",amt:-X.amt};Object.assign(doc,{kind:"rs5",note:`Game reset: balance set to ${RS5_BAL.toLocaleString()} BB`,at:X.at});await b.set(doc);S.bank=S.bank||[];if(!bankById(bid))S.bank.push({id:bid,...doc})}
+async function rs5One(id){const ref=db.doc("prefs/"+id);if(id===S.me){try{await lvFlush()}catch(_){}await new Promise(r=>setTimeout(r,1200))}
+  const f=await ref.get();if(!f.exists)return;const D=f.data()||{};if(D.rs5){await rs5Bank(id,D.rs5);return}S.prefs[id]={...(S.prefs[id]||{}),...D};const all=()=>true,now=Date.now();
+  for(const t of (S.trades||[]).filter(t=>t.live!==false&&(t.from===id||t.taker===id||t.to===id)))try{await db.doc("trades/"+t.id).update({...(t.status==="open"?{status:"cancelled",endAt:now}:{}),returned:true,fromDone:true,takerDone:true,live:false,rs5:true})}catch(_){}
+  for(const l of (S.market||[]).filter(l=>l.status==="open"&&l.seller===id))try{await db.doc("market/"+l.id).update({status:"cancelled",endAt:now,rs5:true})}catch(_){}
+  for(const x of cv2Items(id,all))try{await cv2Strip(id,x.p,all)}catch(_){}
+  for(const l of (S.loans||[]).filter(l=>l.borrower===id||l.lender===id)){try{const st=l.status,u={collateralClaimed:true,collateralBackClaimed:true,divColl:0,divAuto:false,rs5:true};
+    if(st==="active"||st==="late")Object.assign(u,{status:"closed",closedAt:now-1,closedBy:"reset",seized:[]});else if(st==="open")Object.assign(u,{status:"cancelled"});
+    if(st==="active"||st==="late"||st==="open"||(st==="defaulted"&&!(l.collateralClaimed&&l.collateralBackClaimed)))await db.doc("loans/"+l.id).update(u)}catch(_){}}
+  const n=k=>Number(D[k])||0,cb=b=>b&&typeof b==="object"?Object.values(b).reduce((a,v)=>a+(Number(v)||0),0):0;
+  const sb0={bjPL:n("bjNet")+n("bjBonus")+n("revengeEarn"),crPL:n("crNet")+cb(D.crBets),at:now};for(const k of ["bjHands","rlNet","rlSpins","crRolls","hlNet","hlRounds","rrNet","rrWins","rrGames","thNet","thWins","thGames","flapEarn","flapPlays","slNet","slSpins"])sb0[k]=n(k);
+  const ch={},cp={};for(const k in D.cards||{})if(Number(D.cards[k])>0)ch[k]=0;for(const k in D.cp||{})if(Number(D.cp[k])>0)cp[k]=0;
+  _LG=null;const cur=Math.floor(ledger().balOf(id)),amt=RS5_BAL-cur;
+  const z=o=>{const r={};for(const k in o||{})r[k]=0;return r},f0=o=>{const r={};for(const k in o||{})r[k]=false;return r};
+  /* owner Nov 3 8:53 AM: achievements start over (counters + claims; BiggieTown kills counted from now) and every Aura Shop purchase (auras, emotes, skins) is taken back */
+  const p={rs5:{v:1,at:now,amt,from:cur,to:RS5_BAL},shards:{0:0,1:0,2:0,3:0,4:0,5:0,6:0},v2pity:0,showcase:[],rdWin:0,sb0,flapBestS:0,
+    ac:z(D.ac),acC:z(D.acC),acB:{ww:Math.floor(Number((D.wwStats||{}).kills)||0)},auras:f0(D.auras),aura:null,emotes:f0(D.emotes),skins:f0(D.skins),skin:null};if(Object.keys(ch).length)p.cards=ch;if(Object.keys(cp).length)p.cp=cp;if(D.wwBest){p.wwBest0=D.wwBest;p.wwBest=null}
+  await ref.update(p);const q=S.prefs[id];Object.assign(q,{cards:{...(q.cards||{}),...ch},cp:{...(q.cp||{}),...cp},shards:{...p.shards},rs5:p.rs5,v2pity:0,showcase:[],rdWin:0,sb0,flapBestS:0,ac:p.ac,acC:p.acC,acB:p.acB,auras:p.auras,aura:null,emotes:p.emotes,skins:p.skins,skin:null});
+  await rs5Bank(id,p.rs5);
+  /* owner Nov 3 8:56 AM: no announcement (no popup, no NEWS entry) */}
+function rs5Gate(){const q=S.me&&S.prefs[S.me];const need=!!(db&&S.me&&S.ready&&q&&!q.rs5&&!S.readOnly);let o=document.getElementById("rs5Ov");
+  if(need&&!o){o=document.createElement("div");o.id="rs5Ov";o.className="overlay";o.style.zIndex=2147483100;o.innerHTML=`<div class="pickbox recapbox"><h3>Loading…</h3><p class="small muted">One moment.</p></div>`;document.body.appendChild(o)}else if(!need&&o)o.remove()}
+async function rs5Run(){if(rs5Run.busy||!db||!S.me||!S.ready||S.readOnly||!cv2Loaded()||!S.trades)return;rs5Run.busy=true;try{const q=S.prefs[S.me];if(q&&(!q.rs5||(q.rs5.amt&&!bankById("rs5_"+S.me))))await rs5One(S.me);
+  if(S.canEdit)for(const id of members()){const p=S.prefs[id];if(!p||p.rs5||id===S.me||isOnline(id))continue;try{await rs5One(id)}catch(e){console.warn("rs5",id,e)}}}catch(e){console.warn("rs5",e)}finally{rs5Run.busy=false;rs5Gate()}}
+setInterval(rs5Run,3000);setInterval(rs5Gate,1000);
 /* Admin card gifts (owner): prefs.cardGift {id,cid,n,note} (written by job-fix, e.g. drew10) → the player's own page, after the card reset, adds n
    copies like pulls (the first unlocks the card if they don't have it, the rest fill its bar), once (prefs.cardGiftDone = id). */
 async function cardGiftCheck(){const q=S.me&&S.prefs[S.me];if(!q||!q.cardGift||!q.cv3||S.readOnly||cardGiftCheck.busy)return;const G=q.cardGift;if(q.cardGiftDone===G.id)return;const c=cardById(G.cid);if(!c)return;cardGiftCheck.busy=true;
@@ -7129,7 +7162,7 @@ setInterval(cardGiftCheck,5000);
 /* ===== League Moments removed (owner, Oct 29 2:33 AM, no payout) ===== per player once (prefs.lmx), after the card reset: every League Moments card
    (collection, old listings/offers/loan collateral, open trades) is taken out. Own page; the admin's page does offline players. */
 const isLm=k=>cardSet(baseOf(k))==="lm";
-async function lmxOne(id){const ref=db.doc("prefs/"+id),f=await ref.get();if(!f.exists)return;const D=f.data()||{};if(D.lmx||!D.cv3)return;
+async function lmxOne(id){const ref=db.doc("prefs/"+id),f=await ref.get();if(!f.exists)return;const D=f.data()||{};if(D.rs5)return;if(D.lmx||!D.cv3)return;
   for(const t of (S.trades||[]).filter(t=>t.status==="open"&&(t.from===id||t.to===id))){const g=trN(t.give),w=trN(t.want);if(![...g.cards,...w.cards].some(isLm))continue;
     try{if(t.from===id)await db.doc("trades/"+t.id).update({give:{...g,cards:g.cards.filter(k=>!isLm(k))},status:"cancelled",endAt:Date.now()});else await trSetSt(t.id,"declined")}catch(_){}}
   for(const x of cv2Items(id,isLm))try{await cv2Strip(id,x.p,isLm)}catch(_){}
@@ -7145,7 +7178,7 @@ async function cv2Run(){if(S._cv2Busy||!db||!S.me||!cv2Loaded())return;S._cv2Bus
     if(!S._cv2Of){S._cv2Of=1;cv2OfSweep()}
     if(S.canEdit)for(const id of members()){const p=S.prefs[id];if(!p||(p.cv2&&p.cv2.vd)||id===S.me||isOnline(id))continue;try{await cv2One(id)}catch(e){console.warn("cv2",id,e)}}}
   catch(e){console.warn("cv2",e)}finally{S._cv2Busy=false;cv2Gate()}}
-function cv2Gate(){const q=S.me&&S.prefs[S.me];const need=!!(db&&S.me&&S.ready&&q&&q.dfl&&(!q.cv2||!q.cv3||(q.cv2.amt>0&&S.ld.bank&&!!!bankById("cv2_"+S.me))));let o=document.getElementById("cv2Ov");
+function cv2Gate(){const q=S.me&&S.prefs[S.me];const need=!!(db&&S.me&&S.ready&&q&&q.dfl&&!q.rs5&&(!q.cv2||!q.cv3||(q.cv2.amt>0&&S.ld.bank&&!!!bankById("cv2_"+S.me))));let o=document.getElementById("cv2Ov");
   if(need&&!o){o=document.createElement("div");o.id="cv2Ov";o.className="dflov";o.innerHTML=`<div><b>🃏 Switching your cards over…</b><span>New card system: one moment.</span></div>`;document.body.appendChild(o)}else if(!need&&o)o.remove()}
 setInterval(()=>{cv2Gate();cv2Run()},1500);
 function cv2Pop(){const q=S.prefs[S.me]||{},X=q.cv2;if(!X||$("#cv2Pop"))return;try{if(localStorage.getItem("sab-cv2pop")===String(X.at))return;localStorage.setItem("sab-cv2pop",String(X.at))}catch(_){}
@@ -7548,7 +7581,7 @@ async function fixOnce(){const ref=db.doc("config/fixes"),f=await ref.get(),F=(f
   if(!F.neg0){_LG=null;const L=ledger(),fixed=[];for(const id of members()){if(!(S.prefs[id]||{}).dfl)continue;const b=Math.floor(L.balOf(id));if(b<0){await fixSetBal(id,DFL_MIN);fixed.push(nm(id)+" "+b)}}
     await ref.set({...F,neg0:Date.now(),negFixed:fixed});if(fixed.length)toast("Repaired negative balances: "+fixed.join(", "))}renderSoon()}
 async function dflRun(){if(S._dflBusy||!db||!S.me||!dflLoaded())return;S._dflBusy=true;
-  try{const q=S.prefs[S.me];if(q&&!q.dfl){if(await dflOne(S.me)){renderSoon();setTimeout(()=>{const x=S.prefs[S.me]||{};toast(`📉 Deflation: your balance is now ${(Number(x.rbTo)||0).toLocaleString()} BB`)},300)}}
+  try{const q=S.prefs[S.me];if(q&&!q.dfl&&!q.rs5){if(await dflOne(S.me)){renderSoon();setTimeout(()=>{const x=S.prefs[S.me]||{};toast(`📉 Deflation: your balance is now ${(Number(x.rbTo)||0).toLocaleString()} BB`)},300)}}
     if(S.canEdit&&!S._betCut){S._betCut=1;let k=0;for(const b of S.bets||[]){if(b.cut10||!["open","live"].includes(b.status)||!((b.createdAt||0)<BET_CUT_AT))continue;if(b.type!=="parlay"){const g=gameById(b.gameId);if(g&&grade(b,g))continue}else if(gradeParlay(b))continue;
       const pt={cut10:true,stake0:Number(b.stake)||0,stake:Math.floor((Number(b.stake)||0)/10)};if(b.takerStake!=null){pt.takerStake0=Number(b.takerStake)||0;pt.takerStake=Math.floor((Number(b.takerStake)||0)/10)}
       try{await db.doc("bets/"+b.id).update(pt);Object.assign(b,pt);k++}catch(e){console.warn("bet cut",b.id,e)}}if(k)toast(`Cut ${k} outstanding bet${k>1?"s":""} to 1/10`)}
@@ -8611,7 +8644,7 @@ function bkTermsTxt(l){return `${Number(l.rate)}%/${l.rateU}, compounded every $
 /* My loans totals (owner Nov 2): per side over live loans: principal Σ P, interest = projected total − P (bkTotalOf, on-time schedule), remaining payoff = Σ bkPayoffNow */
 /* All-time loan stats (owner Nov 2): every funded loan in the loans collection (full history), minus admin-voided (status cancelled) and admin-closed loans.
    received = payments (bkPaidTot) + dividend collateral (bank divcoll docs with loan id); profit = received − principal */
-function bkStatsHtml(L){const me=S.me,ok=l=>["active","late","repaid","defaulted"].includes(l.status)&&!l.adminVoid&&l.takenAt;
+function bkStatsHtml(L){const me=S.me,ok=l=>["active","late","repaid","defaulted"].includes(l.status)&&!l.adminVoid&&l.takenAt&&Number(l.takenAt)>=RS5_AT;
   const dc={};(S.bank||[]).forEach(t=>{if(t.kind==="divcoll"&&t.loan)dc[t.loan]=(dc[t.loan]||0)+(Math.floor(Number(t.amt))||0)});
   const rec=l=>bkPaidTot(l)+(dc[l.id]||0),f=n=>`${n<0?"−":""}${Math.abs(Math.round(n)).toLocaleString()} BB`,cls=n=>n>0?"pos":n<0?"neg":"";
   const now=Date.now(),side=(a)=>{const x={n:a.length,P:0,R:0,done:0,dP:0,dR:0,live:0,def:0,defLoss:0,owed:0};a.forEach(l=>{const P=Number(l.P)||0,r=rec(l);x.P+=P;x.R+=r;if(l.status==="active"||l.status==="late"){x.live++;x.owed+=Math.max(0,bkTotalOf(l,now)-bkPaidTot(l))}else{x.done++;x.dP+=P;x.dR+=r;if(l.status==="defaulted"){x.def++;x.defLoss+=Math.max(0,P-r)}}});return x};
@@ -8679,7 +8712,7 @@ function bkActivity(me){const out=[],E=(at,v,h,bad)=>{if(at)out.push({at:Number(
   {const q=S.prefs[me]||{};if(q.dfl&&q.dflAt)E(q.dflAt,Math.round(Number(q.rb15)||0),`📉 Deflation reset · balance ÷15 (${(Number(q.rbFrom)||0).toLocaleString()} → ${(Number(q.rbTo)||0).toLocaleString()} BB, 10,000 minimum)`,(Number(q.rb15)||0)<0)
     for(const[d,v]of Object.entries(q.shineLog||{})){const at=Date.parse(d+"T05:00:00Z");E(at,Number(v)||0,Number(v)>0?`💼 Shine Employee paycheck`:`💼 Shine Employee · they missed your payment`,!(Number(v)>0))}
     /* card crafting / upgrade / shard store fees (burned) */for(const[at,x]of Object.entries(q.craftLog||{})){if(x.buy){E(Number(at),-(Number(x.fee)||0),`💎 Shard store: ${esc(shTxt(Number(x.sh)||0,Number(x.n)||0))}`);continue}const c=cardById(x.c);E(Number(at),-(Number(x.fee)||0),x.sh!=null?`⬆️ Upgrade: ${esc(c?c.name:"a card")} LV ${x.f}→${x.t}`:`🔨 Craft: ${esc(c?c.name:"a card")} L${x.f}→L${x.t}`)}}
-  return out.sort((a,b)=>b.at-a.at)}
+  const st0=Math.max(RS5_AT,Number(((S.prefs[me]||{}).rs5||{}).at)||0);return out.filter(x=>x.at>=st0)/* owner Nov 3: history starts at the reset (the reset line itself is the first one) */.sort((a,b)=>b.at-a.at)}
 function viewBank(){if(!S.me)return `<div class="empty">Sign in to use the bank.</div>`;const F=bkF(),bal=Math.floor(ledger().balOf(S.me)),me=S.me;
   const ppl=members().filter(id=>id!==me&&teamOf(id)).sort((a,b)=>nm(a).localeCompare(nm(b)));
   const tx=bkActivity(me).slice(0,20);
@@ -8700,7 +8733,7 @@ function viewBank(){if(!S.me)return `<div class="empty">Sign in to use the bank.
     ${fm?bkFormHtml(fm):""}
     ${sec("🙏 Loan requests",reqs,"Nobody is asking for a loan right now. Lend to someone here and their cards are your collateral.")}${sec("🤝 Loan offers",open,"No open loan offers.")}`}
   else if(tab==="adm"&&S.canEdit)body=bkAdmHtml(L);
-  else body=`${bkTotHtml(live(borr),live(lend))}${bkStatsHtml(L)}${sec("📥 Borrowing",live(borr),"You aren't borrowing anything right now.")}${sec("📤 Lending",live(lend),"You aren't lending anything right now.")}${done(borr).length+done(lend).length?sec("🗂 Past loans",done(borr).concat(done(lend)).sort((a,b)=>(b.takenAt||0)-(a.takenAt||0)),""):""}`;
+  else body=`${bkTotHtml(live(borr),live(lend))}${bkStatsHtml(L)}${sec("📥 Borrowing",live(borr),"You aren't borrowing anything right now.")}${sec("📤 Lending",live(lend),"You aren't lending anything right now.")}${done(borr).filter(l=>(Number(l.takenAt)||0)>=RS5_AT).length+done(lend).filter(l=>(Number(l.takenAt)||0)>=RS5_AT).length?sec("🗂 Past loans",done(borr).concat(done(lend)).filter(l=>(Number(l.takenAt)||0)>=RS5_AT).sort((a,b)=>(b.takenAt||0)-(a.takenAt||0)),""):""}`;
   return `<div class="bkwrap"><div class="bkhead"><h2>🏦 Bank</h2><div class="small">Balance <b class="num" style="color:#5cff72">${bal.toLocaleString()} BB</b></div></div>${tabs}${body}</div>`}
 /* Admin (owner Nov 1): Bank → 🛡️ All loans lists every loan; Close = stop collecting, money stays as it is (status "closed", counted in the ledger like repaid);
    Void = status "cancelled" + adminVoid, so the ledger drops the loan entirely (principal and every payment undone). Both send collateral not yet taken back to the borrower. */
