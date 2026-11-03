@@ -9640,7 +9640,7 @@ document.addEventListener("click",e=>{if(e.target.closest("[data-econ]"))econLoa
 /* ===== Gnome attack (owner Nov 3 12:42 PM): for King Julian, at a random moment about every 10 minutes while the app is open, a parade of
    dancing gnomes covers the screen for ~7 s and blocks every tap/key ("YOU GOT GNOMED!" + synthesized gnome grunts). Original SVG gnomes
    (the owner's reference pictures were stock art). Admin tab has a test button. GNOME_ON=false until the owner has tested it. ===== */
-const GNOME_ON=true,GNOME_WHO="king julian",GNOME_BUF=10e3,GNOME_SPAN=17*60e3;
+const GNOME_ON=true,GNOME_WHO="king julian",GNOME_BUF=5*60e3,GNOME_SPAN=17*60e3;
 const gnIsTarget=()=>!!S.me&&String(teamOf(S.me)||"").toLowerCase().includes(GNOME_WHO);
 const GN_LOOK=[{hat:"#7fb08f",coat:"#7fb08f",pants:"#5d8a6c",prop:"mush"},{hat:"#ef7d1a",coat:"#e0691a",pants:"#4f6b35",prop:null},{hat:"#d8312c",coat:"#d8312c",pants:"#2f8fa3",prop:"staff"},{hat:"#c9282b",coat:"#2a9d86",pants:"#2f5fa3",prop:"lantern"},{hat:"#3d6fc2",coat:"#3d6fc2",pants:"#2f4f8a",prop:null,ears:1}];
 function gnomeSvg(L){const o='stroke="#2a1a12" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"';
