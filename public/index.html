@@ -2049,6 +2049,35 @@ html.lite .aw.fx.au-zap::before{filter:url(#auZap) drop-shadow(0 0 calc(var(--s)
 .h2sec{font:800 24px Barlow,system-ui,sans-serif;color:#fff;margin:22px 0 10px}
 .ui2 .h2c .scwrap{border:0;padding:0;margin:0;background:none}
 </style>
+<style id="gnomecss">
+#gnOv{position:fixed;inset:0;z-index:2147483600;overflow:hidden;background:radial-gradient(ellipse at 50% 60%,rgba(40,90,40,.35),rgba(0,0,0,.72));touch-action:none;user-select:none;-webkit-user-select:none;animation:gnFade 7.2s ease forwards}
+@keyframes gnFade{0%{opacity:0}5%{opacity:1}90%{opacity:1}100%{opacity:0}}
+#gnOv .gnT{position:absolute;left:50%;top:18%;transform:translateX(-50%);font:900 clamp(34px,10vw,84px)/1 "Lilita One",Barlow,system-ui,sans-serif;color:#ffe14a;text-align:center;white-space:nowrap;-webkit-text-stroke:3px #3b1d0a;text-shadow:0 6px 0 #3b1d0a,0 0 30px rgba(255,200,60,.6);animation:gnTxt .55s ease-in-out infinite alternate}
+#gnOv .gnT span{display:inline-block;animation:gnLet .5s ease-in-out infinite alternate}
+@keyframes gnTxt{from{transform:translateX(-50%) rotate(-4deg) scale(1)}to{transform:translateX(-50%) rotate(4deg) scale(1.08)}}
+@keyframes gnLet{from{transform:translateY(0)}to{transform:translateY(-10px)}}
+#gnOv .gn{position:absolute;bottom:var(--y);left:0;width:var(--w);height:calc(var(--w)*1.4);will-change:transform}
+#gnOv .gn.run{animation:gnRun var(--d) linear var(--dl) both}
+#gnOv .gn.runL{animation:gnRunL var(--d) linear var(--dl) both}
+#gnOv .gn.dance{left:var(--x);animation:gnDance .9s ease-in-out var(--dl) infinite alternate}
+@keyframes gnRun{from{transform:translateX(-30vw)}to{transform:translateX(130vw)}}
+@keyframes gnRunL{from{transform:translateX(130vw) scaleX(-1)}to{transform:translateX(-30vw) scaleX(-1)}}
+@keyframes gnDance{0%{transform:translateY(0) rotate(-12deg)}50%{transform:translateY(-38%) rotate(0deg) scale(1.05)}100%{transform:translateY(0) rotate(12deg)}}
+#gnOv .gn svg{width:100%;height:100%;overflow:visible}
+#gnOv .gh{animation:gnHop .32s ease-in-out infinite alternate;transform-origin:50% 100%}
+@keyframes gnHop{from{transform:translateY(0) scaleY(1)}to{transform:translateY(-14px) scaleY(1.04)}}
+#gnOv .gHat{transform-origin:50% 62%;animation:gnHat .32s ease-in-out infinite alternate}
+@keyframes gnHat{from{transform:rotate(-9deg)}to{transform:rotate(9deg)}}
+#gnOv .gLL{transform-origin:40px 112px;animation:gnLeg .32s ease-in-out infinite alternate}
+#gnOv .gLR{transform-origin:60px 112px;animation:gnLeg .32s ease-in-out infinite alternate-reverse}
+@keyframes gnLeg{from{transform:rotate(-28deg)}to{transform:rotate(28deg)}}
+#gnOv .gAL{transform-origin:26px 84px;animation:gnArm .32s ease-in-out infinite alternate-reverse}
+#gnOv .gAR{transform-origin:74px 84px;animation:gnArm .32s ease-in-out infinite alternate}
+@keyframes gnArm{from{transform:rotate(-35deg)}to{transform:rotate(35deg)}}
+#gnOv .dance .gAL,#gnOv .dance .gAR{animation-duration:.22s}
+#gnOv .gnDust{position:absolute;bottom:calc(var(--y) - 6px);left:0;width:22px;height:10px;border-radius:50%;background:rgba(210,190,150,.55);animation:gnRun var(--d) linear var(--dl) both}
+@media (prefers-reduced-motion:reduce){#gnOv .gh,#gnOv .gHat,#gnOv .gLL,#gnOv .gLR,#gnOv .gAL,#gnOv .gAR{animation-duration:1.2s}}
+</style>
 </head>
 <body><svg id="auFx" width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="auFire" x="-30%" y="-30%" width="160%" height="160%"><feTurbulence type="fractalNoise" baseFrequency="0.035 0.09" numOctaves="2" seed="3" result="n"><animate attributeName="seed" values="1;2;3;4;5;6;7;8" dur="0.8s" repeatCount="indefinite" calcMode="discrete"/></feTurbulence><feDisplacementMap in="SourceGraphic" in2="n" scale="14" xChannelSelector="R" yChannelSelector="G"/></filter><filter id="auZap" x="-30%" y="-30%" width="160%" height="160%"><feTurbulence type="turbulence" baseFrequency="0.06" numOctaves="2" seed="1" result="n"><animate attributeName="seed" values="1;7;3;9;5;2;8;4" dur="0.5s" repeatCount="indefinite" calcMode="discrete"/></feTurbulence><feDisplacementMap in="SourceGraphic" in2="n" scale="9" xChannelSelector="R" yChannelSelector="G"/></filter></svg><svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="pmFireF" x="-30%" y="-40%" width="160%" height="170%"><feTurbulence type="fractalNoise" baseFrequency="0.018 0.06" numOctaves="3" seed="3" result="n"><animate attributeName="baseFrequency" dur="2.4s" values="0.018 0.06;0.022 0.075;0.018 0.06" repeatCount="indefinite"/><animate attributeName="seed" dur="0.9s" values="3;4;5;6;7;3" calcMode="discrete" repeatCount="indefinite"/></feTurbulence><feDisplacementMap in="SourceGraphic" in2="n" scale="46" xChannelSelector="R" yChannelSelector="G"/></filter><filter id="pmFireF2" x="-30%" y="-40%" width="160%" height="170%"><feTurbulence type="turbulence" baseFrequency="0.012 0.045" numOctaves="2" seed="9" result="n"><animate attributeName="baseFrequency" dur="3.1s" values="0.012 0.045;0.016 0.06;0.012 0.045" repeatCount="indefinite"/></feTurbulence><feDisplacementMap in="SourceGraphic" in2="n" scale="60" xChannelSelector="R" yChannelSelector="G"/></filter></svg>
 <div id="sbGate" class="sbgate" data-state="loading" role="dialog" aria-modal="true" aria-labelledby="sbGateTitle">
@@ -9599,9 +9628,66 @@ function econHtml(){const E=S.econ;let body="";
   return `<section class="card"><h3>📊 Daily money report</h3><p class="small muted">Who gained or lost the most, and from what. Big moves (100k+ in one place, 50+ packs) are flagged.</p>${body}</section>`}
 document.addEventListener("click",e=>{if(e.target.closest("[data-econ]"))econLoad()});
 
+
+/* ===== Gnome attack (owner Nov 3 12:42 PM): for King Julian, at a random moment about every 10 minutes while the app is open, a parade of
+   dancing gnomes covers the screen for ~7 s and blocks every tap/key ("YOU GOT GNOMED!" + synthesized gnome grunts). Original SVG gnomes
+   (the owner's reference pictures were stock art). Admin tab has a test button. GNOME_ON=false until the owner has tested it. ===== */
+const GNOME_ON=false,GNOME_WHO="king julian",GNOME_BUF=10e3,GNOME_SPAN=10*60e3;
+const gnIsTarget=()=>!!S.me&&String(teamOf(S.me)||"").toLowerCase().includes(GNOME_WHO);
+const GN_LOOK=[{hat:"#7fb08f",coat:"#7fb08f",pants:"#5d8a6c",prop:"mush"},{hat:"#ef7d1a",coat:"#e0691a",pants:"#4f6b35",prop:null},{hat:"#d8312c",coat:"#d8312c",pants:"#2f8fa3",prop:"staff"},{hat:"#c9282b",coat:"#2a9d86",pants:"#2f5fa3",prop:"lantern"},{hat:"#3d6fc2",coat:"#3d6fc2",pants:"#2f4f8a",prop:null,ears:1}];
+function gnomeSvg(L){const o='stroke="#2a1a12" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"';
+  const prop=L.prop==="mush"?`<g transform="translate(78 64)"><rect x="-2.5" y="0" width="5" height="16" rx="2" fill="#f3d9b5" ${o}/><path d="M-12 2a12 10 0 0 1 24 0z" fill="#d8312c" ${o}/><circle cx="-5" cy="-3" r="2" fill="#fff"/><circle cx="3" cy="-5" r="1.6" fill="#fff"/><circle cx="7" cy="-1" r="1.4" fill="#fff"/></g>`
+   :L.prop==="staff"?`<path d="M80 52 L84 118" stroke="#9b6a3c" stroke-width="5" stroke-linecap="round"/><path d="M80 52 L84 118" fill="none" ${o} stroke-width="1.2"/><circle cx="80" cy="50" r="4.5" fill="#b88654" ${o}/>`
+   :L.prop==="lantern"?`<g transform="translate(80 92)"><path d="M0 -10v-4" ${o}/><rect x="-6" y="-10" width="12" height="15" rx="2" fill="#ffd55a" ${o}/><rect x="-7.5" y="-12" width="15" height="3" rx="1" fill="#6b4a2a" ${o}/><circle cx="0" cy="-2.5" r="3" fill="#fff6c0"/></g>`:"";
+  return `<svg viewBox="0 0 100 140" aria-hidden="true"><ellipse cx="50" cy="134" rx="26" ry="5" fill="rgba(0,0,0,.25)"/>
+  <g class="gh">
+   <g class="gLL"><path d="M40 108 L37 124" stroke="${L.pants}" stroke-width="10" stroke-linecap="round"/><path d="M27 126h15a5 5 0 0 0-5-6h-6a6 6 0 0 0-4 6z" fill="#7a4a24" ${o}/></g>
+   <g class="gLR"><path d="M60 108 L63 124" stroke="${L.pants}" stroke-width="10" stroke-linecap="round"/><path d="M58 126h15a6 6 0 0 0-4-6h-6a5 5 0 0 0-5 6z" fill="#7a4a24" ${o}/></g>
+   <path d="M24 112 C22 92 30 76 50 74 C70 76 78 92 76 112 Z" fill="${L.coat}" ${o}/>
+   <rect x="25" y="100" width="50" height="6" rx="2" fill="#6b4a2a" ${o}/><rect x="45" y="99" width="10" height="8" rx="1.5" fill="#e8c14a" ${o}/>
+   <g class="gAL"><path d="M28 84 L18 100" stroke="${L.coat}" stroke-width="9" stroke-linecap="round"/><circle cx="17" cy="102" r="5" fill="#f2b48c" ${o}/></g>
+   <g class="gAR">${prop}<path d="M72 84 L82 100" stroke="${L.coat}" stroke-width="9" stroke-linecap="round"/><circle cx="83" cy="102" r="5" fill="#f2b48c" ${o}/></g>
+   <path d="M30 64 C28 84 36 104 50 114 C64 104 72 84 70 64 Z" fill="#fbfbf6" ${o}/>
+   <path d="M40 76c2 8 1 16 4 24M50 78v28M60 76c-2 8-1 16-4 24" fill="none" stroke="#d9d6cc" stroke-width="1.6" stroke-linecap="round"/>
+   ${L.ears?`<path d="M30 58 L18 50 L30 64Z M70 58 L82 50 L70 64Z" fill="#f2b48c" ${o}/>`:""}
+   <path d="M32 54 C32 66 68 66 68 54 Z" fill="#f2b48c" ${o}/>
+   <circle cx="42" cy="56" r="2.4" fill="#2a1a12"/><circle cx="58" cy="56" r="2.4" fill="#2a1a12"/><circle cx="43" cy="55" r=".8" fill="#fff"/><circle cx="59" cy="55" r=".8" fill="#fff"/>
+   <circle cx="36" cy="61" r="3" fill="#f59a9a" opacity=".7"/><circle cx="64" cy="61" r="3" fill="#f59a9a" opacity=".7"/>
+   <path d="M34 66 C40 62 46 64 50 66 C54 64 60 62 66 66 C60 70 54 69 50 67 C46 69 40 70 34 66Z" fill="#fbfbf6" ${o}/>
+   <ellipse cx="50" cy="62" rx="7" ry="6" fill="#f0a27a" ${o}/><ellipse cx="48" cy="60" rx="2" ry="1.4" fill="#fff" opacity=".7"/>
+   <g class="gHat"><path d="M28 52 C30 30 42 10 58 2 C64 0 70 4 66 8 C60 12 62 24 72 52 Z" fill="${L.hat}" ${o}/><path d="M26 52 C40 58 60 58 74 52 L72 46 C58 51 42 51 28 46 Z" fill="${L.hat}" ${o}/><path d="M40 20 C44 14 50 9 56 6" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="3" stroke-linecap="round"/></g>
+  </g></svg>`}
+let _gnAC=null;function gnAudio(){try{if(!_gnAC){const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;_gnAC=new C()}if(_gnAC.state==="suspended")_gnAC.resume();return _gnAC}catch(_){return null}}
+function gnGrunt(t0,hi){const ac=gnAudio();if(!ac)return;const t=ac.currentTime+t0,f=(hi?190:95)+Math.random()*(hi?90:60),d=.16+Math.random()*.2;
+  const o=ac.createOscillator(),o2=ac.createOscillator(),bp=ac.createBiquadFilter(),lp=ac.createBiquadFilter(),g=ac.createGain();
+  o.type="sawtooth";o2.type="square";o.frequency.setValueAtTime(f*1.15,t);o.frequency.exponentialRampToValueAtTime(f*.7,t+d);o2.frequency.setValueAtTime(f*.5,t);o2.frequency.exponentialRampToValueAtTime(f*.38,t+d);
+  bp.type="bandpass";bp.frequency.setValueAtTime(520+Math.random()*380,t);bp.Q.value=2.2;lp.type="lowpass";lp.frequency.value=1700;
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.32,t+.015);g.gain.exponentialRampToValueAtTime(.001,t+d);
+  const g2=ac.createGain();g2.gain.value=.35;o.connect(bp);o2.connect(g2);g2.connect(bp);bp.connect(lp);lp.connect(g);g.connect(ac.destination);o.start(t);o2.start(t);o.stop(t+d+.05);o2.stop(t+d+.05)}
+/* unlock audio on the target's (and admins') first tap, so a timed attack can grunt later */
+document.addEventListener("pointerdown",()=>{if(gnIsTarget()||S.canEdit)gnAudio()},{capture:true,passive:true});
+let _gnBlock=null;
+function gnomeShow(){if($("#gnOv"))return;const o=document.createElement("div");o.id="gnOv";o.setAttribute("role","alert");
+  const txt="YOU GOT GNOMED!";o.innerHTML=`<div class="gnT">${[...txt].map((c,i)=>`<span style="animation-delay:${(i*.06).toFixed(2)}s">${c===" "?"&nbsp;":c}</span>`).join("")}</div>`;
+  const W=window.innerWidth,parts=[];for(let i=0;i<9;i++){const L=GN_LOOK[i%GN_LOOK.length],w=Math.round(Math.max(70,Math.min(170,W*(.16+Math.random()*.1)))),y=Math.round(4+Math.random()*30)+"%",d=(3.2+Math.random()*2.2).toFixed(2)+"s",dl=(Math.random()*2.6).toFixed(2)+"s";
+    const kind=i<2?"dance":(i%2?"run":"runL");parts.push(`<div class="gn ${kind}" style="--w:${w}px;--y:${kind==="dance"?"22%":y};--d:${d};--dl:${kind==="dance"?(i*.3)+"s":dl};${kind==="dance"?`--x:${i?62:20}%;`:""}">${gnomeSvg(L)}</div>`);
+    if(kind!=="dance")parts.push(`<i class="gnDust" style="--y:${y};--d:${d};--dl:${dl}"></i>`)}
+  o.insertAdjacentHTML("beforeend",parts.join(""));document.body.appendChild(o);
+  for(let k=0;k<14;k++)gnGrunt(.2+k*.45+Math.random()*.25,Math.random()<.35);
+  const stop=e=>{if(!$("#gnOv"))return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation&&e.stopImmediatePropagation()};
+  _gnBlock=stop;["pointerdown","pointerup","click","touchstart","touchend","keydown","keyup","wheel","contextmenu"].forEach(t=>window.addEventListener(t,stop,{capture:true,passive:false}));
+  try{navigator.vibrate&&navigator.vibrate([80,60,80,60,120])}catch(_){}
+  setTimeout(()=>{o.remove();["pointerdown","pointerup","click","touchstart","touchend","keydown","keyup","wheel","contextmenu"].forEach(t=>window.removeEventListener(t,stop,{capture:true}));_gnBlock=null},7200)}
+/* owner 12:44: 10 s buffer after he opens the app, then ONE attack at a random moment inside every 10-minute window (could be 1 s or 9:59 in) */
+let _gnW=0,_gnAt=0,_gnDone=false;setInterval(()=>{if(!GNOME_ON||!gnIsTarget())return;const now=Date.now();
+  if(!_gnW){_gnW=now+GNOME_BUF;_gnAt=_gnW+Math.random()*GNOME_SPAN;_gnDone=false;return}
+  while(now>=_gnW+GNOME_SPAN){_gnW+=GNOME_SPAN;_gnAt=_gnW+Math.random()*GNOME_SPAN;_gnDone=false}
+  if(!_gnDone&&now>=_gnAt&&!document.hidden){_gnDone=true;gnomeShow()}},1000);
+document.addEventListener("click",e=>{if(e.target.closest("[data-gnometest]")){gnAudio();gnomeShow()}});
+
 function viewSetup(){
   if(!S.canEdit)return `<div class="empty"><strong>Admins only.</strong></div>`;
-  let h=`<h2>Admin</h2><p class="small muted">Only admins can see this tab.</p>`+(window.SB_INVITES?window.SB_INVITES.html(S.prefs,nm):"")+cardsAdminHtml();
+  let h=`<h2>Admin</h2><p class="small muted">Only admins can see this tab.</p><section class="card"><h3>🍄 Gnome attack</h3><p class="small muted">King Julian: ${GNOME_ON?"<b class='pos'>ON</b> · one attack at a random moment in every 10 minutes he has the app open (10 s after he opens it)":"<b>OFF</b> · waiting for your OK"}. The test only plays on your screen.</p><button type="button" class="btn" data-gnometest>Test the gnome attack</button></section>`+(window.SB_INVITES?window.SB_INVITES.html(S.prefs,nm):"")+cardsAdminHtml();
   {const L=ledger(),ids=Object.keys(S.prefs).sort((a,b)=>nm(a).localeCompare(nm(b)));
    h+=`<section class="card"><h3>Adjust BiggieBucks</h3><p class="small muted">Add or take away BB for any player. It changes their balance right away and doesn't count as betting profit.</p>
    <div class="adjlist">${ids.map(id=>{const adj=(S.adjust&&S.adjust[id])||0;return `<div class="adjrow">${pic(id)}<span class="adjname"><b>${esc(nm(id))}</b><small class="muted num">${Math.round(L.balOf(id)).toLocaleString()} BB${adj?` · adjusted ${adj>0?"+":"−"}${Math.abs(adj).toLocaleString()}`:""}</small></span>
