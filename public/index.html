@@ -1944,7 +1944,7 @@ html.lite .aw.fx.au-zap::before{filter:url(#auZap) drop-shadow(0 0 calc(var(--s)
 .ui2 body{background:var(--u2bg)!important}
 .ui2 header.mast,.ui2 nav:has(> #tabs),.ui2 #chatFab{display:none!important}
 .ui2 .hd2{width:100%;box-sizing:border-box;align-self:stretch;flex:none;position:sticky;top:env(safe-area-inset-top,0px);z-index:60;background:#0b0b0d;border-bottom:1px solid var(--u2line)}/* :root already pads the safe area (owner Nov 3: header sat far down) */
-.ui2 .hd2in{max-width:1180px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:10px 16px;min-height:60px}
+.ui2 .hd2in{max-width:1180px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:2px 16px 8px;min-height:52px}
 .hd2brand{all:unset;cursor:pointer;display:flex;flex-direction:column;line-height:1;min-width:0}
 .hd2brand b{font:800 25px/1 Barlow,system-ui,sans-serif;color:var(--u2gold);letter-spacing:-.01em}
 .hd2brand span{font:700 10px/1 Barlow,system-ui,sans-serif;color:#fff;letter-spacing:.32em;margin-top:5px;white-space:nowrap}
@@ -1961,13 +1961,13 @@ html.lite .aw.fx.au-zap::before{filter:url(#auZap) drop-shadow(0 0 calc(var(--s)
 .hd2me .av,.hd2me img{width:40px!important;height:40px!important}
 #hd2onl .onlpill{margin:0}
 @media (max-width:420px){.hd2bal small{display:none}.hd2bal{padding:6px 10px}.hd2bal b{font-size:14px}.hd2brand b{font-size:21px}.hd2brand span{font-size:8.5px;letter-spacing:.26em}#hd2onl{display:none}.hd2in{gap:6px;padding:8px 12px}.hd2r{gap:6px}}
-.ui2 main{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))!important}
+.ui2 main{padding-bottom:calc(106px + env(safe-area-inset-bottom,0px))!important}
 .bnav{display:none}
-.ui2 .bnav{display:flex;position:fixed;left:50%;transform:translateX(-50%);bottom:max(6px,calc(env(safe-area-inset-bottom,0px) - 14px));z-index:70;width:min(560px,calc(100% - 20px));padding:6px;gap:4px;background:rgba(18,18,21,.96);border:1px solid var(--u2line);border-radius:22px;box-shadow:0 10px 30px rgba(0,0,0,.55)}
+.ui2 .bnav{display:flex;position:fixed;left:50%;transform:translateX(-50%);bottom:max(12px,calc(env(safe-area-inset-bottom,0px) - 2px));z-index:70;width:min(560px,calc(100% - 20px));padding:6px;gap:4px;background:rgba(18,18,21,.96);border:1px solid var(--u2line);border-radius:22px;box-shadow:0 10px 30px rgba(0,0,0,.55)}
 .bnav button{all:unset;cursor:pointer;flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0 7px;border-radius:16px;color:#e9e9ee;font:600 12.5px/1 Barlow,system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
 .bnav button svg{width:26px;height:26px}
 .bnav button.on{background:var(--u2goldd);color:var(--u2gold)}
-.ui2 .bnavbg{display:block;position:fixed;left:0;right:0;bottom:0;height:calc(70px + max(6px,calc(env(safe-area-inset-bottom,0px) - 14px)));background:linear-gradient(rgba(11,11,13,0),#0b0b0d 38%);z-index:69;pointer-events:none}.bnavbg{display:none}
+.ui2 .bnavbg{display:block;position:fixed;left:0;right:0;bottom:0;height:calc(70px + max(12px,calc(env(safe-area-inset-bottom,0px) - 2px)));background:linear-gradient(rgba(11,11,13,0),#0b0b0d 38%);z-index:69;pointer-events:none}.bnavbg{display:none}
 .ui2 body.rrmode .bnav,.ui2 body.chatmode .bnav,.ui2 body.wwon .bnav,.ui2.u2chat .bnav,.ui2 body.rrmode .bnavbg,.ui2 body.chatmode .bnavbg,.ui2 body.wwon .bnavbg,.ui2.u2chat .bnavbg{display:none}
 .ui2 body.rrmode .hd2{display:none}
 #subbar:empty{display:none}.ui2 main #subbar{padding-bottom:0!important;display:block!important}.ui2 main #subbar:not(:empty)+#view{padding-top:8px!important}
