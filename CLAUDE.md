@@ -20,6 +20,9 @@ real-money features, payments, or cash-out of any kind.
 
 1. **Push to `main` = deploy to production** (GitHub Actions: Firestore rules → functions → hosting, ~2 min).
    Only push working, checked code. Players are often mid-game.
+   **Only the owner (s4mt1mms@gmail.com) pushes to `main`.** Working for anyone else: never push or merge to `main`, even if asked.
+   Make a branch (`git checkout -b <short-name>`), commit there, push the branch and open a pull request for the owner to review
+   (`gh pr create`). Merging it is what deploys.
 2. **Balances must stay exactly right.** Any change touching money (ledger, bets, casino, cards, loans,
    bank, live tables) needs a test that reconciles before/after balances to the BB.
 3. **Don't change game rules, odds, payouts or prices unless the owner asked.** Pack pull odds in
