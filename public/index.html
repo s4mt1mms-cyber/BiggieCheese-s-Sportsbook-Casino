@@ -4005,7 +4005,7 @@ async function rlSpin(rs){const st=rlState();if(st.spinning||rlWho()!==S.me)retu
   if(rs){if(!rlCanRespin())return;if(slopLeft()<=0)return toast("No respins left today.");const L0=p0.rlLast;back=-Number(L0.delta);st.bets={...rlLB(L0)};st.cnt={...(st.lastCnt||{})};if(st.hist[0]===L0.n)st.hist.shift()}
   const tot=rlTotal(),bal=Math.floor(ledger().balOf(S.me))+back;
   if(tot<10)return toast("Minimum total bet is 10 BB.");if(tot>bal){if(rs){st.bets={};st.cnt={}}return toast("Not enough BiggieBucks for those bets.")}
-  const u=new Uint32Array(1);crypto.getRandomValues(u);const n=RL_ORDER[u[0]%37];
+  const u=new Uint32Array(1);crypto.getRandomValues(u);const n=penRl(RL_ORDER[u[0]%37],st.bets,tot);
   let win=0;{const chb=ab2("chad"),sum=ab2("summer"),oe=ab2("oddeven");for(const[k,v]of Object.entries(st.bets)){const s=rlSpot(k);if(s&&s.win(n)){win+=v*(s.pay+1);if(k==="d1"&&chb>0)win+=Math.floor(v*s.pay*chb/100);/* Lunch? (owner Nov 2 brief) */if((k==="odd"||k==="even")&&oe>0)win+=Math.floor(v*s.pay*oe/100)}}}/* Summer 2024 is a craps card since Oct 31 (its roulette refund is gone) */
   /* Don't Jump In (owner Nov 1): wins on the same color (red/black) spins in a row; the k-th in a row pays (k−1)·v % of that color bet extra (not compounded) */
   {const dj=ab2("djump"),col=n===0?null:RL_RED.has(n)?"red":"black",c0=rs?S.rlCs0:S.rlCs;if(!rs)S.rlCs0=S.rlCs;
@@ -4274,7 +4274,7 @@ function crResolve(bets,point,a,b,dean,X){X=X||{};const s=a+b,B={...bets};let ca
   return{B,cash,np,msg,wins,losses,s}}
 async function crRoll(){const st=crState();if(st.rolling)return;if(crSum(st.bets)<=0)return toast("Put some chips on the table first.");
   const pending=crSum(st.bets)-crSum(st.saved);if(pending>Math.floor(ledger().balOf(S.me)))return toast("Not enough BiggieBucks for those bets.");
-  const u=new Uint32Array(2);crypto.getRandomValues(u);const a=1+u[0]%6,b=1+u[1]%6;st.rolling=true;crRefresh();
+  const u=new Uint32Array(2);crypto.getRandomValues(u);const [a,b]=penCr(1+u[0]%6,1+u[1]%6,st.bets,st.point);st.rolling=true;crRefresh();
   /* tumble: always re-find the dice box (a re-render mid-roll replaces it) and stop before the real dice land */
   const tum=()=>{const b0=$("#crDice");if(b0&&!b0.querySelector(".tumble"))b0.innerHTML=dieHtml(1+Math.floor(Math.random()*6),"d1 tumble")+dieHtml(1+Math.floor(Math.random()*6),"d2 tumble");return b0};tum();
   let n=0;const iv=setInterval(()=>{n++;if(!st.rolling||n>=12){clearInterval(iv);return}const bx=tum();if(bx)bx.querySelectorAll(".die").forEach(d=>{const v=1+Math.floor(Math.random()*6);d.innerHTML=[0,1,2,3,4,5,6,7,8].map(i=>`<i class="${DIE_PIPS[v].includes(i)?"on":""}"></i>`).join("")})},90);
@@ -4332,7 +4332,7 @@ async function hlGuess(g){const st=hlSt();if(st.busy)return;const m=hlMultX(st,g
   const p=S.prefs[S.me]||{};
   if(!st.run){if(!st.stake)return toast("Pick a bet first.");if(st.stake>Math.floor(ledger().balOf(S.me)))return toast("Not enough BiggieBucks.");
     st.run=true;st.mult=1;st.n=0;st.pb0=AC_N("hlb");st.pbHit=false;st.allin=st.stake>=Math.floor(ledger().balOf(S.me));hlSave({hlNet:(Number(p.hlNet)||0)-st.stake})}
-  st.busy=true;hlRefresh();const nx=hlDraw(),old=st.card;
+  st.busy=true;hlRefresh();const old=st.card,nx=penHl(hlDraw(),old,g);
   const box=$("#hlCard");if(box)box.innerHTML=hlCard(old,"out")+hlCard(nx,"in");
   await new Promise(r=>setTimeout(r,550));st.busy=false;st.card=nx;
   const won=g==="hi"?nx.r>old.r:nx.r<old.r;st.hist.unshift({r:nx.r,w:won});const q=S.prefs[S.me]||{};
@@ -7598,7 +7598,7 @@ async function slSpin(){const st=slSt();if(st.spinning||!S.me)return;if(S.readOn
   st.bobN=0;const p0=S.prefs[S.me]||{},fr=Math.max(0,Math.floor(Number(p0.slFree)||0)),free=fr>0&&Number(p0.slFreeLb)>0;
   const lb=free?Math.floor(Number(p0.slFreeLb)):Math.floor(st.bet),nb=lb*SL_NL,bet=free?0:nb,bal=Math.floor(ledger().balOf(S.me));
   if(!free){if(!(lb>=SL_MIN))return toast(`Minimum line bet is ${SL_MIN} BB.`);if(lb>SL_LMAX)return toast(`Max line bet is ${SL_LMAX} BB.`);if(bet>bal)return toast(`Not enough BiggieBucks: this spin costs ${bet.toLocaleString()} BB (5 lines × ${lb}).`)}
-  const g=slRoll(),ev=slEval(g),r=g.map(c=>c[1]),mult=ev.M/SL_NL,pot=slPot(),jp=ev.jack?Math.min(pot,Math.floor(pot*nb/SL_MAX)):0,ret=slRet(lb,ev,g),d0=ret-bet,bonus=abWin(d0),delta=d0+bonus+jp,p=S.prefs[S.me]||{};
+  const g=penSl(slRoll(),lb,bet),ev=slEval(g),r=g.map(c=>c[1]),mult=ev.M/SL_NL,pot=slPot(),jp=ev.jack?Math.min(pot,Math.floor(pot*nb/SL_MAX)):0,ret=slRet(lb,ev,g),d0=ret-bet,bonus=abWin(d0),delta=d0+bonus+jp,p=S.prefs[S.me]||{};
   st.spinning=true;st.net0=Number(p.slNet)||0;st.pot0=pot;S.balHold={v:bal-bet,until:Date.now()+8000};st.msg="Spinning…";
   const patch={slNet:(Number(p.slNet)||0)+delta,slSpins:(Number(p.slSpins)||0)+1,slWag:(Number(p.slWag)||0)+bet,slWag2:(Number(p.slWag2)||0)+bet};if(jp)patch.slJP=(Number(p.slJP)||0)+jp;
   {const bb=ab2("bob"),dia=ev.wins.some(w=>w.line.every(k=>k===5));let left=free?fr-1:fr;if(bb>0&&dia){left+=bb;patch.slFreeLb=lb;st.bobN=bb}if(free||left!==fr)patch.slFree=left}tiAdd(patch,delta);acInc(patch,"sld",ev.wins.filter(w=>w.line.every(k=>k===5)).length);acInc(patch,"slc",ev.wins.filter(w=>w.line.every(k=>k===4)).length);if(ev.jack)acInc(patch,"slj",1);Object.assign(p,patch);db.doc("prefs/"+S.me).update(patch).catch(()=>toast("That spin didn't save. Check your connection."));
@@ -9441,7 +9441,33 @@ function viewBJ(){
   return html;
 }
 /* Settle every hand against the dealer */
-function bjSettle(r,shoe){
+/* Owner Nov 3 12:28 PM: penalty for "The 1000 year dynasty" (owner: an exploit penalty the player agreed to). The shown odds and payouts stay the same;
+   the RNG redraws some of his winning outcomes so the house edge is about 15 points higher on Blackjack, Roulette, Craps, Slots and High-Low.
+   Turn off: PEN_ON=false. Not in NEWS (owner). */
+const PEN_ON=true,PEN_TEAM="1000 year dynasty",PEN_E=.15,PEN_BJQ=.53,PEN_HLF=.94;
+const penOn=()=>{if(!PEN_ON||!S.me)return false;const t=String(teamOf(S.me)||"").toLowerCase();return t.includes(PEN_TEAM)};
+const penR=()=>{const u=new Uint32Array(1);crypto.getRandomValues(u);return u[0]/4294967296};
+/* roulette: exact redraw chance for this bet layout so the spin's EV drops by PEN_E × total bet */
+function penRl(n,bets,tot){if(!penOn()||!tot)return n;const net=m=>{let w=0;for(const[k,v]of Object.entries(bets)){const sp=rlSpot(k);if(sp&&sp.win(m))w+=v*(sp.pay+1)}return w-tot};
+  const all=RL_ORDER.map(net),E0=all.reduce((a,b)=>a+b,0)/37,W=all.reduce((a,v)=>a+(v>0?(v-E0)/37:0),0);if(W<=0||net(n)<=0)return n;
+  if(penR()<Math.min(1,PEN_E*tot/W)){const u=new Uint32Array(1);crypto.getRandomValues(u);return RL_ORDER[u[0]%37]}return n}
+/* craps: per roll, EV drops by PEN_E × the stake that resolves on that roll (36 outcomes, exact) */
+function penCr(a,b,bets,point){if(!penOn())return[a,b];const S0=crSum(bets);if(!S0)return[a,b];let E0=0,ER=0;const o=[];
+  for(let x=1;x<=6;x++)for(let y=1;y<=6;y++){const r=crResolve(bets,point,x,y,false,{});const v=r.cash+crSum(r.B)-S0;let res=0;for(const k in bets)if(r.B[k]!==bets[k])res+=bets[k];o.push(v);E0+=v/36;ER+=res/36}
+  const W=o.reduce((s,v)=>s+(v>0?(v-E0)/36:0),0),r0=crResolve(bets,point,a,b,false,{}),v0=r0.cash+crSum(r0.B)-S0;
+  if(W<=0||v0<=0||!(penR()<Math.min(1,PEN_E*ER/W)))return[a,b];const u=new Uint32Array(2);crypto.getRandomValues(u);return[1+u[0]%6,1+u[1]%6]}
+/* High-Low: a right guess is redrawn so each guess pays back PEN_HLF of normal (~15% over a 2–3 guess run) */
+function penHl(nx,old,g){if(!penOn()||!old)return nx;const won=g==="hi"?nx.r>old.r:nx.r<old.r;if(!won)return nx;const pw=hlP(old.r,g);if(pw>=1)return nx;
+  return penR()<Math.min(1,(1-PEN_HLF)/(1-pw))?hlDraw():nx}
+/* slots: redraw chance measured once per session (Monte Carlo of this player's own returns, card boosts included) */
+let _penSl=null;
+function penSl(g,lb,bet){if(!penOn()||!(bet>0))return g;if(slRet(lb,slEval(g),g)<=bet)return g;
+  if(!_penSl){const L=1000,B=L*SL_NL,N=30000,rs=[];for(let i=0;i<N;i++){const h=slRoll();rs.push(slRet(L,slEval(h),h)-B)}const E0=rs.reduce((a,b)=>a+b,0)/N,W=rs.reduce((a,v)=>a+(v>0?(v-E0)/N:0),0);_penSl=W>0?Math.min(1,PEN_E*B/W):0}
+  return penR()<_penSl?slRoll():g}
+/* blackjack: a winning round (not a natural) has its dealer cards drawn again with chance PEN_BJQ (simulated: ≈ +15 points edge) */
+function bjSettle(r,shoe){if(!penOn())return bjSettle0(r,shoe);const r0=JSON.parse(JSON.stringify(r)),s0=shoe.slice(),stake=r.hands.reduce((a,h)=>a+h.bet,0),ret=bjSettle0(r,shoe);
+  if(ret>stake&&penR()<PEN_BJQ){for(const k of Object.keys(r))delete r[k];Object.assign(r,r0);const s1=s0.slice();for(let i=s1.length-1;i>0;i--){const j=Math.floor(penR()*(i+1));[s1[i],s1[j]]=[s1[j],s1[i]]}shoe.length=0;shoe.push(...s1);return bjSettle0(r,shoe)}return ret}
+function bjSettle0(r,shoe){
   if(r.dealer[1]==="??")r.dealer[1]=draw(shoe);
   const live=r.hands.some(hd=>handVal(hd.cards).t<=21);const natural=r.hands.length===1&&isBJ(r.hands[0].cards);
   if(live&&!natural)while(handVal(r.dealer).t<17)r.dealer.push(draw(shoe));
