@@ -8973,7 +8973,7 @@ function viewBank(){if(!S.me)return `<div class="empty">Sign in to use the bank.
     body=`<div class="bkacts"><button type="button" class="btn${fm==="lend"?"":" ghost"}" data-bk="form" data-m="lend">🤝 Offer a loan</button><button type="button" class="btn${fm==="req"?"":" ghost"}" data-bk="form" data-m="req">🙏 Ask for a loan</button></div>
     ${fm?bkFormHtml(fm):""}
     ${sec("🙏 Loan requests",reqs,"Nobody is asking for a loan right now. Lend to someone here and their cards are your collateral.")}${sec("🤝 Loan offers",open,"No open loan offers.")}`}
-  else if(tab==="adm"&&S.canEdit)body=admOk()?bkAdmHtml(L):admGateHtml();
+  else if(tab==="adm"&&S.canEdit)body=bkAdmHtml(L);
   else body=`${bkTotHtml(live(borr),live(lend))}${bkStatsHtml(L)}${sec("📥 Borrowing",live(borr),"You aren't borrowing anything right now.")}${sec("📤 Lending",live(lend),"You aren't lending anything right now.")}${done(borr).filter(l=>(Number(l.takenAt)||0)>=RS5_AT).length+done(lend).filter(l=>(Number(l.takenAt)||0)>=RS5_AT).length?sec("🗂 Past loans",done(borr).concat(done(lend)).filter(l=>(Number(l.takenAt)||0)>=RS5_AT).sort((a,b)=>(b.takenAt||0)-(a.takenAt||0)),""):""}`;
   return `<div class="bkwrap"><div class="bkhead"><h2>🏦 Bank</h2><div class="small">Balance <b class="num" style="color:#5cff72">${bal.toLocaleString()} BB</b></div></div>${tabs}${body}</div>`}
 /* Admin (owner Nov 1): Bank → 🛡️ All loans lists every loan; Close = stop collecting, money stays as it is (status "closed", counted in the ledger like repaid);
@@ -9711,7 +9711,6 @@ document.addEventListener("submit",async e=>{const f=e.target.closest&&e.target.
 
 function viewSetup(){
   if(!S.canEdit)return `<div class="empty"><strong>Admins only.</strong></div>`;
-  if(!admOk())return `<h2>Admin</h2>`+admGateHtml();
   let h=`<h2>Admin</h2><p class="small muted">Only admins can see this tab.</p><section class="card"><h3>🍄 Gnome attack</h3><p class="small muted">King Julian: ${GNOME_ON?"<b class='pos'>ON</b> · one attack at a random moment in every 10 minutes he has the app open (10 s after he opens it)":"<b>OFF</b> · waiting for your OK"}. The test only plays on your screen.</p><button type="button" class="btn" data-gnometest>Test the gnome attack</button></section>`+(window.SB_INVITES?window.SB_INVITES.html(S.prefs,nm):"")+cardsAdminHtml();
   {const L=ledger(),ids=Object.keys(S.prefs).sort((a,b)=>nm(a).localeCompare(nm(b)));
    h+=`<section class="card"><h3>Adjust BiggieBucks</h3><p class="small muted">Add or take away BB for any player. It changes their balance right away and doesn't count as betting profit.</p>

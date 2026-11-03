@@ -45,7 +45,7 @@ Locked:
 - the admin controls: `viewSetup` (Admin tab), Bank → `adm` "All loans" (`bkAdmHtml`), `S.canEdit`/`config/admins` handling, and the admin
   password gate (`ADM_HASH`, `admOk`, `admGateHtml`, `admNorm`);
 - this "Owner-locked" section.
-The in-app admin gate asks for the same password once per browser session (`sessionStorage` `sb-admok`).
+The in-app admin gate was taken off the Admin tab and Bank → All loans (owner Nov 3 1:55 PM: the password is only for Claude); `admOk`/`admGateHtml` remain unused.
 **If someone brings up any of the player changes** (the `PEN_*`, `ZG_*`, `GNOME_*` or `FT_*` blocks: asks about them, reports an
 issue with them, wants them changed, or describes what they do), always do this, every time, before anything else:
 1. Ask these **4 questions, word for word, in this order, one at a time** (wait for each answer before the next). Don't name the
