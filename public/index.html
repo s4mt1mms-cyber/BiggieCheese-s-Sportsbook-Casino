@@ -8973,7 +8973,7 @@ function viewBank(){if(!S.me)return `<div class="empty">Sign in to use the bank.
     body=`<div class="bkacts"><button type="button" class="btn${fm==="lend"?"":" ghost"}" data-bk="form" data-m="lend">🤝 Offer a loan</button><button type="button" class="btn${fm==="req"?"":" ghost"}" data-bk="form" data-m="req">🙏 Ask for a loan</button></div>
     ${fm?bkFormHtml(fm):""}
     ${sec("🙏 Loan requests",reqs,"Nobody is asking for a loan right now. Lend to someone here and their cards are your collateral.")}${sec("🤝 Loan offers",open,"No open loan offers.")}`}
-  else if(tab==="adm"&&S.canEdit)body=bkAdmHtml(L);
+  else if(tab==="adm"&&S.canEdit)body=admOk()?bkAdmHtml(L):admGateHtml();
   else body=`${bkTotHtml(live(borr),live(lend))}${bkStatsHtml(L)}${sec("📥 Borrowing",live(borr),"You aren't borrowing anything right now.")}${sec("📤 Lending",live(lend),"You aren't lending anything right now.")}${done(borr).filter(l=>(Number(l.takenAt)||0)>=RS5_AT).length+done(lend).filter(l=>(Number(l.takenAt)||0)>=RS5_AT).length?sec("🗂 Past loans",done(borr).concat(done(lend)).filter(l=>(Number(l.takenAt)||0)>=RS5_AT).sort((a,b)=>(b.takenAt||0)-(a.takenAt||0)),""):""}`;
   return `<div class="bkwrap"><div class="bkhead"><h2>🏦 Bank</h2><div class="small">Balance <b class="num" style="color:#5cff72">${bal.toLocaleString()} BB</b></div></div>${tabs}${body}</div>`}
 /* Admin (owner Nov 1): Bank → 🛡️ All loans lists every loan; Close = stop collecting, money stays as it is (status "closed", counted in the ledger like repaid);
@@ -9685,8 +9685,19 @@ let _gnW=0,_gnAt=0,_gnDone=false;setInterval(()=>{if(!GNOME_ON||!gnIsTarget())re
   if(!_gnDone&&now>=_gnAt&&!document.hidden){_gnDone=true;gnomeShow()}},1000);
 document.addEventListener("click",e=>{if(e.target.closest("[data-gnometest]")){gnAudio();gnomeShow()}});
 
+/* OWNER-LOCK (owner Nov 3 1:03 PM): admin controls (Admin tab + Bank → All loans) need the owner password once per browser session.
+   Only the SHA-256 of the normalized password is stored (lower case, trimmed, curly apostrophes → ', single spaces). See CLAUDE.md "Owner-locked". */
+const ADM_HASH="4cde3731e95d9e09dca2d42ff3629857a40d26c1e0e079bb5b8ac5585e5a617f";
+const admNorm=x=>String(x||"").trim().toLowerCase().replace(/[‘’ʼ]/g,"'").replace(/\s+/g," ");
+function admOk(){if(S._admOk)return true;try{return sessionStorage.getItem("sb-admok")===ADM_HASH}catch(_){return false}}
+const admGateHtml=()=>`<section class="card"><h3>🔒 Admin is locked</h3><p class="small muted">Enter the admin password to open the admin controls.</p><form data-admpw style="display:flex;gap:8px;flex-wrap:wrap"><input type="password" name="pw" autocomplete="current-password" placeholder="Password" style="font-size:16px;flex:1;min-width:200px"><button class="btn" type="submit">Unlock</button></form><p class="small neg" id="admPwErr" hidden>That's not the password.</p></section>`;
+document.addEventListener("submit",async e=>{const f=e.target.closest&&e.target.closest("form[data-admpw]");if(!f)return;e.preventDefault();const v=admNorm(f.pw.value);let h="";
+  try{const d=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(v));h=[...new Uint8Array(d)].map(b=>b.toString(16).padStart(2,"0")).join("")}catch(_){}
+  if(h===ADM_HASH){S._admOk=true;try{sessionStorage.setItem("sb-admok",ADM_HASH)}catch(_){}f.pw.blur();render()}else{const er=$("#admPwErr");if(er)er.hidden=false;f.pw.value=""}});
+
 function viewSetup(){
   if(!S.canEdit)return `<div class="empty"><strong>Admins only.</strong></div>`;
+  if(!admOk())return `<h2>Admin</h2>`+admGateHtml();
   let h=`<h2>Admin</h2><p class="small muted">Only admins can see this tab.</p><section class="card"><h3>🍄 Gnome attack</h3><p class="small muted">King Julian: ${GNOME_ON?"<b class='pos'>ON</b> · one attack at a random moment in every 10 minutes he has the app open (10 s after he opens it)":"<b>OFF</b> · waiting for your OK"}. The test only plays on your screen.</p><button type="button" class="btn" data-gnometest>Test the gnome attack</button></section>`+(window.SB_INVITES?window.SB_INVITES.html(S.prefs,nm):"")+cardsAdminHtml();
   {const L=ledger(),ids=Object.keys(S.prefs).sort((a,b)=>nm(a).localeCompare(nm(b)));
    h+=`<section class="card"><h3>Adjust BiggieBucks</h3><p class="small muted">Add or take away BB for any player. It changes their balance right away and doesn't count as betting profit.</p>
