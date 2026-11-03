@@ -2810,7 +2810,7 @@ async function auBuy(id){const A=AURA_BY[id];if(!A||!S.me)return;if(S.readOnly)r
   try{const q=S.prefs[S.me]||{};if(auOwns(S.me,id))return;
     if(Math.floor(ledger().balOf(S.me))<A.p)return toast(`You need ${A.p.toLocaleString()} BB for ${A.n}.`);
     const spent=(Number(q.auraSpent)||0)+A.p;
-    await db.doc("prefs/"+S.me).update({auras:{[id]:true},aura:id,auraSpent:spent});
+    await db.doc("prefs/"+S.me).update({auras:{[id]:true},aura:id,auraSpent:{__inc:A.p}});
     q.auras={...(q.auras||{}),[id]:true};q.aura=id;q.auraSpent=spent;shopFee("aura",id,A.p);try{db.collection("chat").add({type:"bet",kind:"shop",uid:S.me,poster:S.me,at:Date.now(),text:`🛍️ ${nm(S.me)} bought the ${A.n} aura (${A.p.toLocaleString()} BB)`})}catch(_){}
     toast(`✨ ${A.n} is yours. It's on now.`)}
   catch(e){toast("That didn't save. Check your connection and try again.")}
@@ -2889,7 +2889,7 @@ async function skBuy(id){const X=SKIN_BY[id];if(!X||!S.me)return;if(S._skBusy)re
   try{const q=S.prefs[S.me]||{};if(skOwns(S.me,id))return;
     if(Math.floor(ledger().balOf(S.me))<divaP(X.p))return toast(`You need ${divaP(X.p).toLocaleString()} BB for the ${X.n}.`);
     const spent=(Number(q.skinSpent)||0)+divaP(X.p);
-    await db.doc("prefs/"+S.me).update({skins:{[id]:true},skin:id,skinSpent:spent});
+    await db.doc("prefs/"+S.me).update({skins:{[id]:true},skin:id,skinSpent:{__inc:divaP(X.p)}});
     q.skins={...(q.skins||{}),[id]:true};q.skin=id;q.skinSpent=spent;shopFee("skin",id,divaP(X.p));try{db.collection("chat").add({type:"bet",kind:"shop",uid:S.me,poster:S.me,at:Date.now(),text:`🛍️ ${nm(S.me)} bought the ${X.n} skin (${divaP(X.p).toLocaleString()} BB)`})}catch(_){}
     toast(`${X.ic} You're the ${X.n} now. It shows the next time you sit at a live table.`)}
   catch(e){toast("That didn't save. Check your connection and try again.")}
@@ -2910,7 +2910,7 @@ async function emBuy(id){const E=EM_BY[id];if(!E||!S.me||!emOn())return;if(S.rea
   try{const q=S.prefs[S.me]||{};if(emOwns(S.me,id))return;
     if(Math.floor(ledger().balOf(S.me))<divaP(E.p))return toast(`You need ${divaP(E.p).toLocaleString()} BB for ${E.n}.`);
     const spent=(Number(q.emoteSpent)||0)+divaP(E.p);
-    await db.doc("prefs/"+S.me).update({emotes:{[id]:true},emoteSpent:spent});
+    await db.doc("prefs/"+S.me).update({emotes:{[id]:true},emoteSpent:{__inc:divaP(E.p)}});
     q.emotes={...(q.emotes||{}),[id]:true};q.emoteSpent=spent;shopFee("emote",id,divaP(E.p));try{db.collection("chat").add({type:"bet",kind:"shop",uid:S.me,poster:S.me,at:Date.now(),text:`🛍️ ${nm(S.me)} bought the ${E.n} emote (${divaP(E.p).toLocaleString()} BB)`})}catch(_){}
     toast(`🕺 ${E.n} is yours. Tap 🕺 at a live Russian Roulette or Hold'em table.`)}
   catch(e){toast("That didn't save. Check your connection and try again.")}
@@ -6875,7 +6875,8 @@ async function v2Buy1(lab,noFree,pm){pm=!!pm;let done=null;if(S._pkBusy||!S.me||
        not the free packs Paradise itself gave, tracked in paraP); every N more = +1 free pack, the remainder carries over (paraN) */
     {const N=ab2("paradise"),own=free&&(Number(D.paraP)||0)>0;if(own)patch.paraP=(Number(D.paraP)||0)-1;
       if(N>0&&!free){/* owner Nov 1 5:20 PM: only paid packs count (no free pack of any kind) */let n=(Number(D.paraN)||0)+1,g=0;while(n>=N){n-=N;g++}patch.paraN=n;if(g){freeNew=g;patch.freeV2=(patch.freeV2!=null?patch.freeV2:(Number(D.freeV2)||0))+g;patch.paraP=(patch.paraP!=null?patch.paraP:(Number(D.paraP)||0))+g}}}
-    await db.doc("prefs/"+S.me).update(patch);
+    /* owner Nov 3 2:18 PM: the charge is an atomic server add, so two devices buying at the same moment can't overwrite each other's charge */
+    await db.doc("prefs/"+S.me).update({...patch,packSpent:{__inc:price},packsOpened:{__inc:1}});
     Object.assign(q,{packSpent:patch.packSpent,packsOpened:patch.packsOpened,v2pity:pity,v2packs:patch.v2packs});q.cards={...(q.cards||{}),...add};if(patch.cp)q.cp={...(q.cp||{}),...cpP};if(patch.shards)q.shards={...(q.shards||{}),...shards};
     if(patch.freeV2!=null)q.freeV2=patch.freeV2;if(patch.paraN!=null)q.paraN=patch.paraN;if(patch.paraP!=null)q.paraP=patch.paraP;if(freeNew)setTimeout(()=>toast("🎁 Another Day in Paradise: you earned a free BiggieCheese Pack!"),4500);
     const pulls=out.map(x=>x.cid);pulls.v2=out;pulls.lunchI=out.map(x=>(cardById(x.cid)||{}).abil==="lunch");cimgPrefetch(pulls);
@@ -6912,6 +6913,9 @@ async function v2Buy(pm){pm=!!pm;if(S._pkChain)return;const q=S.prefs[S.me]||{},
 /* Upgrade one card a level: one prefs write (old key → 0, new key → 1, shards, craftSpent, craftLog) checked against the saved copy */
 /* owner Oct 29 1:57 AM: upgrades are instant: checked against the live prefs copy, applied locally and animated right away; the save runs in
    the background (rolled back with a toast if it fails). Several upgrades in a row queue up in order. */
+/* owner Nov 3 2:18 PM: spend counters are written as atomic server adds ({__inc:n}, firebase-shim), so two devices spending at the same
+   moment can't overwrite each other's charge (before: buying packs on two phones at once charged only half of them). Local copies keep absolute values. */
+const incW=(p,o)=>{const w={...p};for(const k in o)w[k]={__inc:o[k]};return w};
 let _V2UQ=Promise.resolve();
 function v2UpPlan(c,id){const cost=v2UpCost(c),cp=cpOf(c.id,id),useC=Math.min(cp,cost.sh),useS=cost.sh-useC,sh=shardsOf(id)[c.r];return{cost,cp,useC,useS,sh,short:Math.max(0,useS-sh)}}
 function v2Up(cid){if(!S.me||!db)return;if(!(S.prefs[S.me]||{}).cv3)return toast("Cards are resetting. Try again in a moment.");if(!rlvDone())return toast("Your card levels are being recalculated. Try again in a moment.");if(S.readOnly)return toast("View only. Ask the commish for access.");const c=cardById(cid);if(!c||!craftable(c))return;const L=c.lv||1;if(L>=LV_MAX[c.r])return toast("Already at max level.");
@@ -6921,7 +6925,7 @@ function v2Up(cid){if(!S.me||!db)return;if(!(S.prefs[S.me]||{}).cv3)return toast
   const patch={cards:{[cid]:0,[to]:1},cp:{[b]:P.cp-P.useC},craftSpent:(Number(q.craftSpent)||0)+P.cost.bb,craftLog:{[at]:{c:b,f:L,t:L+1,fee:P.cost.bb,n:P.useC,w:P.useS,sh:c.r}}};acInc(patch,"up",1);if(L+1>=LV_MAX[c.r])acInc(patch,"mx"+c.r,1);if(P.useS)patch.shards={[c.r]:P.sh-P.useS};
   q.cards={...cs,...patch.cards};q.cp={...(q.cp||{}),...patch.cp};if(patch.shards)q.shards={...(q.shards||{}),...patch.shards};q.craftSpent=patch.craftSpent;q.craftLog={...(q.craftLog||{}),...patch.craftLog};
   const max=L+1>=LV_MAX[c.r];document.querySelectorAll(".pkov").forEach(x=>x.remove());cfAnim([cid],to,max,[]);setMe();/* perf Oct 31: the collection is redrawn when the animation closes (Nice → render), not under it */
-  _V2UQ=_V2UQ.then(()=>db.doc("prefs/"+S.me).update(patch)).then(()=>{if(max)try{db.collection("chat").add({type:"bet",kind:"bank",uid:S.me,poster:S.me,at,text:`⬆️ ${nm(S.me)} upgraded ${c.name} to MAX (LV ${L+1})!`})}catch(_){}},e=>{console.warn("upgrade",e);
+  _V2UQ=_V2UQ.then(()=>db.doc("prefs/"+S.me).update(incW(patch,{craftSpent:P.cost.bb}))).then(()=>{if(max)try{db.collection("chat").add({type:"bet",kind:"bank",uid:S.me,poster:S.me,at,text:`⬆️ ${nm(S.me)} upgraded ${c.name} to MAX (LV ${L+1})!`})}catch(_){}},e=>{console.warn("upgrade",e);
     db.doc("prefs/"+S.me).get().then(f=>{const D=f.data()||{};Object.assign(q,{cards:D.cards||{},cp:D.cp||{},shards:D.shards||{},craftSpent:D.craftSpent||0,craftLog:D.craftLog||{}});render()}).catch(()=>{});
     document.querySelectorAll(".cfov").forEach(x=>x.remove());toast("The upgrade didn't save (connection?). Nothing was used or charged. Try again.")})}
 /* Shard store: n shards of rarity r, paid to the house (burned like upgrades: craftSpent + craftLog {sh,n,fee,buy}) */
@@ -6932,7 +6936,7 @@ function v2ShBuy(r,n){if(!S.me||!db)return;if(Date.now()-(S._shT||0)<350)return;
   const q=S.prefs[S.me]=S.prefs[S.me]||{},have=Math.floor(Number((q.shards||{})[r])||0),cs0=Number(q.craftSpent)||0;let at=Date.now();while(q.craftLog&&q.craftLog[at])at++;
   const patch={shards:{[r]:have+n},craftSpent:cs0+fee,craftLog:{[at]:{sh:r,n,fee,buy:1}}};
   q.shards={...(q.shards||{}),[r]:have+n};q.craftSpent=patch.craftSpent;q.craftLog={...(q.craftLog||{}),...patch.craftLog};toast(`💎 Bought ${shTxt(r,n)} for ${fee.toLocaleString()} BB.`);render();
-  _V2UQ=_V2UQ.then(()=>db.doc("prefs/"+S.me).update(patch)).catch(()=>{const q2=S.prefs[S.me]||{};q2.shards={...(q2.shards||{}),[r]:Math.max(0,Math.floor(Number((q2.shards||{})[r])||0)-n)};q2.craftSpent=Math.max(0,(Number(q2.craftSpent)||0)-fee);if(q2.craftLog)delete q2.craftLog[at];toast("That shard purchase didn't save. You weren't charged.");render()})}
+  _V2UQ=_V2UQ.then(()=>db.doc("prefs/"+S.me).update(incW({...patch,shards:{[r]:{__inc:n}}},{craftSpent:fee}))).catch(()=>{const q2=S.prefs[S.me]||{};q2.shards={...(q2.shards||{}),[r]:Math.max(0,Math.floor(Number((q2.shards||{})[r])||0)-n)};q2.craftSpent=Math.max(0,(Number(q2.craftSpent)||0)-fee);if(q2.craftLog)delete q2.craftLog[at];toast("That shard purchase didn't save. You weren't charged.");render()})}
 /* Shards on the Marketplace: a listing {cid:"sh-<r>", shard:r, qty, price, seller, status}; the shards leave the seller when listed (back on take-down),
    the buyer adds them on a won purchase race (like mkBuy). Money = the sold listing's price, read by cardMoney like any card sale (5% fee burned). */
 const isShL=l=>l&&/^sh-\d$/.test(String(l.cid||""));
@@ -7693,7 +7697,7 @@ async function craftMax(id){const C=cfSt();if(S._cfBusy||!S.me||!db)return;S._cf
     if(!pl){render();return toast("You don't have enough copies for that anymore.")}if(pl.short){render();return toast(`You need ${pl.fee.toLocaleString()} BB for that.`)}
     const ch={},get=k=>ch[k]!=null?ch[k]:(Number(cs[k])||0),at=Date.now(),log={};let i=0;
     for(let L=1;L<pl.T;L++){const k=pl.crafts[L];if(!k)continue;const [N,f]=CRAFT[pl.r][L-1];ch[lvK(id,L)]=get(lvK(id,L))-k*N;ch[lvK(id,L+1)]=get(lvK(id,L+1))+k;log[at+i]={c:id,f:L,t:L+1,fee:k*f,n:k*N};i++}
-    const patch={cards:ch,craftSpent:(Number(D.craftSpent)||0)+pl.fee,craftLog:log};await db.doc("prefs/"+S.me).update(patch);
+    const patch={cards:ch,craftSpent:(Number(D.craftSpent)||0)+pl.fee,craftLog:log};await db.doc("prefs/"+S.me).update(incW(patch,{craftSpent:pl.fee}));
     const q=S.prefs[S.me]=S.prefs[S.me]||{};q.cards={...(q.cards||{}),...ch};q.craftSpent=patch.craftSpent;q.craftLog={...(q.craftLog||{}),...log};
     const max=pl.T===LV_MAX[pl.r],tc=cardById(id);if(max)try{db.collection("chat").add({type:"bet",kind:"bank",uid:S.me,poster:S.me,at,text:`🔨 ${nm(S.me)} crafted ${tc?tc.name:"a card"} to MAX!`})}catch(_){}
     const lo=Number(Object.keys(pl.crafts).sort((a,b)=>a-b)[0])||1;render();cfAnim(Array(Math.min(6,Math.max(2,pl.uses||CRAFT[pl.r][lo-1][0]))).fill(lvK(id,lo)),lvK(id,pl.T),max,[])}
@@ -9092,7 +9096,7 @@ async function fpUpgrade(kind){if(S._fpUpBusy||!S.me)return;const isP=kind==="pr
   if(cost==null)return toast("Already maxed.");if(Math.floor(ledger().balOf(S.me))<cost)return toast("Not enough BiggieBucks for that upgrade.");
   if(!(S.fpAsk===kind&&Date.now()-(S.fpAskAt||0)>450)){S.fpAsk=kind;S.fpAskAt=Date.now();S._fpStats=null;return fpStats()}
   S._fpUpBusy=true;S.fpAsk=null;const q=S.prefs[S.me]=S.prefs[S.me]||{};const patch={[k]:lv+1,farmSpent:(Number(q.farmSpent)||0)+cost};
-  try{await db.doc("prefs/"+S.me).update(patch);Object.assign(q,patch);haptic&&haptic();toast(isP?`🧀 Press upgraded: ${FP_PRESS[lv+1]} BB per pipe`:`🏚️ Silo upgraded: ${FP_SILO[lv+1].toLocaleString()} BB a day`)}
+  try{await db.doc("prefs/"+S.me).update(incW(patch,{farmSpent:cost}));Object.assign(q,patch);haptic&&haptic();toast(isP?`🧀 Press upgraded: ${FP_PRESS[lv+1]} BB per pipe`:`🏚️ Silo upgraded: ${FP_SILO[lv+1].toLocaleString()} BB a day`)}
   catch(_){toast("Couldn't upgrade. Check your connection.")}finally{S._fpUpBusy=false;S._fpStats=null;fpStats();renderSoon()}}
 document.addEventListener("click",e=>{const b=e.target.closest("[data-fpup]");if(b)return fpUpgrade(b.dataset.fpup);if(S.fpAsk&&!e.target.closest(".fpfarm")){S.fpAsk=null;S._fpStats=null;fpStats()}});
 function fpFarmHtml(){const pl=fpLv("fpPress"),sl=fpLv("fpSilo"),bal=Math.floor(ledger().balOf(S.me));

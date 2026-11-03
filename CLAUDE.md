@@ -467,6 +467,7 @@ Fantasyland / ChudBootyCheeks. League Moments (`lm`) still works the old way (it
 - House sports lines: `hv(ml)` prices each side at (2.1/2.2)/p (−110 on a coin flip) from the fair feed lines (scoreboard/futures stay fair; game docs keep
   fair odds); NFL: `tools/jobs/nfl.py` EDGE = 2.1/2.2, spreads/totals −110.
 
+- **Atomic spend counters (Nov 3 2:18 PM, owner "someone keeps pulling crazy shit"):** buying on two devices at the same moment charged only half the packs (each wrote packSpent = its local copy + price; scratch `dmr/race.cjs`: 24 packs, 60,000 charged). The shim now turns `{__inc:n}` in update() into `F.increment(n)`; `v2Buy1` sends packSpent/packsOpened that way, `incW(patch,{field:delta})` does it for craftSpent (upgrades, shard store, old crafting), farmSpent, and the Aura Shop writes auraSpent/skinSpent/emoteSpent as increments; shard-store shards too. Local copies keep absolute values. Tests: `dmr/race.cjs` (12 packs on 2 devices = 120,000), `dmr/spend.cjs`, `dmr/upt.cjs`.
 - **Stale-tab guard (Oct 23):** tabs still running a pre-deflation copy kept spending old balances (King Julian went negative). The shim now stamps
   every set/update/add with a new random `wv`, and `firestore.rules` (`freshWrite()`) refuses non-admin writes whose `wv` didn't change. If you ever
   write Firestore outside the shim from the app, include a fresh `wv`. Bump the `v2.` prefix in `WV()` + rules if you need to lock out older copies again

@@ -735,7 +735,10 @@ function makeDb(F, fs) {
         const v = obj[k];
         if (v === undefined) continue;
         const path = prefix.concat(k);
-        if (isPlainObject(v)) {
+        if (isPlainObject(v) && Object.keys(v).length === 1 && typeof v.__inc === "number") {
+          // {__inc:n} = atomic server-side add (Nov 3: pack charges can't be lost to two devices buying at once).
+          pairs.push(new F.FieldPath(...path), F.increment(v.__inc));
+        } else if (isPlainObject(v)) {
           // Merging {} into a map changes nothing, so there is nothing to write.
           if (Object.keys(v).length) walk(v, path);
         } else {
