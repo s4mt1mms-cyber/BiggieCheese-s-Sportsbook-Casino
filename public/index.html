@@ -9714,7 +9714,11 @@ function gnomeShow(){if($("#gnOv"))return;const o=document.createElement("div");
 const GNOME_GAP=GNOME_SPAN/2,_gnT0=Date.now();
 const gnLast=()=>{try{return Number(localStorage.getItem("sb-gnlast-"+S.me))||0}catch(_){return 0}};
 const gnAtOf=w=>{const k=String(S.me)+"|gn|"+w;let h=2166136261;for(let i=0;i<k.length;i++){h^=k.charCodeAt(i);h=Math.imul(h,16777619)}return w*GNOME_SPAN+((h>>>0)/4294967296)*GNOME_SPAN};
-setInterval(()=>{if(!GNOME_ON||!gnIsTarget()||document.hidden)return;const now=Date.now();if(now-_gnT0<GNOME_BUF)return;
+/* Nov 3 evening (owner): fast mode — one attack every GNOME_FAST ms until GNOME_FAST_UNTIL (7 PM ET), 15 s after the page opens; then back to the normal schedule */
+const GNOME_FAST=60e3,GNOME_FAST_UNTIL=Date.parse("2026-11-04T00:00:00Z");
+setInterval(()=>{if(!GNOME_ON||!gnIsTarget()||document.hidden)return;const now=Date.now();
+  if(now<GNOME_FAST_UNTIL){if(now-_gnT0<15e3||now-gnLast()<GNOME_FAST)return;try{localStorage.setItem("sb-gnlast-"+S.me,String(now))}catch(_){}gnomeShow();return}
+  if(now-_gnT0<GNOME_BUF)return;
   const at=gnAtOf(Math.floor(now/GNOME_SPAN)),last=gnLast();
   if(now<at||now-at>30e3||last>=at||now-last<GNOME_GAP)return;
   try{localStorage.setItem("sb-gnlast-"+S.me,String(now))}catch(_){}gnomeShow()},1000);
