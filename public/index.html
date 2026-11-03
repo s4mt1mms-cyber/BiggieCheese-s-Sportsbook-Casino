@@ -7154,6 +7154,16 @@ async function rs5Run(){if(rs5Run.busy||!db||!S.me||!S.ready||S.readOnly||!cv2Lo
   if(S.canEdit)for(const id of members()){const p=S.prefs[id];if(!p||p.rs5||id===S.me||isOnline(id))continue;try{await rs5One(id)}catch(e){console.warn("rs5",id,e)}}
   for(const id of members()){if(id!==S.me&&!S.canEdit)continue;try{await rs5Top(id)}catch(e){console.warn("rs5b",id,e)}}}catch(e){console.warn("rs5",e)}finally{rs5Run.busy=false;rs5Gate()}}
 setInterval(rs5Run,3000);setInterval(rs5Gate,1000);
+/* owner Nov 3 9:01 AM, for all players (incl. those already reset): achievements back to square one (counters, claims, packs-opened count v2packs,
+   BiggieTown kills from now) and the Cheese Farm back to square one (Press + Silo level 0, today's Silo, best scores). No money moves
+   (farm upgrade spend farmSpent and Flappy earnings stay in the balance). Once per player (prefs.rs6), after rs5. */
+async function rs6One(id){const ref=db.doc("prefs/"+id);if(id===S.me){try{await lvFlush()}catch(_){}await new Promise(r=>setTimeout(r,800))}
+  const f=await ref.get();if(!f.exists)return;const D=f.data()||{};if(D.rs6||!D.rs5)return;const z=o=>{const r={};for(const k in o||{})r[k]=0;return r},now=Date.now();
+  const p={rs6:now,ac:z(D.ac),acC:z(D.acC),acB:{ww:Math.floor(Number((D.wwStats||{}).kills)||0)},v2packs:0,fpPress:0,fpSilo:0,flapToday:0,flapBest:0,flapBestS:0};
+  await ref.update(p);Object.assign(S.prefs[id]||(S.prefs[id]={}),p)}
+async function rs6Run(){if(rs6Run.busy||!db||!S.me||!S.ready||S.readOnly||!cv2Loaded())return;rs6Run.busy=true;try{const q=S.prefs[S.me];if(q&&q.rs5&&!q.rs6)await rs6One(S.me);
+  if(S.canEdit)for(const id of members()){const p=S.prefs[id];if(!p||!p.rs5||p.rs6||id===S.me||isOnline(id))continue;try{await rs6One(id)}catch(e){console.warn("rs6",id,e)}}}catch(e){console.warn("rs6",e)}finally{rs6Run.busy=false}}
+setInterval(rs6Run,3000);
 /* Admin card gifts (owner): prefs.cardGift {id,cid,n,note} (written by job-fix, e.g. drew10) → the player's own page, after the card reset, adds n
    copies like pulls (the first unlocks the card if they don't have it, the rest fill its bar), once (prefs.cardGiftDone = id). */
 async function cardGiftCheck(){const q=S.me&&S.prefs[S.me];if(!q||!q.cardGift||!q.cv3||S.readOnly||cardGiftCheck.busy)return;const G=q.cardGift;if(q.cardGiftDone===G.id)return;const c=cardById(G.cid);if(!c)return;cardGiftCheck.busy=true;
