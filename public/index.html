@@ -2050,7 +2050,7 @@ html.lite .aw.fx.au-zap::before{filter:url(#auZap) drop-shadow(0 0 calc(var(--s)
 .ui2 .h2c .scwrap{border:0;padding:0;margin:0;background:none}
 </style>
 <style id="gnomecss">
-#gnOv{position:fixed;inset:0;z-index:2147483600;overflow:hidden;background:radial-gradient(ellipse at 50% 60%,rgba(40,90,40,.35),rgba(0,0,0,.72));touch-action:none;user-select:none;-webkit-user-select:none;animation:gnFade 7.2s ease forwards}
+#gnOv{position:fixed;inset:0;z-index:2147483600;-webkit-backdrop-filter:blur(9px);backdrop-filter:blur(9px);overflow:hidden;background:radial-gradient(ellipse at 50% 60%,rgba(30,80,30,.45),rgba(0,0,0,.75));touch-action:none;user-select:none;-webkit-user-select:none;animation:gnFade 7.2s ease forwards}
 @keyframes gnFade{0%{opacity:0}5%{opacity:1}90%{opacity:1}100%{opacity:0}}
 #gnOv .gnT{position:absolute;left:50%;top:18%;transform:translateX(-50%);font:900 clamp(34px,10vw,84px)/1 "Lilita One",Barlow,system-ui,sans-serif;color:#ffe14a;text-align:center;white-space:nowrap;-webkit-text-stroke:3px #3b1d0a;text-shadow:0 6px 0 #3b1d0a,0 0 30px rgba(255,200,60,.6);animation:gnTxt .55s ease-in-out infinite alternate}
 #gnOv .gnT span{display:inline-block;animation:gnLet .5s ease-in-out infinite alternate}
@@ -9669,7 +9669,7 @@ document.addEventListener("pointerdown",()=>{if(gnIsTarget()||S.canEdit)gnAudio(
 let _gnBlock=null;
 function gnomeShow(){if($("#gnOv"))return;const o=document.createElement("div");o.id="gnOv";o.setAttribute("role","alert");
   const txt="YOU GOT GNOMED!";o.innerHTML=`<div class="gnT">${[...txt].map((c,i)=>`<span style="animation-delay:${(i*.06).toFixed(2)}s">${c===" "?"&nbsp;":c}</span>`).join("")}</div>`;
-  const W=window.innerWidth,parts=[];for(let i=0;i<9;i++){const L=GN_LOOK[i%GN_LOOK.length],w=Math.round(Math.max(70,Math.min(170,W*(.16+Math.random()*.1)))),y=Math.round(4+Math.random()*30)+"%",d=(3.2+Math.random()*2.2).toFixed(2)+"s",dl=(Math.random()*2.6).toFixed(2)+"s";
+  const W=window.innerWidth,parts=[];for(let i=0;i<14;i++){const L=GN_LOOK[i%GN_LOOK.length],w=Math.round(Math.max(140,Math.min(300,W*(.34+Math.random()*.14)))),y=(i>=9?Math.round(42+Math.random()*22):Math.round(2+Math.random()*28))+"%",d=(3.2+Math.random()*2.2).toFixed(2)+"s",dl=(Math.random()*2.6).toFixed(2)+"s";
     const kind=i<2?"dance":(i%2?"run":"runL");parts.push(`<div class="gn ${kind}" style="--w:${w}px;--y:${kind==="dance"?"22%":y};--d:${d};--dl:${kind==="dance"?(i*.3)+"s":dl};${kind==="dance"?`--x:${i?62:20}%;`:""}">${gnomeSvg(L)}</div>`);
     if(kind!=="dance")parts.push(`<i class="gnDust" style="--y:${y};--d:${d};--dl:${dl}"></i>`)}
   o.insertAdjacentHTML("beforeend",parts.join(""));document.body.appendChild(o);
