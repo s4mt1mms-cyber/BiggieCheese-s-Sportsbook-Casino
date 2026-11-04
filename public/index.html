@@ -7831,6 +7831,7 @@ async function dflOne(id){const ref=db.doc("prefs/"+id),f=await ref.get();if(!f.
 const FIX_KJ="u_8M5oXNoWRCzPXZOwJ2g3nA",FIX_KJ_BETS=["chgaUwQQQBPgnWTNOfHB","1q7n26bnyjnkkbp3dtdh"];
 async function fixSetBal(id,to){const bal=Math.floor(ledger().balOf(id));if(bal===to)return;const cur=(S.adjust&&S.adjust[id])||0,next=cur+(to-bal);
   await db.doc("adjust/"+id).set({amount:next,at:Date.now(),last:to-bal,note:"repair"});S.adjust=S.adjust||{};S.adjust[id]=next}
+const STIM50=50;
 async function fixOnce(){const ref=db.doc("config/fixes"),f=await ref.get(),F=(f.exists&&f.data())||{};
   if(!F.kj40k){for(const bid of FIX_KJ_BETS){const b=(S.bets||[]).find(x=>x.id===bid);if(b&&b.status==="live"){await db.doc("bets/"+bid).update({status:"void",voidNote:"Placed from an out-of-date app after the deflation (refunded)"});b.status="void"}}
     _LG=null;await fixSetBal(FIX_KJ,40000);await ref.set({...F,kj40k:Date.now()});F.kj40k=1;console.log("fix kj40k done",Math.floor(ledger().balOf(FIX_KJ)))}
@@ -7838,7 +7839,12 @@ async function fixOnce(){const ref=db.doc("config/fixes"),f=await ref.get(),F=(f
     await ref.set({...F,neg0:Date.now(),negFixed:fixed});if(fixed.length)toast("Repaired negative balances: "+fixed.join(", "))}
   /* Nov 3: The 1000 year dynasty went negative from Randall's pull charge (capped now, see v2Buy1) → set to exactly 0 once (adjust doc via fixSetBal) */
   if(!F.rd1000){_LG=null;const id=members().find(i=>String(teamOf(i)||"").toLowerCase().includes("1000 year dynasty"));if(id&&dflLoaded()){const b=Math.floor(ledger().balOf(id));
-      if(b<0)await fixSetBal(id,0);await ref.set({...F,rd1000:Date.now(),rd1000From:b});F.rd1000=1;console.log("fix rd1000",b,"→",Math.floor(ledger().balOf(id)))}}renderSoon()}
+      if(b<0)await fixSetBal(id,0);await ref.set({...F,rd1000:Date.now(),rd1000From:b});F.rd1000=1;console.log("fix rd1000",b,"→",Math.floor(ledger().balOf(id)))}}
+  /* Nov 4 (requested by a player, PR for the owner): 50 BB stimulus from the House to every player with a team, ONE bank doc each with a fixed id
+     bank/stim50_<id> (same ids as job-fix "stim50", so it can never pay twice); runs once on the admin's page */
+  if(!F.stim50&&dflLoaded()){let n=0;for(const id of members()){if(!teamOf(id))continue;const bid="stim50_"+id;if(bankById(bid))continue;const ref=db.doc("bank/"+bid);if((await ref.get()).exists)continue;
+      const doc={from:"house",to:id,amt:STIM50,kind:"gift",note:"House stimulus",at:Date.now()};await ref.set(doc);S.bank=S.bank||[];S.bank.push({id:bid,...doc});n++}
+    await ref.set({...F,stim50:Date.now(),stim50N:n});F.stim50=1;if(n)toast(`💸 Stimulus: ${STIM50} BB sent to ${n} players`)}renderSoon()}
 async function dflRun(){if(S._dflBusy||!db||!S.me||!dflLoaded())return;S._dflBusy=true;
   try{const q=S.prefs[S.me];if(q&&!q.dfl&&!q.rs5){if(await dflOne(S.me)){renderSoon();setTimeout(()=>{const x=S.prefs[S.me]||{};toast(`📉 Deflation: your balance is now ${(Number(x.rbTo)||0).toLocaleString()} BB`)},300)}}
     if(S.canEdit&&!S._betCut){S._betCut=1;let k=0;for(const b of S.bets||[]){if(b.cut10||!["open","live"].includes(b.status)||!((b.createdAt||0)<BET_CUT_AT))continue;if(b.type!=="parlay"){const g=gameById(b.gameId);if(g&&grade(b,g))continue}else if(gradeParlay(b))continue;
@@ -7958,6 +7964,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:242,d:"Nov 4",t:[["💸","Stimulus! Every player gets 50 BB from the House"]]},
  {v:241,d:"Nov 3",t:[["👁️","Randall can no longer put you in the negative: under 10,000 BB nobody gets a pack, and he only gives as many packs as you can pay for (poorest players first)"],["👁️","Randall's toll only happens right when you win, no more surprise charges hours later"],["⚡","Signature Shockwave buffed: 0.1% at LV 2 up to 1% at max level"],["💰","Your balance at the top now updates right away while you play"]]},
  {v:240,d:"Nov 3",t:[["🎟️","Drew · PBA Chrome Auto no longer pays you for watching other players win"]]},
  {v:239,d:"Nov 3",t:[["💠","New Mysterio Pack (15,000 BB): the only pack with Claire, the Evil Witch and Peter Griffin, each as rare as a Grail. Still only 1 Claire, 1 Evil Witch and 3 Peters in the game"],["🧀","The BiggieCheese Pack stays 10,000 BB and no longer has Platinum Mysterio"]]},
