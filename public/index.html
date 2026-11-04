@@ -7958,6 +7958,18 @@ async function pk5Gift(){const me=S.me,q=me&&S.prefs[me];if(pk5Gift.busy||!q||!d
   pk5Gift.busy=true;try{const ref=db.doc("prefs/"+me),d=(await ref.get()).data()||{};if(d.pk5n4){q.pk5n4=d.pk5n4;return}const f=(Math.floor(Number(d.freeV2))||0)+PK5_N,at=Date.now();
     await ref.update({freeV2:f,pk5n4:at});q.freeV2=f;q.pk5n4=at;toast(`🎁 Gift from the House: ${PK5_N} free BiggieCheese Packs! Open them in the Shop.`);renderSoon()}catch(e){console.warn("pk5",e)}finally{pk5Gift.busy=false}}
 setInterval(pk5Gift,5000);
+/* Nov 4 House gifts, paid so they always land: each player's OWN page writes its own doc (players may create bank docs), and the admin's page also
+   fills in every other player with a team (offline ones). Fixed ids bank/<prefix><id> = one per player ever (both writing at once = the same doc).
+   stim50_ was the 50 BB stimulus, which only the admin's fixOnce paid (it never ran, owner hadn't opened the app). */
+const HG_GIFTS=[["gift100k_",100000,"House gift"],["stim50_",50,"House stimulus"]],_hgOk=new Set();
+async function hgTick(){if(hgTick.busy||!db||!S.me||S.readOnly||!dflLoaded())return;hgTick.busy=true;
+  try{const ids=S.canEdit?members().filter(i=>teamOf(i)):(teamOf(S.me)?[S.me]:[]);
+    for(const id of ids)for(const [pre,amt,note] of HG_GIFTS){const bid=pre+id;if(_hgOk.has(bid))continue;if(bankById(bid)){_hgOk.add(bid);continue}
+      const ref=db.doc("bank/"+bid);if((await ref.get()).exists){_hgOk.add(bid);continue}
+      const doc={from:"house",to:id,amt,kind:"gift",note,at:Date.now()};await ref.set(doc);_hgOk.add(bid);S.bank=S.bank||[];if(!bankById(bid))S.bank.push({id:bid,...doc});
+      if(id===S.me)toast(`💸 ${note}: +${amt.toLocaleString()} BB`)}
+    renderSoon()}catch(e){console.warn("hg",e)}finally{hgTick.busy=false}}
+setInterval(hgTick,8000);
 async function hofTake(){if(S._bkBusy||!S.me)return;if(!hasAb("hof"))return toast("You need the Heart of Finance card.");const ls=hofLoans(S.me);
   if(ls.some(l=>l.status==="active"||l.status==="late"))return toast("Pay off your House loan first.");if(ls.some(l=>l.status==="defaulted"))return toast("The House doesn't lend to people who default.");
   if(bkHasLoan(S.me))return toast("One loan at a time: pay off your other loan first.");const c=bkCalc(hofT());if(!c||c.err)return;S._bkBusy=true;
@@ -7972,6 +7984,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:243,d:"Nov 4",t:[["💸","Every player gets 100,000 BB from the House (plus the 50 BB stimulus if it hadn't reached you yet)"]]},
  {v:242,d:"Nov 4",t:[["💸","Stimulus! Every player gets 50 BB from the House"]]},
  {v:241,d:"Nov 3",t:[["👁️","Randall can no longer put you in the negative: under 10,000 BB nobody gets a pack, and he only gives as many packs as you can pay for (poorest players first)"],["👁️","Randall's toll only happens right when you win, no more surprise charges hours later"],["⚡","Signature Shockwave buffed: 0.1% at LV 2 up to 1% at max level"],["💰","Your balance at the top now updates right away while you play"]]},
  {v:240,d:"Nov 3",t:[["🎟️","Drew · PBA Chrome Auto no longer pays you for watching other players win"]]},
