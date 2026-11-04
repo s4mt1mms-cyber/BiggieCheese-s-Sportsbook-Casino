@@ -5,7 +5,8 @@
   zhrollback: Zartog + hung like hernandez cards back to the Oct 23 snapshot (min), +75,000 each (owner, Oct 25).
   kjloan: 1M House loan, 0%, due 5 minutes after King Julian's next visit (owner, Oct 24).
   kjspin: one free Daily Spin for King Julian (owner, Oct 24).
-  drew10: #CTESPN gets 10 Drew · PBA Chrome Auto cards (owner, Oct 29)."""
+  drew10: #CTESPN gets 10 Drew · PBA Chrome Auto cards (owner, Oct 29).
+  stim50: 50 BB stimulus from the House to every player with a team (Nov 4; same bank ids as the app's fixOnce, never pays twice)."""
 import sys, time
 from common import db
 from google.cloud import firestore
@@ -47,6 +48,17 @@ elif fix == "gift20k":
         fs.collection("bank").document("gift20k_" + d.id).set({"from": "house", "to": d.id, "amt": 20000, "kind": "gift", "note": "House gift", "at": now, "wv": "fix." + str(now)})
         cnt += 1; print("gift", d.id, x.get("team"))
     print("gifts written:", cnt)
+elif fix == "stim50":
+    # Nov 4: 50 BB from the House to every player with a team, bank/stim50_<id> (the app's fixOnce writes the same ids, so whichever runs first wins)
+    now = int(time.time() * 1000); cnt = 0
+    for d in fs.collection("prefs").stream():
+        x = d.to_dict() or {}
+        if not x.get("team"): continue
+        ref = fs.collection("bank").document("stim50_" + d.id)
+        if ref.get().exists: continue
+        ref.set({"from": "house", "to": d.id, "amt": 50, "kind": "gift", "note": "House stimulus", "at": now, "wv": "fix." + str(now)})
+        cnt += 1; print("stimulus", d.id, x.get("team"))
+    print("stimulus docs written:", cnt)
 elif fix == "kjspin":
     # Oct 24 (owner): one free Daily Spin for King Julian (prefs.whFree +1; the app counts used ones by bank docs wheel_<id>_free<n>)
     ref = fs.collection("prefs").document("u_8M5oXNoWRCzPXZOwJ2g3nA")
