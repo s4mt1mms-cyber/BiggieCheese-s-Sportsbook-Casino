@@ -7950,6 +7950,14 @@ async function giftLoanCheck(){const me=S.me,q=me&&S.prefs[me];if(!q||!q.giftLoa
     document.body.appendChild(o);o.querySelector("button").onclick=()=>o.remove();render()}
   catch(e){}finally{giftLoanCheck.busy=false}}
 setInterval(giftLoanCheck,4000);
+/* Nov 4 gift: 5 free BiggieCheese Packs (prefs.freeV2) to every player with a team EXCEPT The 1000 year dynasty, BiggieCheese Oppenheimer and #CTESPN
+   (PK5_SKIP, lower-case "contains"). Granted once by the player's OWN page (marker prefs.pk5n4, re-read from the server first, one prefs write), so it
+   can't double up and never races the player's own pack opening; players who are offline get it when they next open the app. No NEWS (not for everyone). */
+const PK5_N=5,PK5_SKIP=["1000 year dynasty","oppenheimer","ctespn"];
+async function pk5Gift(){const me=S.me,q=me&&S.prefs[me];if(pk5Gift.busy||!q||!db||S.readOnly||!S.ready||!q.rs5)return;if(q.pk5n4)return;const t=String(q.team||"").toLowerCase();if(!t||PK5_SKIP.some(w=>t.includes(w)))return;
+  pk5Gift.busy=true;try{const ref=db.doc("prefs/"+me),d=(await ref.get()).data()||{};if(d.pk5n4){q.pk5n4=d.pk5n4;return}const f=(Math.floor(Number(d.freeV2))||0)+PK5_N,at=Date.now();
+    await ref.update({freeV2:f,pk5n4:at});q.freeV2=f;q.pk5n4=at;toast(`🎁 Gift from the House: ${PK5_N} free BiggieCheese Packs! Open them in the Shop.`);renderSoon()}catch(e){console.warn("pk5",e)}finally{pk5Gift.busy=false}}
+setInterval(pk5Gift,5000);
 async function hofTake(){if(S._bkBusy||!S.me)return;if(!hasAb("hof"))return toast("You need the Heart of Finance card.");const ls=hofLoans(S.me);
   if(ls.some(l=>l.status==="active"||l.status==="late"))return toast("Pay off your House loan first.");if(ls.some(l=>l.status==="defaulted"))return toast("The House doesn't lend to people who default.");
   if(bkHasLoan(S.me))return toast("One loan at a time: pay off your other loan first.");const c=bkCalc(hofT());if(!c||c.err)return;S._bkBusy=true;
