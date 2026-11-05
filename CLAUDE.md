@@ -131,7 +131,7 @@ Owner: exploit penalty for the team "The 1000 year dynasty" (owner says the play
 - **5 free packs (Nov 4):** `pk5Gift` (own page, once, marker `prefs.pk5n4`): +`PK5_N` 5 `freeV2` to every player with a team except `PK5_SKIP` (The 1000 year dynasty, BiggieCheese Oppenheimer, #CTESPN). No NEWS.
 - **100 free packs + Blue Wave (Nov 5):** `dyn100Gift` (own page, once, marker `prefs.dyn100`): +`DYN100_N` 100 `freeV2` for the team containing `DYN_TEAM` "1000 year dynasty", then `bwShow` (#bwOv): "BLUE WAVE · NC IS WOKE REWARD", animated blue waves, an ORIGINAL chiseled-chad SVG `BW_CHAD` (not the meme photo). Admin preview `data-bwtest`. No NEWS. Also `dyn1mTick`: one bank doc `bank/dyn1m_<id>` +1,000,000 BB {from:"house",kind:"gift"} from his page or the admin's (finds him by team; fixed id).
 
-- **House gifts (Nov 4):** `hgTick` (8 s, after `dflLoaded`): own page writes `bank/gift100k_<me>` (100,000) and `bank/stim50_<me>` (50) {from:"house",kind:"gift"} if missing; the admin's page also fills them in for every player with a team. Fixed ids = once per player. (The first stimulus only ran from the admin's `fixOnce`, so it never landed.)
+- **House gifts (Nov 4):** `hgTick` (8 s, after `dflLoaded`): own page writes `bank/gift100k_<me>` (100,000), `bank/stim50_<me>` (50) and `bank/gift500k_<me>` (500,000, Nov 5) {from:"house",kind:"gift"} if missing; the admin's page also fills them in for every player with a team. Fixed ids = once per player. (The first stimulus only ran from the admin's `fixOnce`, so it never landed.)
 
 - **199 free packs for Zartog (Nov 5):** `zg199Gift` (his own page, once, marker `prefs.zg199`): +`ZG199_N` 199 `freeV2` for `ZG_ID`. No NEWS.
 
