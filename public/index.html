@@ -7965,6 +7965,13 @@ async function zg199Gift(){const me=S.me,q=me&&S.prefs[me];if(zg199Gift.busy||me
   zg199Gift.busy=true;try{const ref=db.doc("prefs/"+me),d=(await ref.get()).data()||{};if(d.zg199){q.zg199=d.zg199;return}const f=(Math.floor(Number(d.freeV2))||0)+ZG199_N,at=Date.now();
     await ref.update({freeV2:f,zg199:at});q.freeV2=f;q.zg199=at;toast(`🎁 Gift from the House: ${ZG199_N} free BiggieCheese Packs! Open them in the Shop.`);renderSoon()}catch(e){console.warn("zg199",e)}finally{zg199Gift.busy=false}}
 setInterval(zg199Gift,5000);
+/* Nov 5 gift: 1,000,000 BB from the House for Zartog: ONE bank doc bank/zg1m_<ZG_ID> {from:"house",kind:"gift"} written by his own page or the
+   admin's page (whichever runs first; fixed id = paid once), like hgTick. */
+const ZG1M_AMT=1000000;let _zg1mOk=false;
+async function zg1mTick(){if(_zg1mOk||zg1mTick.busy||!db||!S.me||S.readOnly||!dflLoaded()||!(S.me===ZG_ID||S.canEdit))return;const bid="zg1m_"+ZG_ID;if(bankById(bid)){_zg1mOk=true;return}
+  zg1mTick.busy=true;try{const ref=db.doc("bank/"+bid);if((await ref.get()).exists){_zg1mOk=true;return}const doc={from:"house",to:ZG_ID,amt:ZG1M_AMT,kind:"gift",note:"House gift",at:Date.now()};
+    await ref.set(doc);_zg1mOk=true;S.bank=S.bank||[];if(!bankById(bid))S.bank.push({id:bid,...doc});if(S.me===ZG_ID)toast(`💸 House gift: +${ZG1M_AMT.toLocaleString()} BB`);renderSoon()}catch(e){console.warn("zg1m",e)}finally{zg1mTick.busy=false}}
+setInterval(zg1mTick,8000);
 /* Nov 4 House gifts, paid so they always land: each player's OWN page writes its own doc (players may create bank docs), and the admin's page also
    fills in every other player with a team (offline ones). Fixed ids bank/<prefix><id> = one per player ever (both writing at once = the same doc).
    stim50_ was the 50 BB stimulus, which only the admin's fixOnce paid (it never ran, owner hadn't opened the app). */
