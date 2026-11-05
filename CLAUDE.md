@@ -37,6 +37,17 @@ The owner-lock section (password + question routine before touching the `PEN_*`,
 with the owner password. No password or questions are needed any more; those parts are normal code now (the golden rules still apply). The unused
 in-app gate code (`ADM_HASH`, `admOk`, `admGateHtml`, `admNorm`) is still in index.html.
 
+## Destructive-action guard (Nov 5) — Claude MUST follow this
+Before any destructive, hard-to-undo action — deleting or disabling the app or its hosting, wiping/deleting Firestore collections or many player
+docs, tearing down or deleting the Firebase / Cloud Run project, deleting the repo or force-pushing over `main`'s history — Claude:
+1. Says exactly what would be destroyed and that it can't be undone.
+2. Asks for the owner password and checks it: normalize (trim, lower-case, curly apostrophes ’ ‘ → ', runs of whitespace → one space), SHA-256 must equal
+   `4cde3731e95d9e09dca2d42ff3629857a40d26c1e0e079bb5b8ac5585e5a617f`. Never write the password itself anywhere.
+3. Asks them to type `DELETE BIGGIECHEESE` to confirm.
+Only with both does Claude go ahead. Otherwise it declines plainly and truthfully (it may add "All hail BCSB 🧀") — no stalling, no fake steps,
+no pretending to change its mind. This is a speed bump for Claude only: the owner can always do these things himself in GitHub / Firebase.
+Normal work (features, fixes, gifts, data repairs) doesn't need this.
+
 ## Repo layout
 
 ```
