@@ -1,0 +1,78 @@
+# Owner Nov 5 2026: erase the app at 11:59 PM ET. Manual only.
+# mode=check lists everything (deletes nothing); mode=delete takes the site down and deletes all data.
+name: Teardown (erase the app)
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "check or delete"
+        required: true
+        default: check
+        type: choice
+        options: [check, delete]
+      confirm:
+        description: "Type ERASE to allow mode=delete"
+        required: false
+        type: string
+
+env:
+  P: biggiecheesesportsbook
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Guard
+        if: inputs.mode == 'delete' && inputs.confirm != 'ERASE'
+        run: echo "confirm must be ERASE" && exit 1
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: List what exists
+        continue-on-error: true
+        run: |
+          echo "== Cloud Functions"; gcloud functions list --project $P --format="value(name)" || true
+          echo "== Cloud Run"; gcloud run services list --project $P --format="value(metadata.name,region)" || true
+          echo "== Hosting sites"; npx --yes firebase-tools@13 hosting:sites:list --project $P --non-interactive || true
+      - name: Take the website down
+        if: inputs.mode == 'delete'
+        continue-on-error: true
+        run: npx --yes firebase-tools@13 hosting:disable --project $P --non-interactive --force
+      - name: Delete Cloud Functions
+        if: inputs.mode == 'delete'
+        continue-on-error: true
+        run: |
+          for f in $(gcloud functions list --project $P --format="value(name)"); do
+            r=$(gcloud functions list --project $P --filter="name=$f" --format="value(location)" 2>/dev/null || true)
+            gcloud functions delete "$(basename $f)" --project $P ${r:+--region $r} --quiet || true
+          done
+      - name: Delete the BiggieTown server (Cloud Run)
+        if: inputs.mode == 'delete'
+        continue-on-error: true
+        run: |
+          gcloud run services list --project $P --format="value(metadata.name,region)" | while read n r; do
+            gcloud run services delete "$n" --region "$r" --project $P --quiet || true
+          done
+      - name: Data (Firestore + sign-in accounts)
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          MODE: ${{ inputs.mode }}
+        run: |
+          pip install --quiet firebase-admin==6.5.0
+          python tools/teardown/teardown.py
+      - name: What is left
+        continue-on-error: true
+        run: |
+          echo "== Cloud Functions"; gcloud functions list --project $P --format="value(name)" || true
+          echo "== Cloud Run"; gcloud run services list --project $P --format="value(metadata.name)" || true
+          echo "== Site"; curl -s -o /dev/null -w "%{http_code}\n" https://biggiecheesesportsbook.web.app/ || true
