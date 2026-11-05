@@ -1,8 +1,60 @@
 {
   "indexes": [],
   "fieldOverrides": [
-    { "collectionGroup": "photos", "fieldPath": "d", "indexes": [] },
-    { "collectionGroup": "cardimg", "fieldPath": "d", "indexes": [] },
-    { "collectionGroup": "media", "fieldPath": "d", "indexes": [] }
+    {
+      "collectionGroup": "photos",
+      "fieldPath": "d",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "cardimg",
+      "fieldPath": "d",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "media",
+      "fieldPath": "d",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "prefs",
+      "fieldPath": "craftLog",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "prefs",
+      "fieldPath": "cards",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "prefs",
+      "fieldPath": "cp",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "prefs",
+      "fieldPath": "ac",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "prefs",
+      "fieldPath": "acC",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "prefs",
+      "fieldPath": "rdl",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "prefs",
+      "fieldPath": "bsn",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "prefs",
+      "fieldPath": "trDone",
+      "indexes": []
+    }
   ]
 }
