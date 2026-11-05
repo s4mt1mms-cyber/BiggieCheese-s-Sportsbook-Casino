@@ -7989,6 +7989,14 @@ async function dyn100Gift(){const me=S.me,q=me&&S.prefs[me];if(dyn100Gift.busy||
   dyn100Gift.busy=true;try{const ref=db.doc("prefs/"+me),d=(await ref.get()).data()||{};if(d.dyn100){q.dyn100=d.dyn100;return}const f=(Math.floor(Number(d.freeV2))||0)+DYN100_N,at=Date.now();
     await ref.update({freeV2:f,dyn100:at});q.freeV2=f;q.dyn100=at;renderSoon();bwShow(DYN100_N)}catch(e){console.warn("dyn100",e)}finally{dyn100Gift.busy=false}}
 setInterval(dyn100Gift,5000);
+/* Nov 5 gift: 1,000,000 BB from the House for The 1000 year dynasty: ONE bank doc bank/dyn1m_<id> {from:"house",kind:"gift"} written by his own
+   page or the admin's page (finds him by team), whichever runs first; fixed id = paid once, like hgTick. */
+const DYN1M_AMT=1000000;let _dyn1mOk=false;
+async function dyn1mTick(){if(_dyn1mOk||dyn1mTick.busy||!db||!S.me||S.readOnly||!dflLoaded())return;const isD=i=>String(teamOf(i)||"").toLowerCase().includes(DYN_TEAM);
+  const id=isD(S.me)?S.me:(S.canEdit?members().find(isD):null);if(!id)return;const bid="dyn1m_"+id;if(bankById(bid)){_dyn1mOk=true;return}
+  dyn1mTick.busy=true;try{const ref=db.doc("bank/"+bid);if((await ref.get()).exists){_dyn1mOk=true;return}const doc={from:"house",to:id,amt:DYN1M_AMT,kind:"gift",note:"House gift",at:Date.now()};
+    await ref.set(doc);_dyn1mOk=true;S.bank=S.bank||[];if(!bankById(bid))S.bank.push({id:bid,...doc});if(id===S.me)toast(`💸 House gift: +${DYN1M_AMT.toLocaleString()} BB`);renderSoon()}catch(e){console.warn("dyn1m",e)}finally{dyn1mTick.busy=false}}
+setInterval(dyn1mTick,8000);
 document.addEventListener("click",e=>{if(e.target.closest("[data-bwtest]"))bwShow(DYN100_N)});
 async function hofTake(){if(S._bkBusy||!S.me)return;if(!hasAb("hof"))return toast("You need the Heart of Finance card.");const ls=hofLoans(S.me);
   if(ls.some(l=>l.status==="active"||l.status==="late"))return toast("Pay off your House loan first.");if(ls.some(l=>l.status==="defaulted"))return toast("The House doesn't lend to people who default.");
