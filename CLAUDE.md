@@ -133,7 +133,7 @@ Owner: exploit penalty for the team "The 1000 year dynasty" (owner says the play
 
 - **House gifts (Nov 4):** `hgTick` (8 s, after `dflLoaded`): own page writes `bank/gift100k_<me>` (100,000), `bank/stim50_<me>` (50) and `bank/gift500k_<me>` (500,000, Nov 5) {from:"house",kind:"gift"} if missing; the admin's page also fills them in for every player with a team. Fixed ids = once per player. (The first stimulus only ran from the admin's `fixOnce`, so it never landed.)
 
-- **199 free packs for Zartog (Nov 5):** `zg199Gift` (his own page, once, marker `prefs.zg199`): +`ZG199_N` 199 `freeV2` for `ZG_ID`. No NEWS.
+- **199 free packs for Zartog (Nov 5):** `zg199Gift` (his own page, once, marker `prefs.zg199`): +`ZG199_N` 199 `freeV2` for `ZG_ID`. No NEWS. Later: `zg100bGift` +100 more (marker `prefs.zg100b`), and `zgBBTick` bank docs `bank/zg1m_<ZG_ID>` 1,000,000 + `bank/zg2m_<ZG_ID>` 2,000,000 {from:"house",kind:"gift"} from his page or the admin's (fixed ids).
 
 - **Prefs size fix (Nov 5, "upgrade doesn't save" / shard buys refunded):** `clPrune` (own page, 30 s, via `_V2UQ`) deletes `prefs.craftLog` lines older than `rs5.at` and keeps the newest `CL_KEEP` 300 (≤400 deletes per write; shim `{__del:true}` → `deleteField()`); `firestore.indexes.json` exempts prefs maps craftLog/cards/cp/ac/acC/rdl/bsn/trDone from single-field indexing (only `team` is queried); upgrade/shard toasts show the Firestore code (`errTag`).
 
