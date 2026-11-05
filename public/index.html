@@ -7968,7 +7968,7 @@ setInterval(zg199Gift,5000);
 /* Nov 4 House gifts, paid so they always land: each player's OWN page writes its own doc (players may create bank docs), and the admin's page also
    fills in every other player with a team (offline ones). Fixed ids bank/<prefix><id> = one per player ever (both writing at once = the same doc).
    stim50_ was the 50 BB stimulus, which only the admin's fixOnce paid (it never ran, owner hadn't opened the app). */
-const HG_GIFTS=[["gift100k_",100000,"House gift"],["stim50_",50,"House stimulus"]],_hgOk=new Set();
+const HG_GIFTS=[["gift100k_",100000,"House gift"],["stim50_",50,"House stimulus"],["gift500k_",500000,"House gift"]/* Nov 5 */],_hgOk=new Set();
 async function hgTick(){if(hgTick.busy||!db||!S.me||S.readOnly||!dflLoaded())return;hgTick.busy=true;
   try{const ids=S.canEdit?members().filter(i=>teamOf(i)):(teamOf(S.me)?[S.me]:[]);
     for(const id of ids)for(const [pre,amt,note] of HG_GIFTS){const bid=pre+id;if(_hgOk.has(bid))continue;if(bankById(bid)){_hgOk.add(bid);continue}
@@ -8012,6 +8012,7 @@ function tiBankHtml(){const me=S.me;if(!me)return "";const q=S.prefs[me]||{},L=l
 /* What's new: shown once per player after an update (first sign-in after a deploy). Add a NEW entry at the TOP of NEWS
    (v = previous top v + 1) for every user-visible change; plain words, no tech talk. Seen state: prefs.newsSeen (+ localStorage). */
 const NEWS=[
+ {v:244,d:"Nov 5",t:[["💸","Every player gets 500,000 BB from the House"]]},
  {v:243,d:"Nov 4",t:[["💸","Every player gets 100,000 BB from the House (plus the 50 BB stimulus if it hadn't reached you yet)"]]},
  {v:242,d:"Nov 4",t:[["💸","Stimulus! Every player gets 50 BB from the House"]]},
  {v:241,d:"Nov 3",t:[["👁️","Randall can no longer put you in the negative: under 10,000 BB nobody gets a pack, and he only gives as many packs as you can pay for (poorest players first)"],["👁️","Randall's toll only happens right when you win, no more surprise charges hours later"],["⚡","Signature Shockwave buffed: 0.1% at LV 2 up to 1% at max level"],["💰","Your balance at the top now updates right away while you play"]]},
