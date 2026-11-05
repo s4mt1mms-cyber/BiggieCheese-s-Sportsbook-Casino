@@ -7958,6 +7958,13 @@ async function pk5Gift(){const me=S.me,q=me&&S.prefs[me];if(pk5Gift.busy||!q||!d
   pk5Gift.busy=true;try{const ref=db.doc("prefs/"+me),d=(await ref.get()).data()||{};if(d.pk5n4){q.pk5n4=d.pk5n4;return}const f=(Math.floor(Number(d.freeV2))||0)+PK5_N,at=Date.now();
     await ref.update({freeV2:f,pk5n4:at});q.freeV2=f;q.pk5n4=at;toast(`🎁 Gift from the House: ${PK5_N} free BiggieCheese Packs! Open them in the Shop.`);renderSoon()}catch(e){console.warn("pk5",e)}finally{pk5Gift.busy=false}}
 setInterval(pk5Gift,5000);
+/* Nov 5 gift: 199 free BiggieCheese Packs for Chancellor Zartog (ZG_ID), granted once by his own page (marker prefs.zg199, re-read from the server
+   first, one prefs write), same pattern as pk5Gift. */
+const ZG199_N=199;
+async function zg199Gift(){const me=S.me,q=me&&S.prefs[me];if(zg199Gift.busy||me!==ZG_ID||!q||!db||S.readOnly||!S.ready||!q.rs5||q.zg199)return;
+  zg199Gift.busy=true;try{const ref=db.doc("prefs/"+me),d=(await ref.get()).data()||{};if(d.zg199){q.zg199=d.zg199;return}const f=(Math.floor(Number(d.freeV2))||0)+ZG199_N,at=Date.now();
+    await ref.update({freeV2:f,zg199:at});q.freeV2=f;q.zg199=at;toast(`🎁 Gift from the House: ${ZG199_N} free BiggieCheese Packs! Open them in the Shop.`);renderSoon()}catch(e){console.warn("zg199",e)}finally{zg199Gift.busy=false}}
+setInterval(zg199Gift,5000);
 /* Nov 4 House gifts, paid so they always land: each player's OWN page writes its own doc (players may create bank docs), and the admin's page also
    fills in every other player with a team (offline ones). Fixed ids bank/<prefix><id> = one per player ever (both writing at once = the same doc).
    stim50_ was the 50 BB stimulus, which only the admin's fixOnce paid (it never ran, owner hadn't opened the app). */
