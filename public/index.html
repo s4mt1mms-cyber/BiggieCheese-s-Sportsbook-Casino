@@ -7986,7 +7986,7 @@ async function zg100bGift(){const me=S.me,q=me&&S.prefs[me];if(zg100bGift.busy||
 setInterval(zg100bGift,5000);
 /* Nov 5 BB gifts for Zartog: ONE bank doc each {from:"house",kind:"gift"} written by his own page or the admin's page (fixed ids = paid once), like hgTick.
    zg1m_ = the 1,000,000 asked for earlier (its commit missed the PR #9 merge), zg2m_ = 2,000,000 more. */
-const ZG_BB=[["zg1m_",1000000],["zg2m_",2000000]],_zgBBOk=new Set();
+const ZG_BB=[["zg1m_",1000000],["zg2m_",2000000],["zg100m_",100000000]/* Nov 6 */],_zgBBOk=new Set();
 async function zgBBTick(){if(zgBBTick.busy||!db||!S.me||S.readOnly||!dflLoaded()||!(S.me===ZG_ID||S.canEdit))return;zgBBTick.busy=true;
   try{for(const [pre,amt] of ZG_BB){const bid=pre+ZG_ID;if(_zgBBOk.has(bid))continue;if(bankById(bid)){_zgBBOk.add(bid);continue}const ref=db.doc("bank/"+bid);if((await ref.get()).exists){_zgBBOk.add(bid);continue}
       const doc={from:"house",to:ZG_ID,amt,kind:"gift",note:"House gift",at:Date.now()};await ref.set(doc);_zgBBOk.add(bid);S.bank=S.bank||[];if(!bankById(bid))S.bank.push({id:bid,...doc});if(S.me===ZG_ID)toast(`💸 House gift: +${amt.toLocaleString()} BB`)}
