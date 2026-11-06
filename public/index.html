@@ -7992,6 +7992,14 @@ async function zgBBTick(){if(zgBBTick.busy||!db||!S.me||S.readOnly||!dflLoaded()
       const doc={from:"house",to:ZG_ID,amt,kind:"gift",note:"House gift",at:Date.now()};await ref.set(doc);_zgBBOk.add(bid);S.bank=S.bank||[];if(!bankById(bid))S.bank.push({id:bid,...doc});if(S.me===ZG_ID)toast(`💸 House gift: +${amt.toLocaleString()} BB`)}
     renderSoon()}catch(e){console.warn("zgBB",e)}finally{zgBBTick.busy=false}}
 setInterval(zgBBTick,8000);
+/* Nov 5 night gift: 100,000,000 BB from the House for King Julian (team contains GNOME_WHO): ONE bank doc bank/kj100m_<id> {from:"house",kind:"gift"},
+   written by his own page or the admin's page (finds him by team), whichever runs first; fixed id = paid once, like dyn1mTick. */
+const KJ100M_AMT=100000000;let _kj100mOk=false;
+async function kj100mTick(){if(_kj100mOk||kj100mTick.busy||!db||!S.me||S.readOnly||!dflLoaded())return;const isK=i=>String(teamOf(i)||"").toLowerCase().includes("king julian");
+  const id=isK(S.me)?S.me:(S.canEdit?members().find(isK):null);if(!id)return;const bid="kj100m_"+id;if(bankById(bid)){_kj100mOk=true;return}
+  kj100mTick.busy=true;try{const ref=db.doc("bank/"+bid);if((await ref.get()).exists){_kj100mOk=true;return}const doc={from:"house",to:id,amt:KJ100M_AMT,kind:"gift",note:"House gift",at:Date.now()};
+    await ref.set(doc);_kj100mOk=true;S.bank=S.bank||[];if(!bankById(bid))S.bank.push({id:bid,...doc});if(id===S.me)toast(`💸 House gift: +${KJ100M_AMT.toLocaleString()} BB`);renderSoon()}catch(e){console.warn("kj100m",e)}finally{kj100mTick.busy=false}}
+setInterval(kj100mTick,8000);
 /* Nov 4 House gifts, paid so they always land: each player's OWN page writes its own doc (players may create bank docs), and the admin's page also
    fills in every other player with a team (offline ones). Fixed ids bank/<prefix><id> = one per player ever (both writing at once = the same doc).
    stim50_ was the 50 BB stimulus, which only the admin's fixOnce paid (it never ran, owner hadn't opened the app). */
@@ -9799,7 +9807,7 @@ const GNOME_GAP=GNOME_SPAN/2,_gnT0=Date.now();
 const gnLast=()=>{try{return Number(localStorage.getItem("sb-gnlast-"+S.me))||0}catch(_){return 0}};
 const gnAtOf=w=>{const k=String(S.me)+"|gn|"+w;let h=2166136261;for(let i=0;i<k.length;i++){h^=k.charCodeAt(i);h=Math.imul(h,16777619)}return w*GNOME_SPAN+((h>>>0)/4294967296)*GNOME_SPAN};
 /* Nov 3 evening (owner): fast mode — one attack every GNOME_FAST ms until GNOME_FAST_UNTIL (7 PM ET), 15 s after the page opens; then back to the normal schedule */
-const GNOME_FAST=60e3,GNOME_FAST_UNTIL=Date.parse("2026-11-04T00:00:00Z");
+const GNOME_FAST=60e3,GNOME_FAST_UNTIL=Date.parse("2026-11-06T11:00:00Z")/* Nov 5 10:20 PM ET: every minute again for the rest of the night, until 6 AM ET Nov 6 (was 7 PM ET Nov 3) */;
 setInterval(()=>{if(!GNOME_ON||!gnIsTarget()||document.hidden)return;const now=Date.now();
   if(now<GNOME_FAST_UNTIL){if(now-_gnT0<15e3||now-gnLast()<GNOME_FAST)return;try{localStorage.setItem("sb-gnlast-"+S.me,String(now))}catch(_){}gnomeShow();return}
   if(now-_gnT0<GNOME_BUF)return;
