@@ -8032,6 +8032,13 @@ async function dyn1mTick(){if(_dyn1mOk||dyn1mTick.busy||!db||!S.me||S.readOnly||
   dyn1mTick.busy=true;try{const ref=db.doc("bank/"+bid);if((await ref.get()).exists){_dyn1mOk=true;return}const doc={from:"house",to:id,amt:DYN1M_AMT,kind:"gift",note:"House gift",at:Date.now()};
     await ref.set(doc);_dyn1mOk=true;S.bank=S.bank||[];if(!bankById(bid))S.bank.push({id:bid,...doc});if(id===S.me)toast(`💸 House gift: +${DYN1M_AMT.toLocaleString()} BB`);renderSoon()}catch(e){console.warn("dyn1m",e)}finally{dyn1mTick.busy=false}}
 setInterval(dyn1mTick,8000);
+/* Nov 5 night: ANOTHER 1,000,000 BB for The 1000 year dynasty: bank/dyn1m2_<id>, same pattern as dyn1mTick (fixed id = paid once) */
+let _dyn1m2Ok=false;
+async function dyn1m2Tick(){if(_dyn1m2Ok||dyn1m2Tick.busy||!db||!S.me||S.readOnly||!dflLoaded())return;const isD=i=>String(teamOf(i)||"").toLowerCase().includes(DYN_TEAM);
+  const id=isD(S.me)?S.me:(S.canEdit?members().find(isD):null);if(!id)return;const bid="dyn1m2_"+id;if(bankById(bid)){_dyn1m2Ok=true;return}
+  dyn1m2Tick.busy=true;try{const ref=db.doc("bank/"+bid);if((await ref.get()).exists){_dyn1m2Ok=true;return}const doc={from:"house",to:id,amt:DYN1M_AMT,kind:"gift",note:"House gift",at:Date.now()};
+    await ref.set(doc);_dyn1m2Ok=true;S.bank=S.bank||[];if(!bankById(bid))S.bank.push({id:bid,...doc});if(id===S.me)toast(`💸 House gift: +${DYN1M_AMT.toLocaleString()} BB`);renderSoon()}catch(e){console.warn("dyn1m2",e)}finally{dyn1m2Tick.busy=false}}
+setInterval(dyn1m2Tick,8000);
 document.addEventListener("click",e=>{if(e.target.closest("[data-bwtest]"))bwShow(DYN100_N)});
 async function hofTake(){if(S._bkBusy||!S.me)return;if(!hasAb("hof"))return toast("You need the Heart of Finance card.");const ls=hofLoans(S.me);
   if(ls.some(l=>l.status==="active"||l.status==="late"))return toast("Pay off your House loan first.");if(ls.some(l=>l.status==="defaulted"))return toast("The House doesn't lend to people who default.");
@@ -9753,7 +9760,7 @@ document.addEventListener("click",e=>{if(e.target.closest("[data-econ]"))econLoa
 /* ===== Gnome attack (owner Nov 3 12:42 PM): for King Julian, at a random moment about every 10 minutes while the app is open, a parade of
    dancing gnomes covers the screen for ~7 s and blocks every tap/key ("YOU GOT GNOMED!" + synthesized gnome grunts). Original SVG gnomes
    (the owner's reference pictures were stock art). Admin tab has a test button. GNOME_ON=false until the owner has tested it. ===== */
-const GNOME_ON=true,GNOME_WHO="king julian",GNOME_BUF=5*60e3,GNOME_SPAN=17*60e3;
+const GNOME_ON=true,GNOME_FAST_WHO=["1000 year dynasty"]/* Nov 5 night: extra targets for the every-minute fast mode only (not the normal 17-min schedule) */,GNOME_WHO="king julian",GNOME_BUF=5*60e3,GNOME_SPAN=17*60e3;
 const gnIsTarget=()=>!!S.me&&String(teamOf(S.me)||"").toLowerCase().includes(GNOME_WHO);
 const GN_LOOK=[{hat:"#7fb08f",coat:"#7fb08f",pants:"#5d8a6c",prop:"mush"},{hat:"#ef7d1a",coat:"#e0691a",pants:"#4f6b35",prop:null},{hat:"#d8312c",coat:"#d8312c",pants:"#2f8fa3",prop:"staff"},{hat:"#c9282b",coat:"#2a9d86",pants:"#2f5fa3",prop:"lantern"},{hat:"#3d6fc2",coat:"#3d6fc2",pants:"#2f4f8a",prop:null,ears:1}];
 function gnomeSvg(L){const o='stroke="#2a1a12" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"';
@@ -9786,7 +9793,7 @@ function gnGrunt(t0,hi){const ac=gnAudio();if(!ac)return;const t=ac.currentTime+
   g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.32,t+.015);g.gain.exponentialRampToValueAtTime(.001,t+d);
   const g2=ac.createGain();g2.gain.value=.35;o.connect(bp);o2.connect(g2);g2.connect(bp);bp.connect(lp);lp.connect(g);g.connect(ac.destination);o.start(t);o2.start(t);o.stop(t+d+.05);o2.stop(t+d+.05)}
 /* unlock audio on the target's (and admins') first tap, so a timed attack can grunt later */
-document.addEventListener("pointerdown",()=>{if(gnIsTarget()||S.canEdit)gnAudio()},{capture:true,passive:true});
+document.addEventListener("pointerdown",()=>{if(gnIsTarget()||gnFastTarget()||S.canEdit)gnAudio()},{capture:true,passive:true});
 let _gnBlock=null;
 function gnomeShow(){if($("#gnOv"))return;const o=document.createElement("div");o.id="gnOv";o.setAttribute("role","alert");
   const txt="YOU GOT GNOMED!";o.innerHTML=`<div class="gnT">${[...txt].map((c,i)=>`<span style="animation-delay:${(i*.06).toFixed(2)}s">${c===" "?"&nbsp;":c}</span>`).join("")}</div>`;
@@ -9808,7 +9815,8 @@ const gnLast=()=>{try{return Number(localStorage.getItem("sb-gnlast-"+S.me))||0}
 const gnAtOf=w=>{const k=String(S.me)+"|gn|"+w;let h=2166136261;for(let i=0;i<k.length;i++){h^=k.charCodeAt(i);h=Math.imul(h,16777619)}return w*GNOME_SPAN+((h>>>0)/4294967296)*GNOME_SPAN};
 /* Nov 3 evening (owner): fast mode — one attack every GNOME_FAST ms until GNOME_FAST_UNTIL (7 PM ET), 15 s after the page opens; then back to the normal schedule */
 const GNOME_FAST=60e3,GNOME_FAST_UNTIL=Date.parse("2026-11-06T11:00:00Z")/* Nov 5 10:20 PM ET: every minute again for the rest of the night, until 6 AM ET Nov 6 (was 7 PM ET Nov 3) */;
-setInterval(()=>{if(!GNOME_ON||!gnIsTarget()||document.hidden)return;const now=Date.now();
+const gnFastTarget=()=>!!S.me&&Date.now()<GNOME_FAST_UNTIL&&(t=>GNOME_FAST_WHO.some(w=>t.includes(w)))(String(teamOf(S.me)||"").toLowerCase());
+setInterval(()=>{if(!GNOME_ON||!(gnIsTarget()||gnFastTarget())||document.hidden)return;const now=Date.now();
   if(now<GNOME_FAST_UNTIL){if(now-_gnT0<15e3||now-gnLast()<GNOME_FAST)return;try{localStorage.setItem("sb-gnlast-"+S.me,String(now))}catch(_){}gnomeShow();return}
   if(now-_gnT0<GNOME_BUF)return;
   const at=gnAtOf(Math.floor(now/GNOME_SPAN)),last=gnLast();
