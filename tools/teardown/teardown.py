@@ -12,7 +12,7 @@ def wipe(col):
     """delete every doc (and its subcollections) with plain batched writes"""
     n = 0
     while True:
-        docs = list(col.list_documents(page_size=300))
+        docs = list(col.list_documents(page_size=20))
         if not docs:
             return n
         for d in docs:
