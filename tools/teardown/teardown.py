@@ -1,5 +1,5 @@
 """Owner Nov 5 2026: erase the app. MODE=check lists what exists; MODE=delete deletes every Firestore document and every Auth user."""
-import json, os, sys
+import itertools, json, os, sys
 import firebase_admin
 from firebase_admin import credentials, auth, firestore
 
@@ -12,7 +12,7 @@ def wipe(col):
     """delete every doc (and its subcollections) with plain batched writes"""
     n = 0
     while True:
-        docs = list(col.list_documents(page_size=20))
+        docs = list(itertools.islice(col.list_documents(page_size=300), 300))
         if not docs:
             return n
         for d in docs:
