@@ -8,14 +8,30 @@ sa = json.loads(os.environ["FIREBASE_SERVICE_ACCOUNT"])
 firebase_admin.initialize_app(credentials.Certificate(sa), {"projectId": "biggiecheesesportsbook"})
 db = firestore.client()
 
+def wipe(col):
+    """delete every doc (and its subcollections) with plain batched writes"""
+    n = 0
+    while True:
+        docs = list(col.list_documents(page_size=300))
+        if not docs:
+            return n
+        for d in docs:
+            for sub in d.collections():
+                n += wipe(sub)
+        b = db.batch()
+        for d in docs:
+            b.delete(d)
+        b.commit()
+        n += len(docs)
+
 cols = list(db.collections())
 print("Firestore collections:", len(cols))
 for c in cols:
     n = sum(1 for _ in c.list_documents(page_size=500))
     print(f"  {c.id}: {n} docs")
     if mode == "delete":
-        db.recursive_delete(c)
-        print(f"    deleted {c.id}")
+        k = wipe(c)
+        print(f"    deleted {c.id}: {k} docs")
 
 uids = []
 page = auth.list_users()
